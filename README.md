@@ -2,7 +2,9 @@
 
 GitHub Secrets
 ec2 엘라스틱 ip 설정 후에 GitHub Secrets EC2_HOST 등록해야됨
-
+github action 
+    build-and-action 까지는 통과
+    deploy ec2 없어서 지금은 실패
 
 
 
