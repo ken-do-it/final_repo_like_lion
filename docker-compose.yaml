@@ -29,6 +29,8 @@ services:
       - DB_NAME=korea_travel_db
       - DB_USER=myuser
       - DB_PASSWORD=mypassword
+    env_file:
+        - ./django_app/.env
 
   # 3. AI 서버 (FastAPI)
   fastapi:
