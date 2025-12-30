@@ -35,11 +35,11 @@ services:
     build:
       context: ./fastapi_app
       dockerfile: Dockerfile
-    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./fastapi_app:/app # 코드 수정하면 바로 반영
     ports:
-      - "8001:8001"
+      - "8001:8000"
 
   # 4. 프론트엔드 (React + Nginx)
   frontend:
