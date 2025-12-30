@@ -138,7 +138,7 @@ final_repo/
 
 ### 사전 요구사항
 - Python 3.12+
-- Node.js 18+
+- Node.js 22+
 - Docker & Docker Compose
 - Conda (Anaconda 또는 Miniconda) - 선택사항
 
