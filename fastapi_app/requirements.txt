@@ -18,3 +18,7 @@ typing_extensions==4.15.0
 urllib3==2.6.2
 uvicorn==0.40.0
 wheel==0.45.1
+psycopg2-binary  # DB 접속용
+sqlalchemy       # ORM
+sentence-transformers  # ★ 핵심: 텍스트를 벡터로 바꿔주는 AI 모델
+pgvector         # DB 벡터 연산 지원

@@ -11,19 +11,22 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-gz0upn7g6&g&-w+jq8w0yyjobdf(=g7^#+b34vf03q^4+-o7g('
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = []
 
@@ -43,7 +46,7 @@ INSTALLED_APPS = [
     
     #프로젝트로 생성한 앱
     'users',
-    'places',
+    'places.apps.PlacesConfig',
     'plans',
     'contents',
     'reservations',
@@ -86,12 +89,25 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv('DB_ENGINE'):
+    DATABASES = {
+        'default': {
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.getenv('DB_NAME', 'korea_travel_db'),
+            'USER': os.getenv('DB_USER', 'myuser'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'mypassword'),
+            'HOST': os.getenv('DB_HOST', 'db'),  # 도커 서비스 이름 'db'
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
     }
-}
+else:
+    # 환경변수가 없으면 개발용 SQLite 사용 (안전장치)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -130,6 +146,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+<<<<<<< HEAD
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
@@ -172,3 +189,14 @@ CORS_ALLOW_CREDENTIALS = True
 # Time Zone
 TIME_ZONE = 'Asia/Seoul'
 USE_TZ = True
+=======
+# BigAutoField 설정
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# MEDIA settings for local file uploads (shortform videos, thumbnails).
+# MEDIA_URL: public URL prefix when serving uploaded files in development.
+# MEDIA_ROOT: filesystem path where uploaded files are stored locally.
+# NOTE: Production에서 S3 등을 사용할 경우 스토리지 백엔드로 교체 예정.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+>>>>>>> 1311e5e6dfd7d0fbe5bd8a1b1ca9330630f549ea

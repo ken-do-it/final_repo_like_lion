@@ -88,3 +88,67 @@ class PlaceBookmark(models.Model):
             models.Index(fields=['user']),
             models.Index(fields=['created_at']),
         ]
+
+class LocalColumn(models.Model):
+    """
+    현지인 추천 칼럼 (local_columns)
+    - 현지인이 작성하는 맛집/명소 소개 매거진
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='local_columns')
+    
+    title = models.CharField(max_length=200, help_text="현지인 칼럼 제목")
+    thumbnail_url = models.TextField(blank=True, null=True, help_text="현지인 칼럼 썸네일")
+    content = models.TextField(help_text="현지인 칼럼 내용 (서론)")
+    
+    # 칼럼 내부 이미지 (메인 내용에 들어가는 이미지)
+    intro_image_url = models.TextField(blank=True, null=True, help_text="현지인 칼럼 내부 이미지")
+    
+    # 메인 장소 연결 (옵션)
+    representative_place = models.ForeignKey(Place, on_delete=models.SET_NULL, null=True, blank=True, help_text="대표 장소 ID")
+    
+    view_count = models.IntegerField(default=0, help_text="조회수")
+    
+    # 좋아요 기능은 추후 개발 단계에서 추가 예정 (현재는 제외)
+    # like_count = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'local_columns'
+        ordering = ['-created_at']
+
+class LocalColumnSection(models.Model):
+    """
+    칼럼 섹션 (local_column_sections)
+    - 칼럼 하나에 여러 장소나 소주제를 담기 위한 섹션
+    """
+    column = models.ForeignKey(LocalColumn, on_delete=models.CASCADE, related_name='sections')
+    
+    # 섹션별 장소 연결
+    place = models.ForeignKey(Place, on_delete=models.SET_NULL, null=True, blank=True, help_text="섹션과 연결된 장소")
+    
+    order = models.IntegerField(default=0, help_text="섹션 순서")
+    title = models.CharField(max_length=200, blank=True, help_text="섹션 제목")
+    content = models.TextField(help_text="섹션 내용 (설명/추천이유)")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'local_column_sections'
+        ordering = ['column', 'order'] # 칼럼별 순서대로 정렬
+
+class LocalColumnSectionImage(models.Model):
+    """
+    칼럼 섹션 이미지 (local_column_section_images)
+    - 섹션 하나에 여러 장의 이미지가 들어갈 수 있음
+    """
+    section = models.ForeignKey(LocalColumnSection, on_delete=models.CASCADE, related_name='images')
+    
+    image_url = models.TextField(help_text="칼럼 섹션 이미지 URL")
+    order = models.IntegerField(default=0, help_text="이미지 순서")
+
+    class Meta:
+        db_table = 'local_column_section_images'
+        ordering = ['section', 'order']

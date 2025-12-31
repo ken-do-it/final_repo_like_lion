@@ -1,0 +1,58 @@
+
+services:
+  # 1. 데이터베이스 (PostgreSQL)
+  db:
+    image: pgvector/pgvector:pg16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=korea_travel_db
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+    ports:
+      - "5432:5432"
+
+  # 2. 메인 백엔드 (Django)
+  django:
+    build:
+      context: ./django_app
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./django_app:/app  # 코드 수정하면 바로 반영되게 연결 (Hot Reload)
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_NAME=korea_travel_db
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+    env_file:
+        - ./django_app/.env
+
+  # 3. AI 서버 (FastAPI)
+  fastapi:
+    build:
+      context: ./fastapi_app
+      dockerfile: Dockerfile
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./fastapi_app:/app # 코드 수정하면 바로 반영
+    ports:
+      - "8001:8000"
+
+  # 4. 프론트엔드 (React + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"  # 브라우저에서 localhost로 접속
+    depends_on:
+      - django
+      - fastapi
+
+volumes:
+  postgres_data:
