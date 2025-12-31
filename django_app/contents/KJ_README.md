@@ -116,4 +116,53 @@ python manage.py makemigrarions
 python manage.py migrate
 
 
+---
+
+# Shortform API 구현 및 테스트 (2025-12-31)
+
+## 구현 요약
+- ViewSet 기반 숏폼 API: `ShortformViewSet`에서 목록/단건/생성 + 커스텀 액션(좋아요/취소/댓글/조회수).
+- 업로드: `video_file` multipart/form-data → `media/shortforms/videos/<uuid>.mp4` 저장, `video_url` 자동 세팅. 현재 인증 없음, superuser를 기본 작성자로 사용.
+- 좋아요: `POST /api/shortforms/{id}/like/` (중복 방지), 취소: `DELETE /api/shortforms/{id}/unlike/`.
+- 댓글: `GET|POST /api/shortforms/{id}/comments/` (content 필수, superuser 작성).
+- 조회수: `POST /api/shortforms/{id}/view/` (user 또는 IP 기준 중복 방지).
+- Media 설정: `MEDIA_URL=/media/`, `MEDIA_ROOT=BASE_DIR/media`, dev 서버에서 정적 서빙.
+
+## 테스트 커맨드 (로컬)
+```
+# 업로드
+curl -X POST http://127.0.0.1:8000/api/shortforms/ \
+  -F "video_file=@/path/to/test.mp4" \
+  -F "title=붕어빵" \
+  -F "content=길거리 붕어빵" \
+  -F "visibility=PUBLIC"
+
+# 목록/단건
+curl http://127.0.0.1:8000/api/shortforms/
+curl http://127.0.0.1:8000/api/shortforms/1/
+
+# 좋아요/취소
+curl -X POST http://127.0.0.1:8000/api/shortforms/1/like/
+curl -X DELETE http://127.0.0.1:8000/api/shortforms/1/unlike/
+
+# 댓글 작성/조회
+curl -X POST http://127.0.0.1:8000/api/shortforms/1/comments/ \
+  -H "Content-Type: application/json" \
+  -d "{\"content\": \"댓글 테스트\", \"source_lang\": \"ko\"}"
+curl http://127.0.0.1:8000/api/shortforms/1/comments/
+
+# 조회수 기록
+curl -X POST http://127.0.0.1:8000/api/shortforms/1/view/
+```
+
+## 실제 테스트 결과 (요약)
+- 업로드 후 리스트/단건: id=1, `video_url`=/media/shortforms/videos/09c5daf2-22ba-4bc2-bb6e-1d31da4c1a26.mp4
+- 좋아요/취소: `{"liked":true,"total_likes":1}` → 취소 후 `{"liked":false,"total_likes":0}`
+- 댓글 작성/조회: 댓글 생성 응답(`id`:1, `content`:"댓글 테스트") → 조회 시 리스트에 표시
+- 조회수 기록: `{"viewed":true,"total_views":1}` (동일 user/IP로 반복 호출 시 카운트 유지)
+
+## 사용 주의
+- 인증 미구현: superuser가 반드시 존재해야 하고 기본 작성자로 사용됨.
+- 업로드 실패 시 저장 파일 정리 로직은 생략(개발 편의). 필요 시 추후 정리 추가.
+
 

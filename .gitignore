@@ -210,3 +210,10 @@ __marimo__/
 
 # claude skills
 .claude/
+
+
+# kijin ignore
+KJ_DevlopPlan.md
+KJ_SKILL.md
+KJ_DevlopPlan2.md
+media/

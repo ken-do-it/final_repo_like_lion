@@ -134,3 +134,10 @@ STATIC_URL = 'static/'
 
 # BigAutoField 설정
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# MEDIA settings for local file uploads (shortform videos, thumbnails).
+# MEDIA_URL: public URL prefix when serving uploaded files in development.
+# MEDIA_ROOT: filesystem path where uploaded files are stored locally.
+# NOTE: Production에서 S3 등을 사용할 경우 스토리지 백엔드로 교체 예정.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
