@@ -146,7 +146,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-<<<<<<< HEAD
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
@@ -189,7 +188,6 @@ CORS_ALLOW_CREDENTIALS = True
 # Time Zone
 TIME_ZONE = 'Asia/Seoul'
 USE_TZ = True
-=======
 # BigAutoField 설정
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -199,4 +197,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # NOTE: Production에서 S3 등을 사용할 경우 스토리지 백엔드로 교체 예정.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
->>>>>>> 1311e5e6dfd7d0fbe5bd8a1b1ca9330630f549ea
