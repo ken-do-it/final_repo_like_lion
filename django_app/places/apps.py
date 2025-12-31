@@ -6,10 +6,9 @@ class PlacesConfig(AppConfig):
     name = 'places'
 
     def ready(self):
-        # ★ 여기서 한 번만 불러오면, 위에서 정의한 모든 신호(Place, Plan 등)가 다 작동합니다.
+        # ★ 서버 시작 시 신호등(Signal) 파일 연결!
         try:
-            # django_app 폴더 바로 아래에 search_signals.py가 있다면:
-            import search_signals 
-            print("✅ 통합 검색 신호(Signal) 연결 완료!")
+            import search_signals
+            print("✅ [Places] 검색엔진 자동 등록 시스템 연결됨")
         except ImportError:
-            pass
+            print("⚠️ search_signals.py를 찾을 수 없습니다.")
