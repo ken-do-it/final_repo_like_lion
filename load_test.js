@@ -1,5 +1,5 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';  //docker run --rm -i --add-host=host.docker.internal:host-gateway grafana/k6 run - < load_test.js    k6작동 코드
+import { check, sleep } from 'k6';  //docker run --rm -i --add-host=host.docker.internal:host-gateway grafana/k6 run - < load_test.js    k6작동 코드   그라파나 코드에 rate(http_requests_total[1m])
 
 export const options = {
   stages: [
