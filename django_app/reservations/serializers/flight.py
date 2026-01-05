@@ -25,7 +25,7 @@ class MSFlightSearchRequestSerializer(serializers.Serializer):
     요청 예시:
     {
         "tripType": "ROUNDTRIP",
-        "from": "GMP",
+        "from_airport": "GMP",
         "to": "CJU",
         "departDate": "2025-01-15",
         "returnDate": "2025-01-20",
@@ -141,7 +141,11 @@ class MSFlightOfferSummarySerializer(serializers.Serializer):
     API 명세의 FlightOfferSummary
     """
     offerId = serializers.CharField(help_text="항공편 Offer ID")
-    airline = serializers.CharField(help_text="항공사")
+    airline = serializers.CharField(
+        required=False,
+        allow_null=True,
+        help_text="항공사 (왕복의 경우 생략될 수 있음)"
+    )
 
     # 편도인 경우
     flightNo = serializers.CharField(

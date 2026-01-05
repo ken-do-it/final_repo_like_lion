@@ -3,6 +3,7 @@
 - 한국공항공사 공공 API 연동
 - TAGO(국토교통부) API 연동
 """
+import os
 import requests
 from django.conf import settings
 from typing import Optional, List, Dict
@@ -35,8 +36,9 @@ class MSFlightAPIService:
         - TAGO_SERVICE_KEY: TAGO API 인증키
         - KAC_SERVICE_KEY: 한국공항공사 API 인증키
         """
-        self.tago_key = getattr(settings, 'TAGO_SERVICE_KEY', None)
-        self.kac_key = getattr(settings, 'KAC_SERVICE_KEY', None)
+        # Django settings에 없으면 .env(환경변수)에서 폴백으로 읽기
+        self.tago_key = getattr(settings, 'TAGO_SERVICE_KEY', None) or os.getenv('TAGO_SERVICE_KEY')
+        self.kac_key = getattr(settings, 'KAC_SERVICE_KEY', None) or os.getenv('KAC_SERVICE_KEY')
 
     def ms_search_flights(
         self,
@@ -356,17 +358,28 @@ class MSFlightAPIService:
             "currency": "KRW"
         }
 
-    def _ms_parse_datetime(self, time_str: str) -> Optional[datetime]:
+    def _ms_parse_datetime(self, time_str: str | int | None) -> Optional[datetime]:
         """
-        TAGO API 시각 형식 파싱
+        TAGO API 시각 형식 파싱을 안전하게 처리
 
-        형식: YYYYMMDDHHmm (예: "202501051430")
+        - 입력이 정수(예: 202501051430)로 올 수도 있어 문자열로 변환
+        - 숫자 이외 문자가 섞여도 숫자만 추출해 앞 12자리 사용
+        - 기대 형식: YYYYMMDDHHmm (12자리)
         """
-        if not time_str or len(time_str) < 12:
+        if time_str is None:
             return None
 
+        # 문자열로 변환 후 숫자만 추출
+        s = str(time_str)
+        digits = ''.join(ch for ch in s if ch.isdigit())
+
+        if len(digits) < 12:
+            return None
+
+        candidate = digits[:12]
+
         try:
-            return datetime.strptime(time_str, "%Y%m%d%H%M")
+            return datetime.strptime(candidate, "%Y%m%d%H%M")
         except ValueError:
             return None
 

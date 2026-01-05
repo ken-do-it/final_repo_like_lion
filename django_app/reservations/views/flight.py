@@ -38,7 +38,7 @@ class MSFlightSearchView(APIView):
         요청 예시:
         {
             "tripType": "ROUNDTRIP",
-            "from": "GMP",
+            "from_airport": "GMP",
             "to": "CJU",
             "departDate": "2025-01-15",
             "returnDate": "2025-01-20",
