@@ -1,23 +1,11 @@
-/* frontend/src/index.css */
-
 :root {
-  /* 🌑 다크 모드 기본값 (Dark Mode Default) */
-  --bg-main: #242424;          /* 전체 배경 */
-  --bg-card: #333333;          /* 카드 배경 */
-  --bg-box: #444444;           /* 박스 배경 */
-  --text-main: rgba(255, 255, 255, 0.87); /* 기본 글자 */
-  --text-muted: #aaaaaa;       /* 흐린 글자 */
-  --border-color: #555555;     /* 테두리 색 */
-  --hero-bg: #2a2a2a;          /* 히어로 섹션 배경 */
-  --primary-color: #646cff;    /* 강조 색상 */
-
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: var(--text-main);
-  background-color: var(--bg-main);
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,25 +13,26 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ☀️ 라이트 모드 오버라이드 (Light Mode Override) */
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg-main: #ffffff;
-    --bg-card: #ffffff;
-    --bg-box: #f1f5f9;
-    --text-main: #213547;
-    --text-muted: #64748b;
-    --border-color: #e2e8f0;
-    --hero-bg: #f8fafc;
-    --primary-color: #3b82f6;
-  }
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
 }
 
 body {
   margin: 0;
-  display: block; /* flex 대신 block 사용 (전체 스크롤 편하게) */
+  display: flex;
+  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
 }
 
 button {
@@ -53,12 +42,27 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: var(--bg-box); /* 버튼 배경도 변수로 */
-  color: var(--text-main);
+  background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
 }
-
 button:hover {
-  border-color: var(--primary-color);
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
 }

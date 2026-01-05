@@ -11,30 +11,17 @@ class Place(models.Model):
     class Provider(models.TextChoices):
         KAKAO = 'KAKAO', 'Kakao API'
         USER = 'USER', 'User Registered'
-
+        
     provider = models.CharField(max_length=50, choices=Provider.choices, default=Provider.KAKAO)
-
+    
     # [2] 장소 ID 관리
     # 카카오 장소 ID는 유니크하지만, 사용자 등록일 경우 null일 수 있음 -> unique=True 유지하되 null 허용
     place_api_id = models.CharField(max_length=50, unique=True, null=True, blank=True, help_text="카카오맵 장소 ID")
-
+    
     name = models.TextField(help_text="장소 이름")
-    source_lang = models.CharField(max_length=10, default='ko', help_text="작성 언어 (예: ko, en)")
-
+    
     # [3] 카테고리 (대분류 / 상세분류 JSON)
-    class CategoryMain(models.TextChoices):
-        RESTAURANT = '음식점', '음식점'
-        CAFE = '카페', '카페'
-        TOURIST_ATTRACTION = '관광명소', '관광명소'
-        ACCOMMODATION = '숙박', '숙박'
-        CULTURE = '문화시설', '문화시설'
-        SHOPPING = '쇼핑', '쇼핑'
-        HOSPITAL = '병원', '병원'
-        CONVENIENCE = '편의점', '편의점'
-        BANK = '은행', '은행'
-        PARKING = '주차장', '주차장'
-
-    category_main = models.CharField(max_length=50, choices=CategoryMain.choices, help_text="메인 카테고리")
+    category_main = models.CharField(max_length=50, help_text="메인 카테고리 (예: 음식점, 관광지)")
     
     # "['음식점', '베이커리', '빵']" 처럼 리스트로 저장하기 위해 JSONField 사용
     # SQLite에서는 텍스트로 저장되지만, PostgreSQL에서는 실제 JSON 타입으로 저장됨 (검색 유리)
@@ -54,11 +41,7 @@ class Place(models.Model):
     
     # [6] 등록자 정보 (사용자 직접 등록 시)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
-
-    # [7] 리뷰 통계 (캐시 필드 - 성능 최적화)
-    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00, help_text="평균 별점 (0.00~5.00)")
-    review_count = models.IntegerField(default=0, help_text="리뷰 개수")
-
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -77,7 +60,6 @@ class PlaceReview(models.Model):
     place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
-    source_lang = models.CharField(max_length=10, default='ko', help_text="작성 언어 (예: ko, en)")
     rating = models.IntegerField(default=5, choices=[(i, str(i)) for i in range(1, 6)]) # 1~5점
     
     # 리뷰 이미지 (옵션)
@@ -88,7 +70,6 @@ class PlaceReview(models.Model):
     
     class Meta:
         db_table = 'place_reviews'
-        unique_together = ('user', 'place')  # 한 사용자가 같은 장소에 중복 리뷰 방지
         ordering = ['-created_at']
 
 class PlaceBookmark(models.Model):
@@ -118,8 +99,7 @@ class LocalColumn(models.Model):
     title = models.CharField(max_length=200, help_text="현지인 칼럼 제목")
     thumbnail_url = models.TextField(blank=True, null=True, help_text="현지인 칼럼 썸네일")
     content = models.TextField(help_text="현지인 칼럼 내용 (서론)")
-    source_lang = models.CharField(max_length=10, default='ko', help_text="작성 언어 (예: ko, en)")
-
+    
     # 칼럼 내부 이미지 (메인 내용에 들어가는 이미지)
     intro_image_url = models.TextField(blank=True, null=True, help_text="현지인 칼럼 내부 이미지")
     
@@ -151,8 +131,7 @@ class LocalColumnSection(models.Model):
     order = models.IntegerField(default=0, help_text="섹션 순서")
     title = models.CharField(max_length=200, blank=True, help_text="섹션 제목")
     content = models.TextField(help_text="섹션 내용 (설명/추천이유)")
-    source_lang = models.CharField(max_length=10, default='ko', help_text="작성 언어 (예: ko, en)")
-
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
