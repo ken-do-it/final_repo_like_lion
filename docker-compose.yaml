@@ -2,7 +2,7 @@
 services:
   # 1. 데이터베이스 (PostgreSQL)
   db:
-    image: pgvector/pgvector:pg16
+    image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -37,11 +37,11 @@ services:
     build:
       context: ./fastapi_app
       dockerfile: Dockerfile
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
     volumes:
       - ./fastapi_app:/app # 코드 수정하면 바로 반영
     ports:
-      - "8001:8000"
+      - "8001:8001"
 
   # 4. 프론트엔드 (React + Nginx)
   frontend:
@@ -53,24 +53,6 @@ services:
     depends_on:
       - django
       - fastapi
- 
-  # [1] 프로메테우스 (데이터 수집가)
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml # 설정 파일 연결
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-
-  # [2] 그라파나 (데이터 시각화)
-  grafana:
-    image: grafana/grafana
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
 
 volumes:
   postgres_data:

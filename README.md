@@ -235,19 +235,6 @@ DATABASE_URL=postgres://user:pass@host:5432/dbname
 ALLOWED_HOSTS=your-domain.com
 ```
 
-## 📦 필수 OS 패키지 (ffmpeg/ffprobe)
-- 영상 메타데이터(duration/width/height) 추출과 썸네일 생성을 위해 ffprobe(=ffmpeg 패키지)이 필요합니다.
-- Windows: `winget install --id Gyan.FFmpeg -e --source winget` (또는 `choco install ffmpeg`)
-- Ubuntu/Debian: `sudo apt update && sudo apt install -y ffmpeg`
-- Amazon Linux 2023/CentOS: `sudo dnf install -y ffmpeg` (또는 `sudo yum install -y ffmpeg`)
-- 확인: `ffprobe -version`, `ffmpeg -version`
-- 주의: ffmpeg/ffprobe는 Python 패키지가 아니므로 `requirements.txt`에는 포함되지 않으며, 배포 스크립트/서버 프로비저닝 단계에서 OS 패키지로 설치해야 합니다.
-- 참고: `pip install Pillow`는 영상 메타데이터(ffprobe) 대체가 불가합니다. 썸네일 후처리 시 이미지를 다루기 위해 선택적으로 추가할 수 있지만, 영상 프레임 추출은 여전히 ffmpeg가 필요합니다.
-- 배포 시 환경 변수 설정(필요한 경우 경로 직접 지정 .env에 직접 작성):
-  - 예시 (Linux): `FFPROBE_BIN=/usr/bin/ffprobe`, `FFMPEG_BIN=/usr/bin/ffmpeg`
-  - 예시 (Windows): `FFPROBE_BIN=C:\Users\...\ffprobe.exe`, `FFMPEG_BIN=C:\Users\...\ffmpeg.exe`
-  - OS에 ffmpeg를 설치하고 PATH에 잡히면 env 설정이 없어도 동작하지만, 서비스 실행 계정에서 못 찾을 경우 위 env를 명시합니다.
-
 ## 📡 API 엔드포인트
 
 ### Ingress 라우팅 규칙

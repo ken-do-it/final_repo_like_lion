@@ -1,120 +1,34 @@
-// frontend/src/App.jsx
 import { useState } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom' // ★ 기존 임포트 유지 (수정 X)
-import MainPage from './pages/MainPage'
-import SearchPage from './pages/SearchPage'
-import GeoImageUploader from './pages/GeoImageUploader' // ★ [1] 새로 추가한 페이지
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
-  // 1. 상태 관리
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  
-  // 페이지 이동을 위한 훅
-  const navigate = useNavigate();
-
-  // 사이드바 토글
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  // 홈으로 가기
-  const goHome = () => {
-    setSearchQuery(""); 
-    navigate("/");      
-  };
-
-  // ★ [2] 지오게서(퀴즈) 페이지로 이동하는 함수 추가
-  const goGeoQuiz = () => {
-    navigate("/geo-quiz");
-    setIsSidebarOpen(false); // 이동 후 사이드바 닫기
-  };
-
-  // 2. 검색 실행 함수
-  const handleSearch = (e) => {
-    if (e.key === 'Enter') {
-      if (!searchQuery.trim()) return;
-      console.log("페이지 이동:", searchQuery);
-      navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
-      setIsSidebarOpen(false); 
-    }
-  };
+  const [count, setCount] = useState(0)
 
   return (
-    <div className="app-container">
-      {/* ------------------------------------------------------
-          1. 상단 Navbar
-      ------------------------------------------------------- */}
-      <nav className="navbar">
-        <div className="navbar-left">
-          <button className="icon-btn menu-toggle" onClick={toggleSidebar}>
-            ☰
-          </button>
-          <span className="logo-text" onClick={goHome} style={{ cursor: 'pointer' }}>
-            KOREA TRIP
-          </span>
-        </div>
-
-        <div className="navbar-center">
-          <div className="search-wrapper">
-            <span className="search-icon">🔍</span>
-            <input 
-              type="text" 
-              className="main-search-input" 
-              placeholder="어디로 떠나고 싶으신가요? (AI 의미 검색)" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch}
-            />
-          </div>
-        </div>
-
-        <div className="navbar-right">
-          <button className="icon-btn">🔔</button>
-          <div className="profile-avatar">👤</div>
-        </div>
-      </nav>
-
-      <div className="content-wrapper">
-        {/* ------------------------------------------------------
-            2. 사이드바 (Navigation)
-        ------------------------------------------------------- */}
-        <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-          <ul className="sidebar-menu">
-            <li onClick={goHome}>🏠 홈</li>
-            
-            {/* ★ [3] 사이드바 메뉴 추가 */}
-            <li onClick={goGeoQuiz}>🌍 나만의 지오게서</li>
-
-            <li>📅 AI 일정 만들기</li>
-            <li>🥘 현지인 맛집 칼럼</li>
-            <li>🔥 실시간 숏폼</li>
-            <li>✈️ 항공권 예약</li>
-            <div className="divider"></div>
-            <li>❤️ 찜한 장소</li>
-            <li>⚙️ 설정</li>
-            <li>📞 고객센터</li>
-          </ul>
-        </aside>
-
-        {/* ------------------------------------------------------
-            3. 메인 컨텐츠 영역 (라우팅 적용)
-        ------------------------------------------------------- */}
-        <main className={`main-content ${isSidebarOpen ? 'shifted' : ''}`}>
-          <Routes>
-            {/* 기본 주소(/)일 때 -> 메인 페이지 */}
-            <Route path="/" element={<MainPage />} />
-            
-            {/* 검색 주소(/search)일 때 -> 검색 결과 페이지 */}
-            <Route path="/search" element={<SearchPage />} />
-
-            {/* ★ [4] 지오게서 퀴즈 페이지 라우터 추가 */}
-            <Route path="/geo-quiz" element={<GeoImageUploader />} />
-          </Routes>
-        </main>
+    <>
+      <div>
+        <a href="https://vite.dev" target="_blank">
+          <img src={viteLogo} className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
       </div>
-    </div>
+      <h1>Vite + React</h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <p>
+          Edit <code>src/App.jsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
+    </>
   )
 }
 

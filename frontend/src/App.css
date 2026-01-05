@@ -1,328 +1,42 @@
-/* frontend/src/App.css */
-
-/* =========================================
-   0. 전체 레이아웃 (App Layout)
-   ========================================= */
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-}
-
-/* =========================================
-   1. 상단 Navbar 스타일
-   ========================================= */
-.navbar {
-  height: 64px;
-  background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem;
-  
-  /* 상단 고정 */
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-width: 150px;
-}
-
-.logo-text {
-  font-weight: 800;
-  font-size: 1.3rem;
-  color: var(--primary-color);
-  letter-spacing: -0.5px;
-}
-
-/* 검색창 */
-.navbar-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  max-width: 700px;
-}
-
-.search-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 600px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.5;
-}
-
-.main-search-input {
-  width: 100%;
-  padding: 12px 12px 12px 45px;
-  border-radius: 50px;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-box);
-  color: var(--text-main);
-  font-size: 1rem;
-  transition: all 0.2s;
-}
-
-.main-search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-  background-color: var(--bg-card);
-}
-
-.navbar-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-width: 150px;
-  justify-content: flex-end;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  color: var(--text-main);
-}
-.icon-btn:hover {
-  background-color: var(--bg-box);
-}
-
-.profile-avatar {
-  width: 36px;
-  height: 36px;
-  background-color: var(--primary-color);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* =========================================
-   2. 사이드바 (Sidebar) 스타일
-   ========================================= */
-.content-wrapper {
-  display: flex;
-  margin-top: 64px; /* Navbar 높이만큼 내리기 */
-  min-height: calc(100vh - 64px);
-  position: relative;
-  /* 가로 스크롤 방지 (사이드바 밀릴 때) */
-  overflow-x: hidden; 
-}
-
-.sidebar {
-  width: 260px;
-  background-color: var(--bg-card);
-  border-right: 1px solid var(--border-color);
-  
-  /* 위치 고정 */
-  position: fixed;
-  left: -260px; /* 평소엔 화면 밖 */
-  top: 64px;
-  bottom: 0;
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 900;
-  overflow-y: auto;
-  padding-top: 1rem;
-}
-
-/* 열렸을 때 */
-.sidebar.open {
-  left: 0;
-}
-
-.sidebar-menu {
-  list-style: none;
-  padding: 0 1rem;
-  margin: 0;
-}
-
-.sidebar-menu li {
-  padding: 14px 16px;
-  margin-bottom: 4px;
-  cursor: pointer;
-  border-radius: 12px;
-  color: var(--text-main);
-  font-weight: 500;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.sidebar-menu li:hover {
-  background-color: var(--bg-box);
-}
-
-.sidebar-menu li.active {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: var(--primary-color);
-}
-
-.divider {
-  height: 1px;
-  background-color: var(--border-color);
-  margin: 1rem 0;
-}
-
-/* =========================================
-   3. 메인 컨텐츠 영역 (레이아웃)
-   ========================================= */
-.main-content {
-  flex: 1;
-  padding: 2rem;
-  width: 100%;
-  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@media (min-width: 1024px) {
-  .main-content.shifted {
-    padding-left: 280px;
-  }
-}
-
-.overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 800;
-  backdrop-filter: blur(2px);
-}
-
-/* =========================================
-   4. 메인 페이지 상세 스타일 (Hero, Cards, Shorts)
-   ★ 이 부분이 빠져서 깨져 보였던 겁니다!
-   ========================================= */
-.main-container {
-  display: flex;
-  flex-direction: column;
-  gap: 4rem;
-  max-width: 1200px;
+#root {
+  max-width: 1280px;
   margin: 0 auto;
-}
-
-/* 4-1. 히어로 섹션 */
-.hero-section {
-  padding: 4rem 2rem;
-  background-color: var(--hero-bg);
-  color: var(--text-main);
-  border-radius: 16px;
-  border: 2px dashed var(--border-color);
-  transition: background-color 0.3s, color 0.3s;
+  padding: 2rem;
   text-align: center;
 }
 
-.placeholder-box {
-  background-color: var(--bg-box);
-  color: var(--text-muted);
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin: 2rem 0;
-  font-weight: bold;
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-.cta-button {
-  background-color: var(--primary-color);
-  color: white !important;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 1.2rem;
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* 4-2. 카드 그리드 */
-.feature-section {
-  text-align: left;
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
 }
 
-.feature-section h2 {
-  color: var(--text-main);
-  margin-bottom: 1rem;
+.card {
+  padding: 2em;
 }
 
-.card-grid {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  padding-bottom: 1rem;
-}
-
-.placeholder-card {
-  min-width: 200px;
-  height: 250px;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  color: var(--text-main);
-}
-
-.image-area {
-  height: 60%;
-  background-color: var(--bg-box);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-}
-
-.text-area {
-  padding: 1rem;
-}
-
-.text-area p {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-/* 4-3. 숏폼 그리드 */
-.shorts-grid {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto; /* 숏폼도 가로 스크롤 가능하게 */
-  padding-bottom: 1rem;
-}
-
-.placeholder-shorts {
-  min-width: 120px;
-  height: 200px;
-  background-color: #000;
-  color: #fff;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #333;
-}
-
-.wide-banner {
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--bg-box);
-  border: 2px dashed var(--primary-color);
-  color: var(--text-main);
+.read-the-docs {
+  color: #888;
 }
