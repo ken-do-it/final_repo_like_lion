@@ -62,6 +62,7 @@ MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware', #부하 테스트 정확한 시간 측정을 위해 맨 위에 있어야함
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -150,5 +151,59 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Default primary key field type
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# REST Framework Settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'users.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # 각 View에서 개별 설정
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        # 브라우저에서 테스트용 UI를 보이게 하기 위해 추가
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        # 파일 업로드/폼 테스트를 위해 추가
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+}
+
+# JWT Settings
+JWT_SECRET_KEY = SECRET_KEY
+JWT_ALGORITHM = 'HS256'
+JWT_ACCESS_TOKEN_LIFETIME = 60 * 60  # 1 hour
+JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 14  # 14 days
+
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+
+# CORS Settings
+CORS_ALLOW_ALL_ORIGINS = True  # 개발용, 프로덕션에서는 특정 도메인만 허용
+CORS_ALLOW_CREDENTIALS = True
+
+# Time Zone
+TIME_ZONE = 'Asia/Seoul'
+USE_TZ = True
 # BigAutoField 설정
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# MEDIA settings for local file uploads (shortform videos, thumbnails).
+# MEDIA_URL: public URL prefix when serving uploaded files in development.
+# MEDIA_ROOT: filesystem path where uploaded files are stored locally.
+# NOTE: Production에서 S3 등을 사용할 경우 스토리지 백엔드로 교체 예정.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
