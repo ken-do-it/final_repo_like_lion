@@ -1,6 +1,7 @@
 import logging
 import os
 from fastapi import FastAPI, HTTPException
+from translation.router import router as translation_router  # AI 번역 라우터
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any
@@ -12,6 +13,11 @@ from prometheus_fastapi_instrumentator import Instrumentator
 class DeleteRequest(BaseModel):
     id: int      # 장고에서 보내준 원본 ID (Place ID)
     category: str
+
+
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # 필수 라이브러리 체크
 try:
@@ -71,6 +77,19 @@ def get_db_connection():
     except Exception as e:
         logger.error(f"DB 연결 에러: {e}")
         raise HTTPException(status_code=500, detail=f"DB Connection Error: {str(e)}")
+
+
+
+
+# ---------------------------------------------------------
+# AI 번역 라우터 등록 (Hugging Face Inference API)
+# ---------------------------------------------------------
+app.include_router(translation_router, prefix="/api/ai", tags=["translation"])
+
+
+
+
+
 
 # ---------------------------------------------------------
 # 1. 통합 데이터 등록 API (Index Data)
