@@ -19,6 +19,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('django_prometheus.urls')), # /metrics 경로 생성
     path('api/users/', include('users.urls')),
 ]
 from django.conf import settings
