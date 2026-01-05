@@ -10,3 +10,4 @@ wheel==0.45.1
 python-dotenv
 Pillow
 requests
+django-prometheus

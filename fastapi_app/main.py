@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any
 from pydantic import BaseModel
 from database import get_db_connection
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # 삭제 요청 데이터 모델
 class DeleteRequest(BaseModel):
@@ -25,6 +26,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+Instrumentator().instrument(app).expose(app)
 
 # ---------------------------------------------------------
 # CORS 설정 (모든 도메인 허용 - 개발용)
