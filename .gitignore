@@ -205,3 +205,20 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+
+#우창호 프론트 테스트
+django_app/users/templates/
+
+
+# claude skills
+.claude/
+
+
+# kijin ignore
+KJ_DevlopPlan.md
+KJ_SKILL.md
+KJ_DevlopPlan2.md
+media/
+
