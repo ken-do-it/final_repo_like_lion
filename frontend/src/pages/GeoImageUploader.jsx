@@ -1,50 +1,87 @@
 import React, { useState } from 'react';
-import EXIF from 'exif-js';
+import exifr from 'exifr'; // ★ 최신 라이브러리 import
+import RoadviewGame from './RoadviewGame';
 
-const ImageUploader = ({ onLocationFound }) => {
+const GeoImageUploader = () => {
   const [imageSrc, setImageSrc] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => { // ★ async 필수
     const file = e.target.files[0];
-    if (file) {
-      // 1. 이미지 미리보기
-      setImageSrc(URL.createObjectURL(file));
+    if (!file) return;
 
-      // 2. EXIF 데이터에서 GPS 추출
-      EXIF.getData(file, function () {
-        const latData = EXIF.getTag(this, "GPSLatitude");
-        const lonData = EXIF.getTag(this, "GPSLongitude");
-        const latRef = EXIF.getTag(this, "GPSLatitudeRef"); // N or S
-        const lonRef = EXIF.getTag(this, "GPSLongitudeRef"); // E or W
+    setLoading(true);
+    setImageSrc(URL.createObjectURL(file));
 
-        if (latData && lonData) {
-          // 도/분/초(DMS) 포맷을 십진수(Decimal)로 변환하는 함수
-          const toDecimal = (coord, ref) => {
-            let decimal = coord[0] + coord[1] / 60 + coord[2] / 3600;
-            if (ref === "S" || ref === "W") decimal *= -1;
-            return decimal;
-          };
+    try {
+      console.log("🔍 GPS 정보 추출 중...");
+      
+      // ★ exifr의 마법: 한 줄이면 끝납니다.
+      // 폰 사진은 회전되어 있을 수 있는데 그것까지 감안해서 좌표를 뽑아줍니다.
+      const gpsData = await exifr.gps(file);
 
-          const latitude = toDecimal(latData, latRef);
-          const longitude = toDecimal(lonData, lonRef);
-
-          console.log("📍 사진 위치:", latitude, longitude);
-          
-          // 부모 컴포넌트로 좌표 전달 (게임 생성용)
-          onLocationFound({ lat: latitude, lng: longitude });
-        } else {
-          alert("❌ 이 사진에는 위치 정보(GPS)가 없습니다!");
-        }
-      });
+      if (gpsData && gpsData.latitude && gpsData.longitude) {
+        console.log("✅ 위치 찾음:", gpsData.latitude, gpsData.longitude);
+        
+        // 1초 뒤 게임 시작
+        setTimeout(() => {
+            setLocation({ lat: gpsData.latitude, lng: gpsData.longitude });
+            setLoading(false);
+        }, 1000);
+      } else {
+        console.warn("❌ GPS 없음");
+        alert("이 사진에는 위치 정보가 없습니다! 😭\n(카톡으로 받은 사진 말고, 폰으로 찍은 '원본'을 올려주세요!)");
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("⚠️ 에러 발생:", error);
+      alert("사진을 분석하는 중 문제가 생겼습니다.");
+      setLoading(false);
     }
   };
 
+  // 좌표가 있으면 게임 화면 보여주기
+  if (location) {
+    return <RoadviewGame lat={location.lat} lng={location.lng} />;
+  }
+
   return (
-    <div>
-      <input type="file" accept="image/*" onChange={handleImageUpload} />
-      {imageSrc && <img src={imageSrc} alt="Preview" style={{ width: '200px' }} />}
+    <div style={{ padding: '20px', textAlign: 'center' }}>
+      <h2>📸 나만의 지오게서 (GeoGuessr)</h2>
+      <p>여행 사진을 올리면 <b>로드뷰 퀴즈</b>를 만들어 드립니다!</p>
+      
+      <div style={{ 
+        margin: '30px auto', 
+        padding: '40px', 
+        border: '3px dashed #aaa', 
+        borderRadius: '20px',
+        maxWidth: '500px',
+        backgroundColor: '#f9f9f9',
+        cursor: 'pointer'
+      }}>
+        <label htmlFor="file-upload" style={{ cursor: 'pointer', fontSize: '1.2rem', fontWeight: 'bold' }}>
+          📂 사진 선택하기 (클릭)
+        </label>
+        <input 
+          id="file-upload"
+          type="file" 
+          accept="image/*" 
+          onChange={handleImageUpload} 
+          style={{ display: 'none' }} // 못생긴 기본 버튼 숨김
+        />
+      </div>
+
+      {loading && <p style={{ color: '#007bff', fontWeight: 'bold' }}>📍 사진 속 위치를 찾고 있습니다...</p>}
+      
+      {imageSrc && !loading && (
+        <div style={{ marginTop: '20px' }}>
+          <p>👇 선택한 사진</p>
+          <img src={imageSrc} alt="Preview" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }} />
+        </div>
+      )}
     </div>
   );
 };
 
-export default ImageUploader;
+export default GeoImageUploader;
