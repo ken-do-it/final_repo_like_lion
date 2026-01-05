@@ -15,6 +15,9 @@ urlpatterns = [
 
     # 4. 콘텐츠 API (숏폼 등)
     path('api/', include('contents.urls')),
+
+    # 5. 교통 API (항공/기차/지하철)
+    path('api/v1/transport/', include('reservations.urls')),
 ]
 
 # 5. 미디어 파일(이미지) 처리
