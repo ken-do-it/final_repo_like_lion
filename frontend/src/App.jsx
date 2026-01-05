@@ -1,8 +1,9 @@
 // frontend/src/App.jsx
 import { useState } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom' // ★ 라우터 필수 요소
+import { Routes, Route, useNavigate } from 'react-router-dom' // ★ 기존 임포트 유지 (수정 X)
 import MainPage from './pages/MainPage'
-import SearchPage from './pages/SearchPage' // ★ 검색 페이지 import
+import SearchPage from './pages/SearchPage'
+import GeoImageUploader from './pages/GeoImageUploader' // ★ [1] 새로 추가한 페이지
 import './App.css'
 
 function App() {
@@ -10,7 +11,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // 페이지 이동을 위한 훅 (Hook)
+  // 페이지 이동을 위한 훅
   const navigate = useNavigate();
 
   // 사이드바 토글
@@ -18,25 +19,24 @@ function App() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // 홈으로 가기 (로고나 홈 버튼 클릭 시)
+  // 홈으로 가기
   const goHome = () => {
-    setSearchQuery(""); // 검색창 비우기
-    navigate("/");      // 메인 페이지로 이동
+    setSearchQuery(""); 
+    navigate("/");      
   };
 
-  // 2. 검색 실행 함수 (API 호출 안 함 -> 페이지 이동만 함)
+  // ★ [2] 지오게서(퀴즈) 페이지로 이동하는 함수 추가
+  const goGeoQuiz = () => {
+    navigate("/geo-quiz");
+    setIsSidebarOpen(false); // 이동 후 사이드바 닫기
+  };
+
+  // 2. 검색 실행 함수
   const handleSearch = (e) => {
     if (e.key === 'Enter') {
-      // 빈 값 입력 방지
       if (!searchQuery.trim()) return;
-
       console.log("페이지 이동:", searchQuery);
-      
-      // 검색 결과 페이지로 이동 (예: /search?query=경복궁)
-      // encodeURIComponent는 한글이 깨지지 않게 변환해줍니다.
       navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
-      
-      // 모바일 등에서 사이드바가 열려있다면 닫아줌
       setIsSidebarOpen(false); 
     }
   };
@@ -47,18 +47,15 @@ function App() {
           1. 상단 Navbar
       ------------------------------------------------------- */}
       <nav className="navbar">
-        {/* 왼쪽: 햄버거 버튼 + 로고 */}
         <div className="navbar-left">
           <button className="icon-btn menu-toggle" onClick={toggleSidebar}>
             ☰
           </button>
-          {/* 로고 클릭 시 홈으로 이동 */}
           <span className="logo-text" onClick={goHome} style={{ cursor: 'pointer' }}>
             KOREA TRIP
           </span>
         </div>
 
-        {/* 가운데: 검색창 */}
         <div className="navbar-center">
           <div className="search-wrapper">
             <span className="search-icon">🔍</span>
@@ -68,12 +65,11 @@ function App() {
               placeholder="어디로 떠나고 싶으신가요? (AI 의미 검색)" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch} // 엔터키 감지
+              onKeyDown={handleSearch}
             />
           </div>
         </div>
 
-        {/* 오른쪽: 알림/프로필 */}
         <div className="navbar-right">
           <button className="icon-btn">🔔</button>
           <div className="profile-avatar">👤</div>
@@ -87,6 +83,10 @@ function App() {
         <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
           <ul className="sidebar-menu">
             <li onClick={goHome}>🏠 홈</li>
+            
+            {/* ★ [3] 사이드바 메뉴 추가 */}
+            <li onClick={goGeoQuiz}>🌍 나만의 지오게서</li>
+
             <li>📅 AI 일정 만들기</li>
             <li>🥘 현지인 맛집 칼럼</li>
             <li>🔥 실시간 숏폼</li>
@@ -102,13 +102,15 @@ function App() {
             3. 메인 컨텐츠 영역 (라우팅 적용)
         ------------------------------------------------------- */}
         <main className={`main-content ${isSidebarOpen ? 'shifted' : ''}`}>
-          {/* URL 주소에 따라 보여줄 컴포넌트를 결정합니다 */}
           <Routes>
             {/* 기본 주소(/)일 때 -> 메인 페이지 */}
             <Route path="/" element={<MainPage />} />
             
             {/* 검색 주소(/search)일 때 -> 검색 결과 페이지 */}
             <Route path="/search" element={<SearchPage />} />
+
+            {/* ★ [4] 지오게서 퀴즈 페이지 라우터 추가 */}
+            <Route path="/geo-quiz" element={<GeoImageUploader />} />
           </Routes>
         </main>
       </div>

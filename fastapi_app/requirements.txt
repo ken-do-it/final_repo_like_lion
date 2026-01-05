@@ -31,3 +31,4 @@ sentencepiece  # NLLB 토크나이저 필수
 huggingface-hub  # 모델 다운로드 & 캐시
 
 python-dotenv
+prometheus-fastapi-instrumentator #부하 테스트용
