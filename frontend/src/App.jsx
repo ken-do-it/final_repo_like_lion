@@ -3,14 +3,15 @@ import { useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom' // ★ 기존 임포트 유지 (수정 X)
 import MainPage from './pages/MainPage'
 import SearchPage from './pages/SearchPage'
-import GeoImageUploader from './pages/GeoImageUploader' // ★ [1] 새로 추가한 페이지
+import GeoImageUploader from './pages/GeoImageUploader'
+import RoadviewGame from './pages/RoadviewGame' // ★ [NEW] Missing import fixed
 import './App.css'
 
 function App() {
   // 1. 상태 관리
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // 페이지 이동을 위한 훅
   const navigate = useNavigate();
 
@@ -21,8 +22,8 @@ function App() {
 
   // 홈으로 가기
   const goHome = () => {
-    setSearchQuery(""); 
-    navigate("/");      
+    setSearchQuery("");
+    navigate("/");
   };
 
   // ★ [2] 지오게서(퀴즈) 페이지로 이동하는 함수 추가
@@ -37,7 +38,7 @@ function App() {
       if (!searchQuery.trim()) return;
       console.log("페이지 이동:", searchQuery);
       navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
-      setIsSidebarOpen(false); 
+      setIsSidebarOpen(false);
     }
   };
 
@@ -59,10 +60,10 @@ function App() {
         <div className="navbar-center">
           <div className="search-wrapper">
             <span className="search-icon">🔍</span>
-            <input 
-              type="text" 
-              className="main-search-input" 
-              placeholder="어디로 떠나고 싶으신가요? (AI 의미 검색)" 
+            <input
+              type="text"
+              className="main-search-input"
+              placeholder="어디로 떠나고 싶으신가요? (AI 의미 검색)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
@@ -83,7 +84,7 @@ function App() {
         <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
           <ul className="sidebar-menu">
             <li onClick={goHome}>🏠 홈</li>
-            
+
             {/* ★ [3] 사이드바 메뉴 추가 */}
             <li onClick={goGeoQuiz}>🌍 나만의 지오게서</li>
 
@@ -105,12 +106,13 @@ function App() {
           <Routes>
             {/* 기본 주소(/)일 때 -> 메인 페이지 */}
             <Route path="/" element={<MainPage />} />
-            
+
             {/* 검색 주소(/search)일 때 -> 검색 결과 페이지 */}
             <Route path="/search" element={<SearchPage />} />
 
             {/* ★ [4] 지오게서 퀴즈 페이지 라우터 추가 */}
             <Route path="/geo-quiz" element={<GeoImageUploader />} />
+            <Route path="/game" element={<RoadviewGame />} />
           </Routes>
         </main>
       </div>
