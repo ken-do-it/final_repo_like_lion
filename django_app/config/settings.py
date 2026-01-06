@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',  # API 문서 자동 생성
     'corsheaders',
 
     # Social Authentication
@@ -59,6 +60,9 @@ INSTALLED_APPS = [
     'plans',
     'contents',
     'reservations',
+    
+    #부하 테스트용
+    'django_prometheus',
 ]
 
 # Django Sites Framework (Required for allauth)
@@ -68,6 +72,7 @@ SITE_ID = 1
 AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware', #부하 테스트 정확한 시간 측정을 위해 맨 위에 있어야함
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -77,6 +82,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',  # django-allauth
+    'django_prometheus.middleware.PrometheusAfterMiddleware', #부하 테스트 결과 확인을 위해 맨 아래 있어야함
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -174,10 +180,17 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
+        # 브라우저에서 테스트용 UI를 보이게 하기 위해 추가
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
+        # 파일 업로드/폼 테스트를 위해 추가
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
     ],
+    # API 문서 자동 생성
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # JWT Settings
@@ -272,3 +285,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # NOTE: Production에서 S3 등을 사용할 경우 스토리지 백엔드로 교체 예정.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# drf-spectacular Settings (API Documentation)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Korea Travel API',
+    'DESCRIPTION': '외국인 관광객을 위한 한국 여행 서비스 API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # 한국어/영어 모두 지원
+    'SCHEMA_PATH_PREFIX': r'/api/',
+    'COMPONENT_SPLIT_REQUEST': True,
+}

@@ -1,9 +1,23 @@
 import logging
 import os
 from fastapi import FastAPI, HTTPException
+# from translation.router import router as translation_router  # AI 번역 라우터 (Moved)
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any
+from pydantic import BaseModel
+from database import get_db_connection
+from prometheus_fastapi_instrumentator import Instrumentator
+
+# 삭제 요청 데이터 모델
+class DeleteRequest(BaseModel):
+    id: int      # 장고에서 보내준 원본 ID (Place ID)
+    category: str
+
+
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # 필수 라이브러리 체크
 try:
@@ -18,6 +32,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+Instrumentator().instrument(app).expose(app)
 
 # ---------------------------------------------------------
 # CORS 설정 (모든 도메인 허용 - 개발용)
@@ -62,6 +77,22 @@ def get_db_connection():
     except Exception as e:
         logger.error(f"DB 연결 에러: {e}")
         raise HTTPException(status_code=500, detail=f"DB Connection Error: {str(e)}")
+
+
+
+
+# ---------------------------------------------------------
+# AI 번역 라우터 등록 (Hugging Face Inference API)
+# ---------------------------------------------------------
+# ---------------------------------------------------------
+# AI 번역 라우터 등록 (Removed: Moved to fastapi_ai_translation)
+# ---------------------------------------------------------
+# app.include_router(translation_router, prefix="/api/ai", tags=["translation"])
+
+
+
+
+
 
 # ---------------------------------------------------------
 # 1. 통합 데이터 등록 API (Index Data)
@@ -178,3 +209,40 @@ def search_grouped(request: SearchRequest):
         if "relation \"search_vectors\" does not exist" in str(e):
              raise HTTPException(status_code=404, detail="데이터가 없습니다. /index-data 로 데이터를 먼저 넣어주세요.")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/delete-data")
+def delete_data(request: DeleteRequest):
+    conn = None
+    try:
+        # ★ 아까 만든 파일에서 DB 연결을 새로 받아옵니다 (독립 실행)
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # 삭제 실행
+        cur.execute(
+            "DELETE FROM search_vectors WHERE target_id = %s AND category = %s",
+            (request.id, request.category)
+        )
+        conn.commit()
+        
+        deleted_count = cur.rowcount
+        print(f"🗑️ 삭제 완료 [{request.category}] ID: {request.id} (건수: {deleted_count})")
+        
+        return {
+            "status": "deleted", 
+            "count": deleted_count, 
+            "id": request.id, 
+            "category": request.category
+        }
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        print(f"❌ 삭제 에러: {e}")
+        return {"status": "error", "message": str(e)}
+        
+    finally:
+        # 쓴 자원 반납 (깔끔)
+        if conn:
+            cur.close()
+            conn.close()

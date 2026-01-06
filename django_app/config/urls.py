@@ -1,25 +1,11 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
+    # 1. 관리자 페이지
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
     # Shortform/contents API (no auth for now)
@@ -27,3 +13,27 @@ urlpatterns = [
     # Django-allauth URLs (최상위 레벨에 추가하여 콜백 URL 문제 해결)
     path('accounts/', include('allauth.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    # 2. 프로메테우스 (모니터링) - ★ 이거 살려야 그래프 나옵니다
+    path('', include('django_prometheus.urls')),
+
+    # 3. 유저 API (로그인/회원가입)
+    path('api/users/', include('users.urls')),
+
+    # 4. 콘텐츠 API (숏폼 등)
+    path('api/', include('contents.urls')),
+
+    # 5. 교통 API (항공/기차/지하철)
+    path('api/v1/transport/', include('reservations.urls')),
+
+    # 5-1. 예약 API (항공 예약 생성, 내 예약 조회 등)
+    path('api/v1/', include('reservations.reservation_urls')),
+
+    # 6. API 문서 (Swagger & ReDoc)
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/docs/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+]
+
+# 5. 미디어 파일(이미지) 처리
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
