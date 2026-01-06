@@ -99,7 +99,7 @@ function TestFrontAI() {
       heroSub: 'AI builds the best route for you. Start now or create your own.',
       ctaAI: 'Generate with AI',
       ctaSelf: 'Build It Yourself',
-      shortsTitle: 'Featured Shorts',
+      shortsTitle: 'Shorts',
       shortsSub: 'Watch the latest uploads with AI captions/translation.',
       play: 'Play',
       durationMissing: '00:00',
