@@ -199,9 +199,12 @@ python manage.py runserver
 #### Backend (FastAPI)
 
 ```bash
+# Conda 환경 생성
+conda create -n korea-trip-ai python=3.12 -y
+conda activate korea-trip-ai
+
+# 의존성 설치 및 실행
 cd fastapi_app
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8001
 ```

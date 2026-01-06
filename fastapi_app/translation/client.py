@@ -1,29 +1,28 @@
-"""
-Local translation client using transformers (no external HF Inference API).
-- Loads model from HF_MODEL (default: facebook/nllb-200-distilled-600M).
-- Short codes(en, ko, ja, zh 등)을 NLLB lang_code로 매핑해 강제 BOS를 올바르게 설정합니다.
-"""
+"""Local transformers-based translator (NLLB-200 by default)."""
 
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, Set
 
 from dotenv import load_dotenv
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import torch
 
-# NLLB 전용 토크나이저 우선 사용 (lang_code_to_id 보장)
+# Prefer NllbTokenizer for NLLB models when available
 try:
     from transformers import NllbTokenizer
-except ImportError:  # transformers 버전에 따라 없을 수 있음
+except ImportError:
     NllbTokenizer = None
 
 load_dotenv()
 
 
 class TranslationClient:
+    """Thin wrapper around an NLLB seq2seq model with lang validation."""
+
     def __init__(self):
         model_name = os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
         self.model_name = model_name
+
         tokenizer_cls = AutoTokenizer
         if NllbTokenizer and "nllb" in model_name.lower():
             tokenizer_cls = NllbTokenizer
@@ -33,12 +32,10 @@ class TranslationClient:
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         self.lang_map = self._init_lang_map()
         self._ensure_lang_code_ids()
+        self.supported_langs: Set[str] = set(getattr(self.tokenizer, "lang_code_to_id", {}).keys())
 
     def _ensure_lang_code_ids(self):
-        """
-        일부 토크나이저(캐시/버전 차이)에서 lang_code_to_id가 비어있을 수 있어,
-        additional_special_tokens를 기반으로 직접 매핑을 구성합니다.
-        """
+        """Ensure lang_code_to_id exists even when only additional_special_tokens are present."""
         if getattr(self.tokenizer, "lang_code_to_id", None):
             return
         specials = getattr(self.tokenizer, "additional_special_tokens", None)
@@ -52,10 +49,7 @@ class TranslationClient:
                 self.tokenizer.lang_code_to_id = mapping
 
     def _init_lang_map(self) -> Dict[str, str]:
-        """
-        사용자 입력 언어코드를 NLLB 코드로 정규화합니다.
-        필요한 언어는 여기에 추가하세요.
-        """
+        """Normalize common short codes to NLLB codes."""
         return {
             "en": "eng_Latn",
             "ko": "kor_Hang",
@@ -70,6 +64,7 @@ class TranslationClient:
         }
 
     def _normalize_lang(self, code: str) -> str:
+        """Map shorthand language code to the NLLB code if possible."""
         if not code:
             return code
         key = code.lower()
@@ -82,29 +77,39 @@ class TranslationClient:
         return None
 
     def translate(self, text: str, source_lang: str, target_lang: str, timeout: int = 30) -> str:
-        # 언어 코드 정규화
+        """
+        Translate a single text using the local NLLB model.
+        Validates lang codes against tokenizer.lang_code_to_id.
+        """
+        if not text or not text.strip():
+            raise ValueError("Text is empty")
+
         source_lang = self._normalize_lang(source_lang)
         target_lang = self._normalize_lang(target_lang)
 
-        # NLLB 계열일 경우 소스 언어 설정
+        # Validate languages against tokenizer
+        if self.supported_langs:
+            if target_lang not in self.supported_langs:
+                raise ValueError(f"Unsupported target_lang: {target_lang}")
+            if hasattr(self.tokenizer, "src_lang") and source_lang not in self.supported_langs:
+                raise ValueError(f"Unsupported source_lang: {source_lang}")
+
+        # Set source language for NLLB tokenizers
         if hasattr(self.tokenizer, "src_lang"):
             self.tokenizer.src_lang = source_lang
 
-        # lang_code_to_id가 없는 모델이면 바로 에러 (NLLB 아닌 모델 방지)
+        # Guard: require lang_code_to_id for NLLB models
         if not getattr(self.tokenizer, "lang_code_to_id", None):
             raise ValueError(f"Tokenizer has no lang_code_to_id; model may not be NLLB. model={self.model_name}")
 
-        inputs = self.tokenizer(text, return_tensors="pt")
+        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
         forced_bos = self._get_forced_bos(target_lang)
-        # target_lang이 유효하지 않으면 기본 영어로 강제 (eng_Latn). 그래도 없으면 에러.
+
+        # Fallback to English if target_lang not supported
         if forced_bos is None:
-            lang_map = getattr(self.tokenizer, "lang_code_to_id", None)
-            if lang_map:
-                forced_bos = self._get_forced_bos("eng_Latn")
-                if forced_bos is None:
-                    raise ValueError(f"Unsupported target_lang for this tokenizer: {target_lang} (model={self.model_name})")
-            else:
-                raise ValueError(f"Tokenizer has no lang_code_to_id; model may not be NLLB. model={self.model_name}")
+            forced_bos = self._get_forced_bos("eng_Latn")
+            if forced_bos is None:
+                raise ValueError(f"Unsupported target_lang: {target_lang} (model={self.model_name})")
 
         with torch.no_grad():
             generated = self.model.generate(
@@ -113,3 +118,45 @@ class TranslationClient:
                 max_length=256,
             )
         return self.tokenizer.decode(generated[0], skip_special_tokens=True)
+
+    def translate_batch(self, texts: list[str], source_lang: str, target_lang: str) -> list[str]:
+        """
+        Translate a list of texts using batch processing.
+        """
+        if not texts:
+            return []
+        
+        source_lang = self._normalize_lang(source_lang)
+        target_lang = self._normalize_lang(target_lang)
+
+        # Validate languages (same as single mode)
+        if self.supported_langs:
+            if target_lang not in self.supported_langs:
+                raise ValueError(f"Unsupported target_lang: {target_lang}")
+            if hasattr(self.tokenizer, "src_lang") and source_lang not in self.supported_langs:
+                raise ValueError(f"Unsupported source_lang: {source_lang}")
+
+        if hasattr(self.tokenizer, "src_lang"):
+            self.tokenizer.src_lang = source_lang
+
+        # Guard
+        if not getattr(self.tokenizer, "lang_code_to_id", None):
+             # Fallback to single loop if something is wrong with tokenizer
+            return [self.translate(t, source_lang, target_lang) for t in texts]
+
+        # Batch Tokenization
+        inputs = self.tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=512)
+        forced_bos = self._get_forced_bos(target_lang)
+        
+        if forced_bos is None:
+             forced_bos = self._get_forced_bos("eng_Latn")
+
+        with torch.no_grad():
+            generated = self.model.generate(
+                **inputs,
+                forced_bos_token_id=forced_bos,
+                max_length=256,
+            )
+        
+        # Batch Decode
+        return self.tokenizer.batch_decode(generated, skip_special_tokens=True)

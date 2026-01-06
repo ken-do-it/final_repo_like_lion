@@ -3,8 +3,11 @@ from .models import Shortform, ShortformComment
 
 
 class ShortformSerializer(serializers.ModelSerializer):
-    # 업로드용 파일 필드 (write-only). UI에 파일 선택기가 보이도록 추가.
+    # 업로드용 파일 필드 (write-only)
     video_file = serializers.FileField(write_only=True, required=True)
+    # 번역 결과를 담을 읽기 전용 필드
+    title_translated = serializers.CharField(read_only=True)
+    content_translated = serializers.CharField(read_only=True)
 
     class Meta:
         model = Shortform
@@ -27,6 +30,8 @@ class ShortformSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'video_file',  # write-only
+            'title_translated',
+            'content_translated',
         ]
         read_only_fields = [
             'id',
@@ -42,6 +47,8 @@ class ShortformSerializer(serializers.ModelSerializer):
             'file_size',
             'created_at',
             'updated_at',
+            'title_translated',
+            'content_translated',
         ]
 
     def validate(self, attrs):
@@ -50,7 +57,7 @@ class ShortformSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        # video_file은 모델 필드가 아니므로 제거하고 나머지만 모델에 저장
+        # video_file은 실제 저장 시 소비되므로 직렬화 대상에서 제거
         validated_data.pop('video_file', None)
         return super().create(validated_data)
 

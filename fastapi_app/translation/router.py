@@ -1,8 +1,4 @@
-"""
-FastAPI 라우터: 로컬 transformers 기반 번역 엔드포인트
-- 요청: text, source_lang, target_lang
-- 캐시: 메모리 캐시(TranslationCache) 사용
-"""
+"""Translation API: local transformers inference with in-memory cache."""
 
 import logging
 from fastapi import APIRouter, HTTPException
@@ -11,17 +7,15 @@ from .client import TranslationClient
 from .cache import TranslationCache
 
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
-# 단순 메모리 캐시 (추후 Redis 대체 가능)
-cache = TranslationCache(ttl_seconds=0) #3600초 = 1시간를 개발할때 0으로 바꿔서 테스트 가능
+# In-memory cache (TTL 5 minutes)
+cache = TranslationCache(ttl_seconds=300)
 
-# 번역 클라이언트 초기화
 try:
     client = TranslationClient()
 except Exception as e:
-    logger.error("TranslationClient 초기화 실패: %s", e)
+    logger.error("TranslationClient init failed: %s", e)
     client = None
 
 
@@ -35,21 +29,71 @@ class TranslateRequest(BaseModel):
 def translate(req: TranslateRequest):
     """
     POST /api/ai/translate
-    - 캐시 히트 시 cached=True
-    - 캐시 미스 시 로컬 transformers로 번역 후 저장
+    Request body:
+    {
+        "text": "string",
+        "source_lang": "kor_Hang",
+        "target_lang": "eng_Latn"
+    }
     """
     if client is None:
-        raise HTTPException(status_code=500, detail="Translation client not initialized (HF_MODEL 확인).")
+        raise HTTPException(status_code=500, detail="Translation client not initialized (check HF_MODEL).")
 
-    cached = cache.get(req.text, req.source_lang, req.target_lang)
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="text is required")
+
+    cached = cache.get(text, req.source_lang, req.target_lang)
     if cached:
         translated_text, provider = cached
         return {"translated_text": translated_text, "cached": True, "provider": provider}
 
     try:
-        translated = client.translate(req.text, req.source_lang, req.target_lang)
-        cache.set(req.text, req.source_lang, req.target_lang, translated, provider="local-transformers")
+        translated = client.translate(text, req.source_lang, req.target_lang)
+        cache.set(text, req.source_lang, req.target_lang, translated, provider="local-transformers")
         return {"translated_text": translated, "cached": False, "provider": "local-transformers"}
+    except ValueError as e:
+        logger.warning("Translation validation error: %s", e)
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error("로컬 번역 실패: %s", e)
+        logger.error("Local translation failed: %s", e)
         raise HTTPException(status_code=502, detail=f"Translation failed: {e}")
+
+
+class TranslateBatchRequest(BaseModel):
+    texts: list[str]
+    source_lang: str = "kor_Hang"
+    target_lang: str = "eng_Latn"
+
+
+@router.post("/translate/batch")
+def translate_batch(req: TranslateBatchRequest):
+    """
+    POST /api/ai/translate/batch
+    Request body:
+    {
+        "texts": ["string1", "string2"],
+        "source_lang": "kor_Hang",
+        "target_lang": "eng_Latn"
+    }
+    """
+    if client is None:
+        raise HTTPException(status_code=500, detail="Translation client not initialized.")
+    
+    if not req.texts:
+        return {"translations": [], "provider": "local-transformers"}
+
+    # Filter out empty strings to save compute, but maintain order?
+    # For simplicity, we just pass everything to the client, let it handle empty checks if needed,
+    # but client.translate_batch might error on empty. 
+    # Let's simple pass-through. The client handles empty lists, but maybe not empty in list for some tokenizers.
+    
+    try:
+        translated_list = client.translate_batch(req.texts, req.source_lang, req.target_lang)
+        return {"translations": translated_list, "provider": "local-transformers-batch"}
+    except ValueError as e:
+        logger.warning("Batch translation validation error: %s", e)
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Batch translation failed: %s", e)
+        raise HTTPException(status_code=502, detail=f"Batch translation failed: {e}")
