@@ -1,0 +1,16 @@
+# FastAPI 핵심
+fastapi==0.128.0
+uvicorn==0.40.0
+
+# 데이터베이스
+psycopg2-binary
+sqlalchemy
+
+# 비동기 HTTP 클라이언트 (카카오/구글 API 호출)
+httpx
+
+# 환경 변수 관리
+python-dotenv
+
+# 테스트용 (선택사항)
+requests
