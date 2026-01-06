@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Korea Travel Guide - Discover Korea</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #2C3333;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00C9A7, #845EC2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #2C3333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #00C9A7;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-login {
+            padding: 8px 20px;
+            background: white;
+            color: #00C9A7;
+            border: 2px solid #00C9A7;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: #00C9A7;
+            color: white;
+        }
+
+        .btn-register {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #00C9A7, #00B394);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 201, 167, 0.3);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00C9A7, #845EC2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(0, 201, 167, 0.9), rgba(132, 94, 194, 0.9)),
+                        url('https://images.unsplash.com/photo-1578193661644-dee2e18a5e6a?w=1920') center/cover;
+            color: white;
+            padding: 120px 24px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            font-size: 24px;
+            margin-bottom: 32px;
+            opacity: 0.95;
+        }
+
+        .btn-cta {
+            padding: 16px 32px;
+            background: white;
+            color: #00C9A7;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Section */
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: #6B7280;
+            margin-bottom: 48px;
+        }
+
+        /* Destination Cards */
+        .destinations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .destination-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .destination-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .destination-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .destination-content {
+            padding: 20px;
+        }
+
+        .destination-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .destination-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .destination-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            background: #F3F4F6;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #6B7280;
+        }
+
+        .destination-description {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 12px;
+        }
+
+        .destination-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .cost {
+            font-weight: 600;
+            color: #00C9A7;
+        }
+
+        /* Experience Cards */
+        .experiences-scroll {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 16px;
+            scrollbar-width: thin;
+            scrollbar-color: #00C9A7 #F3F4F6;
+        }
+
+        .experience-card {
+            min-width: 300px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .category-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #845EC2;
+        }
+
+        .experience-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .experience-content {
+            padding: 16px;
+        }
+
+        .experience-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .experience-location {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 12px;
+        }
+
+        .experience-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .experience-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #00C9A7;
+        }
+
+        /* Local Recommendations */
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .recommendation-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .recommendation-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .author-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF6F91, #845EC2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .author-info {
+            flex: 1;
+        }
+
+        .author-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .author-badge {
+            font-size: 12px;
+            color: #00C9A7;
+            font-weight: 600;
+        }
+
+        .recommendation-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .recommendation-tip {
+            background: #FFF9E6;
+            border-left: 3px solid #F59E0B;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        /* Travel Tips */
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .tip-card {
+            background: #F9FAFB;
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .tip-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #00C9A7, #845EC2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 16px;
+        }
+
+        .tip-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .tip-description {
+            font-size: 14px;
+            color: #6B7280;
+        }
+
+        /* Quick Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            text-align: center;
+            padding: 60px 0;
+            background: linear-gradient(135deg, #00C9A7, #845EC2);
+            color: white;
+            border-radius: 24px;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        footer {
+            background: #2C3333;
+            color: white;
+            padding: 48px 24px;
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero p {
+                font-size: 18px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .section-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav class="navbar">
+            <div class="logo">🌏 Korea Travel</div>
+            <div class="nav-links">
+                <a href="#destinations">Destinations</a>
+                <a href="#experiences">Experiences</a>
+                <a href="#local">Local Tips</a>
+            </div>
+            <div class="user-menu" id="userMenu">
+                <a href="/api/users/login-page/" class="btn-login">Sign In</a>
+                <a href="/api/users/register-page/" class="btn-register">Sign Up</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <h1>Discover Korea</h1>
+        <p>Travel smarter with local insights</p>
+        <button class="btn-cta" onclick="scrollToSection('destinations')">Start Planning</button>
+    </section>
+
+    <!-- Trending Destinations -->
+    <section class="section" id="destinations">
+        <div class="container">
+            <h2 class="section-title">Trending Destinations</h2>
+            <p class="section-subtitle">Explore Korea's most popular travel spots</p>
+            <div class="destinations-grid" id="destinationsGrid">
+                <!-- 동적으로 로드 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Experiences -->
+    <section class="section" id="experiences" style="background: #F9FAFB;">
+        <div class="container">
+            <h2 class="section-title">Featured Experiences</h2>
+            <p class="section-subtitle">Unique activities you can't miss</p>
+            <div class="experiences-scroll" id="experiencesScroll">
+                <!-- 동적으로 로드 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Local Recommendations -->
+    <section class="section" id="local">
+        <div class="container">
+            <h2 class="section-title">Local Recommendations</h2>
+            <p class="section-subtitle">Hidden gems from local experts</p>
+            <div class="recommendations-grid" id="recommendationsGrid">
+                <!-- 동적으로 로드 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Travel Tips -->
+    <section class="section" style="background: #F9FAFB;">
+        <div class="container">
+            <h2 class="section-title">Travel Tips</h2>
+            <p class="section-subtitle">Everything you need to know</p>
+            <div class="tips-grid" id="tipsGrid">
+                <!-- 동적으로 로드 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Stats -->
+    <section class="section">
+        <div class="container">
+            <div class="stats-grid" id="statsGrid">
+                <!-- 동적으로 로드 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 Korea Travel Guide. Made for foreign travelers.</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api/users/api';
+
+        // 메인페이지 데이터 로드
+        async function loadMainData() {
+            const token = localStorage.getItem('access_token');
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/main/`, { headers });
+                const data = await response.json();
+
+                renderUserMenu(data.user);
+                renderDestinations(data.trending_destinations);
+                renderExperiences(data.featured_experiences);
+                renderRecommendations(data.local_recommendations);
+                renderTips(data.travel_tips);
+                renderStats(data.quick_stats);
+            } catch (error) {
+                console.error('Error loading main data:', error);
+            }
+        }
+
+        // 사용자 메뉴 렌더링
+        function renderUserMenu(user) {
+            const userMenu = document.getElementById('userMenu');
+            if (user) {
+                const initial = user.nickname ? user.nickname[0].toUpperCase() : user.username[0].toUpperCase();
+                userMenu.innerHTML = `
+                    <div class="user-profile" onclick="toggleUserDropdown()">
+                        <div class="user-avatar">${initial}</div>
+                        <span>${user.nickname || user.username}</span>
+                    </div>
+                `;
+            } else {
+                userMenu.innerHTML = `
+                    <a href="/api/users/login-page/" class="btn-login">Sign In</a>
+                    <a href="/api/users/register-page/" class="btn-register">Sign Up</a>
+                `;
+            }
+        }
+
+        // 여행지 렌더링
+        function renderDestinations(destinations) {
+            const grid = document.getElementById('destinationsGrid');
+            grid.innerHTML = destinations.map(dest => `
+                <div class="destination-card">
+                    <img src="${dest.image_url}" alt="${dest.name}">
+                    <div class="destination-content">
+                        <div class="destination-header">
+                            <div>
+                                <div class="destination-name">${dest.name}</div>
+                                <div style="font-size: 14px; color: #6B7280;">${dest.name_ko}</div>
+                            </div>
+                            <div class="destination-rating">⭐ ${dest.rating}</div>
+                        </div>
+                        <div class="tags">
+                            ${dest.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                        <div class="destination-description">${dest.description}</div>
+                        <div class="destination-footer">
+                            <div class="cost">Avg. ${dest.average_cost}/day</div>
+                            <div style="font-size: 12px; color: #9CA3AF;">${dest.review_count.toLocaleString()} reviews</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 체험 렌더링
+        function renderExperiences(experiences) {
+            const scroll = document.getElementById('experiencesScroll');
+            scroll.innerHTML = experiences.map(exp => `
+                <div class="experience-card">
+                    <div class="category-badge">${exp.category}</div>
+                    <img src="${exp.image_url}" alt="${exp.title}">
+                    <div class="experience-content">
+                        <div class="experience-title">${exp.title}</div>
+                        <div class="experience-location">📍 ${exp.location}</div>
+                        <div class="experience-details">
+                            <span>⏱ ${exp.duration}</span>
+                            <span>⭐ ${exp.rating}</span>
+                        </div>
+                        <div class="experience-price">${exp.price}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 추천 렌더링
+        function renderRecommendations(recommendations) {
+            const grid = document.getElementById('recommendationsGrid');
+            grid.innerHTML = recommendations.map(rec => `
+                <div class="recommendation-card">
+                    <div class="recommendation-header">
+                        <div class="author-avatar">${rec.author[0]}</div>
+                        <div class="author-info">
+                            <div class="author-name">${rec.author}</div>
+                            <div class="author-badge">✨ ${rec.author_badge}</div>
+                        </div>
+                        <div style="color: #FF6F91;">❤️ ${rec.saved_count}</div>
+                    </div>
+                    <div class="recommendation-title">${rec.title}</div>
+                    <div style="font-size: 14px; color: #6B7280;">📍 ${rec.location}</div>
+                    <div class="recommendation-tip">💡 ${rec.tip}</div>
+                </div>
+            `).join('');
+        }
+
+        // 팁 렌더링
+        function renderTips(tips) {
+            const icons = {
+                wifi: '📶',
+                translate: '🌐',
+                payment: '💳',
+                transport: '🚇'
+            };
+            const grid = document.getElementById('tipsGrid');
+            grid.innerHTML = tips.map(tip => `
+                <div class="tip-card">
+                    <div class="tip-icon">${icons[tip.icon]}</div>
+                    <div class="tip-title">${tip.title}</div>
+                    <div class="tip-description">${tip.description}</div>
+                </div>
+            `).join('');
+        }
+
+        // 통계 렌더링
+        function renderStats(stats) {
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = `
+                <div>
+                    <div class="stat-number">${stats.destinations}</div>
+                    <div class="stat-label">Destinations</div>
+                </div>
+                <div>
+                    <div class="stat-number">${stats.experiences.toLocaleString()}</div>
+                    <div class="stat-label">Experiences</div>
+                </div>
+                <div>
+                    <div class="stat-number">${stats.local_guides}</div>
+                    <div class="stat-label">Local Guides</div>
+                </div>
+                <div>
+                    <div class="stat-number">${(stats.reviews / 1000).toFixed(0)}K+</div>
+                    <div class="stat-label">Reviews</div>
+                </div>
+            `;
+        }
+
+        // 섹션 스크롤
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 페이지 로드 시 데이터 가져오기
+        loadMainData();
+    </script>
+</body>
+</html>

@@ -7,5 +7,9 @@ setuptools==80.9.0
 sqlparse==0.5.5
 tzdata==2025.3
 wheel==0.45.1
-pillow==11.3.0
-drf-spectacular==0.29.0
+python-dotenv
+Pillow==11.3.0
+requests
+django-prometheus
+PyJWT==2.10.1
+drf-spectacular==0.27.2
