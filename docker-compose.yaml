@@ -55,7 +55,7 @@ services:
     environment:
       - HF_MODEL=facebook/nllb-200-distilled-600M
     env_file:
-      - ./fastapi_app/.env # 환경변수 공유 (필요 시 별도 분리)
+      - ./fastapi_ai_translation/.env
 
   # 4. 프론트엔드 (React + Nginx)
   frontend:
