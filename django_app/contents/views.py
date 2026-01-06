@@ -20,7 +20,11 @@ from .serializers import ShortformSerializer, ShortformCommentSerializer
 
 logger = logging.getLogger(__name__)
 
-FASTAPI_TRANSLATE_URL = os.getenv("FASTAPI_TRANSLATE_URL", "http://fastapi:8000/api/ai/translate")
+# FastAPI 검색 서버
+FASTAPI_SEARCH_URL = "http://fastapi:8000/api/search"
+
+# FastAPI 번역 서버 (분리됨: Port 8003)
+FASTAPI_TRANSLATE_URL = "http://fastapi-ai-translation:8003/api/ai/translate"
 
 
 def resolve_bin(name, env_var):
@@ -468,11 +472,11 @@ def call_fastapi_translate_batch(texts: list[str], source_lang: str, target_lang
         data = resp.json()
         return data.get("translations", []), data.get("provider", "fastapi-batch")
     except Exception as first_error:
-        # 2. 시도: 로컬호스트 Fallback
-        if "fastapi" in url:
-            fallback_url = "http://127.0.0.1:8001/api/ai/translate/batch"
+        # 2. 시도: 로컬호스트 Fallback (Port 8003)
+        if "fastapi-ai-translation" in url or "fastapi" in url:
+            fallback_url = "http://127.0.0.1:8003/api/ai/translate"
             try:
-                logger.info(f"Batch translation URL failed. Retrying fallback: {fallback_url}")
+                logger.info(f"Translation URL failed. Retrying fallback: {fallback_url}")
                 resp = requests.post(fallback_url, json=payload, timeout=timeout)
                 resp.raise_for_status()
                 data = resp.json()

@@ -24,11 +24,11 @@ sentence-transformers  # ★ 핵심: 텍스트를 벡터로 바꿔주는 AI 모�
 pgvector         # DB 벡터 연산 지원
 
 
-# 번역용 AI 모델
-transformers  # 모델 로딩 & generate()
-torch   # 모델 실행 엔진 설치에 오래걸림
-sentencepiece  # NLLB 토크나이저 필수
-huggingface-hub  # 모델 다운로드 & 캐시
+# 번역용 AI 모델 (Moved to fastapi_ai_translation)
+# transformers  
+# torch   
+# sentencepiece  
+# huggingface-hub
 
 python-dotenv
 prometheus-fastapi-instrumentator #부하 테스트용
