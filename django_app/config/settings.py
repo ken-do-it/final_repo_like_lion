@@ -204,11 +204,15 @@ ACCOUNT_EMAIL_VERIFICATION = 'optional'
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
 
+# 소셜 로그인 시 항상 재인증 요구 (자동 로그인 방지)
+SOCIALACCOUNT_STORE_TOKENS = False
+ACCOUNT_SESSION_REMEMBER = False
+
 # 소셜 로그인 후 리다이렉트 URL
-LOGIN_REDIRECT_URL = '/api/users/'
+LOGIN_REDIRECT_URL = '/api/users/social-callback/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/api/users/login-page/'
 
-# 소셜 로그인 Provider 설정 (환경변수로 관리 권장)
+# 소셜 로그인 Provider 설정
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
@@ -217,24 +221,31 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
+            'prompt': 'select_account',  # 매번 계정 선택 화면 표시
         },
         'APP': {
-            'client_id': 'YOUR_GOOGLE_CLIENT_ID',  # 환경변수로 설정 필요
-            'secret': 'YOUR_GOOGLE_CLIENT_SECRET',  # 환경변수로 설정 필요
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
             'key': ''
         }
     },
     'kakao': {
+        'AUTH_PARAMS': {
+            'prompt': 'login',  # 매번 로그인 화면 표시
+        },
         'APP': {
-            'client_id': 'YOUR_KAKAO_REST_API_KEY',  # 환경변수로 설정 필요
-            'secret': 'YOUR_KAKAO_CLIENT_SECRET',  # 환경변수로 설정 필요
+            'client_id': os.getenv('KAKAO_REST_API_KEY', ''),
+            'secret': os.getenv('KAKAO_CLIENT_SECRET', ''),
             'key': ''
         }
     },
     'naver': {
+        'AUTH_PARAMS': {
+            'auth_type': 'reauthenticate',  # 매번 재인증 요구
+        },
         'APP': {
-            'client_id': 'YOUR_NAVER_CLIENT_ID',  # 환경변수로 설정 필요
-            'secret': 'YOUR_NAVER_CLIENT_SECRET',  # 환경변수로 설정 필요
+            'client_id': os.getenv('NAVER_CLIENT_ID', ''),
+            'secret': os.getenv('NAVER_CLIENT_SECRET', ''),
             'key': ''
         }
     }

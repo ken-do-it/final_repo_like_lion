@@ -24,4 +24,6 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     # Shortform/contents API (no auth for now)
     path('api/', include('contents.urls')),
+    # Django-allauth URLs (최상위 레벨에 추가하여 콜백 URL 문제 해결)
+    path('accounts/', include('allauth.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

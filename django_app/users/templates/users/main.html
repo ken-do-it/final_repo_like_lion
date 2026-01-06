@@ -111,6 +111,7 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
+            position: relative;
         }
 
         .user-avatar {
@@ -123,6 +124,53 @@
             justify-content: center;
             color: white;
             font-weight: 600;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 12px;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .user-dropdown-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #2C3333;
+            text-decoration: none;
+        }
+
+        .user-dropdown-item:hover {
+            background: #F3F4F6;
+        }
+
+        .user-dropdown-divider {
+            height: 1px;
+            background: #E5E7EB;
+            margin: 8px 0;
+        }
+
+        .btn-logout {
+            color: #EF4444;
+        }
+
+        .btn-logout:hover {
+            background: #FEE2E2;
         }
 
         /* Hero Section */
@@ -634,14 +682,113 @@
                     <div class="user-profile" onclick="toggleUserDropdown()">
                         <div class="user-avatar">${initial}</div>
                         <span>${user.nickname || user.username}</span>
+                        <div class="user-dropdown" id="userDropdown">
+                            <div style="padding: 12px 16px; border-bottom: 1px solid #E5E7EB; margin-bottom: 8px;">
+                                <div style="font-weight: 600; color: #2C3333;">${user.nickname || user.username}</div>
+                                <div style="font-size: 12px; color: #9CA3AF;">${user.email}</div>
+                                ${user.social_provider !== 'LOCAL' ? `<div style="font-size: 11px; color: #00C9A7; margin-top: 4px;">🔗 ${user.social_provider}</div>` : ''}
+                            </div>
+                            <a href="#" class="user-dropdown-item" onclick="navigateToProfile(event)">
+                                <span>👤</span>
+                                <span>Profile</span>
+                            </a>
+                            <a href="#" class="user-dropdown-item" onclick="navigateToSettings(event)">
+                                <span>⚙️</span>
+                                <span>Settings</span>
+                            </a>
+                            <div class="user-dropdown-divider"></div>
+                            <div class="user-dropdown-item btn-logout" onclick="logout(event)">
+                                <span>🚪</span>
+                                <span>Logout</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             } else {
+                // localStorage에서 사용자 정보 확인
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    try {
+                        const userData = JSON.parse(storedUser);
+                        renderUserMenu(userData);
+                        return;
+                    } catch (e) {
+                        console.error('Failed to parse stored user:', e);
+                    }
+                }
+
                 userMenu.innerHTML = `
                     <a href="/api/users/login-page/" class="btn-login">Sign In</a>
                     <a href="/api/users/register-page/" class="btn-register">Sign Up</a>
                 `;
             }
+        }
+
+        // 드롭다운 토글
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        // 드롭다운 외부 클릭 시 닫기
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const userProfile = document.querySelector('.user-profile');
+
+            if (dropdown && !userProfile?.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // 로그아웃
+        async function logout(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!confirm('정말 로그아웃 하시겠습니까?')) {
+                return;
+            }
+
+            const token = localStorage.getItem('access_token');
+
+            // 서버에 로그아웃 요청
+            if (token) {
+                try {
+                    await fetch(`${API_BASE_URL}/logout/`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } catch (error) {
+                    console.error('Logout API error:', error);
+                }
+            }
+
+            // localStorage 정리
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+
+            // 로그인 페이지로 리다이렉트
+            window.location.href = '/api/users/login-page/';
+        }
+
+        // 프로필 페이지로 이동
+        function navigateToProfile(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            alert('프로필 페이지는 준비 중입니다.');
+        }
+
+        // 설정 페이지로 이동
+        function navigateToSettings(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            alert('설정 페이지는 준비 중입니다.');
         }
 
         // 여행지 렌더링
