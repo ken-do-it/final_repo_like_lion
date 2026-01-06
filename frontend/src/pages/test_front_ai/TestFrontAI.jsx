@@ -66,6 +66,19 @@ const langToCode = {
   中文: 'zho_Hans',
 }
 
+// UI Glossary: Override AI translations for specific terms
+// 재생, 닫기, 로그인, 회원가입, 계획 시작하기, 모두 보기 고정된 텍스트를 AI가 번역하지 않고 정의된 텍스트로 출력
+const uiGlossary = {
+  play: { kor_Hang: '재생', jpn_Jpan: '再生', zho_Hans: '播放' },
+  close: { kor_Hang: '닫기', jpn_Jpan: '閉じる', zho_Hans: '关闭' },
+  navLogin: { kor_Hang: '로그인', jpn_Jpan: 'ログイン', zho_Hans: '登录' },
+  navSignup: { kor_Hang: '회원가입', jpn_Jpan: 'サインアップ', zho_Hans: '注册' },
+  navStart: { kor_Hang: '계획 시작하기', jpn_Jpan: '計画を始める', zho_Hans: '开始计划' },
+  viewAll: { kor_Hang: '모두 보기', jpn_Jpan: 'すべて見る', zho_Hans: '查看全部' },
+  loading: { kor_Hang: '로딩 중...', jpn_Jpan: '読み込み中...', zho_Hans: '载入中...' },
+  langLabel: { kor_Hang: '언어', jpn_Jpan: '言語', zho_Hans: '语言' },
+}
+
 function TestFrontAI() {
   const [language, setLanguage] = useState('English')
   const [shortforms, setShortforms] = useState(sampleShorts)
@@ -109,28 +122,47 @@ function TestFrontAI() {
     }
 
     const translateUiBatch = async () => {
-      // 1. Prepare all items to translate
-      const uiItems = Object.entries(baseTexts).map(([k, v]) => ({
-        key: k,
-        text: v,
-        type: 'ui',
-        id: 0,
-        field: k
-      }))
+      // 1. Prepare items
+      const uiMap = {}
+      const itemsToTranslate = []
 
+      // UI Texts: Check glossary first
+      Object.entries(baseTexts).forEach(([k, v]) => {
+        const glossaryValue = uiGlossary[k]?.[target]
+        if (glossaryValue) {
+          // Use glossary
+          uiMap[k] = glossaryValue
+        } else {
+          // Queue for AI translation
+          itemsToTranslate.push({
+            key: k,
+            text: v,
+            type: 'ui',
+            id: 0,
+            field: k
+          })
+        }
+      })
+
+      // Destinations: Always dynamic, so queue them
       const destItems = initialDestinations.flatMap(d => [
-        { key: `dest_${d.id}_name`, text: d.name, type: 'destination', id: d.id, field: 'name', refId: d.id, refField: 'name' },
-        { key: `dest_${d.id}_desc`, text: d.desc, type: 'destination', id: d.id, field: 'desc', refId: d.id, refField: 'desc' }
+        { key: `dest_${d.id}_name`, text: d.name, type: 'destination', id: d.id, field: 'name' },
+        { key: `dest_${d.id}_desc`, text: d.desc, type: 'destination', id: d.id, field: 'desc' }
       ])
 
-      const allItems = [...uiItems, ...destItems]
+      const allItemsToRequest = [...itemsToTranslate, ...destItems]
+
+      if (allItemsToRequest.length === 0) {
+        setUiTranslations(uiMap)
+        return
+      }
 
       try {
         const resp = await fetch('/api/translations/batch/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            items: allItems.map(i => ({
+            items: allItemsToRequest.map(i => ({
               text: i.text,
               entity_type: i.type,
               entity_id: i.id,
@@ -145,34 +177,19 @@ function TestFrontAI() {
         const data = await resp.json()
         const translations = data.translations || []
 
-        // 2. Map results back to state
-        // UI Texts
-        const uiMap = {}
-        uiItems.forEach((item, idx) => {
+        // 2. Map results back
+        // UI Texts (from AI)
+        itemsToTranslate.forEach((item, idx) => {
           uiMap[item.key] = translations[idx] || item.text
         })
         setUiTranslations(uiMap)
 
         // Destinations
-        // The destination items start after uiItems
-        const destStartIndex = uiItems.length
-        const newDests = initialDestinations.map(d => {
-          // Find translated values for this destination
-          // We know the order: name first, then desc
-          // But safer to allow lookup if we had a map, but array order is preserved.
-          // Let's rely on filter logic to be robust? 
-          // Actually, we constructed destItems in order: d1_name, d1_desc, d2_name...
-          // So we can find them in translations list.
+        const destStartIndex = itemsToTranslate.length
+        const newDests = initialDestinations.map(d => ({ ...d }))
 
-          // Let's create a map for easier lookup if indices get messy
-          // But strict indexing is fastest.
-          return { ...d }
-        })
-
-        // Let's update newDests using the flat list
         let currentIdx = destStartIndex
         initialDestinations.forEach((d, i) => {
-          // corresponding to destItems: name, desc
           newDests[i].name = translations[currentIdx] || d.name
           newDests[i].desc = translations[currentIdx + 1] || d.desc
           currentIdx += 2
@@ -182,7 +199,6 @@ function TestFrontAI() {
 
       } catch (e) {
         console.error("Batch translation failed", e)
-        // Fallback or just keep original
       }
     }
 

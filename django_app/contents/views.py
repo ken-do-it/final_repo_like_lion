@@ -248,6 +248,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
 
         def enrich(item):
             src_lang = item.get("source_lang") or "kor_Hang"
+            # NEW: 언어가 같으면 원본 그대로 사용
+            if src_lang == target_lang:
+                item["title_translated"] = item.get("title", "")
+                item["content_translated"] = item.get("content", "")
+                return item
+
             item["title_translated"] = translate_and_cache(
                 item.get("title", ""),
                 entity_type="shortform",
@@ -504,6 +510,12 @@ class TranslationBatchView(APIView):
             text = item.get("text", "")
             if not text:
                 results[idx] = ""
+                continue
+
+            # NEW: 소스 언어와 타겟 언어가 같으면 번역 건너뛰기
+            src_lang = source_lang
+            if src_lang == target_lang:
+                results[idx] = text
                 continue
             
             entity_type = item.get("entity_type", "raw")
