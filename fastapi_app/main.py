@@ -4,6 +4,10 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any
+from dotenv import load_dotenv
+
+# 환경 변수 로드 (.env 파일)
+load_dotenv()
 
 # 필수 라이브러리 체크
 try:
@@ -29,6 +33,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------------------------------------
+# Places API Router 등록
+# ---------------------------------------------------------
+from places.router import router as places_router
+app.include_router(places_router)
 
 # 모델 전역 변수
 model = None
