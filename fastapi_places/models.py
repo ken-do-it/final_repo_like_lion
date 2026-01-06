@@ -3,10 +3,11 @@ SQLAlchemy Models for Places API
 Django 테이블을 SQLAlchemy로 매핑
 """
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Numeric, Date, JSON, Index, UniqueConstraint
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
-Base = declarative_base()
+# 같은 디렉토리의 database.py에서 Base import
+from .database import Base
 
 
 class User(Base):

@@ -22,9 +22,7 @@ from .service import (
     search_places_hybrid, authenticate_local_badge, check_local_badge_active,
     update_place_review_stats, update_place_thumbnails
 )
-import sys
-sys.path.append('..')
-from database import get_db
+from .database import get_db
 
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])
 

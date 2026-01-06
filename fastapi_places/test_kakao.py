@@ -2,9 +2,12 @@ import requests
 import os
 from dotenv import load_dotenv
 
-# python fastapi_app/places/test_kakao.py이나 python test_kakao.py 로 실행
-#구글 api는 터미널에
-#curl "https://maps.googleapis.com/maps/api/place/textsearch/json?query=성심당&key=여기에_발급받은_API_키_입력"로 실행해서 테스트 가능
+# 실행 방법:
+# cd fastapi_places
+# python test_kakao.py
+#
+# 구글 API는 터미널에서:
+# curl "https://maps.googleapis.com/maps/api/place/textsearch/json?query=성심당&key=여기에_발급받은_API_키_입력"
 
 load_dotenv()
 

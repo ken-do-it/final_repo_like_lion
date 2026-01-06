@@ -45,12 +45,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------
-# Places API Router 등록
-# ---------------------------------------------------------
-from places.router import router as places_router
-app.include_router(places_router)
-
 # 모델 전역 변수
 model = None
 
