@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 import logging
 
 from ..serializers.flight import (
@@ -31,6 +32,12 @@ class MSFlightSearchView(APIView):
     """
     permission_classes = [AllowAny]  # 비회원도 접근 가능
 
+    @extend_schema(
+        request=MSFlightSearchRequestSerializer,
+        responses={200: MSFlightSearchResponseSerializer},
+        description="항공편 검색 API - 출발지, 도착지, 날짜 등을 입력하여 항공편을 검색합니다.",
+        summary="항공편 검색"
+    )
     def post(self, request):
         """
         항공편 검색
@@ -84,7 +91,10 @@ class MSFlightSearchView(APIView):
                 adults=validated_data['passengers']['adults'],
                 children=validated_data['passengers']['children'],
                 infants=validated_data['passengers']['infants'],
-                cabin_class=validated_data['cabinClass']
+                cabin_class=validated_data['cabinClass'],
+                # 필터/정렬 옵션 추가 (있으면 전달, 없으면 None)
+                filters=validated_data.get('filters'),
+                sort=validated_data.get('sort')
             )
 
             # 4. 응답 데이터 직렬화
