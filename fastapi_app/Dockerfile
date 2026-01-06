@@ -16,4 +16,4 @@ COPY . /app/
 
 # 6. 실행 명령어 (임시)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
-CMD ["python", "--version"]
+#CMD ["python", "--version"]
