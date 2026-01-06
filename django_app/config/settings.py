@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -50,12 +50,16 @@ INSTALLED_APPS = [
     'plans',
     'contents',
     'reservations',
+    
+    #부하 테스트용
+    'django_prometheus',
 ]
 
 #커스텀 유저 모델 지정
 AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware', #부하 테스트 정확한 시간 측정을 위해 맨 위에 있어야함
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -64,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware', #부하 테스트 결과 확인을 위해 맨 아래 있어야함
 ]
 
 ROOT_URLCONF = 'config.urls'
