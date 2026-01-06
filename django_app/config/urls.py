@@ -7,6 +7,12 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 urlpatterns = [
     # 1. 관리자 페이지
     path('admin/', admin.site.urls),
+    path('api/users/', include('users.urls')),
+    # Shortform/contents API (no auth for now)
+    path('api/', include('contents.urls')),
+    # Django-allauth URLs (최상위 레벨에 추가하여 콜백 URL 문제 해결)
+    path('accounts/', include('allauth.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
     # 2. 프로메테우스 (모니터링) - ★ 이거 살려야 그래프 나옵니다
     path('', include('django_prometheus.urls')),
