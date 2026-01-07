@@ -7,21 +7,15 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 urlpatterns = [
     # 1. 관리자 페이지
     path('admin/', admin.site.urls),
-    path('api/users/', include('users.urls')),
-    # Shortform/contents API (no auth for now)
-    path('api/', include('contents.urls')),
+
     # Django-allauth URLs (최상위 레벨에 추가하여 콜백 URL 문제 해결)
     path('accounts/', include('allauth.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
     # 2. 프로메테우스 (모니터링) - ★ 이거 살려야 그래프 나옵니다
     path('', include('django_prometheus.urls')),
 
     # 3. 유저 API (로그인/회원가입)
     path('api/users/', include('users.urls')),
-
-    # 4. 콘텐츠 API (숏폼 등)
-    path('api/', include('contents.urls')),
 
     # 5. 교통 API (항공/기차/지하철)
     path('api/v1/transport/', include('reservations.urls')),
@@ -33,7 +27,9 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/docs/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-]
 
-# 5. 미디어 파일(이미지) 처리
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # 4. 콘텐츠 API (숏폼 등)
+    # Moved to bottom to avoid shadowing more specific 'api/...' paths
+    path('api/', include('contents.urls')),
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
