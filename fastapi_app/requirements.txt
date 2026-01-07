@@ -22,6 +22,8 @@ psycopg2-binary  # DB 접속용
 sqlalchemy       # ORM
 sentence-transformers  # ★ 핵심: 텍스트를 벡터로 바꿔주는 AI 모델  ❌ (번역용 아님 RAG / 유사도 검색용)
 pgvector         # DB 벡터 연산 지원
+httpx            # 비동기 HTTP 클라이언트 (외부 API 호출용)
+python-dotenv    # 환경 변수 관리
 
 
 # 번역용 AI 모델 (Moved to fastapi_ai_translation)
@@ -30,5 +32,4 @@ pgvector         # DB 벡터 연산 지원
 # sentencepiece  
 # huggingface-hub
 
-python-dotenv
 prometheus-fastapi-instrumentator #부하 테스트용

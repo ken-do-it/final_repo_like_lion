@@ -194,6 +194,34 @@
         .strength-medium { background: #F59E0B; width: 66%; }
         .strength-strong { background: #10B981; width: 100%; }
 
+        .validation-message {
+            margin-top: 4px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .validation-message.success {
+            color: #10B981;
+        }
+
+        .validation-message.error {
+            color: #EF4444;
+        }
+
+        .validation-message.checking {
+            color: #6B7280;
+        }
+
+        input.valid {
+            border-color: #10B981 !important;
+        }
+
+        input.invalid {
+            border-color: #EF4444 !important;
+        }
+
         @media (max-width: 640px) {
             .container {
                 padding: 32px 24px;
@@ -222,12 +250,14 @@
             <div class="form-group">
                 <label for="username">Username *</label>
                 <input type="text" id="username" name="username" required placeholder="traveler123">
+                <div id="usernameValidation"></div>
                 <small>Choose a unique username</small>
             </div>
 
             <div class="form-group">
                 <label for="email">Email *</label>
                 <input type="email" id="email" name="email" required placeholder="your@email.com">
+                <div id="emailValidation"></div>
                 <small>We'll send a verification email</small>
             </div>
 
@@ -291,6 +321,121 @@
 
     <script>
         const API_BASE_URL = 'http://localhost:8000/api/users/api';
+
+        // Debounce 함수
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Username 중복 체크
+        const checkUsername = debounce(async (username) => {
+            const validationDiv = document.getElementById('usernameValidation');
+            const usernameInput = document.getElementById('username');
+
+            if (!username || username.length < 3) {
+                validationDiv.innerHTML = '';
+                usernameInput.classList.remove('valid', 'invalid');
+                return;
+            }
+
+            validationDiv.innerHTML = '<div class="validation-message checking">⏳ Checking availability...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/register/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        email: 'test@test.com',  // 임시 이메일
+                        password: 'Test1234!',
+                        password_confirm: 'Test1234!',
+                        nickname: 'test',
+                        country: 'KR'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.username) {
+                    // username 필드에 에러가 있으면 중복
+                    validationDiv.innerHTML = '<div class="validation-message error">❌ Username already taken</div>';
+                    usernameInput.classList.remove('valid');
+                    usernameInput.classList.add('invalid');
+                } else {
+                    // username 필드에 에러가 없으면 사용 가능
+                    validationDiv.innerHTML = '<div class="validation-message success">✓ Username available</div>';
+                    usernameInput.classList.remove('invalid');
+                    usernameInput.classList.add('valid');
+                }
+            } catch (error) {
+                validationDiv.innerHTML = '';
+                usernameInput.classList.remove('valid', 'invalid');
+            }
+        }, 500);
+
+        // Email 중복 체크
+        const checkEmail = debounce(async (email) => {
+            const validationDiv = document.getElementById('emailValidation');
+            const emailInput = document.getElementById('email');
+
+            if (!email || !email.includes('@')) {
+                validationDiv.innerHTML = '';
+                emailInput.classList.remove('valid', 'invalid');
+                return;
+            }
+
+            validationDiv.innerHTML = '<div class="validation-message checking">⏳ Checking availability...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/register/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'testuser123',  // 임시 username
+                        email: email,
+                        password: 'Test1234!',
+                        password_confirm: 'Test1234!',
+                        nickname: 'test',
+                        country: 'KR'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.email) {
+                    // email 필드에 에러가 있으면 중복
+                    validationDiv.innerHTML = '<div class="validation-message error">❌ Email already registered</div>';
+                    emailInput.classList.remove('valid');
+                    emailInput.classList.add('invalid');
+                } else {
+                    // email 필드에 에러가 없으면 사용 가능
+                    validationDiv.innerHTML = '<div class="validation-message success">✓ Email available</div>';
+                    emailInput.classList.remove('invalid');
+                    emailInput.classList.add('valid');
+                }
+            } catch (error) {
+                validationDiv.innerHTML = '';
+                emailInput.classList.remove('valid', 'invalid');
+            }
+        }, 500);
+
+        // Username 입력 이벤트
+        document.getElementById('username').addEventListener('input', (e) => {
+            checkUsername(e.target.value);
+        });
+
+        // Email 입력 이벤트
+        document.getElementById('email').addEventListener('input', (e) => {
+            checkEmail(e.target.value);
+        });
 
         // 비밀번호 강도 체크
         document.getElementById('password').addEventListener('input', (e) => {
