@@ -1,38 +1,130 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import './TestFrontAI.css'
 import ShortsPage from './ShortsPage'
 import ShortsDetailPage from './ShortsDetailPage'
 
-const initialDestinations = [
-  {
-    id: 1,
-    name: 'Seoul',
-    desc: 'The vibrant heart of culture & tech',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBPHuKBiO6H4F_aRO_p_I0QmtgymwrOknzT5pkxa2-KYcYNiLIlzIq2NnS2u19OMs8zHAXCCI3fHC46-YAMV01_pJJMAtUucnhZ-xNqA3372FYE2XIJsPqSa2FjghchNQGbA1AuEgTXsn0dgcpkG_FCLaiy-j4G7ALXo-pegyxU4OOcoUxrGTHc-0YZ968W4-ghlvz3ObgOD-iX1JpKV3P4W7dK1F215t3FVk_lqzDPnaXLi_7Bp7Z4KbNukR-CBJmpYMH8ySGRuGb9',
-  },
-  {
-    id: 2,
-    name: 'Busan',
-    desc: 'Coastal adventures & fresh seafood',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDIgUeQYhKi6UCCncqvYgC-Slh3Xh8U0ImxRSNAbQX0dHta7JcEFY-vnqUzP4m7i5lNVOhUNTH0xC8zwVAgrZXf7tWBw5iea7J2PFmEy0zOBvi8LLTrsmFWHRl-DX_BQadAJRVnjKB8Hl-FBjW-VrX0IJHL8XGsNPBPM6jKJobtWQPtck8AsgPfwsFWntNpDSqCUBd7OkJC_BlnMOOyu6uSshCdTjz8544LUktInWoQkxtMBXXn06XAT9FVebr3ot2L2zISL2Un4HKO',
-  },
-  {
-    id: 3,
-    name: 'Jeju Island',
-    desc: "Nature's paradise & volcanic wonders",
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA8rnKIyHbDKKhcvHTbDkn_QWg-SILVWbgsEzoq0aUOWDT-_eLChpnuii0JawRvz47NwfOm8K4VexZShJd-cCOEQ3op73UBCrAcrHdXwZHNcb1Zbecbc6H7UwydrEQbQylXTcNhc3BlIbPluqBPhKpJwr-iSHBhoAyOHkqeYp7QLdlqx-B2L-kGja_oVHG61WDv6ig3fh5Sof3bNV4khkKGW0ksE6JwOHVb6HPc88YoGrakSfJFeO7opLF1ZlJqnodcjbsPvaguKOsf',
-  },
-  {
-    id: 4,
-    name: 'Gyeongju',
-    desc: 'A museum without walls',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDV1H7ddimHAV9U2uEpcwQQZiJxgI0HsAW_H5JIjkuN_vpDDU25AABP11-GTQaufLLtdyPehhzA0BcihGvXgfp7a-c57Go6U-sFf3u26yQWI9rDvMNjemO2IgmWpSf0I6fjmGUFbpUNKAmKbLRp5ac1GBiKUovNEUmG20aWhrfOWhq0UtBoPxbByo8b6BM3DW-TK8vrYEiz1UsP0jH_BDjXuQfeE6Wq5_GjeJdnwEoaUjo70f8uRg09ge7BqaWETIgDppeO93y4M9gY',
-  },
-]
+const destinationsMap = {
+  eng_Latn: [
+    {
+      id: 1,
+      name: 'Seoul',
+      desc: 'The vibrant heart of culture & tech',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBPHuKBiO6H4F_aRO_p_I0QmtgymwrOknzT5pkxa2-KYcYNiLIlzIq2NnS2u19OMs8zHAXCCI3fHC46-YAMV01_pJJMAtUucnhZ-xNqA3372FYE2XIJsPqSa2FjghchNQGbA1AuEgTXsn0dgcpkG_FCLaiy-j4G7ALXo-pegyxU4OOcoUxrGTHc-0YZ968W4-ghlvz3ObgOD-iX1JpKV3P4W7dK1F215t3FVk_lqzDPnaXLi_7Bp7Z4KbNukR-CBJmpYMH8ySGRuGb9',
+    },
+    {
+      id: 2,
+      name: 'Busan',
+      desc: 'Coastal adventures & fresh seafood',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDIgUeQYhKi6UCCncqvYgC-Slh3Xh8U0ImxRSNAbQX0dHta7JcEFY-vnqUzP4m7i5lNVOhUNTH0xC8zwVAgrZXf7tWBw5iea7J2PFmEy0zOBvi8LLTrsmFWHRl-DX_BQadAJRVnjKB8Hl-FBjW-VrX0IJHL8XGsNPBPM6jKJobtWQPtck8AsgPfwsFWntNpDSqCUBd7OkJC_BlnMOOyu6uSshCdTjz8544LUktInWoQkxtMBXXn06XAT9FVebr3ot2L2zISL2Un4HKO',
+    },
+    {
+      id: 3,
+      name: 'Jeju Island',
+      desc: "Nature's paradise & volcanic wonders",
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuA8rnKIyHbDKKhcvHTbDkn_QWg-SILVWbgsEzoq0aUOWDT-_eLChpnuii0JawRvz47NwfOm8K4VexZShJd-cCOEQ3op73UBCrAcrHdXwZHNcb1Zbecbc6H7UwydrEQbQylXTcNhc3BlIbPluqBPhKpJwr-iSHBhoAyOHkqeYp7QLdlqx-B2L-kGja_oVHG61WDv6ig3fh5Sof3bNV4khkKGW0ksE6JwOHVb6HPc88YoGrakSfJFeO7opLF1ZlJqnodcjbsPvaguKOsf',
+    },
+    {
+      id: 4,
+      name: 'Gyeongju',
+      desc: 'A museum without walls',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDV1H7ddimHAV9U2uEpcwQQZiJxgI0HsAW_H5JIjkuN_vpDDU25AABP11-GTQaufLLtdyPehhzA0BcihGvXgfp7a-c57Go6U-sFf3u26yQWI9rDvMNjemO2IgmWpSf0I6fjmGUFbpUNKAmKbLRp5ac1GBiKUovNEUmG20aWhrfOWhq0UtBoPxbByo8b6BM3DW-TK8vrYEiz1UsP0jH_BDjXuQfeE6Wq5_GjeJdnwEoaUjo70f8uRg09ge7BqaWETIgDppeO93y4M9gY',
+    },
+  ],
+  kor_Hang: [
+    {
+      id: 1,
+      name: '서울',
+      desc: '문화와 기술이 공존하는 중심지',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBPHuKBiO6H4F_aRO_p_I0QmtgymwrOknzT5pkxa2-KYcYNiLIlzIq2NnS2u19OMs8zHAXCCI3fHC46-YAMV01_pJJMAtUucnhZ-xNqA3372FYE2XIJsPqSa2FjghchNQGbA1AuEgTXsn0dgcpkG_FCLaiy-j4G7ALXo-pegyxU4OOcoUxrGTHc-0YZ968W4-ghlvz3ObgOD-iX1JpKV3P4W7dK1F215t3FVk_lqzDPnaXLi_7Bp7Z4KbNukR-CBJmpYMH8ySGRuGb9',
+    },
+    {
+      id: 2,
+      name: '부산',
+      desc: '해변의 낭만과 신선한 해산물',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDIgUeQYhKi6UCCncqvYgC-Slh3Xh8U0ImxRSNAbQX0dHta7JcEFY-vnqUzP4m7i5lNVOhUNTH0xC8zwVAgrZXf7tWBw5iea7J2PFmEy0zOBvi8LLTrsmFWHRl-DX_BQadAJRVnjKB8Hl-FBjW-VrX0IJHL8XGsNPBPM6jKJobtWQPtck8AsgPfwsFWntNpDSqCUBd7OkJC_BlnMOOyu6uSshCdTjz8544LUktInWoQkxtMBXXn06XAT9FVebr3ot2L2zISL2Un4HKO',
+    },
+    {
+      id: 3,
+      name: '제주도',
+      desc: '자연의 낙원과 화산의 신비',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuA8rnKIyHbDKKhcvHTbDkn_QWg-SILVWbgsEzoq0aUOWDT-_eLChpnuii0JawRvz47NwfOm8K4VexZShJd-cCOEQ3op73UBCrAcrHdXwZHNcb1Zbecbc6H7UwydrEQbQylXTcNhc3BlIbPluqBPhKpJwr-iSHBhoAyOHkqeYp7QLdlqx-B2L-kGja_oVHG61WDv6ig3fh5Sof3bNV4khkKGW0ksE6JwOHVb6HPc88YoGrakSfJFeO7opLF1ZlJqnodcjbsPvaguKOsf',
+    },
+    {
+      id: 4,
+      name: '경주',
+      desc: '지붕 없는 박물관',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDV1H7ddimHAV9U2uEpcwQQZiJxgI0HsAW_H5JIjkuN_vpDDU25AABP11-GTQaufLLtdyPehhzA0BcihGvXgfp7a-c57Go6U-sFf3u26yQWI9rDvMNjemO2IgmWpSf0I6fjmGUFbpUNKAmKbLRp5ac1GBiKUovNEUmG20aWhrfOWhq0UtBoPxbByo8b6BM3DW-TK8vrYEiz1UsP0jH_BDjXuQfeE6Wq5_GjeJdnwEoaUjo70f8uRg09ge7BqaWETIgDppeO93y4M9gY',
+    },
+  ],
+  jpn_Jpan: [
+    {
+      id: 1,
+      name: 'ソウル',
+      desc: '文化と技術が融合する中心地',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBPHuKBiO6H4F_aRO_p_I0QmtgymwrOknzT5pkxa2-KYcYNiLIlzIq2NnS2u19OMs8zHAXCCI3fHC46-YAMV01_pJJMAtUucnhZ-xNqA3372FYE2XIJsPqSa2FjghchNQGbA1AuEgTXsn0dgcpkG_FCLaiy-j4G7ALXo-pegyxU4OOcoUxrGTHc-0YZ968W4-ghlvz3ObgOD-iX1JpKV3P4W7dK1F215t3FVk_lqzDPnaXLi_7Bp7Z4KbNukR-CBJmpYMH8ySGRuGb9',
+    },
+    {
+      id: 2,
+      name: '釜山',
+      desc: '海辺の冒険と新鮮なシーフード',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDIgUeQYhKi6UCCncqvYgC-Slh3Xh8U0ImxRSNAbQX0dHta7JcEFY-vnqUzP4m7i5lNVOhUNTH0xC8zwVAgrZXf7tWBw5iea7J2PFmEy0zOBvi8LLTrsmFWHRl-DX_BQadAJRVnjKB8Hl-FBjW-VrX0IJHL8XGsNPBPM6jKJobtWQPtck8AsgPfwsFWntNpDSqCUBd7OkJC_BlnMOOyu6uSshCdTjz8544LUktInWoQkxtMBXXn06XAT9FVebr3ot2L2zISL2Un4HKO',
+    },
+    {
+      id: 3,
+      name: '済州島',
+      desc: '自然の楽園と火山の驚異',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuA8rnKIyHbDKKhcvHTbDkn_QWg-SILVWbgsEzoq0aUOWDT-_eLChpnuii0JawRvz47NwfOm8K4VexZShJd-cCOEQ3op73UBCrAcrHdXwZHNcb1Zbecbc6H7UwydrEQbQylXTcNhc3BlIbPluqBPhKpJwr-iSHBhoAyOHkqeYp7QLdlqx-B2L-kGja_oVHG61WDv6ig3fh5Sof3bNV4khkKGW0ksE6JwOHVb6HPc88YoGrakSfJFeO7opLF1ZlJqnodcjbsPvaguKOsf',
+    },
+    {
+      id: 4,
+      name: '慶州',
+      desc: '屋根のない博物館',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDV1H7ddimHAV9U2uEpcwQQZiJxgI0HsAW_H5JIjkuN_vpDDU25AABP11-GTQaufLLtdyPehhzA0BcihGvXgfp7a-c57Go6U-sFf3u26yQWI9rDvMNjemO2IgmWpSf0I6fjmGUFbpUNKAmKbLRp5ac1GBiKUovNEUmG20aWhrfOWhq0UtBoPxbByo8b6BM3DW-TK8vrYEiz1UsP0jH_BDjXuQfeE6Wq5_GjeJdnwEoaUjo70f8uRg09ge7BqaWETIgDppeO93y4M9gY',
+    },
+  ],
+  zho_Hans: [
+    {
+      id: 1,
+      name: '首尔',
+      desc: '文化与科技的活力中心',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBPHuKBiO6H4F_aRO_p_I0QmtgymwrOknzT5pkxa2-KYcYNiLIlzIq2NnS2u19OMs8zHAXCCI3fHC46-YAMV01_pJJMAtUucnhZ-xNqA3372FYE2XIJsPqSa2FjghchNQGbA1AuEgTXsn0dgcpkG_FCLaiy-j4G7ALXo-pegyxU4OOcoUxrGTHc-0YZ968W4-ghlvz3ObgOD-iX1JpKV3P4W7dK1F215t3FVk_lqzDPnaXLi_7Bp7Z4KbNukR-CBJmpYMH8ySGRuGb9',
+    },
+    {
+      id: 2,
+      name: '釜山',
+      desc: '沿海探险与新鲜海鲜',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDIgUeQYhKi6UCCncqvYgC-Slh3Xh8U0ImxRSNAbQX0dHta7JcEFY-vnqUzP4m7i5lNVOhUNTH0xC8zwVAgrZXf7tWBw5iea7J2PFmEy0zOBvi8LLTrsmFWHRl-DX_BQadAJRVnjKB8Hl-FBjW-VrX0IJHL8XGsNPBPM6jKJobtWQPtck8AsgPfwsFWntNpDSqCUBd7OkJC_BlnMOOyu6uSshCdTjz8544LUktInWoQkxtMBXXn06XAT9FVebr3ot2L2zISL2Un4HKO',
+    },
+    {
+      id: 3,
+      name: '济州岛',
+      desc: '自然天堂与火山奇观',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuA8rnKIyHbDKKhcvHTbDkn_QWg-SILVWbgsEzoq0aUOWDT-_eLChpnuii0JawRvz47NwfOm8K4VexZShJd-cCOEQ3op73UBCrAcrHdXwZHNcb1Zbecbc6H7UwydrEQbQylXTcNhc3BlIbPluqBPhKpJwr-iSHBhoAyOHkqeYp7QLdlqx-B2L-kGja_oVHG61WDv6ig3fh5Sof3bNV4khkKGW0ksE6JwOHVb6HPc88YoGrakSfJFeO7opLF1ZlJqnodcjbsPvaguKOsf',
+    },
+    {
+      id: 4,
+      name: '庆州',
+      desc: '没有屋顶的博物馆',
+      image:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDV1H7ddimHAV9U2uEpcwQQZiJxgI0HsAW_H5JIjkuN_vpDDU25AABP11-GTQaufLLtdyPehhzA0BcihGvXgfp7a-c57Go6U-sFf3u26yQWI9rDvMNjemO2IgmWpSf0I6fjmGUFbpUNKAmKbLRp5ac1GBiKUovNEUmG20aWhrfOWhq0UtBoPxbByo8b6BM3DW-TK8vrYEiz1UsP0jH_BDjXuQfeE6Wq5_GjeJdnwEoaUjo70f8uRg09ge7BqaWETIgDppeO93y4M9gY',
+    },
+  ],
+}
 
 const langToCode = {
   English: 'eng_Latn',
@@ -42,20 +134,19 @@ const langToCode = {
 }
 
 const uiGlossary = {
-  play: { kor_Hang: '재생', jpn_Jpan: '再生', zho_Hans: '播放' },
-  close: { kor_Hang: '닫기', jpn_Jpan: '閉じる', zho_Hans: '关闭' },
   navLogin: { kor_Hang: '로그인', jpn_Jpan: 'ログイン', zho_Hans: '登录' },
   navSignup: { kor_Hang: '회원가입', jpn_Jpan: 'サインアップ', zho_Hans: '注册' },
   navStart: { kor_Hang: '계획 시작하기', jpn_Jpan: '計画を始める', zho_Hans: '开始计划' },
   navShorts: { kor_Hang: '쇼츠', jpn_Jpan: 'ショート', zho_Hans: '短视频' },
   viewAll: { kor_Hang: '모두 보기', jpn_Jpan: 'すべて見る', zho_Hans: '查看全部' },
-  loading: { kor_Hang: '로딩 중...', jpn_Jpan: '読み込み中...', zho_Hans: '载入中...' },
-  langLabel: { kor_Hang: '언어', jpn_Jpan: '言語', zho_Hans: '语言' },
-  upload: { kor_Hang: '업로드', jpn_Jpan: 'アップロード', zho_Hans: '上传' },
   heroBadge: { kor_Hang: 'AI 여행 가이드', jpn_Jpan: 'AI旅行ガイド', zho_Hans: 'AI旅游指南' },
   heroTitle1: { kor_Hang: '당신의 완벽한', jpn_Jpan: 'あなたの完璧な', zho_Hans: '您的完美' },
   heroTitle2: { kor_Hang: '한국 여행을 디자인하세요', jpn_Jpan: '韓国旅行をデザイン', zho_Hans: '韩国旅行设计' },
-  heroSub: { kor_Hang: 'AI가 추천하는 숨겨진 명소와 맛집을 탐험해보세요.', jpn_Jpan: 'AIが推奨する隠れた名所とグルメを探索しましょう。', zho_Hans: '探索AI推荐的隐藏景点和美食。' },
+  heroSub: {
+    kor_Hang: 'AI가 추천하는 숨겨진 명소와 맛집을 탐험해보세요.',
+    jpn_Jpan: 'AIが推奨する隠れた名所とグルメを探索しましょう。',
+    zho_Hans: '探索AI推荐的隐藏景点和美食。',
+  },
   ctaAI: { kor_Hang: 'AI로 일정 만들기', jpn_Jpan: 'AIで日程作成', zho_Hans: '用AI制定行程' },
   ctaSelf: { kor_Hang: '직접 계획하기', jpn_Jpan: '自分で計画', zho_Hans: '自行计划' },
   popularTitle: { kor_Hang: '인기 여행지', jpn_Jpan: '人気旅行先', zho_Hans: '热门目的地' },
@@ -63,11 +154,7 @@ const uiGlossary = {
 
 function TestFrontAI() {
   const [language, setLanguage] = useState('English')
-  const [destinations, setDestinations] = useState(initialDestinations)
-  const [uiTranslations, setUiTranslations] = useState({})
-
-  // Navigation State
-  const [currentView, setCurrentView] = useState('home') // 'home', 'shorts', 'shorts_detail'
+  const [currentView, setCurrentView] = useState('home')
   const [selectedShortId, setSelectedShortId] = useState(null)
 
   const baseTexts = useMemo(
@@ -88,27 +175,22 @@ function TestFrontAI() {
     []
   )
 
-  useEffect(() => {
-    const target = langToCode[language]
-    if (!target || target === 'eng_Latn') {
-      setUiTranslations({})
-      return
+  const langCode = langToCode[language] || 'eng_Latn'
+  const t = useMemo(() => {
+    const map = { ...baseTexts }
+    if (langCode !== 'eng_Latn') {
+      Object.keys(baseTexts).forEach((key) => {
+        const translated = uiGlossary[key]?.[langCode]
+        if (translated) map[key] = translated
+      })
     }
+    return map
+  }, [baseTexts, langCode])
 
-    const uiMap = {}
-    Object.entries(baseTexts).forEach(([k, v]) => {
-      const glossaryValue = uiGlossary[k]?.[target]
-      if (glossaryValue) {
-        uiMap[k] = glossaryValue
-      }
-    })
-    setUiTranslations(uiMap)
-
-  }, [language, baseTexts])
-
-  const t = useMemo(() => ({ ...baseTexts, ...uiTranslations }), [baseTexts, uiTranslations])
+  const destinations = useMemo(() => destinationsMap[langCode] || destinationsMap.eng_Latn, [langCode])
 
   const handleShortClick = (id) => {
+    if (!id) return
     setSelectedShortId(id)
     setCurrentView('shorts_detail')
   }
@@ -137,7 +219,6 @@ function TestFrontAI() {
           </div>
         </div>
         <div className="tfai-subnav-right">
-          {/* Changed button to span with anchor styling to match look */}
           <span
             onClick={() => setCurrentView('shorts')}
             style={{
@@ -145,7 +226,7 @@ function TestFrontAI() {
               fontSize: '14px',
               fontWeight: 500,
               marginRight: '20px',
-              color: '#333' // Explicit color to ensure visibility
+              color: '#333',
             }}
           >
             {t.navShorts}
@@ -181,8 +262,7 @@ function TestFrontAI() {
             </div>
           </section>
 
-          {/* Restore Shorts Section using embedded ShortsPage */}
-          <ShortsPage embed={true} onShortClick={handleShortClick} />
+          <ShortsPage embed onShortClick={handleShortClick} language={language} />
 
           <section className="tfai-section">
             <div className="tfai-section-heading tfai-section-heading-row">
@@ -193,7 +273,7 @@ function TestFrontAI() {
             </div>
             <div className="tfai-destinations">
               {destinations.map((d) => (
-                <div key={d.name} className="tfai-dest-card">
+                <div key={d.id} className="tfai-dest-card">
                   <div className="image" style={{ backgroundImage: `url(${d.image})` }} aria-label={d.name} />
                   <div>
                     <p className="name">{d.name}</p>
@@ -208,13 +288,13 @@ function TestFrontAI() {
 
       {currentView === 'shorts' && (
         <div style={{ marginTop: '20px' }}>
-          <ShortsPage onShortClick={handleShortClick} />
+          <ShortsPage onShortClick={handleShortClick} language={language} />
         </div>
       )}
 
       {currentView === 'shorts_detail' && selectedShortId && (
         <div style={{ marginTop: '20px' }}>
-          <ShortsDetailPage videoId={selectedShortId} onBack={handleBackToShorts} />
+          <ShortsDetailPage videoId={selectedShortId} onBack={handleBackToShorts} language={language} />
         </div>
       )}
     </div>
