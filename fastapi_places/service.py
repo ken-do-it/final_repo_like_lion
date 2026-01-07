@@ -30,6 +30,61 @@ KOREA_LON_MAX = float(os.getenv("KOREA_LON_MAX", "132"))
 
 # ==================== 외부 API 통합 ====================
 
+async def get_or_create_place_by_api_id(
+    db: Session,
+    place_api_id: str,
+    provider: str = "KAKAO",
+    name_hint: Optional[str] = None
+) -> Optional[Place]:
+    """
+    place_api_id로 DB에서 조회하거나, 없으면 외부 API에서 가져와서 생성
+    """
+    # 1. DB에서 조회
+    place = db.query(Place).filter(Place.place_api_id == place_api_id).first()
+    if place:
+        return place
+
+    # 2. 외부 API에서 가져오기
+    if not name_hint:
+        return None
+
+    # name으로 검색해서 place_api_id가 일치하는 것 찾기
+    if provider == "KAKAO":
+        results = await search_kakao_places(name_hint, limit=10)
+    else:  # GOOGLE
+        results = await search_google_places(name_hint, limit=10)
+
+    # place_api_id 매칭
+    place_data = None
+    for result in results:
+        if result.get("place_api_id") == place_api_id:
+            place_data = result
+            break
+
+    if not place_data:
+        return None
+
+    # 3. DB에 저장
+    place = Place(
+        provider=place_data.get("provider"),
+        place_api_id=place_data.get("place_api_id"),
+        name=place_data.get("name"),
+        address=place_data.get("address"),
+        city=place_data.get("city"),
+        latitude=place_data.get("latitude"),
+        longitude=place_data.get("longitude"),
+        category_main=place_data.get("category_main"),
+        category_detail=place_data.get("category_detail"),
+        thumbnail_urls=[]
+    )
+
+    db.add(place)
+    db.commit()
+    db.refresh(place)
+
+    return place
+
+
 async def search_kakao_places(query: str, limit: int = 15) -> List[Dict]:
     """
     카카오맵 API로 장소 검색
