@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 # Places Router 등록
-from .router import router as places_router
+from router import router as places_router
 app.include_router(places_router)
 
 
@@ -41,7 +41,7 @@ app.include_router(places_router)
 @app.on_event("startup")
 def startup_event():
     """앱 시작 시 데이터베이스 테이블 생성"""
-    from .database import create_tables
+    from database import create_tables
     logger.info("Creating database tables...")
     create_tables()
     logger.info("Database tables created successfully!")

@@ -7,22 +7,22 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import date
 
-from .models import (
+from models import (
     Place, PlaceReview, PlaceBookmark, LocalBadge,
     LocalColumn, LocalColumnSection, LocalColumnSectionImage, User
 )
-from .schemas import (
+from schemas import (
     PlaceSearchRequest, PlaceSearchResult, PlaceAutocompleteRequest,
     PlaceAutocompleteSuggestion, PlaceDetailResponse, ReviewCreateRequest,
     ReviewResponse, BookmarkResponse, LocalBadgeAuthRequest, LocalBadgeAuthResponse,
     LocalBadgeStatusResponse, LocalColumnCreateRequest, LocalColumnResponse,
     LocalColumnListResponse, CityContentResponse, PopularCityResponse
 )
-from .service import (
+from service import (
     search_places_hybrid, authenticate_local_badge, check_local_badge_active,
     update_place_review_stats, update_place_thumbnails
 )
-from .database import get_db
+from database import get_db
 
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])
 

@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, desc
 from fastapi import HTTPException
 
-from .models import Place, PlaceReview, PlaceBookmark, LocalBadge, LocalColumn, User
-from .schemas import PlaceSearchResult
+from models import Place, PlaceReview, PlaceBookmark, LocalBadge, LocalColumn, User
+from schemas import PlaceSearchResult
 
 
 # ==================== 환경 변수 ====================
@@ -143,7 +143,12 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
     # 필터링 적용
     filtered_results = unique_results
     if category:
-        filtered_results = [r for r in filtered_results if r.get("category_main") == category]
+        # category_main 또는 category_detail에 포함되어 있으면 매칭
+        filtered_results = [
+            r for r in filtered_results
+            if r.get("category_main") == category
+            or (isinstance(r.get("category_detail"), list) and category in r.get("category_detail", []))
+        ]
     if city:
         filtered_results = [r for r in filtered_results if r.get("city") == city]
 
