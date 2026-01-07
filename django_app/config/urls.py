@@ -11,18 +11,23 @@ urlpatterns = [
     # 2. 프로메테우스 (모니터링)
     path('', include('django_prometheus.urls')),
 
-    # 3. 유저 API (로그인/회원가입)
+    # 3. 유저 API
     path('api/users/', include('users.urls')),
 
-    # 4. 콘텐츠 API (숏폼 등)
+    # 4. 콘텐츠 API
     path('api/', include('contents.urls')),
+    
+    # 5. 여행 일정 API (Plans)
+    path('api/plans/', include('plans.urls')),
 
-    # 5. 교통 API (항공/기차/지하철)
+    # 6. 교통 API
     path('api/v1/transport/', include('reservations.urls')),
 
-    # 5-1. 예약 API
+    # 7. 예약 API
     path('api/v1/', include('reservations.reservation_urls')),
 
+    # 8. API 문서 (통합!)
+   
     # 6. Django-allauth
     path('accounts/', include('allauth.urls')),
 
