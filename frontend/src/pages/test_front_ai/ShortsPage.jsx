@@ -22,6 +22,7 @@ const uiGlossary = {
     },
     nowPlaying: { kor_Hang: '재생 중', jpn_Jpan: '再生中', zho_Hans: '正在播放' },
     langLabel: { kor_Hang: '언어', jpn_Jpan: '言語', zho_Hans: '语言' },
+    loading: { kor_Hang: '로딩 중...', jpn_Jpan: '読み込み中...', zho_Hans: '加载中...' },
     noShorts: {
         kor_Hang: '준비된 쇼츠가 없습니다.',
         jpn_Jpan: '準備されたショート動画がありません。',
@@ -98,7 +99,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                     lang: item.source_lang || 'N/A',
                 }))
                 setShortforms(mapped)
-            } catch (err) {
+            } catch {
                 setError('Failed to load shorts. Please check the server/connection.')
                 setShortforms([])
             } finally {
@@ -174,7 +175,9 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                 <div className="tfai-feature-grid">
                     {!loading && !error && shortforms.length === 0 && (
                         <div className="tfai-no-shorts" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '48px', marginBottom: '10px' }}>videocam_off</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: '48px', marginBottom: '10px' }}>
+                                videocam_off
+                            </span>
                             <p>{t.noShorts}</p>
                         </div>
                     )}

@@ -442,25 +442,25 @@ class ShortformViewSet(viewsets.ModelViewSet):
         return data
 
     def list(self, request, *args, **kwargs):
-        try:
-            resp = super().list(request, *args, **kwargs)
-            target_lang = request.query_params.get("lang")
-            if target_lang:
+        resp = super().list(request, *args, **kwargs)
+        target_lang = request.query_params.get("lang")
+        if target_lang:
+            try:
                 resp.data = self._apply_translation(resp.data, target_lang)
-            
-            return resp
-        except Exception as e:
-            return Response({"error": str(e), "detail": "Error inside ShortformViewSet.list"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            except Exception as e:
+                logger.exception("Graceful handled: Error in _apply_translation during list")
+                # 실패해도 원본 데이터는 이미 resp.data에 들어있으므로 그대로 반환 가능
+        return resp
 
     def retrieve(self, request, *args, **kwargs):
-        try:
-            resp = super().retrieve(request, *args, **kwargs)
-            target_lang = request.query_params.get("lang")
-            if target_lang:
+        resp = super().retrieve(request, *args, **kwargs)
+        target_lang = request.query_params.get("lang")
+        if target_lang:
+            try:
                 resp.data = self._apply_translation(resp.data, target_lang)
-            return resp
-        except Exception as e:
-            return Response({"error": str(e), "detail": "Error inside ShortformViewSet.retrieve"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            except Exception as e:
+                logger.exception("Graceful handled: Error in _apply_translation during retrieve")
+        return resp
 
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
