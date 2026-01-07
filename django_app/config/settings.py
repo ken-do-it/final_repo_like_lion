@@ -17,7 +17,8 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / '.env')
+# .env 파일을 루트 폴더(00000-final_repo)에서 읽어옵니다
+load_dotenv(BASE_DIR.parent / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -289,4 +290,34 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': r'/api/',
     'COMPONENT_SPLIT_REQUEST': True,
+    # 전역 Authorize 버튼(Bearer JWT) 활성화
+    'COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+                'description': 'Authorization: Bearer <access_token>'
+            }
+        }
+    },
+    # 기본 보안 요구사항: BearerAuth
+    # (로그인/회원가입 등 공개 엔드포인트는 각 View에서 @extend_schema(auth=[])로 해제 가능)
+    'SECURITY': [
+        {'BearerAuth': []}
+    ],
+}
+
+# TAGO API Settings (국토교통부 항공 API)
+TAGO_SERVICE_KEY = os.getenv('TAGO_SERVICE_KEY', '')
+
+# 한국공항공사 API Settings
+KAC_SERVICE_KEY = os.getenv('KAC_SERVICE_KEY', '')
+
+# 토스페이먼츠 Settings
+TOSS_PAYMENTS = {
+    'CLIENT_KEY': os.getenv('TOSS_CLIENT_KEY', 'test_ck_default'),
+    'SECRET_KEY': os.getenv('TOSS_SECRET_KEY', 'test_sk_default'),
+    'SUCCESS_URL': os.getenv('TOSS_SUCCESS_URL', 'http://localhost:3000/payment/success'),
+    'FAIL_URL': os.getenv('TOSS_FAIL_URL', 'http://localhost:3000/payment/fail'),
 }
