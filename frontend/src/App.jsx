@@ -4,7 +4,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom'
 import MainPage from './pages/MainPage'
 import SearchPage from './pages/SearchPage'
 import GeoImageUploader from './pages/GeoImageUploader'
-import RoadviewGame from './pages/RoadviewGame' // ★ [NEW] Missing import fixed
+import RoadviewGame from './pages/RoadviewGame'
 import TestFrontAI from './pages/test_front_ai/TestFrontAI'
 import './App.css'
 
@@ -113,6 +113,7 @@ function App() {
             <Route path="/test-front" element={<TestFrontAI />} />
           </Routes>
         </main>
+
       </div>
     </div>
   )

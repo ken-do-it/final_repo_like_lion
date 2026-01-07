@@ -55,41 +55,57 @@ async def search_places(
     query: str = Query(..., min_length=1, description="검색어"),
     category: Optional[str] = Query(None, description="카테고리 필터"),
     city: Optional[str] = Query(None, description="도시 필터"),
-    limit: int = Query(20, ge=1, le=100, description="결과 개수")
+    page: int = Query(1, ge=1, description="페이지 번호")
 ):
     """
     장소 검색 (카카오맵 + 구글맵 통합)
+
+    페이지네이션:
+    - page: 페이지 번호 (1부터 시작)
+    - 페이지당 15개 고정
+
+    참고: API 특성상 총 결과 수는 제한적일 수 있음 (카카오+구글 합쳐서 최대 ~45개)
     """
-    results = await search_places_hybrid(query, category, city, limit)
+    limit = 15  # 페이지당 개수 고정
+
+    # API에서 더 많은 결과를 가져옴 (페이지네이션 대비)
+    fetch_limit = page * limit + 10  # 여유분 포함
+
+    all_results = await search_places_hybrid(query, category, city, fetch_limit)
+
+    # 페이지네이션 적용
+    offset = (page - 1) * limit
+    paginated_results = all_results[offset:offset + limit]
 
     return {
         "query": query,
-        "count": len(results),
-        "results": results
+        "page": page,
+        "limit": limit,
+        "total": len(all_results),  # 필터링 후 전체 개수
+        "count": len(paginated_results),  # 현재 페이지 개수
+        "results": paginated_results
     }
 
 
 @router.get("/autocomplete")
 async def autocomplete_places(
     q: str = Query(..., min_length=2, description="검색어 (최소 2글자)"),
-    limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db)
+    limit: int = Query(10, ge=1, le=50)
 ):
     """
-    장소 자동완성
+    장소 자동완성 (카카오 API 실시간 조회)
+    타이핑하는 동안 실시간으로 장소명 추천
     """
-    # DB에서 이름으로 검색
-    places = db.query(Place).filter(
-        Place.name.ilike(f"%{q}%")
-    ).limit(limit).all()
+    # 카카오 API로 실시간 검색
+    kakao_results = await search_kakao_places(q, limit=limit)
 
     suggestions = [
         PlaceAutocompleteSuggestion(
-            name=p.name,
-            address=p.address,
-            city=p.city
+            name=result["name"],
+            address=result["address"],
+            city=result["city"]
         )
-        for p in places
+        for result in kakao_results
     ]
 
     return {"suggestions": suggestions}
@@ -215,20 +231,37 @@ def get_place_detail_by_db_id(
 @router.get("/{place_id}/reviews")
 def get_place_reviews(
     place_id: int,
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 개수"),
+    order_by: str = Query("latest", description="정렬: latest(최신순), rating_desc(별점높은순), rating_asc(별점낮은순)"),
+    has_image: bool = Query(False, description="이미지 첨부 리뷰만 보기"),
     db: Session = Depends(get_db)
 ):
     """
-    장소 리뷰 목록 조회
+    장소 리뷰 목록 조회 (필터링 및 정렬 가능)
+
+    - order_by: latest(최신순, 기본값) / rating_desc(별점높은순) / rating_asc(별점낮은순)
+    - has_image: True(이미지 있는 리뷰만) / False(전체 리뷰, 기본값)
     """
     offset = (page - 1) * limit
 
-    reviews = db.query(PlaceReview).filter(
-        PlaceReview.place_id == place_id
-    ).order_by(
-        PlaceReview.created_at.desc()
-    ).offset(offset).limit(limit).all()
+    # 기본 쿼리
+    query = db.query(PlaceReview).filter(PlaceReview.place_id == place_id)
+
+    # 이미지 필터
+    if has_image:
+        query = query.filter(PlaceReview.image_url.isnot(None))
+
+    # 정렬
+    if order_by == "rating_desc":
+        query = query.order_by(PlaceReview.rating.desc(), PlaceReview.created_at.desc())
+    elif order_by == "rating_asc":
+        query = query.order_by(PlaceReview.rating.asc(), PlaceReview.created_at.desc())
+    else:  # latest (기본값)
+        query = query.order_by(PlaceReview.created_at.desc())
+
+    # 페이지네이션
+    reviews = query.offset(offset).limit(limit).all()
 
     # 사용자 닉네임 조회
     review_data = []
@@ -245,7 +278,11 @@ def get_place_reviews(
             created_at=review.created_at
         ))
 
-    total = db.query(PlaceReview).filter(PlaceReview.place_id == place_id).count()
+    # total도 같은 필터 적용
+    total_query = db.query(PlaceReview).filter(PlaceReview.place_id == place_id)
+    if has_image:
+        total_query = total_query.filter(PlaceReview.image_url.isnot(None))
+    total = total_query.count()
 
     return {
         "page": page,
