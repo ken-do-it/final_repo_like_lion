@@ -51,7 +51,8 @@ class MSPaymentCreateView(APIView):
         "failUrl": "http://localhost:3000/payment/fail"
     }
     """
-    permission_classes = [IsAuthenticated]
+    # 인증: DEBUG 모드에서는 테스트 유저 자동 사용, 배포에서는 로그인 필수
+    permission_classes = []  # 메서드 내부에서 조건부 인증 체크
 
     @extend_schema(
         tags=['결제'],
@@ -86,6 +87,24 @@ class MSPaymentCreateView(APIView):
     )
     def post(self, request):
         """결제 생성"""
+        # DEBUG 모드에서만: 로그인 안 한 경우 자동으로 테스트 유저 사용
+        from django.conf import settings
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        if settings.DEBUG and request.user.is_anonymous:
+            # 개발 환경에서만 첫 번째 슈퍼유저를 자동으로 사용 (테스트용)
+            test_user = User.objects.filter(is_superuser=True).first()
+            if not test_user:
+                return Response(
+                    {"error": "테스트를 위해 슈퍼유저를 먼저 생성해주세요. (python manage.py createsuperuser)"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user = test_user
+        else:
+            # 배포 환경이거나 로그인한 경우: 정상적인 인증 필요
+            user = request.user
+
         # 1. 요청 데이터 검증
         serializer = MSPaymentCreateRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -99,7 +118,7 @@ class MSPaymentCreateView(APIView):
             try:
                 reservation = Reservation.objects.get(
                     id=reservation_id,
-                    user=request.user
+                    user=user
                 )
             except Reservation.DoesNotExist:
                 return Response(
@@ -111,7 +130,7 @@ class MSPaymentCreateView(APIView):
         try:
             service = MSTossPaymentsService()
             payment = service.ms_create_payment(
-                user=request.user,
+                user=user,
                 amount=validated_data['amount'],
                 order_name=validated_data['orderName'],
                 reservation=reservation
@@ -169,7 +188,8 @@ class MSPaymentConfirmView(APIView):
         "data": { 토스페이먼츠 승인 응답 }
     }
     """
-    permission_classes = [IsAuthenticated]
+    # 인증: DEBUG 모드에서는 테스트 허용, 배포에서는 로그인 필수
+    permission_classes = []  # 메서드 내부에서 조건부 인증 체크
 
     @extend_schema(
         tags=['결제'],
@@ -256,6 +276,8 @@ class MSPaymentCancelView(APIView):
         "data": { 토스페이먼츠 취소 응답 }
     }
     """
+    # 인증 필수: 로그인한 사용자만 사용 가능
+    # DEBUG 모드에서는 자동으로 테스트 유저 사용
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -343,6 +365,8 @@ class MSPaymentDetailView(APIView):
         "createdAt": "2025-01-06T12:00:00Z"
     }
     """
+    # 인증 필수: 로그인한 사용자만 사용 가능
+    # DEBUG 모드에서는 자동으로 테스트 유저 사용
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -372,3 +396,50 @@ class MSPaymentDetailView(APIView):
             return Response({
                 "error": {"message": "결제 정보를 찾을 수 없습니다."}
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+# ========================================
+# 테스트용 HTML 페이지 뷰
+# ========================================
+from django.views.generic import TemplateView
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
+
+class MSPaymentTestView(TemplateView):
+    """
+    결제 테스트 페이지
+
+    GET /api/v1/payments/test
+
+    [설명]
+    토스페이먼츠 결제를 테스트할 수 있는 간단한 HTML 페이지입니다.
+    """
+    template_name = 'reservations/payment_test.html'
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MSPaymentSuccessPageView(TemplateView):
+    """
+    결제 성공 페이지
+
+    GET /api/v1/payments/success
+
+    [설명]
+    토스페이먼츠 결제 성공 후 리다이렉트되는 페이지입니다.
+    자동으로 결제 승인 API를 호출합니다.
+    """
+    template_name = 'reservations/payment_success.html'
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MSPaymentFailPageView(TemplateView):
+    """
+    결제 실패 페이지
+
+    GET /api/v1/payments/fail
+
+    [설명]
+    토스페이먼츠 결제 실패 시 리다이렉트되는 페이지입니다.
+    """
+    template_name = 'reservations/payment_fail.html'

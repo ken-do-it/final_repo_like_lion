@@ -4,12 +4,16 @@
 Base: /api/v1/
 """
 from django.urls import path
+from django.conf import settings
 from .views.reservation import MSReservationCreateView
 from .views.payment import (
     MSPaymentCreateView,
     MSPaymentConfirmView,
     MSPaymentCancelView,
     MSPaymentDetailView,
+    MSPaymentTestView,
+    MSPaymentSuccessPageView,
+    MSPaymentFailPageView,
 )
 
 app_name = 'reservations_api'
@@ -66,3 +70,35 @@ urlpatterns = [
         name='payment-detail'
     ),
 ]
+
+# ========================================
+# 테스트용 HTML 페이지 (개발 환경에서만 활성화)
+# ========================================
+# DEBUG 모드일 때만 테스트 페이지를 사용할 수 있어요
+# 배포 환경(DEBUG=False)에서는 자동으로 비활성화됩니다
+if settings.DEBUG:
+    urlpatterns += [
+        # 결제 테스트 페이지
+        # GET /api/v1/payments/test
+        path(
+            'payments/test',
+            MSPaymentTestView.as_view(),
+            name='payment-test'
+        ),
+
+        # 결제 성공 페이지
+        # GET /api/v1/payments/success
+        path(
+            'payments/success',
+            MSPaymentSuccessPageView.as_view(),
+            name='payment-success-page'
+        ),
+
+        # 결제 실패 페이지
+        # GET /api/v1/payments/fail
+        path(
+            'payments/fail',
+            MSPaymentFailPageView.as_view(),
+            name='payment-fail-page'
+        ),
+    ]

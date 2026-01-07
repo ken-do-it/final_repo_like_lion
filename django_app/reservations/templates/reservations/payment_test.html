@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>토스페이먼츠 결제 테스트</title>
+    <style>
+        /* 기본 스타일 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .price-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .price-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .price-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #1976d2;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            list-style: none;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .info-box li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .info-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #2196f3;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .error-message p {
+            color: #c62828;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💳 토스페이먼츠 결제 테스트</h1>
+        <p class="subtitle">항공권 결제 시뮬레이션</p>
+
+        <div class="info-box">
+            <h3>📌 테스트 안내</h3>
+            <ul>
+                <li>실제 결제가 이루어지지 않습니다</li>
+                <li>테스트 환경에서만 동작합니다</li>
+                <li>로그인이 필요합니다</li>
+            </ul>
+        </div>
+
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="orderName">주문명</label>
+                <input
+                    type="text"
+                    id="orderName"
+                    placeholder="예: 김포→제주 항공권"
+                    value="김포→제주 항공권 (테스트)"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="amount">결제 금액 (원)</label>
+                <input
+                    type="number"
+                    id="amount"
+                    placeholder="금액을 입력하세요"
+                    value="65000"
+                    min="100"
+                    step="1000"
+                    required
+                >
+            </div>
+
+            <div class="price-display">
+                <div class="price-label">최종 결제 금액</div>
+                <div class="price-value" id="priceDisplay">65,000원</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="payButton">
+                결제하기
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>결제 준비 중...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <p id="errorText"></p>
+        </div>
+    </div>
+
+    <!-- 토스페이먼츠 SDK -->
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+
+    <script>
+        // 금액 표시 업데이트
+        const amountInput = document.getElementById('amount');
+        const priceDisplay = document.getElementById('priceDisplay');
+
+        amountInput.addEventListener('input', function() {
+            const amount = parseInt(this.value) || 0;
+            priceDisplay.textContent = amount.toLocaleString() + '원';
+        });
+
+        // 결제 폼 제출
+        const form = document.getElementById('paymentForm');
+        const payButton = document.getElementById('payButton');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 에러 메시지 숨기기
+            errorMessage.classList.remove('active');
+
+            // 로딩 시작
+            payButton.disabled = true;
+            payButton.textContent = '처리 중...';
+            loading.classList.add('active');
+
+            const orderName = document.getElementById('orderName').value;
+            const amount = parseInt(document.getElementById('amount').value);
+
+            try {
+                // 1. 백엔드에서 결제 정보 생성
+                const response = await fetch('/api/v1/payments/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 실제 환경에서는 JWT 토큰을 여기에 추가해야 합니다
+                        // 'Authorization': 'Bearer ' + accessToken,
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        orderName: orderName
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('결제 생성 실패: ' + response.status);
+                }
+
+                const data = await response.json();
+
+                console.log('결제 정보:', data);
+
+                // 2. 토스페이먼츠 위젯 호출
+                const tossPayments = TossPayments(data.clientKey);
+
+                // 결제 위젯 실행
+                await tossPayments.requestPayment('카드', {
+                    amount: data.amount,
+                    orderId: data.orderId,
+                    orderName: data.orderName,
+                    successUrl: window.location.origin + '/api/v1/payments/success',
+                    failUrl: window.location.origin + '/api/v1/payments/fail',
+                    customerName: '테스트 사용자',
+                });
+
+            } catch (error) {
+                console.error('결제 오류:', error);
+
+                // 에러 표시
+                errorText.textContent = error.message || '결제 처리 중 오류가 발생했습니다.';
+                errorMessage.classList.add('active');
+
+                // 로딩 종료
+                payButton.disabled = false;
+                payButton.textContent = '결제하기';
+                loading.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
