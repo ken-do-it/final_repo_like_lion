@@ -1,7 +1,7 @@
 import logging
 import os
 from fastapi import FastAPI, HTTPException
-from translation.router import router as translation_router  # AI 번역 라우터
+# from translation.router import router as translation_router  # AI 번역 라우터 (Moved)
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any
@@ -49,12 +49,12 @@ app.add_middleware(
 model = None
 
 # ---------------------------------------------------------
-# ★ DB 설정 (형님 설정 유지)
+# ★ DB 설정 
 # ---------------------------------------------------------
-DB_HOST = "db"
-DB_NAME = "korea_travel_db"
-DB_USER = "myuser"
-DB_PASS = "mypassword"
+DB_HOST = os.getenv("DB_HOST", "db")
+DB_NAME = os.getenv("DB_NAME", "korea_travel_db")
+DB_USER = os.getenv("DB_USER", "myuser")
+DB_PASS = os.getenv("DB_PASSWORD", "mypassword")
 
 @app.on_event("startup")
 async def startup_event():
@@ -84,7 +84,10 @@ def get_db_connection():
 # ---------------------------------------------------------
 # AI 번역 라우터 등록 (Hugging Face Inference API)
 # ---------------------------------------------------------
-app.include_router(translation_router, prefix="/api/ai", tags=["translation"])
+# ---------------------------------------------------------
+# AI 번역 라우터 등록 (Removed: Moved to fastapi_ai_translation)
+# ---------------------------------------------------------
+# app.include_router(translation_router, prefix="/api/ai", tags=["translation"])
 
 
 

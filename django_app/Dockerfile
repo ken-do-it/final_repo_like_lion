@@ -16,4 +16,4 @@ COPY . /app/
 
 # 6. 실행 명령어 (임시)
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
-CMD ["python", "--version"]
+#CMD ["python", "--version"]
