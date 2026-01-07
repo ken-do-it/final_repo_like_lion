@@ -33,6 +33,7 @@ class MSFlightSearchView(APIView):
     permission_classes = [AllowAny]  # 비회원도 접근 가능
 
     @extend_schema(
+        tags=['항공'],
         request=MSFlightSearchRequestSerializer,
         responses={200: MSFlightSearchResponseSerializer},
         description="항공편 검색 API - 출발지, 도착지, 날짜 등을 입력하여 항공편을 검색합니다.",
@@ -131,6 +132,12 @@ class MSFlightDetailView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=['항공'],
+        responses={200: MSFlightDetailResponseSerializer},
+        summary="항공편 상세 조회",
+        description="항공편의 상세 정보(좌석, 수하물, 환불규정 등)를 조회합니다."
+    )
     def get(self, request, offer_id):
         """
         항공편 상세 정보 조회
@@ -210,6 +217,11 @@ class MSAirportListView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=['항공'],
+        summary="공항 목록 조회",
+        description="국내 주요 공항 목록을 조회합니다. 프론트엔드에서 공항 선택 시 사용합니다."
+    )
     def get(self, request):
         """
         공항 목록 조회

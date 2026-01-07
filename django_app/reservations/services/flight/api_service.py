@@ -172,7 +172,7 @@ class MSFlightAPIService:
             "depAirportId": dep_airport_id,
             "arrAirportId": arr_airport_id,
             "depPlandTime": dep_date.strftime("%Y%m%d"),
-            "numOfRows": 50,  # 최대 50개 조회
+            "numOfRows": 15,  # 최대 15개 조회 (왕복: 15x15=225개 조합)
             "pageNo": 1,
             "_type": "json"
         }
@@ -277,8 +277,15 @@ class MSFlightAPIService:
                 results.append(offer)
         else:
             # 왕복: 가는편 x 오는편 조합
+            # [안전장치] 너무 많은 조합 방지 (최대 200개)
+            max_results = 200
             for out_flight in outbound_flights:
                 for in_flight in inbound_flights:
+                    # 최대 개수에 도달하면 중단
+                    if len(results) >= max_results:
+                        logger.warning(f"[주의] 왕복 조합이 {max_results}개를 초과하여 중단했습니다.")
+                        break
+
                     offer = self._ms_combine_roundtrip_offer(
                         out_flight,
                         in_flight,
@@ -287,6 +294,10 @@ class MSFlightAPIService:
                         infants
                     )
                     results.append(offer)
+
+                # 외부 루프도 중단
+                if len(results) >= max_results:
+                    break
 
         return results
 

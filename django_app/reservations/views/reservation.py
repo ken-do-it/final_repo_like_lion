@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema, OpenApiExample
 import logging
 
 from ..serializers.reservation import (
@@ -34,6 +35,51 @@ class MSReservationCreateView(APIView):
     """
     permission_classes = [IsAuthenticated]  # 로그인 필수
 
+    # Swagger(스웨거)에게 이 API가 어떤 JSON을 받아/내보내는지 알려줍니다.
+    # 이렇게 해야 Swagger UI에서 요청 바디 입력창이 생겨요!
+    @extend_schema(
+        tags=['항공'],
+        request=MSReservationCreateRequestSerializer,
+        responses={201: MSReservationCreateResponseSerializer},
+        summary="항공편 예약 생성",
+        description=(
+            "선택한 항공편(offerId)와 승객/연락처/요청사항/좌석선택 정보를 받아 예약을 생성합니다.\n"
+            "인증이 필요합니다(로그인 필요)."
+        ),
+        examples=[
+            OpenApiExample(
+                name="ReservationCreateExample",
+                value={
+                    "offerId": "abc123",
+                    "tripType": "ONEWAY",
+                    "cabinClass": "ECONOMY",
+                    "passengers": [
+                        {
+                            "passengerType": "ADT",
+                            "fullName": "홍길동",
+                            "birthDate": "1990-01-01",
+                            "passportNo": "M12345678"
+                        }
+                    ],
+                    "contacts": {
+                        "contactEmail": "test@example.com",
+                        "contactPhone": "010-1234-5678"
+                    },
+                    "requests": {
+                        "specialRequest": "채식 기내식"
+                    },
+                    "seatSelections": [
+                        {
+                            "direction": "OUTBOUND",
+                            "segmentNo": 1,
+                            "seatNo": "12A"
+                        }
+                    ]
+                },
+                request_only=True,
+            )
+        ],
+    )
     def post(self, request):
         """
         예약 생성
