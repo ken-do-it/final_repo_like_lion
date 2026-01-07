@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 
 # 같은 디렉토리의 database.py에서 Base import
-from .database import Base
+from database import Base
 
 
 class User(Base):

@@ -7,22 +7,23 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import date
 
-from .models import (
+from models import (
     Place, PlaceReview, PlaceBookmark, LocalBadge,
     LocalColumn, LocalColumnSection, LocalColumnSectionImage, User
 )
-from .schemas import (
+from schemas import (
     PlaceSearchRequest, PlaceSearchResult, PlaceAutocompleteRequest,
     PlaceAutocompleteSuggestion, PlaceDetailResponse, ReviewCreateRequest,
     ReviewResponse, BookmarkResponse, LocalBadgeAuthRequest, LocalBadgeAuthResponse,
     LocalBadgeStatusResponse, LocalColumnCreateRequest, LocalColumnResponse,
     LocalColumnListResponse, CityContentResponse, PopularCityResponse
 )
-from .service import (
+from service import (
     search_places_hybrid, authenticate_local_badge, check_local_badge_active,
-    update_place_review_stats, update_place_thumbnails
+    update_place_review_stats, update_place_thumbnails, get_or_create_place_by_api_id,
+    search_kakao_places, search_google_places, get_google_place_details
 )
-from .database import get_db
+from database import get_db
 
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])
 
@@ -96,13 +97,110 @@ async def autocomplete_places(
 
 # ==================== 장소 상세 ====================
 
+@router.get("/detail")
+async def get_place_detail_by_api_id(
+    place_api_id: str = Query(..., description="외부 API의 장소 ID"),
+    provider: str = Query("KAKAO", description="제공자 (KAKAO, GOOGLE)"),
+    name: str = Query(..., description="장소명 (검색용)"),
+    db: Session = Depends(get_db)
+):
+    """
+    장소 상세 정보 조회 (외부 API ID 기반)
+    DB에 없으면 외부 API에서 가져와서 저장 (온디맨드 방식)
+
+    반환:
+    - DB 저장 정보: name, address, latitude, longitude, category 등
+    - 동적 정보 (실시간 API 호출): phone, place_url, opening_hours
+    """
+    # 1. DB 조회 또는 생성 (기본 정보)
+    place = await get_or_create_place_by_api_id(
+        db=db,
+        place_api_id=place_api_id,
+        provider=provider,
+        name_hint=name
+    )
+
+    if not place:
+        raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다")
+
+    # 2. 동적 정보 API 호출
+    phone = ""
+    place_url = ""
+    opening_hours = []
+
+    if provider == "KAKAO":
+        # 카카오: 검색 API 직접 호출해서 phone, place_url 가져오기
+        import httpx
+        import os
+        kakao_api_key = os.getenv("YJ_KAKAO_REST_API_KEY", "")
+        if kakao_api_key:
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    response = await client.get(
+                        "https://dapi.kakao.com/v2/local/search/keyword.json",
+                        headers={"Authorization": f"KakaoAK {kakao_api_key}"},
+                        params={"query": name, "size": 5}
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        for doc in data.get("documents", []):
+                            if doc.get("id") == place_api_id:
+                                phone = doc.get("phone", "")
+                                place_url = doc.get("place_url", "")
+                                break
+            except Exception as e:
+                print(f"카카오 상세 정보 조회 실패: {e}")
+
+        # 구글에서 영업시간 가져오기 (장소명 + 주소로 검색)
+        google_results = await search_google_places(f"{place.name} {place.address}", limit=3)
+        if google_results:
+            # 첫 번째 결과의 place_id로 상세 정보 조회
+            google_place_id = google_results[0].get("place_api_id")
+            if google_place_id:
+                google_details = await get_google_place_details(google_place_id)
+                if google_details:
+                    opening_hours = google_details.get("opening_hours", [])
+
+    elif provider == "GOOGLE":
+        # 구글: Details API에서 전부 가져오기
+        google_details = await get_google_place_details(place_api_id)
+        if google_details:
+            phone = google_details.get("phone", "")
+            opening_hours = google_details.get("opening_hours", [])
+            place_url = google_details.get("website", "")
+
+    # 3. DB 데이터 + 동적 정보 합치기
+    return {
+        # DB 정보
+        "id": place.id,
+        "provider": place.provider,
+        "place_api_id": place.place_api_id,
+        "name": place.name,
+        "address": place.address,
+        "city": place.city,
+        "latitude": float(place.latitude),
+        "longitude": float(place.longitude),
+        "category_main": place.category_main,
+        "category_detail": place.category_detail,
+        "thumbnail_urls": place.thumbnail_urls,
+        "average_rating": float(place.average_rating) if place.average_rating else 0.0,
+        "review_count": place.review_count,
+        "created_at": place.created_at,
+        "updated_at": place.updated_at,
+        # 동적 정보 (DB 저장 안함)
+        "phone": phone,
+        "place_url": place_url,
+        "opening_hours": opening_hours
+    }
+
+
 @router.get("/{place_id}", response_model=PlaceDetailResponse)
-def get_place_detail(
+def get_place_detail_by_db_id(
     place_id: int,
     db: Session = Depends(get_db)
 ):
     """
-    장소 상세 정보 조회
+    장소 상세 정보 조회 (DB ID 기반)
     """
     place = db.query(Place).filter(Place.id == place_id).first()
 
