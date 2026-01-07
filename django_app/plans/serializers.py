@@ -77,25 +77,45 @@ class PlanDetailCreateSerializer(serializers.ModelSerializer):
     """날짜별 장소 생성용"""
     
     images = PlanDetailImageCreateSerializer(many=True, required=False)
-    
+    place_name = serializers.CharField(required=False, write_only=True)
+
     class Meta:
         model = PlanDetail
-        fields = ['place', 'date', 'description', 'order_index', 'images']
+        fields = ['place', 'date', 'description', 'order_index', 'images','place_name']
     
+    def validate(self, data):
+        """place와 place_name 중 하나만 있어야 함"""
+        place = data.get('place')
+        place_name = data.get('place_name')
+
+        if not place and not place_name:
+            raise serializers.ValidationError(
+                "place 또는 place_name 중 하나는 반드시 제공해야 합니다."
+            )
+
+        if place and place_name:
+            raise serializers.ValidationError(
+                "place와 place_name을 동시에 제공할 수 없습니다."
+            )
+
+        return data
+
     def create(self, validated_data):
         # images 데이터 분리
         images_data = validated_data.pop('images', [])
-        
+        # place_name은 views.py에서 처리하므로 제거
+        validated_data.pop('place_name', None)
+
         # PlanDetail 생성
         plan_detail = PlanDetail.objects.create(**validated_data)
-        
+
         # PlanDetailImage 생성
         for image_data in images_data:
             PlanDetailImage.objects.create(
                 detail=plan_detail,
                 **image_data
             )
-        
+
         return plan_detail
 
 

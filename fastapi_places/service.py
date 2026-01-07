@@ -180,6 +180,44 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
         return []
 
 
+async def get_google_place_details(place_id: str) -> Optional[Dict]:
+    """
+    구글 Place Details API로 영업시간 등 상세 정보 조회
+    """
+    if not GOOGLE_MAPS_API_KEY:
+        return None
+
+    url = "https://maps.googleapis.com/maps/api/place/details/json"
+    params = {
+        "place_id": place_id,
+        "fields": "opening_hours,formatted_phone_number,website",
+        "key": GOOGLE_MAPS_API_KEY,
+        "language": "ko"
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("status") != "OK":
+                return None
+
+            result = data.get("result", {})
+            opening_hours = result.get("opening_hours", {})
+
+            return {
+                "opening_hours": opening_hours.get("weekday_text", []),
+                "phone": result.get("formatted_phone_number", ""),
+                "website": result.get("website", "")
+            }
+
+    except Exception as e:
+        print(f"❌ 구글 Place Details API 에러: {e}")
+        return None
+
+
 async def search_places_hybrid(query: str, category: Optional[str] = None,
                                 city: Optional[str] = None, limit: int = 20) -> List[Dict]:
     """
