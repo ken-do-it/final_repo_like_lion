@@ -118,20 +118,25 @@ def translate_and_cache(text, entity_type, entity_id, field, source_lang, target
         entry.save(update_fields=["last_used_at"])
         return entry.translated_text
 
-    translated_text, provider = call_fastapi_translate(text, source_lang, target_lang)
-    TranslationEntry.objects.create(
-        entity_type=entity_type,
-        entity_id=entity_id,
-        field=field,
-        source_lang=source_lang,
-        target_lang=target_lang,
-        source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
-        translated_text=translated_text,
-        provider=provider or "fastapi",
-        model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
-        last_used_at=timezone.now(),
-    )
-    return translated_text
+    try:
+        translated_text, provider = call_fastapi_translate(text, source_lang, target_lang)
+        TranslationEntry.objects.create(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            field=field,
+            source_lang=source_lang,
+            target_lang=target_lang,
+            source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            translated_text=translated_text,
+            provider=provider or "fastapi",
+            model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+            last_used_at=timezone.now(),
+        )
+        return translated_text
+    except Exception as e:
+        logger.error(f"Translation failed for {entity_type}:{entity_id}:{field}. Error: {e}")
+        # 번역 실패 시 원본 텍스트 반환 (500 에러 방지)
+        return text
 
 
 def save_video_file(uploaded_file):
@@ -246,52 +251,215 @@ class ShortformViewSet(viewsets.ModelViewSet):
     def _apply_translation(self, data, target_lang):
         """
         serializer.data(dict 또는 list)에 title/content 번역 필드를 추가.
+        (Batch API 사용 버전)
         """
         if not target_lang:
             return data
 
-        def enrich(item):
+        # 1. 데이터 정규화 (리스트로 변환)
+        items = []
+        if isinstance(data, dict):
+            if 'results' in data and isinstance(data['results'], list):
+                items = data['results']
+            else:
+                items = [data]
+        elif isinstance(data, list):
+            items = data
+        else:
+            return data
+        
+        if not items:
+            return data
+
+        # 2. 번역 대상 수집
+        # to_translate: list of dict {'item_idx': i, 'type': 'title'|'content', 'text': str, 'original_item': item}
+        to_translate_tasks = []
+        
+        # 결과 매핑을 위한 임시 저장소 (cache_map[hash] = translated_text)
+        # 키는 (entity_type, entity_id, field, target_lang)가 정확하겠지만
+        # 여기서는 간단히 나중에 순서대로 채워넣거나, map을 미리 만들어둔다.
+        # 편의상 "item 내부"에 직접 값을 할당하는 식으로 한다.
+        
+        # Batch 요청을 위한 준비
+        # requests_map: needed_text -> list of (item, field_name)
+        # 이렇게 하면 같은 텍스트가 여러번 나와도 한번만 번역함.
+        requests_map = {} 
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            
             src_lang = item.get("source_lang") or "kor_Hang"
-            # NEW: 언어가 같으면 원본 그대로 사용
             if src_lang == target_lang:
                 item["title_translated"] = item.get("title", "")
                 item["content_translated"] = item.get("content", "")
-                return item
+                continue
 
-            item["title_translated"] = translate_and_cache(
-                item.get("title", ""),
-                entity_type="shortform",
-                entity_id=item.get("id") or 0,
-                field="title",
-                source_lang=src_lang,
-                target_lang=target_lang,
-            )
-            item["content_translated"] = translate_and_cache(
-                item.get("content", "") or "",
-                entity_type="shortform",
-                entity_id=item.get("id") or 0,
-                field="content",
-                source_lang=src_lang,
-                target_lang=target_lang,
-            )
-            return item
+            entity_id = item.get("id") or 0
+            
+            # Title
+            t_text = item.get("title") or ""
+            if t_text:
+                key = ("shortform", entity_id, "title", target_lang)
+                if key not in requests_map:
+                    requests_map[key] = {'text': t_text, 'consumers': []}
+                requests_map[key]['consumers'].append((item, "title_translated"))
+            else:
+                item["title_translated"] = ""
 
-        if isinstance(data, list):
-            return [enrich(i) for i in data]
-        return enrich(data)
+            # Content
+            c_text = item.get("content") or ""
+            if c_text:
+                key = ("shortform", entity_id, "content", target_lang)
+                if key not in requests_map:
+                    requests_map[key] = {'text': c_text, 'consumers': []}
+                requests_map[key]['consumers'].append((item, "content_translated"))
+            else:
+                item["content_translated"] = ""
+
+        if not requests_map:
+            return data
+
+        # 3. DB 캐시 조회
+        # WHERE (entity_type, entity_id, field, target_lang) IN (...)
+        # Django ORM으로 tuple in query가 복잡하므로, 
+        # 간단히 loop 돌며 확인커나, id list로 가져와서 메모리 필터링한다.
+        # 여기선 간단히 쿼리 최적화보다 로직 정확성을 위해 '필요한 키' 목록을 순회하며 확인한다.
+        # (서비스 규모가 커지면 IN 쿼리 최적화 필요)
+        
+        # 개선: 한번에 가져오기 위해 Q 객체 생성
+        q_objs = Q()
+        for (etype, eid, field, tlang) in requests_map.keys():
+            q_objs |= Q(entity_type=etype, entity_id=eid, field=field, target_lang=tlang)
+        
+        cached_entries = TranslationEntry.objects.filter(q_objs)
+        # Memory map for quick lookup
+        entry_map = {
+            (e.entity_type, e.entity_id, e.field, e.target_lang): e 
+            for e in cached_entries
+        }
+
+        # 4. 캐시 없는 것들 분류 (API 호출 대상)
+        api_call_texts = []
+        api_call_keys = [] # 나중에 순서대로 매핑하기 위함
+
+        for key, info in requests_map.items():
+            entry = entry_map.get(key)
+            if entry:
+                # Cache Hit
+                translated = entry.translated_text
+                # Update Last Used
+                # (성능상 bulk update가 좋지만 여기선 skip or simple update)
+                # entry.last_used_at = timezone.now(); entry.save() # 생략 가능
+                
+                # Apply to items
+                for (it, field_name) in info['consumers']:
+                    it[field_name] = translated
+            else:
+                # Cache Miss -> API Call Needed
+                api_call_texts.append(info['text'])
+                api_call_keys.append(key)
+
+        # 5. Batch API 호출 (한번만!)
+        if api_call_texts:
+            # source_lang은 item마다 다를 수 있지만, 
+            # 현재 로직상 하나의 Batch 요청은 source_lang이 통일되어야 함.
+            # 하지만 여기서는 '다국어 섞인 리스트'일 수 있음.
+            # call_fastapi_translate_batch spec을 보면 source_lang을 하나만 받음.
+            # 따라서 source_lang 별로 그룹핑해야 완벽함.
+            # *Assumption*: 숏폼 리스트는 대부분 같은 언어(예: 한국어)일 확률이 높음.
+            # 만약 섞여 있다면 그룹핑 로직이 필요.
+            
+            # 그룹핑 추가: (source_lang) -> list of keys
+            batches_by_lang = {}
+             # requests_map 순회하며 source_lang 확인 필요
+             # 하지만 requests_map key에는 source_lang이 없음. 
+             # -> item에서 가져와야 함. consumers[0]의 item을 참조.
+            
+            pending_keys = []
+            
+            # 재분류
+            for key in api_call_keys:
+                # Find source lang from one consumer
+                # requests_map[key]['consumers'][0][0] is item
+                item = requests_map[key]['consumers'][0][0]
+                src = item.get("source_lang") or "kor_Hang"
+                
+                if src not in batches_by_lang:
+                    batches_by_lang[src] = {'texts': [], 'keys': []}
+                
+                batches_by_lang[src]['texts'].append(requests_map[key]['text'])
+                batches_by_lang[src]['keys'].append(key)
+
+            # 각 언어별로 배치 호출
+            new_entries = []
+            
+            for src_lang, batch_data in batches_by_lang.items():
+                texts = batch_data['texts']
+                keys = batch_data['keys']
+                
+                try:
+                    translations, provider = call_fastapi_translate_batch(texts, src_lang, target_lang)
+                except Exception as e:
+                    logger.error(f"Batch translation error for {src_lang}->{target_lang}: {e}")
+                    # 실패 시 원본 그대로 채움
+                    translations = texts # Fallback to original
+                    provider = "error_fallback"
+
+                # 결과 매핑 및 DB 저장 준비
+                for i, t_text in enumerate(translations):
+                    if i >= len(keys): break
+                    key = keys[i]
+                    original_text = texts[i]
+                    
+                    # Apply to consumers
+                    for (it, field_name) in requests_map[key]['consumers']:
+                        it[field_name] = t_text
+                    
+                    if provider == "error_fallback":
+                         # 번역 실패 시 캐시 저장하지 않음 (다음 요청 때 재시도)
+                         continue
+
+                    # Prepare Entry
+                    (etype, eid, fld, tlang) = key
+                    new_entries.append(TranslationEntry(
+                        entity_type=etype,
+                        entity_id=eid,
+                        field=fld,
+                        source_lang=src_lang,
+                        target_lang=tlang,
+                        source_hash=hashlib.sha256(original_text.encode("utf-8")).hexdigest(),
+                        translated_text=t_text,
+                        provider=provider,
+                        model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+                        last_used_at=timezone.now(),
+                    ))
+
+            # 6. Bulk Create
+            if new_entries:
+                TranslationEntry.objects.bulk_create(new_entries, ignore_conflicts=True)
+
+        return data
 
     def list(self, request, *args, **kwargs):
         resp = super().list(request, *args, **kwargs)
         target_lang = request.query_params.get("lang")
         if target_lang:
-            resp.data = self._apply_translation(resp.data, target_lang)
+            try:
+                resp.data = self._apply_translation(resp.data, target_lang)
+            except Exception as e:
+                logger.exception("Graceful handled: Error in _apply_translation during list")
+                # 실패해도 원본 데이터는 이미 resp.data에 들어있으므로 그대로 반환 가능
         return resp
 
     def retrieve(self, request, *args, **kwargs):
         resp = super().retrieve(request, *args, **kwargs)
         target_lang = request.query_params.get("lang")
         if target_lang:
-            resp.data = self._apply_translation(resp.data, target_lang)
+            try:
+                resp.data = self._apply_translation(resp.data, target_lang)
+            except Exception as e:
+                logger.exception("Graceful handled: Error in _apply_translation during retrieve")
         return resp
 
     @action(detail=True, methods=['post'])
@@ -473,18 +641,22 @@ def call_fastapi_translate_batch(texts: list[str], source_lang: str, target_lang
         return data.get("translations", []), data.get("provider", "fastapi-batch")
     except Exception as first_error:
         # 2. 시도: 로컬호스트 Fallback (Port 8003)
-        if "fastapi-ai-translation" in url or "fastapi" in url:
-            fallback_url = "http://127.0.0.1:8003/api/ai/translate"
-            try:
-                logger.info(f"Translation URL failed. Retrying fallback: {fallback_url}")
-                resp = requests.post(fallback_url, json=payload, timeout=timeout)
-                resp.raise_for_status()
-                data = resp.json()
-                return data.get("translations", []), data.get("provider", "fastapi-local-batch")
-            except Exception:
-                pass
+        # 만약 Docker DNS 해석 실패(NameResolutionError)나 연결 거부 시 로컬 포트로 재시도
+        logger.warning(f"Primary translation URL failed ({url}): {first_error}. Retrying local fallback...")
         
-        logger.error(f"Batch translation failed: {first_error}")
+        fallback_url = "http://127.0.0.1:8003/api/ai/translate/batch"
+        try:
+            resp = requests.post(fallback_url, json=payload, timeout=timeout)
+            resp.raise_for_status()
+            data = resp.json()
+            logger.info(f"Fallback translation successful via {fallback_url}")
+            return data.get("translations", []), data.get("provider", "fastapi-local-batch")
+        except Exception as second_error:
+            # Fallback도 실패하면 원래 에러 로깅
+            logger.error(f"Fallback translation also failed: {second_error}")
+            pass
+        
+        logger.error(f"Batch translation finally failed: {first_error}")
         raise exceptions.APIException(f"Translation service failed: {first_error}")
 
 
@@ -553,6 +725,9 @@ class TranslationBatchView(APIView):
                 original_item = items[original_idx]
                 results[original_idx] = translated_text
                 
+                if provider == "error_fallback":
+                    continue
+
                 # DB Save
                 TranslationEntry.objects.create(
                     entity_type=original_item.get("entity_type", "raw"),
