@@ -1,4 +1,3 @@
-
 services:
   # 1. 데이터베이스 (PostgreSQL)
   db:
@@ -19,7 +18,7 @@ services:
       dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./django_app:/app  # 코드 수정하면 바로 반영되게 연결 (Hot Reload)
+      - ./django_app:/app # 코드 수정하면 바로 반영되게 연결 (Hot Reload)
     ports:
       - "8000:8000"
     depends_on:
@@ -30,7 +29,7 @@ services:
       - DB_USER=myuser
       - DB_PASSWORD=mypassword
     env_file:
-        - ./django_app/.env
+      - ./django_app/.env
 
   # 3. AI 서버 (FastAPI)
   fastapi:
@@ -43,17 +42,54 @@ services:
     ports:
       - "8001:8000"
 
+  # 3.5. AI 번역 서버 (FastAPI Translation Only) - 8003
+  fastapi-ai-translation:
+    build:
+      context: ./fastapi_ai_translation
+      dockerfile: Dockerfile
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+    volumes:
+      - ./fastapi_ai_translation:/app
+    ports:
+      - "8003:8003"
+    environment:
+      - HF_MODEL=facebook/nllb-200-distilled-600M
+    env_file:
+      - ./fastapi_ai_translation/.env
+
   # 4. 프론트엔드 (React + Nginx)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"  # 브라우저에서 localhost로 접속
+      - "80:80" # 브라우저에서 localhost로 접속
     depends_on:
       - django
       - fastapi
- 
+
+  # 5. 장소 검색 서버 (FastAPI Places)
+  fastapi_places:
+    build:
+      context: ./fastapi_places
+      dockerfile: Dockerfile
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+    volumes:
+      - ./fastapi_places:/app # 코드 수정하면 바로 반영
+    ports:
+      - "8002:8002"
+    depends_on:
+      - db
+      - django  # Django가 users_user 테이블을 먼저 생성
+    environment:
+      - DB_HOST=db
+      - DB_NAME=korea_travel_db
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_PORT=5432
+    env_file:
+      - ./fastapi_places/.env
+
   # [1] 프로메테우스 (데이터 수집가)
   prometheus:
     image: prom/prometheus

@@ -3,17 +3,28 @@ import uuid
 import json
 import subprocess
 import logging
+import hashlib
+import requests
 from shutil import which
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db.models import F, Q
-from rest_framework import parsers, exceptions, viewsets
+from django.utils import timezone
+from rest_framework import parsers, exceptions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Shortform, ShortformLike, ShortformComment, ShortformView
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from .models import Shortform, ShortformLike, ShortformComment, ShortformView, TranslationEntry
 from .serializers import ShortformSerializer, ShortformCommentSerializer
 
 logger = logging.getLogger(__name__)
+
+# FastAPI 검색 서버
+FASTAPI_SEARCH_URL = "http://fastapi:8000/api/search"
+
+# FastAPI 번역 서버 (분리됨: Port 8003)
+FASTAPI_TRANSLATE_URL = "http://fastapi-ai-translation:8003/api/ai/translate"
 
 
 def resolve_bin(name, env_var):
@@ -40,7 +51,8 @@ def get_default_user():
         raise ValueError("No superuser found. Create a superuser to own uploaded shortforms.")
     return user
 
-# 2 인증 연동 전까지는 모든 작성자/소유자를 superuser로 처리
+
+# 인증 연동 전까지는 모든 작성자/소유자를 superuser로 처리
 def get_action_user(request):
     """
     인증 연동 시 교체 예정.
@@ -53,14 +65,78 @@ def get_action_user(request):
     return get_default_user()
 
 
+def call_fastapi_translate(text: str, source_lang: str, target_lang: str, timeout: int = 20):
+    """
+    FastAPI 번역 엔드포인트 호출. 실패 시 APIException 발생.
+    로컬 개발 환경(docker-compose 외부)을 고려해 localhost 포트도 Fallback으로 시도.
+    """
+    payload = {
+        "text": text,
+        "source_lang": source_lang,
+        "target_lang": target_lang,
+    }
+    
+    # 1. 시도: 설정된 URL (Docker Internal or Env)
+    try:
+        resp = requests.post(FASTAPI_TRANSLATE_URL, json=payload, timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("translated_text"), data.get("provider", "fastapi")
+    except Exception as first_error:
+        # 2. 시도: 로컬호스트 Fallback (개발 편의성)
+        # 만약 기본 URL이 'fastapi:8000' 형태라면, 로컬 8001포트로 재시도
+        if "fastapi" in FASTAPI_TRANSLATE_URL:
+            fallback_url = "http://127.0.0.1:8001/api/ai/translate"
+            try:
+                logger.info(f"Primary translation URL failed. Retrying fallback: {fallback_url}")
+                resp = requests.post(fallback_url, json=payload, timeout=timeout)
+                resp.raise_for_status()
+                data = resp.json()
+                return data.get("translated_text"), data.get("provider", "fastapi-local")
+            except Exception:
+                # Fallback도 실패하면 원래 에러 로깅
+                pass
+        
+        logger.error(f"Translation failed: {first_error}")
+        raise exceptions.APIException(f"Translation service failed: {first_error}")
+
+
+def translate_and_cache(text, entity_type, entity_id, field, source_lang, target_lang):
+    """
+    TranslationEntry 캐시 조회 후 FastAPI 번역 요청. 결과를 DB에 저장해 재사용.
+    """
+    if not text or source_lang == target_lang:
+        return text
+    entry = TranslationEntry.objects.filter(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        field=field,
+        target_lang=target_lang,
+    ).first()
+    if entry:
+        entry.last_used_at = timezone.now()
+        entry.save(update_fields=["last_used_at"])
+        return entry.translated_text
+
+    translated_text, provider = call_fastapi_translate(text, source_lang, target_lang)
+    TranslationEntry.objects.create(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        field=field,
+        source_lang=source_lang,
+        target_lang=target_lang,
+        source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        translated_text=translated_text,
+        provider=provider or "fastapi",
+        model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+        last_used_at=timezone.now(),
+    )
+    return translated_text
+
+
 def save_video_file(uploaded_file):
     """
     업로드된 파일을 로컬 MEDIA_ROOT 아래에 저장하고, 저장된 URL을 반환한다.
-    매개변수:
-      - uploaded_file: request.FILES에서 받은 UploadedFile
-    반환:
-        - saved_path: 저장된 상대 경로 (예: shortforms/videos/<uuid>.mp4)
-        - saved_url: MEDIA_URL을 포함한 접근 가능한 URL (예: /media/shortforms/videos/<uuid>.mp4)
     """
     ext = os.path.splitext(uploaded_file.name)[1] or '.mp4'
     filename = f"{uuid.uuid4()}{ext}"
@@ -73,7 +149,6 @@ def extract_metadata(file_path):
     """
     ffprobe를 사용해 영상 메타데이터를 추출한다.
     반환: dict(duration, width, height) / 실패 시 {}
-    TODO: ffprobe 미설치 시 로그만 남기고 빈 dict 반환.
     """
     ffprobe_bin = resolve_bin("ffprobe", "FFPROBE_BIN")
     if not ffprobe_bin:
@@ -168,6 +243,57 @@ class ShortformViewSet(viewsets.ModelViewSet):
             thumbnail_url=thumb_url,
         )
 
+    def _apply_translation(self, data, target_lang):
+        """
+        serializer.data(dict 또는 list)에 title/content 번역 필드를 추가.
+        """
+        if not target_lang:
+            return data
+
+        def enrich(item):
+            src_lang = item.get("source_lang") or "kor_Hang"
+            # NEW: 언어가 같으면 원본 그대로 사용
+            if src_lang == target_lang:
+                item["title_translated"] = item.get("title", "")
+                item["content_translated"] = item.get("content", "")
+                return item
+
+            item["title_translated"] = translate_and_cache(
+                item.get("title", ""),
+                entity_type="shortform",
+                entity_id=item.get("id") or 0,
+                field="title",
+                source_lang=src_lang,
+                target_lang=target_lang,
+            )
+            item["content_translated"] = translate_and_cache(
+                item.get("content", "") or "",
+                entity_type="shortform",
+                entity_id=item.get("id") or 0,
+                field="content",
+                source_lang=src_lang,
+                target_lang=target_lang,
+            )
+            return item
+
+        if isinstance(data, list):
+            return [enrich(i) for i in data]
+        return enrich(data)
+
+    def list(self, request, *args, **kwargs):
+        resp = super().list(request, *args, **kwargs)
+        target_lang = request.query_params.get("lang")
+        if target_lang:
+            resp.data = self._apply_translation(resp.data, target_lang)
+        return resp
+
+    def retrieve(self, request, *args, **kwargs):
+        resp = super().retrieve(request, *args, **kwargs)
+        target_lang = request.query_params.get("lang")
+        if target_lang:
+            resp.data = self._apply_translation(resp.data, target_lang)
+        return resp
+
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
         """
@@ -254,3 +380,193 @@ class ShortformViewSet(viewsets.ModelViewSet):
             shortform.refresh_from_db(fields=['total_views'])
 
         return Response({"viewed": True, "total_views": shortform.total_views})
+
+
+class TranslationProxyView(APIView):
+    """
+    Django -> FastAPI 번역 프록시.
+    1) TranslationEntry DB 캐시 조회
+    2) 캐시 없으면 FastAPI 호출 후 DB 저장
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        text = request.data.get("text")
+        source_lang = request.data.get("source_lang") or "kor_Hang"
+        target_lang = request.data.get("target_lang") or "eng_Latn"
+        entity_type = request.data.get("entity_type") or "raw"
+        entity_id = request.data.get("entity_id") or 0
+        field = request.data.get("field") or "text"
+
+        if not text:
+            return Response({"detail": "text is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        entry = TranslationEntry.objects.filter(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            field=field,
+            target_lang=target_lang,
+        ).first()
+        if entry:
+            entry.last_used_at = timezone.now()
+            entry.save(update_fields=["last_used_at"])
+            return Response(
+                {
+                    "translated_text": entry.translated_text,
+                    "cached": True,
+                    "provider": entry.provider,
+                    "model": entry.model,
+                }
+            )
+
+        translated_text, provider = call_fastapi_translate(text, source_lang, target_lang)
+        entry = TranslationEntry.objects.create(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            field=field,
+            source_lang=source_lang,
+            target_lang=target_lang,
+            source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            translated_text=translated_text,
+            provider=provider or "fastapi",
+            model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+            last_used_at=timezone.now(),
+        )
+
+        return Response(
+            {
+                "translated_text": entry.translated_text,
+                "cached": False,
+                "provider": entry.provider,
+                "model": entry.model,
+            },
+            status=status.HTTP_200_OK,
+        )
+        return Response(
+            {
+                "translated_text": entry.translated_text,
+                "cached": False,
+                "provider": entry.provider,
+                "model": entry.model,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+def call_fastapi_translate_batch(texts: list[str], source_lang: str, target_lang: str, timeout: int = 60):
+    """
+    FastAPI 배치 번역 엔드포인트 호출
+    """
+    payload = {
+        "texts": texts,
+        "source_lang": source_lang,
+        "target_lang": target_lang,
+    }
+    
+    url = f"{FASTAPI_TRANSLATE_URL.replace('/translate', '')}/translate/batch"
+    
+    # 1. 시도: Docker Internal URL
+    try:
+        resp = requests.post(url, json=payload, timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("translations", []), data.get("provider", "fastapi-batch")
+    except Exception as first_error:
+        # 2. 시도: 로컬호스트 Fallback (Port 8003)
+        if "fastapi-ai-translation" in url or "fastapi" in url:
+            fallback_url = "http://127.0.0.1:8003/api/ai/translate"
+            try:
+                logger.info(f"Translation URL failed. Retrying fallback: {fallback_url}")
+                resp = requests.post(fallback_url, json=payload, timeout=timeout)
+                resp.raise_for_status()
+                data = resp.json()
+                return data.get("translations", []), data.get("provider", "fastapi-local-batch")
+            except Exception:
+                pass
+        
+        logger.error(f"Batch translation failed: {first_error}")
+        raise exceptions.APIException(f"Translation service failed: {first_error}")
+
+
+class TranslationBatchView(APIView):
+    """
+    배치 번역 프록시.
+    1) 요청받은 텍스트 리스트 중 DB 캐시 확인
+    2) 없는 것만 추려서 FastAPI Batch API 호출
+    3) 결과 병합하여 반환
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        items = request.data.get("items", [])  # List of {text, entity_type, entity_id, field}
+        source_lang = request.data.get("source_lang") or "kor_Hang"
+        target_lang = request.data.get("target_lang") or "eng_Latn"
+
+        if not items:
+            return Response({"results": []})
+
+        # 1. 캐시 조회
+        results = {}  # index -> translated_text
+        to_translate_indices = []
+        to_translate_texts = []
+
+        for idx, item in enumerate(items):
+            text = item.get("text", "")
+            if not text:
+                results[idx] = ""
+                continue
+
+            # NEW: 소스 언어와 타겟 언어가 같으면 번역 건너뛰기
+            src_lang = source_lang
+            if src_lang == target_lang:
+                results[idx] = text
+                continue
+            
+            entity_type = item.get("entity_type", "raw")
+            entity_id = item.get("entity_id", 0)
+            field = item.get("field", "text")
+
+            entry = TranslationEntry.objects.filter(
+                entity_type=entity_type,
+                entity_id=entity_id,
+                field=field,
+                target_lang=target_lang,
+            ).first()
+
+            if entry:
+                # Cache hit
+                entry.last_used_at = timezone.now()
+                entry.save(update_fields=["last_used_at"])
+                results[idx] = entry.translated_text
+            else:
+                # Cache miss
+                to_translate_indices.append(idx)
+                to_translate_texts.append(text)
+
+        # 2. 외부 API 호출 (Batch)
+        if to_translate_texts:
+            translated_list, provider = call_fastapi_translate_batch(to_translate_texts, source_lang, target_lang)
+            
+            # 3. DB 저장 및 결과 매핑
+            for internal_idx, translated_text in enumerate(translated_list):
+                original_idx = to_translate_indices[internal_idx]
+                original_item = items[original_idx]
+                results[original_idx] = translated_text
+                
+                # DB Save
+                TranslationEntry.objects.create(
+                    entity_type=original_item.get("entity_type", "raw"),
+                    entity_id=original_item.get("entity_id", 0),
+                    field=original_item.get("field", "text"),
+                    source_lang=source_lang,
+                    target_lang=target_lang,
+                    source_hash=hashlib.sha256(original_item.get("text").encode("utf-8")).hexdigest(),
+                    translated_text=translated_text,
+                    provider=provider,
+                    model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+                    last_used_at=timezone.now(),
+                )
+
+        # 4. 순서대로 정렬하여 반환
+        final_list = [results.get(i, "") for i in range(len(items))]
+        return Response({"translations": final_list})

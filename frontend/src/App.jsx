@@ -1,10 +1,11 @@
 // frontend/src/App.jsx
 import { useState } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom' // ★ 기존 임포트 유지 (수정 X)
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import MainPage from './pages/MainPage'
 import SearchPage from './pages/SearchPage'
 import GeoImageUploader from './pages/GeoImageUploader'
 import RoadviewGame from './pages/RoadviewGame' // ★ [NEW] Missing import fixed
+import TestFrontAI from './pages/test_front_ai/TestFrontAI'
 import './App.css'
 
 function App() {
@@ -15,12 +16,7 @@ function App() {
   // 페이지 이동을 위한 훅
   const navigate = useNavigate();
 
-  // 사이드바 토글
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  // 홈으로 가기
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev)
   const goHome = () => {
     setSearchQuery("");
     navigate("/");
@@ -28,11 +24,13 @@ function App() {
 
   // ★ [2] 지오게서(퀴즈) 페이지로 이동하는 함수 추가
   const goGeoQuiz = () => {
-    navigate("/geo-quiz");
-    setIsSidebarOpen(false); // 이동 후 사이드바 닫기
-  };
-
-  // 2. 검색 실행 함수
+    navigate('/geo-quiz')
+    setIsSidebarOpen(false)
+  }
+  const goTestFront = () => {
+    navigate('/test-front')
+    setIsSidebarOpen(false)
+  }
   const handleSearch = (e) => {
     if (e.key === 'Enter') {
       if (!searchQuery.trim()) return;
@@ -40,7 +38,7 @@ function App() {
       navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
       setIsSidebarOpen(false);
     }
-  };
+  }
 
   return (
     <div className="app-container">
@@ -50,7 +48,7 @@ function App() {
       <nav className="navbar">
         <div className="navbar-left">
           <button className="icon-btn menu-toggle" onClick={toggleSidebar}>
-            ☰
+            메뉴
           </button>
           <span className="logo-text" onClick={goHome} style={{ cursor: 'pointer' }}>
             KOREA TRIP
@@ -72,8 +70,8 @@ function App() {
         </div>
 
         <div className="navbar-right">
-          <button className="icon-btn">🔔</button>
-          <div className="profile-avatar">👤</div>
+          <button className="icon-btn">알림</button>
+          <div className="profile-avatar">🙂</div>
         </div>
       </nav>
 
@@ -84,10 +82,8 @@ function App() {
         <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
           <ul className="sidebar-menu">
             <li onClick={goHome}>🏠 홈</li>
-
-            {/* ★ [3] 사이드바 메뉴 추가 */}
-            <li onClick={goGeoQuiz}>🌍 나만의 지오게서</li>
-
+            <li onClick={goGeoQuiz}>지오 퀴즈 업로더</li>
+            <li onClick={goTestFront}>🚪 테스트 프론트</li>
             <li>📅 AI 일정 만들기</li>
             <li>🥘 현지인 맛집 칼럼</li>
             <li>🔥 실시간 숏폼</li>
@@ -96,6 +92,7 @@ function App() {
             <li>❤️ 찜한 장소</li>
             <li>⚙️ 설정</li>
             <li>📞 고객센터</li>
+            <li>버전 정보</li>
           </ul>
         </aside>
 
@@ -113,6 +110,7 @@ function App() {
             {/* ★ [4] 지오게서 퀴즈 페이지 라우터 추가 */}
             <Route path="/geo-quiz" element={<GeoImageUploader />} />
             <Route path="/game" element={<RoadviewGame />} />
+            <Route path="/test-front" element={<TestFrontAI />} />
           </Routes>
         </main>
       </div>

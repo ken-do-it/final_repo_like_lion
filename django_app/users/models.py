@@ -188,6 +188,11 @@ class LocalBadge(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='local_badges')
     city = models.CharField(max_length=100, help_text="인증된 도시")
     
+    #레벨1 : 인증 시작했지만 아직 뱃지 획득 못함(글 작성 권한 없음)
+    #레벨2 : 1주일 간격으로 3번 인증 성공. 뱃지 최저 단계. 여기부터 글 작성 가능
+    #레벨3 : 1달 후 인증 성공
+    #레벨4 : 6개월 후 인증 성공
+    #레벨5 : 1년 후 인증 성공. 이때부턴 계속 1년주기로 인증 갱신
     level = models.IntegerField(default=1, choices=[(i, f'Level {i}') for i in range(1, 6)])
     is_active = models.BooleanField(default=True)
     
