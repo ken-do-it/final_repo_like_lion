@@ -15,6 +15,10 @@ from .views.payment import (
     MSPaymentSuccessPageView,
     MSPaymentFailPageView,
 )
+from .views.train import (
+    MSTrainSearchView,
+    MSKorailLinkView,
+)
 
 app_name = 'reservations_api'
 
@@ -34,6 +38,25 @@ urlpatterns = [
     # TODO: 내 예약 상세
     # GET /api/v1/my/reservations/{reservationId}
     # path('my/reservations/<uuid:reservation_id>', MSMyReservationDetailView.as_view(), name='my-reservation-detail'),
+
+    # ========================================
+    # 기차 API
+    # ========================================
+    # 기차 검색
+    # GET/POST /api/v1/transport/trains/search
+    path(
+        'transport/trains/search',
+        MSTrainSearchView.as_view(),
+        name='train-search'
+    ),
+
+    # 코레일 외부 링크 생성
+    # GET /api/v1/transport/trains/korail-link
+    path(
+        'transport/trains/korail-link',
+        MSKorailLinkView.as_view(),
+        name='train-korail-link'
+    ),
 
     # ========================================
     # 결제 API
