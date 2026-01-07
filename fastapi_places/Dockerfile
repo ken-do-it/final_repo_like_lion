@@ -7,13 +7,12 @@ WORKDIR /app
 # 3. 환경 변수
 ENV PYTHONUNBUFFERED=1
 
-# 4. 의존성 설치 (나중에 requirements.txt 생기면 주석 해제)
+# 4. 의존성 설치
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 5. 소스 코드 복사
 COPY . /app/
 
-# 6. 실행 명령어 (임시)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
-#CMD ["python", "--version"]
+# 6. 실행 명령어 (임시, 포트 8002)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]

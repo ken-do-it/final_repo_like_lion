@@ -46,6 +46,16 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',  # API 문서 자동 생성
     'corsheaders',
+
+    # Social Authentication
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.kakao',
+    'allauth.socialaccount.providers.naver',
+
     #프로젝트로 생성한 앱
     'users',
     'places.apps.PlacesConfig',
@@ -56,6 +66,9 @@ INSTALLED_APPS = [
     #부하 테스트용
     'django_prometheus',
 ]
+
+# Django Sites Framework (Required for allauth)
+SITE_ID = 1
 
 #커스텀 유저 모델 지정
 AUTH_USER_MODEL = 'users.User'
@@ -70,6 +83,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # django-allauth
     'django_prometheus.middleware.PrometheusAfterMiddleware', #부하 테스트 결과 확인을 위해 맨 아래 있어야함
 ]
 
@@ -187,6 +201,68 @@ JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 14
 
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Django Allauth Settings
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # 기본 Django 인증
+    'allauth.account.auth_backends.AuthenticationBackend',  # Allauth 인증
+]
+
+# Allauth Configuration
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username'
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+
+# 소셜 로그인 시 항상 재인증 요구 (자동 로그인 방지)
+SOCIALACCOUNT_STORE_TOKENS = False
+ACCOUNT_SESSION_REMEMBER = False
+
+# 소셜 로그인 후 리다이렉트 URL
+LOGIN_REDIRECT_URL = '/api/users/social-callback/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/api/users/login-page/'
+
+# 소셜 로그인 Provider 설정
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'prompt': 'select_account',  # 매번 계정 선택 화면 표시
+        },
+        'APP': {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    },
+    'kakao': {
+        'AUTH_PARAMS': {
+            'prompt': 'login',  # 매번 로그인 화면 표시
+        },
+        'APP': {
+            'client_id': os.getenv('KAKAO_REST_API_KEY', ''),
+            'secret': os.getenv('KAKAO_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    },
+    'naver': {
+        'AUTH_PARAMS': {
+            'auth_type': 'reauthenticate',  # 매번 재인증 요구
+        },
+        'APP': {
+            'client_id': os.getenv('NAVER_CLIENT_ID', ''),
+            'secret': os.getenv('NAVER_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    }
+}
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

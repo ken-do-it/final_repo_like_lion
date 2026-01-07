@@ -698,3 +698,17 @@ def main_page(request):
 def api_test_page(request):
     """API 테스트 페이지 렌더링"""
     return render(request, 'users/api_test.html')
+
+
+def social_callback_page(request):
+    """소셜 로그인 성공 후 콜백 페이지"""
+    context = {
+        'access_token': request.session.get('access_token', ''),
+        'refresh_token': request.session.get('refresh_token', ''),
+        'user_id': request.session.get('user_id', ''),
+        'username': request.session.get('username', ''),
+        'email': request.session.get('email', ''),
+        'nickname': request.session.get('nickname', ''),
+        'social_provider': request.session.get('social_provider', ''),
+    }
+    return render(request, 'users/social_callback.html', context)

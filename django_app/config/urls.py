@@ -27,10 +27,15 @@ urlpatterns = [
     path('api/v1/', include('reservations.reservation_urls')),
 
     # 8. API 문서 (통합!)
+   
+    # 6. Django-allauth
+    path('accounts/', include('allauth.urls')),
+
+    # 7. API 문서 (Swagger & ReDoc)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/docs/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
-# 미디어 파일
+# 미디어 파일 처리
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

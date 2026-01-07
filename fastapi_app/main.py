@@ -1,12 +1,12 @@
 import logging
 import os
 from fastapi import FastAPI, HTTPException
-from translation.router import router as translation_router  # AI 번역 라우터
+# from translation.router import router as translation_router  # AI 번역 라우터 (Moved)
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any
 from pydantic import BaseModel
-from database import get_db_connection
+# from database import get_db_connection
 from prometheus_fastapi_instrumentator import Instrumentator
 
 # 삭제 요청 데이터 모델
@@ -84,7 +84,10 @@ def get_db_connection():
 # ---------------------------------------------------------
 # AI 번역 라우터 등록 (Hugging Face Inference API)
 # ---------------------------------------------------------
-app.include_router(translation_router, prefix="/api/ai", tags=["translation"])
+# ---------------------------------------------------------
+# AI 번역 라우터 등록 (Removed: Moved to fastapi_ai_translation)
+# ---------------------------------------------------------
+# app.include_router(translation_router, prefix="/api/ai", tags=["translation"])
 
 
 
