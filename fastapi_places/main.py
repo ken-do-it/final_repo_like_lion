@@ -33,18 +33,12 @@ app.add_middleware(
 )
 
 # Places Router 등록
-from .router import router as places_router
+from router import router as places_router
 app.include_router(places_router)
 
 
-# 앱 시작 시 테이블 자동 생성
-@app.on_event("startup")
-def startup_event():
-    """앱 시작 시 데이터베이스 테이블 생성"""
-    from .database import create_tables
-    logger.info("Creating database tables...")
-    create_tables()
-    logger.info("Database tables created successfully!")
+# 테이블 생성은 Django 마이그레이션으로 처리
+# FastAPI는 기존 테이블을 읽기만 함
 
 
 @app.get("/")

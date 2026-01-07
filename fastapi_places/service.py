@@ -12,13 +12,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, desc
 from fastapi import HTTPException
 
-from .models import Place, PlaceReview, PlaceBookmark, LocalBadge, LocalColumn, User
-from .schemas import PlaceSearchResult
+from models import Place, PlaceReview, PlaceBookmark, LocalBadge, LocalColumn, User
+from schemas import PlaceSearchResult
 
 
 # ==================== 환경 변수 ====================
 
-KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY", "")
+KAKAO_REST_API_KEY = os.getenv("YJ_KAKAO_REST_API_KEY", "")
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
 
 # 한국 위치 범위
@@ -29,6 +29,61 @@ KOREA_LON_MAX = float(os.getenv("KOREA_LON_MAX", "132"))
 
 
 # ==================== 외부 API 통합 ====================
+
+async def get_or_create_place_by_api_id(
+    db: Session,
+    place_api_id: str,
+    provider: str = "KAKAO",
+    name_hint: Optional[str] = None
+) -> Optional[Place]:
+    """
+    place_api_id로 DB에서 조회하거나, 없으면 외부 API에서 가져와서 생성
+    """
+    # 1. DB에서 조회
+    place = db.query(Place).filter(Place.place_api_id == place_api_id).first()
+    if place:
+        return place
+
+    # 2. 외부 API에서 가져오기
+    if not name_hint:
+        return None
+
+    # name으로 검색해서 place_api_id가 일치하는 것 찾기
+    if provider == "KAKAO":
+        results = await search_kakao_places(name_hint, limit=10)
+    else:  # GOOGLE
+        results = await search_google_places(name_hint, limit=10)
+
+    # place_api_id 매칭
+    place_data = None
+    for result in results:
+        if result.get("place_api_id") == place_api_id:
+            place_data = result
+            break
+
+    if not place_data:
+        return None
+
+    # 3. DB에 저장
+    place = Place(
+        provider=place_data.get("provider"),
+        place_api_id=place_data.get("place_api_id"),
+        name=place_data.get("name"),
+        address=place_data.get("address"),
+        city=place_data.get("city"),
+        latitude=place_data.get("latitude"),
+        longitude=place_data.get("longitude"),
+        category_main=place_data.get("category_main"),
+        category_detail=place_data.get("category_detail"),
+        thumbnail_urls=[]
+    )
+
+    db.add(place)
+    db.commit()
+    db.refresh(place)
+
+    return place
+
 
 async def search_kakao_places(query: str, limit: int = 15) -> List[Dict]:
     """
@@ -143,7 +198,12 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
     # 필터링 적용
     filtered_results = unique_results
     if category:
-        filtered_results = [r for r in filtered_results if r.get("category_main") == category]
+        # category_main 또는 category_detail에 포함되어 있으면 매칭
+        filtered_results = [
+            r for r in filtered_results
+            if r.get("category_main") == category
+            or (isinstance(r.get("category_detail"), list) and category in r.get("category_detail", []))
+        ]
     if city:
         filtered_results = [r for r in filtered_results if r.get("city") == city]
 
