@@ -1,3 +1,4 @@
+import requests
 from django.shortcuts import render
 from users.models import User
 from rest_framework import status
@@ -6,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated , AllowAny
 from rest_framework.response import Response
 from .models import TravelPlan , PlanDetail, PlanDetailImage
 from drf_spectacular.utils import extend_schema
+from .services import get_or_create_place_from_search
 from .serializers import (
     TravelPlanCreateSerializer,
     TravelPlanDetailSerializer,
@@ -183,24 +185,41 @@ def detail_list_create(request, plan_id):
         return Response(serializer.data)
     
     elif request.method == 'POST':
-        # 장소 추가
         serializer = PlanDetailCreateSerializer(data=request.data)
-        
+
         if serializer.is_valid():
-            serializer.save(plan=plan)
-            
+            # 1. place_name이 있는지 확인
+            place_name = request.data.get('place_name')
+
+            if place_name:
+                # 2. services.py의 함수 호출 (import 필요)
+                try:
+                    place, created = get_or_create_place_from_search(place_name)
+                    # 3. serializer.save()에 place 전달
+                    serializer.save(plan=plan, place=place)
+                except ValueError as e:
+                    # 장소를 찾지 못한 경우 에러 반환
+                    return Response({'error': str(e)}, status=404)
+                except requests.RequestException as e:
+                    # FastAPI 연결 실패
+                    return Response({'error': '장소 검색 서버에 연결할 수 없습니다'}, status=503)
+            else:
+                # place_name이 없으면 기존 로직 (place_id 사용)
+                serializer.save(plan=plan)
+
             detail = serializer.instance
             response_serializer = PlanDetailUpdateSerializer(detail)
-            
+
             return Response(
                 response_serializer.data,
                 status=status.HTTP_201_CREATED
             )
-        
+
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
 
 @extend_schema(
     tags=['장소 관리'],
