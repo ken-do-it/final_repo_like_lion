@@ -26,7 +26,9 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+#DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -45,6 +47,15 @@ INSTALLED_APPS = [
     'drf_spectacular',  # API 문서 자동 생성
     'corsheaders',
 
+    # Social Authentication
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.kakao',
+    'allauth.socialaccount.providers.naver',
+
     #프로젝트로 생성한 앱
     'users',
     'places.apps.PlacesConfig',
@@ -55,6 +66,9 @@ INSTALLED_APPS = [
     #부하 테스트용
     'django_prometheus',
 ]
+
+# Django Sites Framework (Required for allauth)
+SITE_ID = 1
 
 #커스텀 유저 모델 지정
 AUTH_USER_MODEL = 'users.User'
@@ -69,6 +83,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # django-allauth
     'django_prometheus.middleware.PrometheusAfterMiddleware', #부하 테스트 결과 확인을 위해 맨 아래 있어야함
 ]
 
@@ -155,6 +170,7 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
+# REST Framework Settings
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework Settings
@@ -163,31 +179,90 @@ REST_FRAMEWORK = {
         'users.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # 각 View에서 개별 설정
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        # 브라우저에서 테스트용 UI를 보이게 하기 위해 추가
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
-        # 파일 업로드/폼 테스트를 위해 추가
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ],
-    # API 문서 자동 생성
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # JWT Settings
 JWT_SECRET_KEY = SECRET_KEY
 JWT_ALGORITHM = 'HS256'
-JWT_ACCESS_TOKEN_LIFETIME = 60 * 60  # 1 hour
-JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 14  # 14 days
+JWT_ACCESS_TOKEN_LIFETIME = 60 * 60
+JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 14
 
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Django Allauth Settings
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # 기본 Django 인증
+    'allauth.account.auth_backends.AuthenticationBackend',  # Allauth 인증
+]
+
+# Allauth Configuration
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username'
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+
+# 소셜 로그인 시 항상 재인증 요구 (자동 로그인 방지)
+SOCIALACCOUNT_STORE_TOKENS = False
+ACCOUNT_SESSION_REMEMBER = False
+
+# 소셜 로그인 후 리다이렉트 URL
+LOGIN_REDIRECT_URL = '/api/users/social-callback/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/api/users/login-page/'
+
+# 소셜 로그인 Provider 설정
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'prompt': 'select_account',  # 매번 계정 선택 화면 표시
+        },
+        'APP': {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    },
+    'kakao': {
+        'AUTH_PARAMS': {
+            'prompt': 'login',  # 매번 로그인 화면 표시
+        },
+        'APP': {
+            'client_id': os.getenv('KAKAO_REST_API_KEY', ''),
+            'secret': os.getenv('KAKAO_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    },
+    'naver': {
+        'AUTH_PARAMS': {
+            'auth_type': 'reauthenticate',  # 매번 재인증 요구
+        },
+        'APP': {
+            'client_id': os.getenv('NAVER_CLIENT_ID', ''),
+            'secret': os.getenv('NAVER_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    }
+}
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -195,29 +270,23 @@ EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
 
 # CORS Settings
-CORS_ALLOW_ALL_ORIGINS = True  # 개발용, 프로덕션에서는 특정 도메인만 허용
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Time Zone
 TIME_ZONE = 'Asia/Seoul'
 USE_TZ = True
-# BigAutoField 설정
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# MEDIA settings for local file uploads (shortform videos, thumbnails).
-# MEDIA_URL: public URL prefix when serving uploaded files in development.
-# MEDIA_ROOT: filesystem path where uploaded files are stored locally.
-# NOTE: Production에서 S3 등을 사용할 경우 스토리지 백엔드로 교체 예정.
+# MEDIA settings
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# drf-spectacular Settings (API Documentation)
+# drf-spectacular Settings (통합)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Korea Travel API',
     'DESCRIPTION': '외국인 관광객을 위한 한국 여행 서비스 API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    # 한국어/영어 모두 지원
     'SCHEMA_PATH_PREFIX': r'/api/',
     'COMPONENT_SPLIT_REQUEST': True,
 }

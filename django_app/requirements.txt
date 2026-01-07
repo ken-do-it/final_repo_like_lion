@@ -7,8 +7,12 @@ setuptools==80.9.0
 sqlparse==0.5.5
 tzdata==2025.3
 wheel==0.45.1
+python-dotenv==1.0.0
+django-allauth==65.4.0
+requests==2.32.3
+cryptography==44.0.0
 python-dotenv
-Pillow
+Pillow==11.3.0
 requests
 django-prometheus
 PyJWT==2.10.1
