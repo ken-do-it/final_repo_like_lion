@@ -118,20 +118,25 @@ def translate_and_cache(text, entity_type, entity_id, field, source_lang, target
         entry.save(update_fields=["last_used_at"])
         return entry.translated_text
 
-    translated_text, provider = call_fastapi_translate(text, source_lang, target_lang)
-    TranslationEntry.objects.create(
-        entity_type=entity_type,
-        entity_id=entity_id,
-        field=field,
-        source_lang=source_lang,
-        target_lang=target_lang,
-        source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
-        translated_text=translated_text,
-        provider=provider or "fastapi",
-        model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
-        last_used_at=timezone.now(),
-    )
-    return translated_text
+    try:
+        translated_text, provider = call_fastapi_translate(text, source_lang, target_lang)
+        TranslationEntry.objects.create(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            field=field,
+            source_lang=source_lang,
+            target_lang=target_lang,
+            source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            translated_text=translated_text,
+            provider=provider or "fastapi",
+            model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+            last_used_at=timezone.now(),
+        )
+        return translated_text
+    except Exception as e:
+        logger.error(f"Translation failed for {entity_type}:{entity_id}:{field}. Error: {e}")
+        # 번역 실패 시 원본 텍스트 반환 (500 에러 방지)
+        return text
 
 
 def save_video_file(uploaded_file):

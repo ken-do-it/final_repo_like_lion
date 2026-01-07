@@ -68,6 +68,7 @@ const langToCode = {
 
 // UI Glossary: Override AI translations for specific terms
 // 재생, 닫기, 로그인, 회원가입, 계획 시작하기, 모두 보기 고정된 텍스트를 AI가 번역하지 않고 정의된 텍스트로 출력
+// UI Glossary: Override AI translations for specific terms
 const uiGlossary = {
   play: { kor_Hang: '재생', jpn_Jpan: '再生', zho_Hans: '播放' },
   close: { kor_Hang: '닫기', jpn_Jpan: '閉じる', zho_Hans: '关闭' },
@@ -77,6 +78,7 @@ const uiGlossary = {
   viewAll: { kor_Hang: '모두 보기', jpn_Jpan: 'すべて見る', zho_Hans: '查看全部' },
   loading: { kor_Hang: '로딩 중...', jpn_Jpan: '読み込み中...', zho_Hans: '载入中...' },
   langLabel: { kor_Hang: '언어', jpn_Jpan: '言語', zho_Hans: '语言' },
+  upload: { kor_Hang: '업로드', jpn_Jpan: 'アップロード', zho_Hans: '上传' }, // Added
 }
 
 function TestFrontAI() {
@@ -87,6 +89,46 @@ function TestFrontAI() {
   const [error, setError] = useState('')
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [uiTranslations, setUiTranslations] = useState({})
+
+  // Upload Modal State
+  const [showUpload, setShowUpload] = useState(false)
+  const [uploadFile, setUploadFile] = useState(null)
+  const [uploadTitle, setUploadTitle] = useState('')
+  const [uploadDesc, setUploadDesc] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+
+  const handleUpload = async (e) => {
+    e.preventDefault()
+    if (!uploadFile) return
+
+    setIsUploading(true)
+    const formData = new FormData()
+    formData.append('video_file', uploadFile)
+    formData.append('title', uploadTitle)
+    formData.append('content', uploadDesc)
+    formData.append('source_lang', 'ko') // Default to Korean for now
+
+    try {
+      const res = await fetch('/api/shortforms/', {
+        method: 'POST',
+        body: formData,
+      })
+      if (!res.ok) throw new Error('Upload failed')
+
+      // Reset and reload
+      setShowUpload(false)
+      setUploadFile(null)
+      setUploadTitle('')
+      setUploadDesc('')
+      alert('Upload Successful!')
+      // Trigger reload (simple toggle)
+      setLanguage(prev => prev === 'English' ? 'English ' : 'English') // Hack to re-trigger useEffect or extract fetch function
+    } catch (err) {
+      alert('Upload failed: ' + err.message)
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   const baseTexts = useMemo(
     () => ({
@@ -102,6 +144,7 @@ function TestFrontAI() {
       shortsTitle: 'Shorts',
       shortsSub: 'Watch the latest uploads with AI captions/translation.',
       play: 'Play',
+      upload: 'Upload', // New
       durationMissing: '00:00',
       langLabel: 'Lang',
       nowPlaying: 'Now Playing',
@@ -288,9 +331,15 @@ function TestFrontAI() {
       </section>
 
       <section className="tfai-section">
-        <div className="tfai-section-heading">
-          <h2>{t.shortsTitle}</h2>
-          <p>{t.shortsSub}</p>
+        <div className="tfai-section-heading tfai-section-heading-row">
+          <div>
+            <h2>{t.shortsTitle}</h2>
+            <p>{t.shortsSub}</p>
+          </div>
+          <button className="tfai-cta" onClick={() => setShowUpload(true)} style={{ fontSize: '14px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'bottom', marginRight: '4px' }}>upload</span>
+            {t.upload}
+          </button>
         </div>
         <div className="tfai-feature-grid">
           {shortforms.map((s, idx) => (
@@ -333,6 +382,59 @@ function TestFrontAI() {
             </video>
           </div>
         </section>
+      )}
+
+      {/* Upload Modal */}
+      {showUpload && (
+        <div className="tfai-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowUpload(false) }}>
+          <div className="tfai-modal">
+            <h2>Upload a Short</h2>
+            <form onSubmit={handleUpload}>
+              <div className="tfai-form-group">
+                <label className="tfai-label">Video File</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={e => setUploadFile(e.target.files[0])}
+                    className="tfai-file-input"
+                    style={{ width: '100%' }}
+                    required
+                  />
+                  {uploadFile && <p style={{ marginTop: '8px', fontSize: '13px', color: '#13a4ec' }}>{uploadFile.name}</p>}
+                </div>
+              </div>
+
+              <div className="tfai-form-group">
+                <label className="tfai-label">Title</label>
+                <input
+                  className="tfai-input"
+                  value={uploadTitle}
+                  onChange={e => setUploadTitle(e.target.value)}
+                  placeholder="Enter title..."
+                  required
+                />
+              </div>
+
+              <div className="tfai-form-group">
+                <label className="tfai-label">Description</label>
+                <textarea
+                  className="tfai-textarea"
+                  value={uploadDesc}
+                  onChange={e => setUploadDesc(e.target.value)}
+                  placeholder="What is this video about?"
+                />
+              </div>
+
+              <div className="tfai-modal-actions">
+                <button type="button" className="tfai-btn-cancel" onClick={() => setShowUpload(false)}>Cancel</button>
+                <button type="submit" className="tfai-btn-submit" disabled={isUploading}>
+                  {isUploading ? 'Uploading...' : 'Upload'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       <section className="tfai-section">
