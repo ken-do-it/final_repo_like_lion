@@ -7,22 +7,22 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import date
 
-from .models import (
+from models import (
     Place, PlaceReview, PlaceBookmark, LocalBadge,
     LocalColumn, LocalColumnSection, LocalColumnSectionImage, User
 )
-from .schemas import (
+from schemas import (
     PlaceSearchRequest, PlaceSearchResult, PlaceAutocompleteRequest,
     PlaceAutocompleteSuggestion, PlaceDetailResponse, ReviewCreateRequest,
     ReviewResponse, BookmarkResponse, LocalBadgeAuthRequest, LocalBadgeAuthResponse,
     LocalBadgeStatusResponse, LocalColumnCreateRequest, LocalColumnResponse,
     LocalColumnListResponse, CityContentResponse, PopularCityResponse
 )
-from .service import (
+from service import (
     search_places_hybrid, authenticate_local_badge, check_local_badge_active,
-    update_place_review_stats, update_place_thumbnails
+    update_place_review_stats, update_place_thumbnails, get_or_create_place_by_api_id
 )
-from .database import get_db
+from database import get_db
 
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])
 
@@ -96,13 +96,37 @@ async def autocomplete_places(
 
 # ==================== 장소 상세 ====================
 
+@router.get("/detail", response_model=PlaceDetailResponse)
+async def get_place_detail_by_api_id(
+    place_api_id: str = Query(..., description="외부 API의 장소 ID"),
+    provider: str = Query("KAKAO", description="제공자 (KAKAO, GOOGLE)"),
+    name: str = Query(..., description="장소명 (검색용)"),
+    db: Session = Depends(get_db)
+):
+    """
+    장소 상세 정보 조회 (외부 API ID 기반)
+    DB에 없으면 외부 API에서 가져와서 저장 (온디맨드 방식)
+    """
+    place = await get_or_create_place_by_api_id(
+        db=db,
+        place_api_id=place_api_id,
+        provider=provider,
+        name_hint=name
+    )
+
+    if not place:
+        raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다")
+
+    return place
+
+
 @router.get("/{place_id}", response_model=PlaceDetailResponse)
-def get_place_detail(
+def get_place_detail_by_db_id(
     place_id: int,
     db: Session = Depends(get_db)
 ):
     """
-    장소 상세 정보 조회
+    장소 상세 정보 조회 (DB ID 기반)
     """
     place = db.query(Place).filter(Place.id == place_id).first()
 
