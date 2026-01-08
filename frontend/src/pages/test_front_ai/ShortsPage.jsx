@@ -30,7 +30,7 @@ const uiGlossary = {
     },
 }
 
-function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
+function ShortsPage({ onShortClick, embed = false, language: propLanguage, accessToken }) {
     const navigate = useNavigate()
     const [language, setLanguage] = useState(propLanguage || 'English')
     const [shortforms, setShortforms] = useState([])
@@ -116,6 +116,11 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         event.preventDefault()
         if (!uploadFile) return
 
+        if (!accessToken) {
+            alert("Login required for uploading! (Click 'Login' in top nav)")
+            return
+        }
+
         setIsUploading(true)
         const formData = new FormData()
         formData.append('video_file', uploadFile)
@@ -125,6 +130,9 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         try {
             const res = await fetch('/api/shortforms/', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
                 body: formData,
             })
             if (!res.ok) throw new Error('Upload failed')
@@ -180,15 +188,17 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                         <h2>{t.shortsTitle}</h2>
                         <p>{t.shortsSub}</p>
                     </div>
-                    <button className="tfai-cta" onClick={() => setShowUpload(true)} style={{ fontSize: '14px' }}>
-                        <span
-                            className="material-symbols-outlined"
-                            style={{ fontSize: '18px', verticalAlign: 'bottom', marginRight: '4px' }}
-                        >
-                            upload
-                        </span>
-                        {t.upload}
-                    </button>
+                    {accessToken && (
+                        <button className="tfai-cta" onClick={() => setShowUpload(true)} style={{ fontSize: '14px' }}>
+                            <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: '18px', verticalAlign: 'bottom', marginRight: '4px' }}
+                            >
+                                upload
+                            </span>
+                            {t.upload}
+                        </button>
+                    )}
                 </div>
                 <div className="tfai-feature-grid">
                     {!loading && !error && shortforms.length === 0 && (

@@ -14,9 +14,10 @@ from rest_framework import parsers, exceptions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
 from .models import Shortform, ShortformLike, ShortformComment, ShortformView, TranslationEntry
 from .serializers import ShortformSerializer, ShortformCommentSerializer
+from .permissions import IsOwnerOrReadOnly
 from langdetect import detect, LangDetectException
 
 logger = logging.getLogger(__name__)
@@ -65,29 +66,7 @@ def resolve_bin(name, env_var):
     return found
 
 
-def get_default_user():
-    """
-    개발 단계에서 인증이 없으므로 기본으로 사용할 관리자(superuser)를 찾는다.
-    반환: User 인스턴스 (없으면 ValueError 발생)
-    """
-    User = get_user_model()
-    user = User.objects.filter(is_superuser=True).first()
-    if not user:
-        raise ValueError("No superuser found. Create a superuser to own uploaded shortforms.")
-    return user
-
-
-# 인증 연동 전까지는 모든 작성자/소유자를 superuser로 처리
-def get_action_user(request):
-    """
-    인증 연동 시 교체 예정.
-    - 현재: request.user가 인증된 경우 해당 사용자 사용.
-    - 미인증: superuser fallback (get_default_user) 사용.
-    TODO: 실제 인증 도입 시 소유자/작성자 검증 로직으로 대체.
-    """
-    if hasattr(request, "user") and getattr(request.user, "is_authenticated", False):
-        return request.user
-    return get_default_user()
+# Helper functions removed (get_default_user, get_action_user)
 
 
 def call_fastapi_translate(text: str, source_lang: str, target_lang: str, timeout: int = 20):
@@ -247,13 +226,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
 
     queryset = Shortform.objects.order_by('-created_at')
     serializer_class = ShortformSerializer
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def perform_create(self, serializer):
-        try:
-            user = get_action_user(self.request)
-        except ValueError as e:
-            raise exceptions.ValidationError({"detail": str(e)})
+        user = self.request.user
+        if not user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to upload.")
 
         video_file = self.request.FILES.get('video_file') or serializer.validated_data.get('video_file')
         if not video_file:
@@ -280,6 +258,62 @@ class ShortformViewSet(viewsets.ModelViewSet):
             thumbnail_url=thumb_url,
             source_lang=detected_lang,
         )
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        # Owner check is handled by permission_classes
+
+        video_file = self.request.FILES.get('video_file')
+        
+        # If a new video file is provided, process it
+        if video_file:
+            saved_path, saved_url = save_video_file(video_file)
+            abs_path = default_storage.path(saved_path)
+            meta = extract_metadata(abs_path)
+            thumb_path, thumb_url = generate_thumbnail(abs_path)
+
+            # Update language detection if title/content changed or just re-detect from file?
+            # Ideally detect from text. If text changed, re-detect.
+            title = serializer.validated_data.get('title', self.get_object().title)
+            content = serializer.validated_data.get('content', self.get_object().content)
+            full_text = f"{title} {content}".strip()
+            detected_lang = detect_language(full_text)
+
+            serializer.save(
+                video_url=saved_url,
+                file_size=video_file.size,
+                duration=meta.get("duration"),
+                width=meta.get("width"),
+                height=meta.get("height"),
+                thumbnail_url=thumb_url,
+                source_lang=detected_lang,
+            )
+        else:
+            # Just content update
+            # Re-detect language if title or content changed
+            title = serializer.validated_data.get('title')
+            content = serializer.validated_data.get('content')
+            
+            if title is not None or content is not None:
+                current = self.get_object()
+                t = title if title is not None else current.title
+                c = content if content is not None else current.content
+                full_text = f"{t} {c}".strip()
+                detected_lang = detect_language(full_text)
+                serializer.save(source_lang=detected_lang)
+            else:
+                serializer.save()
+
+        # [FIX] Invalidate Translation Cache
+        # 내용이 수정되었으므로 기존 번역 캐시를 삭제하여 다시 번역하게 함
+        try:
+            instance = self.get_object()
+            TranslationEntry.objects.filter(
+                entity_type="shortform", 
+                entity_id=instance.id
+            ).delete()
+        except Exception as e:
+            print(f"Cache invalidation failed: {e}")
 
     def _apply_translation_sequential(self, data, target_lang):
         """
@@ -600,10 +634,9 @@ class ShortformViewSet(viewsets.ModelViewSet):
         POST: 좋아요 추가 (이미 좋아요면 그대로 유지)
         """
         shortform = self.get_object()
-        try:
-            user = get_action_user(request)
-        except ValueError as e:
-            raise exceptions.ValidationError({"detail": str(e)})
+        user = request.user
+        if not user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to like.")
 
         obj, created = ShortformLike.objects.get_or_create(shortform=shortform, user=user)
         if created:
@@ -617,10 +650,9 @@ class ShortformViewSet(viewsets.ModelViewSet):
         DELETE: 좋아요 취소 (없으면 무시)
         """
         shortform = self.get_object()
-        try:
-            user = get_action_user(request)
-        except ValueError as e:
-            raise exceptions.ValidationError({"detail": str(e)})
+        user = request.user
+        if not user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to unlike.")
 
         deleted, _ = ShortformLike.objects.filter(shortform=shortform, user=user).delete()
         if deleted:
@@ -641,10 +673,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
         # POST
-        try:
-            user = get_action_user(request)
-        except ValueError as e:
-            raise exceptions.ValidationError({"detail": str(e)})
+        # POST
+        if not request.user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to comment.")
+        
+        user = request.user
 
         serializer = ShortformCommentSerializer(data=request.data)
         if serializer.is_valid():
@@ -662,10 +695,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         """
         shortform = self.get_object()
         ip = request.META.get('REMOTE_ADDR')
-        try:
-            user = get_action_user(request)
-        except ValueError:
-            user = None  # superuser가 없을 때는 익명으로 기록
+        user = request.user if request.user.is_authenticated else None
 
         if user:
             exists = ShortformView.objects.filter(
