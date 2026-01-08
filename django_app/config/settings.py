@@ -304,26 +304,18 @@ SPECTACULAR_SETTINGS = {
         }
     },
     'APPEND_COMPONENTS': {
-    # 전역 Authorize 버튼(Bearer JWT) 활성화
-    'COMPONENTS': {
-        'securitySchemes': {
-            'BearerAuth': {
-                'type': 'http',
-                'scheme': 'bearer',
-                'bearerFormat': 'JWT',
-                'description': 'JWT 인증 토큰을 입력하세요. 로그인 API를 통해 발급받은 access_token을 입력하면 됩니다.'
+        # 전역 Authorize 버튼(Bearer JWT) 활성화
+        'COMPONENTS': {
+            'securitySchemes': {
+                'BearerAuth': {
+                    'type': 'http',
+                    'scheme': 'bearer',
+                    'bearerFormat': 'JWT',
+                    'description': 'JWT 인증 토큰을 입력하세요. 로그인 API를 통해 발급받은 access_token을 입력하면 됩니다.'
+                }
             }
         }
     },
-                'description': 'Authorization: Bearer <access_token>'
-            }
-        }
-    },
-    # 기본 보안 요구사항: BearerAuth
-    # (로그인/회원가입 등 공개 엔드포인트는 각 View에서 @extend_schema(auth=[])로 해제 가능)
-    'SECURITY': [
-        {'BearerAuth': []}
-    ],
 }
 
 # TAGO API Settings (국토교통부 항공 API)

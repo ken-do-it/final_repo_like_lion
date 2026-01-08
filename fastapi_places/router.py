@@ -2,7 +2,7 @@
 Places API Router
 장소 검색, 리뷰, 현지인 인증, 칼럼 관련 엔드포인트
 """
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import date
@@ -24,28 +24,9 @@ from service import (
     search_kakao_places, search_google_places, get_google_place_details
 )
 from database import get_db
+from auth import get_current_user, require_auth
 
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])
-
-
-# ==================== 의존성 (사용자 인증) ====================
-
-def get_current_user(
-    user_id: Optional[int] = Header(None, alias="user-id")
-) -> Optional[int]:
-    """
-    Django에서 전달받은 user_id 헤더 추출
-    """
-    return user_id
-
-
-def require_auth(user_id: Optional[int] = Depends(get_current_user)) -> int:
-    """
-    인증 필수 엔드포인트용
-    """
-    if not user_id:
-        raise HTTPException(status_code=401, detail="로그인이 필요합니다")
-    return user_id
 
 
 # ==================== 장소 검색 ====================
