@@ -64,6 +64,10 @@ class PlaceDetailResponse(BaseModel):
     review_count: int = 0
     created_at: datetime
     updated_at: datetime
+    # 동적 정보 (외부 API에서 실시간 조회)
+    phone: Optional[str] = ""
+    place_url: Optional[str] = ""
+    opening_hours: List[str] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
