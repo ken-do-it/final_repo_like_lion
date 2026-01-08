@@ -1,0 +1,127 @@
+"""
+Accommodations API Router
+숙소 검색 전용 엔드포인트
+"""
+from fastapi import APIRouter, Query
+from typing import Optional, List
+import asyncio
+
+from service import search_kakao_places, search_google_places, remove_duplicate_places
+
+router = APIRouter(prefix="/api/v1/accommodations", tags=["Accommodations"])
+
+
+# ==================== 숙소 전용 서비스 함수 ====================
+
+async def search_accommodations_hybrid(query: str, city: str, limit: int = 30) -> List[dict]:
+    """
+    숙소 전용 검색 (카카오 + 구글)
+    """
+    # 카카오 API는 size 최대 15
+    kakao_task = search_kakao_places(query, limit=15)
+    google_task = search_google_places(query, limit=15)
+    
+    kakao_results, google_results = await asyncio.gather(kakao_task, google_task)
+    
+    all_results = kakao_results + google_results
+    
+    # 숙소 키워드 필터링
+    accommodation_keywords = [
+        "호텔", "모텔", "펜션", "게스트하우스", "리조트", "민박", "숙박", "여관",
+        "hotel", "motel", "resort", "inn", "lodging", "hostel"
+    ]
+    
+    filtered_results = []
+    for result in all_results:
+        name = result.get("name", "").lower()
+        category_str = " ".join(result.get("category_detail", [])).lower()
+        
+        is_accommodation = any(
+            kw.lower() in name or kw.lower() in category_str
+            for kw in accommodation_keywords
+        )
+        
+        if is_accommodation:
+            result["category_main"] = "숙박"
+            filtered_results.append(result)
+    
+    unique_results = remove_duplicate_places(filtered_results)
+    
+    if city:
+        unique_results = [
+            r for r in unique_results
+            if city in r.get("address", "") or r.get("city") == city
+        ]
+    
+    return unique_results[:limit]
+
+
+# ==================== API 엔드포인트 ====================
+
+@router.get("")
+async def search_accommodations(
+    city: str = Query(..., min_length=1, description="도시명 (필수)"),
+    type: Optional[str] = Query(None, description="숙소 유형: 호텔, 모텔, 펜션, 게스트하우스, 리조트"),
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(15, ge=1, le=50, description="페이지당 개수")
+):
+    """
+    숙소 검색 API
+    
+    사용 예시:
+    - GET /api/v1/accommodations?city=서울
+    - GET /api/v1/accommodations?city=부산&type=호텔
+    - GET /api/v1/accommodations?city=제주&type=펜션&page=2
+    """
+    type_keywords = {
+        "호텔": "호텔",
+        "모텔": "모텔",
+        "펜션": "펜션",
+        "게스트하우스": "게스트하우스",
+        "리조트": "리조트",
+        "민박": "민박",
+    }
+    
+    if type and type in type_keywords:
+        search_query = f"{city} {type_keywords[type]}"
+    else:
+        search_query = f"{city} 숙박"
+    
+    all_results = await search_accommodations_hybrid(search_query, city, limit=50)
+    
+    # 페이지네이션
+    offset = (page - 1) * limit
+    paginated_results = all_results[offset:offset + limit]
+    
+    return {
+        "city": city,
+        "type": type,
+        "page": page,
+        "limit": limit,
+        "total": len(all_results),
+        "count": len(paginated_results),
+        "results": paginated_results
+    }
+
+
+@router.get("/types")
+async def get_accommodation_types():
+    """지원하는 숙소 유형 목록"""
+    return {
+        "types": [
+            {"code": "호텔", "name": "호텔"},
+            {"code": "모텔", "name": "모텔"},
+            {"code": "펜션", "name": "펜션"},
+            {"code": "게스트하우스", "name": "게스트하우스"},
+            {"code": "리조트", "name": "리조트"},
+            {"code": "민박", "name": "민박"},
+        ]
+    }
+
+
+@router.get("/popular")
+async def get_popular_cities():
+    """숙소 검색 인기 도시"""
+    return {
+        "cities": ["서울", "부산", "제주", "강릉", "경주", "여수", "속초", "전주"]
+    }

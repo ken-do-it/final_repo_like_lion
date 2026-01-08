@@ -36,6 +36,10 @@ app.add_middleware(
 from router import router as places_router
 app.include_router(places_router)
 
+# 숙소 전용 라우터 등록
+from accommodations import router as accommodations_router
+app.include_router(accommodations_router)
+
 
 # 테이블 생성은 Django 마이그레이션으로 처리
 # FastAPI는 기존 테이블을 읽기만 함
