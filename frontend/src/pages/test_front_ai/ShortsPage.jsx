@@ -40,6 +40,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
     const [uploadFile, setUploadFile] = useState(null)
     const [uploadTitle, setUploadTitle] = useState('')
     const [uploadDesc, setUploadDesc] = useState('')
+    const [useBatch, setUseBatch] = useState(true)
     const [isUploading, setIsUploading] = useState(false)
 
     useEffect(() => {
@@ -59,6 +60,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
             nowPlaying: 'Now Playing',
             loading: 'Loading...',
             noShorts: 'No shorts available.',
+            batchLabel: 'Batch Optimization',
         }),
         []
     )
@@ -79,7 +81,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         try {
             setLoading(true)
             setError('')
-            const res = await fetch(`/api/shortforms/?lang=${langCode}`)
+            const res = await fetch(`/api/shortforms/?lang=${langCode}&batch=${useBatch}`)
             if (!res.ok) {
                 throw new Error(`HTTP ${res.status}`)
             }
@@ -104,7 +106,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         } finally {
             setLoading(false)
         }
-    }, [langCode])
+    }, [langCode, useBatch])
 
     useEffect(() => {
         fetchShortforms()
@@ -160,6 +162,20 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                         </div>
                     </div>
                 )}
+
+                {/* Batch Toggle - Always visible for Demo */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 4px 10px 0' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', color: '#64748b' }}>
+                        <input
+                            type="checkbox"
+                            checked={useBatch}
+                            onChange={(e) => setUseBatch(e.target.checked)}
+                            style={{ marginRight: '6px' }}
+                        />
+                        {t.batchLabel || 'Batch Opt'}
+                    </label>
+                </div>
+
                 <div className="tfai-section-heading tfai-section-heading-row">
                     <div>
                         <h2>{t.shortsTitle}</h2>
@@ -219,7 +235,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                     {error && <p className="tfai-error">{error}</p>}
                     {loading && <p className="tfai-loading">{t.loading}</p>}
                 </div>
-            </section>
+            </section >
 
             {showUpload && (
                 <div className="tfai-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowUpload(false)}>
@@ -271,7 +287,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                     </div>
                 </div>
             )}
-        </div>
+        </div >
     )
 }
 

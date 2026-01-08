@@ -78,15 +78,16 @@ def call_fastapi_translate(text: str, source_lang: str, target_lang: str, timeou
     
     # 1. 시도: 설정된 URL (Docker Internal or Env)
     try:
-        resp = requests.post(FASTAPI_TRANSLATE_URL, json=payload, timeout=timeout)
+        # (connect timeout, read timeout)
+        resp = requests.post(FASTAPI_TRANSLATE_URL, json=payload, timeout=(3, timeout))
         resp.raise_for_status()
         data = resp.json()
         return data.get("translated_text"), data.get("provider", "fastapi")
     except Exception as first_error:
         # 2. 시도: 로컬호스트 Fallback (개발 편의성)
-        # 만약 기본 URL이 'fastapi:8000' 형태라면, 로컬 8001포트로 재시도
+        # 만약 기본 URL이 'fastapi:8000' 형태라면, 로컬 8003포트로 재시도
         if "fastapi" in FASTAPI_TRANSLATE_URL:
-            fallback_url = "http://127.0.0.1:8001/api/ai/translate"
+            fallback_url = "http://127.0.0.1:8003/api/ai/translate"  # Port 8003으로 수정됨
             try:
                 logger.info(f"Primary translation URL failed. Retrying fallback: {fallback_url}")
                 resp = requests.post(fallback_url, json=payload, timeout=timeout)
@@ -248,7 +249,97 @@ class ShortformViewSet(viewsets.ModelViewSet):
             thumbnail_url=thumb_url,
         )
 
-    def _apply_translation(self, data, target_lang):
+    def _apply_translation_sequential(self, data, target_lang):
+        """
+        [DEMO]: 하나씩 순차적으로 번역 API를 호출하는 느린 버전 (최적화 전)
+        """
+        if not target_lang:
+            return data
+
+        # 1. 데이터 정규화 (리스트로 변환)
+        items = []
+        if isinstance(data, dict):
+            if 'results' in data and isinstance(data['results'], list):
+                items = data['results']
+            else:
+                items = [data]
+        elif isinstance(data, list):
+            items = data
+        else:
+            return data
+        
+        if not items:
+            return data
+
+        # 2. 순차적으로 하나씩 처리
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            src_lang = item.get("source_lang") or "kor_Hang"
+            if src_lang == target_lang:
+                item["title_translated"] = item.get("title", "")
+                item["content_translated"] = item.get("content", "")
+                continue
+
+            entity_id = item.get("id") or 0
+            
+            # Title Processing
+            t_text = item.get("title") or ""
+            if t_text:
+                # 2-1. DB 캐시 확인
+                entry = TranslationEntry.objects.filter(
+                    entity_type="shortform", entity_id=entity_id, field="title", target_lang=target_lang
+                ).first()
+                
+                if entry:
+                    item["title_translated"] = entry.translated_text
+                else:
+                    # 2-2. API 호출 (Single) - 여기서 시간이 걸림!
+                    try:
+                        translated_text, provider = call_fastapi_translate(t_text, src_lang, target_lang)
+                        # DB 저장
+                        TranslationEntry.objects.create(
+                            entity_type="shortform", entity_id=entity_id, field="title",
+                            source_lang=src_lang, target_lang=target_lang,
+                            source_hash=hashlib.sha256(t_text.encode("utf-8")).hexdigest(),
+                            translated_text=translated_text, provider=provider,
+                            model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+                            last_used_at=timezone.now(),
+                        )
+                        item["title_translated"] = translated_text
+                    except Exception as e:
+                        logger.error(f"Sequential translation failed: {e}")
+                        item["title_translated"] = t_text # Fallback
+            else:
+                item["title_translated"] = ""
+
+            # Content Processing (위와 동일 반복)
+            c_text = item.get("content") or ""
+            if c_text:
+                entry = TranslationEntry.objects.filter(
+                    entity_type="shortform", entity_id=entity_id, field="content", target_lang=target_lang
+                ).first()
+                if entry:
+                    item["content_translated"] = entry.translated_text
+                else:
+                    try:
+                        translated_text, provider = call_fastapi_translate(c_text, src_lang, target_lang)
+                        TranslationEntry.objects.create(
+                            entity_type="shortform", entity_id=entity_id, field="content",
+                            source_lang=src_lang, target_lang=target_lang,
+                            source_hash=hashlib.sha256(c_text.encode("utf-8")).hexdigest(),
+                            translated_text=translated_text, provider=provider,
+                            model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+                            last_used_at=timezone.now(),
+                        )
+                        item["content_translated"] = translated_text
+                    except Exception:
+                        item["content_translated"] = c_text
+
+        return data
+
+    def _apply_translation_batch(self, data, target_lang):
         """
         serializer.data(dict 또는 list)에 title/content 번역 필드를 추가.
         (Batch API 사용 버전)
@@ -444,22 +535,31 @@ class ShortformViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         resp = super().list(request, *args, **kwargs)
         target_lang = request.query_params.get("lang")
+        use_batch = request.query_params.get("batch", "true") == "true"
+        
         if target_lang:
             try:
-                resp.data = self._apply_translation(resp.data, target_lang)
+                if use_batch:
+                    resp.data = self._apply_translation_batch(resp.data, target_lang)
+                else:
+                    resp.data = self._apply_translation_sequential(resp.data, target_lang)
             except Exception as e:
-                logger.exception("Graceful handled: Error in _apply_translation during list")
-                # 실패해도 원본 데이터는 이미 resp.data에 들어있으므로 그대로 반환 가능
+                logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during list")
         return resp
 
     def retrieve(self, request, *args, **kwargs):
         resp = super().retrieve(request, *args, **kwargs)
         target_lang = request.query_params.get("lang")
+        use_batch = request.query_params.get("batch", "true") == "true"      
+
         if target_lang:
             try:
-                resp.data = self._apply_translation(resp.data, target_lang)
+                if use_batch:
+                    resp.data = self._apply_translation_batch(resp.data, target_lang)
+                else:
+                    resp.data = self._apply_translation_sequential(resp.data, target_lang)
             except Exception as e:
-                logger.exception("Graceful handled: Error in _apply_translation during retrieve")
+                logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during retrieve")
         return resp
 
     @action(detail=True, methods=['post'])
@@ -634,8 +734,11 @@ def call_fastapi_translate_batch(texts: list[str], source_lang: str, target_lang
     url = f"{FASTAPI_TRANSLATE_URL.replace('/translate', '')}/translate/batch"
     
     # 1. 시도: Docker Internal URL
+    # 로컬 개발 환경(Window/Mac Host)에서는 이 URL 접근 불가하여 TimeOut 발생 가능성 높음
+    # 따라서 connect timeout을 짧게 설정하여 빠르게 Fallback으로 넘어가도록 함.
     try:
-        resp = requests.post(url, json=payload, timeout=timeout)
+        # (connect timeout, read timeout)
+        resp = requests.post(url, json=payload, timeout=(3, timeout))
         resp.raise_for_status()
         data = resp.json()
         return data.get("translations", []), data.get("provider", "fastapi-batch")
