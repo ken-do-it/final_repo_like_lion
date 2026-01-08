@@ -17,7 +17,8 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / '.env')
+# .env 파일을 루트 폴더(00000-final_repo)에서 읽어옵니다
+load_dotenv(BASE_DIR.parent / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -27,6 +28,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+# DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -168,6 +171,7 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
+# REST Framework Settings
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework Settings
@@ -176,28 +180,25 @@ REST_FRAMEWORK = {
         'users.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # 각 View에서 개별 설정
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        # 브라우저에서 테스트용 UI를 보이게 하기 위해 추가
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
-        # 파일 업로드/폼 테스트를 위해 추가
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ],
-    # API 문서 자동 생성
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # JWT Settings
 JWT_SECRET_KEY = SECRET_KEY
 JWT_ALGORITHM = 'HS256'
-JWT_ACCESS_TOKEN_LIFETIME = 60 * 60  # 1 hour
-JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 14  # 14 days
+JWT_ACCESS_TOKEN_LIFETIME = 60 * 60
+JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 14
 
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -270,29 +271,23 @@ EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
 
 # CORS Settings
-CORS_ALLOW_ALL_ORIGINS = True  # 개발용, 프로덕션에서는 특정 도메인만 허용
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # Time Zone
 TIME_ZONE = 'Asia/Seoul'
 USE_TZ = True
-# BigAutoField 설정
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# MEDIA settings for local file uploads (shortform videos, thumbnails).
-# MEDIA_URL: public URL prefix when serving uploaded files in development.
-# MEDIA_ROOT: filesystem path where uploaded files are stored locally.
-# NOTE: Production에서 S3 등을 사용할 경우 스토리지 백엔드로 교체 예정.
+# MEDIA settings
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# drf-spectacular Settings (API Documentation)
+# drf-spectacular Settings (통합)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Korea Travel API',
     'DESCRIPTION': '외국인 관광객을 위한 한국 여행 서비스 API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    # 한국어/영어 모두 지원
     'SCHEMA_PATH_PREFIX': r'/api/',
     'COMPONENT_SPLIT_REQUEST': True,
     # JWT 인증 스키마 추가
@@ -309,6 +304,8 @@ SPECTACULAR_SETTINGS = {
         }
     },
     'APPEND_COMPONENTS': {
+    # 전역 Authorize 버튼(Bearer JWT) 활성화
+    'COMPONENTS': {
         'securitySchemes': {
             'BearerAuth': {
                 'type': 'http',
@@ -318,4 +315,27 @@ SPECTACULAR_SETTINGS = {
             }
         }
     },
+                'description': 'Authorization: Bearer <access_token>'
+            }
+        }
+    },
+    # 기본 보안 요구사항: BearerAuth
+    # (로그인/회원가입 등 공개 엔드포인트는 각 View에서 @extend_schema(auth=[])로 해제 가능)
+    'SECURITY': [
+        {'BearerAuth': []}
+    ],
+}
+
+# TAGO API Settings (국토교통부 항공 API)
+TAGO_SERVICE_KEY = os.getenv('TAGO_SERVICE_KEY', '')
+
+# 한국공항공사 API Settings
+KAC_SERVICE_KEY = os.getenv('KAC_SERVICE_KEY', '')
+
+# 토스페이먼츠 Settings
+TOSS_PAYMENTS = {
+    'CLIENT_KEY': os.getenv('TOSS_CLIENT_KEY', 'test_ck_default'),
+    'SECRET_KEY': os.getenv('TOSS_SECRET_KEY', 'test_sk_default'),
+    'SUCCESS_URL': os.getenv('TOSS_SUCCESS_URL', 'http://localhost:3000/payment/success'),
+    'FAIL_URL': os.getenv('TOSS_FAIL_URL', 'http://localhost:3000/payment/fail'),
 }

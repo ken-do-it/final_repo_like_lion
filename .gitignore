@@ -221,4 +221,8 @@ KJ_DevlopPlan.md
 KJ_SKILL.md
 KJ_DevlopPlan2.md
 media/
-stitch_
+stitch_front/
+
+#최진석 부하테스트용
+load_test.js
+

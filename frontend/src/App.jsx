@@ -4,19 +4,25 @@ import { Routes, Route, useNavigate } from 'react-router-dom'
 import MainPage from './pages/MainPage'
 import SearchPage from './pages/SearchPage'
 import GeoImageUploader from './pages/GeoImageUploader'
+import RoadviewGame from './pages/RoadviewGame'
 import TestFrontAI from './pages/test_front_ai/TestFrontAI'
 import './App.css'
 
 function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const navigate = useNavigate()
+  // 1. 상태 관리
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // 페이지 이동을 위한 훅
+  const navigate = useNavigate();
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev)
   const goHome = () => {
-    setSearchQuery('')
-    navigate('/')
-  }
+    setSearchQuery("");
+    navigate("/");
+  };
+
+  // ★ [2] 지오게서(퀴즈) 페이지로 이동하는 함수 추가
   const goGeoQuiz = () => {
     navigate('/geo-quiz')
     setIsSidebarOpen(false)
@@ -27,9 +33,10 @@ function App() {
   }
   const handleSearch = (e) => {
     if (e.key === 'Enter') {
-      if (!searchQuery.trim()) return
-      navigate(`/search?query=${encodeURIComponent(searchQuery)}`)
-      setIsSidebarOpen(false)
+      if (!searchQuery.trim()) return;
+      console.log("페이지 이동:", searchQuery);
+      navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
+      setIsSidebarOpen(false);
     }
   }
 
@@ -50,7 +57,7 @@ function App() {
 
         <div className="navbar-center">
           <div className="search-wrapper">
-            <span className="search-icon">검색</span>
+            <span className="search-icon">🔍</span>
             <input
               type="text"
               className="main-search-input"
@@ -96,15 +103,17 @@ function App() {
           <Routes>
             {/* 기본 주소(/)일 때 -> 메인 페이지 */}
             <Route path="/" element={<MainPage />} />
-            
+
             {/* 검색 주소(/search)일 때 -> 검색 결과 페이지 */}
             <Route path="/search" element={<SearchPage />} />
 
             {/* ★ [4] 지오게서 퀴즈 페이지 라우터 추가 */}
             <Route path="/geo-quiz" element={<GeoImageUploader />} />
+            <Route path="/game" element={<RoadviewGame />} />
             <Route path="/test-front" element={<TestFrontAI />} />
           </Routes>
         </main>
+
       </div>
     </div>
   )

@@ -12,13 +12,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, desc
 from fastapi import HTTPException
 
-from .models import Place, PlaceReview, PlaceBookmark, LocalBadge, LocalColumn, User
-from .schemas import PlaceSearchResult
+from models import Place, PlaceReview, PlaceBookmark, LocalBadge, LocalColumn, User
+from schemas import PlaceSearchResult
 
 
 # ==================== 환경 변수 ====================
 
-KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY", "")
+KAKAO_REST_API_KEY = os.getenv("YJ_KAKAO_REST_API_KEY", "")
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
 
 # 한국 위치 범위
@@ -29,6 +29,61 @@ KOREA_LON_MAX = float(os.getenv("KOREA_LON_MAX", "132"))
 
 
 # ==================== 외부 API 통합 ====================
+
+async def get_or_create_place_by_api_id(
+    db: Session,
+    place_api_id: str,
+    provider: str = "KAKAO",
+    name_hint: Optional[str] = None
+) -> Optional[Place]:
+    """
+    place_api_id로 DB에서 조회하거나, 없으면 외부 API에서 가져와서 생성
+    """
+    # 1. DB에서 조회
+    place = db.query(Place).filter(Place.place_api_id == place_api_id).first()
+    if place:
+        return place
+
+    # 2. 외부 API에서 가져오기
+    if not name_hint:
+        return None
+
+    # name으로 검색해서 place_api_id가 일치하는 것 찾기
+    if provider == "KAKAO":
+        results = await search_kakao_places(name_hint, limit=10)
+    else:  # GOOGLE
+        results = await search_google_places(name_hint, limit=10)
+
+    # place_api_id 매칭
+    place_data = None
+    for result in results:
+        if result.get("place_api_id") == place_api_id:
+            place_data = result
+            break
+
+    if not place_data:
+        return None
+
+    # 3. DB에 저장
+    place = Place(
+        provider=place_data.get("provider"),
+        place_api_id=place_data.get("place_api_id"),
+        name=place_data.get("name"),
+        address=place_data.get("address"),
+        city=place_data.get("city"),
+        latitude=place_data.get("latitude"),
+        longitude=place_data.get("longitude"),
+        category_main=place_data.get("category_main"),
+        category_detail=place_data.get("category_detail"),
+        thumbnail_urls=[]
+    )
+
+    db.add(place)
+    db.commit()
+    db.refresh(place)
+
+    return place
+
 
 async def search_kakao_places(query: str, limit: int = 15) -> List[Dict]:
     """
@@ -125,14 +180,99 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
         return []
 
 
+async def get_google_place_details(place_id: str) -> Optional[Dict]:
+    """
+    구글 Place Details API로 영업시간 등 상세 정보 조회
+    """
+    if not GOOGLE_MAPS_API_KEY:
+        return None
+
+    url = "https://maps.googleapis.com/maps/api/place/details/json"
+    params = {
+        "place_id": place_id,
+        "fields": "opening_hours,formatted_phone_number,website",
+        "key": GOOGLE_MAPS_API_KEY,
+        "language": "ko"
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("status") != "OK":
+                return None
+
+            result = data.get("result", {})
+            opening_hours = result.get("opening_hours", {})
+
+            return {
+                "opening_hours": opening_hours.get("weekday_text", []),
+                "phone": result.get("formatted_phone_number", ""),
+                "website": result.get("website", "")
+            }
+
+    except Exception as e:
+        print(f"❌ 구글 Place Details API 에러: {e}")
+        return None
+
+
+# async def search_places_hybrid(query: str, category: Optional[str] = None,
+#                                 city: Optional[str] = None, limit: int = 20) -> List[Dict]:
+#     """
+#     카카오 + 구글 병렬 검색 후 결과 통합
+#     수정전
+#     """
+#     # 병렬 호출로 성능 최적화 (2초 → 1초)
+#     kakao_task = search_kakao_places(query, limit=15)
+#     google_task = search_google_places(query, limit=15)
+
+#     kakao_results, google_results = await asyncio.gather(kakao_task, google_task)
+
+#     # 결과 통합 및 중복 제거
+#     all_results = kakao_results + google_results
+#     unique_results = remove_duplicate_places(all_results)
+
+#     # 필터링 적용
+#     filtered_results = unique_results
+#     if category:
+#         # category_main 또는 category_detail에 포함되어 있으면 매칭
+#         filtered_results = [
+#             r for r in filtered_results
+#             if r.get("category_main") == category
+#             or (isinstance(r.get("category_detail"), list) and category in r.get("category_detail", []))
+#         ]
+#     if city:
+#         filtered_results = [r for r in filtered_results if r.get("city") == city]
+
+#     return filtered_results[:limit]
+
 async def search_places_hybrid(query: str, category: Optional[str] = None,
                                 city: Optional[str] = None, limit: int = 20) -> List[Dict]:
     """
     카카오 + 구글 병렬 검색 후 결과 통합
+    카테고리 포함 검색 수정후
     """
-    # 병렬 호출로 성능 최적화 (2초 → 1초)
-    kakao_task = search_kakao_places(query, limit=15)
-    google_task = search_google_places(query, limit=15)
+    # ★ 추가: 카테고리가 있으면 검색어에 키워드 추가
+    search_query = query
+    if category:
+        category_keywords = {
+            "숙박": "호텔",
+            "호텔": "호텔",
+            "모텔": "모텔", 
+            "펜션": "펜션",
+            "음식점": "맛집",
+            "카페": "카페",
+            "관광명소": "관광",
+        }
+        keyword = category_keywords.get(category, category)
+        if keyword not in query:  # 중복 방지
+            search_query = f"{query} {keyword}"
+    
+    # ★ 수정: query → search_query로 변경
+    kakao_task = search_kakao_places(search_query, limit=15)
+    google_task = search_google_places(search_query, limit=15)
 
     kakao_results, google_results = await asyncio.gather(kakao_task, google_task)
 
@@ -140,14 +280,13 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
     all_results = kakao_results + google_results
     unique_results = remove_duplicate_places(all_results)
 
-    # 필터링 적용
-    filtered_results = unique_results
-    if category:
-        filtered_results = [r for r in filtered_results if r.get("category_main") == category]
+    # ★ 카테고리 필터링은 제거하거나 완화 (검색어에 이미 반영됨)
+    # 기존 필터링 코드 삭제 또는 주석 처리
+    
     if city:
-        filtered_results = [r for r in filtered_results if r.get("city") == city]
+        unique_results = [r for r in unique_results if r.get("city") == city]
 
-    return filtered_results[:limit]
+    return unique_results[:limit]
 
 
 def remove_duplicate_places(places: List[Dict]) -> List[Dict]:
@@ -367,30 +506,64 @@ def extract_city_from_address(address: str) -> Optional[str]:
 
 
 def map_category_to_main(category_detail: List[str]) -> Optional[str]:
+
+    # # """
+    # # 카카오 카테고리 → 메인 카테고리 매핑
+    # # 수정전
+    # # """
+    # if not category_detail:
+    #     return None
+
+    # first_category = category_detail[0] if category_detail else ""
+
+    # mapping = {
+    #     "음식점": "음식점",
+    #     "카페": "카페",
+    #     "관광명소": "관광명소",
+    #     "숙박": "숙박",
+    #     "문화시설": "문화시설",
+    #     "쇼핑": "쇼핑",
+    #     "병원": "병원",
+    #     "편의점": "편의점",
+    #     "은행": "은행",
+    #     "주차장": "주차장"
+    # }
+
+    # for key, value in mapping.items():
+    #     if key in first_category:
+    #         return value
+
+    # return "기타"
+
     """
     카카오 카테고리 → 메인 카테고리 매핑
+    전체 카테고리 리스트를 검사하여 매핑
+    수정본
     """
     if not category_detail:
         return None
 
-    first_category = category_detail[0] if category_detail else ""
+    # 전체 카테고리를 하나의 문자열로 합침
+    full_category = " ".join(category_detail)
 
-    mapping = {
-        "음식점": "음식점",
-        "카페": "카페",
-        "관광명소": "관광명소",
-        "숙박": "숙박",
-        "문화시설": "문화시설",
-        "쇼핑": "쇼핑",
-        "병원": "병원",
-        "편의점": "편의점",
-        "은행": "은행",
-        "주차장": "주차장"
-    }
+    # 우선순위 순으로 매핑 (구체적인 것 먼저)
+    mapping_rules = [
+        (["호텔", "모텔", "펜션", "게스트하우스", "리조트", "민박", "숙박"], "숙박"),
+        (["음식점", "식당", "맛집"], "음식점"),
+        (["카페", "커피"], "카페"),
+        (["관광", "명소", "여행"], "관광명소"),
+        (["문화시설", "박물관", "미술관", "공연장"], "문화시설"),
+        (["쇼핑", "백화점", "마트", "시장"], "쇼핑"),
+        (["병원", "의원", "약국"], "병원"),
+        (["편의점"], "편의점"),
+        (["은행", "ATM"], "은행"),
+        (["주차장"], "주차장"),
+    ]
 
-    for key, value in mapping.items():
-        if key in first_category:
-            return value
+    for keywords, category in mapping_rules:
+        for keyword in keywords:
+            if keyword in full_category:
+                return category
 
     return "기타"
 

@@ -7,22 +7,23 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import date
 
-from .models import (
+from models import (
     Place, PlaceReview, PlaceBookmark, LocalBadge,
     LocalColumn, LocalColumnSection, LocalColumnSectionImage, User
 )
-from .schemas import (
+from schemas import (
     PlaceSearchRequest, PlaceSearchResult, PlaceAutocompleteRequest,
     PlaceAutocompleteSuggestion, PlaceDetailResponse, ReviewCreateRequest,
     ReviewResponse, BookmarkResponse, LocalBadgeAuthRequest, LocalBadgeAuthResponse,
     LocalBadgeStatusResponse, LocalColumnCreateRequest, LocalColumnResponse,
     LocalColumnListResponse, CityContentResponse, PopularCityResponse
 )
-from .service import (
+from service import (
     search_places_hybrid, authenticate_local_badge, check_local_badge_active,
-    update_place_review_stats, update_place_thumbnails
+    update_place_review_stats, update_place_thumbnails, get_or_create_place_by_api_id,
+    search_kakao_places, search_google_places, get_google_place_details
 )
-from .database import get_db
+from database import get_db
 
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])
 
@@ -54,41 +55,57 @@ async def search_places(
     query: str = Query(..., min_length=1, description="검색어"),
     category: Optional[str] = Query(None, description="카테고리 필터"),
     city: Optional[str] = Query(None, description="도시 필터"),
-    limit: int = Query(20, ge=1, le=100, description="결과 개수")
+    page: int = Query(1, ge=1, description="페이지 번호")
 ):
     """
     장소 검색 (카카오맵 + 구글맵 통합)
+
+    페이지네이션:
+    - page: 페이지 번호 (1부터 시작)
+    - 페이지당 15개 고정
+
+    참고: API 특성상 총 결과 수는 제한적일 수 있음 (카카오+구글 합쳐서 최대 ~45개)
     """
-    results = await search_places_hybrid(query, category, city, limit)
+    limit = 15  # 페이지당 개수 고정
+
+    # API에서 더 많은 결과를 가져옴 (페이지네이션 대비)
+    fetch_limit = page * limit + 10  # 여유분 포함
+
+    all_results = await search_places_hybrid(query, category, city, fetch_limit)
+
+    # 페이지네이션 적용
+    offset = (page - 1) * limit
+    paginated_results = all_results[offset:offset + limit]
 
     return {
         "query": query,
-        "count": len(results),
-        "results": results
+        "page": page,
+        "limit": limit,
+        "total": len(all_results),  # 필터링 후 전체 개수
+        "count": len(paginated_results),  # 현재 페이지 개수
+        "results": paginated_results
     }
 
 
 @router.get("/autocomplete")
 async def autocomplete_places(
     q: str = Query(..., min_length=2, description="검색어 (최소 2글자)"),
-    limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db)
+    limit: int = Query(10, ge=1, le=50)
 ):
     """
-    장소 자동완성
+    장소 자동완성 (카카오 API 실시간 조회)
+    타이핑하는 동안 실시간으로 장소명 추천
     """
-    # DB에서 이름으로 검색
-    places = db.query(Place).filter(
-        Place.name.ilike(f"%{q}%")
-    ).limit(limit).all()
+    # 카카오 API로 실시간 검색
+    kakao_results = await search_kakao_places(q, limit=limit)
 
     suggestions = [
         PlaceAutocompleteSuggestion(
-            name=p.name,
-            address=p.address,
-            city=p.city
+            name=result["name"],
+            address=result["address"],
+            city=result["city"]
         )
-        for p in places
+        for result in kakao_results
     ]
 
     return {"suggestions": suggestions}
@@ -96,13 +113,110 @@ async def autocomplete_places(
 
 # ==================== 장소 상세 ====================
 
+@router.get("/detail")
+async def get_place_detail_by_api_id(
+    place_api_id: str = Query(..., description="외부 API의 장소 ID"),
+    provider: str = Query("KAKAO", description="제공자 (KAKAO, GOOGLE)"),
+    name: str = Query(..., description="장소명 (검색용)"),
+    db: Session = Depends(get_db)
+):
+    """
+    장소 상세 정보 조회 (외부 API ID 기반)
+    DB에 없으면 외부 API에서 가져와서 저장 (온디맨드 방식)
+
+    반환:
+    - DB 저장 정보: name, address, latitude, longitude, category 등
+    - 동적 정보 (실시간 API 호출): phone, place_url, opening_hours
+    """
+    # 1. DB 조회 또는 생성 (기본 정보)
+    place = await get_or_create_place_by_api_id(
+        db=db,
+        place_api_id=place_api_id,
+        provider=provider,
+        name_hint=name
+    )
+
+    if not place:
+        raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다")
+
+    # 2. 동적 정보 API 호출
+    phone = ""
+    place_url = ""
+    opening_hours = []
+
+    if provider == "KAKAO":
+        # 카카오: 검색 API 직접 호출해서 phone, place_url 가져오기
+        import httpx
+        import os
+        kakao_api_key = os.getenv("YJ_KAKAO_REST_API_KEY", "")
+        if kakao_api_key:
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    response = await client.get(
+                        "https://dapi.kakao.com/v2/local/search/keyword.json",
+                        headers={"Authorization": f"KakaoAK {kakao_api_key}"},
+                        params={"query": name, "size": 5}
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        for doc in data.get("documents", []):
+                            if doc.get("id") == place_api_id:
+                                phone = doc.get("phone", "")
+                                place_url = doc.get("place_url", "")
+                                break
+            except Exception as e:
+                print(f"카카오 상세 정보 조회 실패: {e}")
+
+        # 구글에서 영업시간 가져오기 (장소명 + 주소로 검색)
+        google_results = await search_google_places(f"{place.name} {place.address}", limit=3)
+        if google_results:
+            # 첫 번째 결과의 place_id로 상세 정보 조회
+            google_place_id = google_results[0].get("place_api_id")
+            if google_place_id:
+                google_details = await get_google_place_details(google_place_id)
+                if google_details:
+                    opening_hours = google_details.get("opening_hours", [])
+
+    elif provider == "GOOGLE":
+        # 구글: Details API에서 전부 가져오기
+        google_details = await get_google_place_details(place_api_id)
+        if google_details:
+            phone = google_details.get("phone", "")
+            opening_hours = google_details.get("opening_hours", [])
+            place_url = google_details.get("website", "")
+
+    # 3. DB 데이터 + 동적 정보 합치기
+    return {
+        # DB 정보
+        "id": place.id,
+        "provider": place.provider,
+        "place_api_id": place.place_api_id,
+        "name": place.name,
+        "address": place.address,
+        "city": place.city,
+        "latitude": float(place.latitude),
+        "longitude": float(place.longitude),
+        "category_main": place.category_main,
+        "category_detail": place.category_detail,
+        "thumbnail_urls": place.thumbnail_urls,
+        "average_rating": float(place.average_rating) if place.average_rating else 0.0,
+        "review_count": place.review_count,
+        "created_at": place.created_at,
+        "updated_at": place.updated_at,
+        # 동적 정보 (DB 저장 안함)
+        "phone": phone,
+        "place_url": place_url,
+        "opening_hours": opening_hours
+    }
+
+
 @router.get("/{place_id}", response_model=PlaceDetailResponse)
-def get_place_detail(
+def get_place_detail_by_db_id(
     place_id: int,
     db: Session = Depends(get_db)
 ):
     """
-    장소 상세 정보 조회
+    장소 상세 정보 조회 (DB ID 기반)
     """
     place = db.query(Place).filter(Place.id == place_id).first()
 
@@ -117,20 +231,37 @@ def get_place_detail(
 @router.get("/{place_id}/reviews")
 def get_place_reviews(
     place_id: int,
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 개수"),
+    order_by: str = Query("latest", description="정렬: latest(최신순), rating_desc(별점높은순), rating_asc(별점낮은순)"),
+    has_image: bool = Query(False, description="이미지 첨부 리뷰만 보기"),
     db: Session = Depends(get_db)
 ):
     """
-    장소 리뷰 목록 조회
+    장소 리뷰 목록 조회 (필터링 및 정렬 가능)
+
+    - order_by: latest(최신순, 기본값) / rating_desc(별점높은순) / rating_asc(별점낮은순)
+    - has_image: True(이미지 있는 리뷰만) / False(전체 리뷰, 기본값)
     """
     offset = (page - 1) * limit
 
-    reviews = db.query(PlaceReview).filter(
-        PlaceReview.place_id == place_id
-    ).order_by(
-        PlaceReview.created_at.desc()
-    ).offset(offset).limit(limit).all()
+    # 기본 쿼리
+    query = db.query(PlaceReview).filter(PlaceReview.place_id == place_id)
+
+    # 이미지 필터
+    if has_image:
+        query = query.filter(PlaceReview.image_url.isnot(None))
+
+    # 정렬
+    if order_by == "rating_desc":
+        query = query.order_by(PlaceReview.rating.desc(), PlaceReview.created_at.desc())
+    elif order_by == "rating_asc":
+        query = query.order_by(PlaceReview.rating.asc(), PlaceReview.created_at.desc())
+    else:  # latest (기본값)
+        query = query.order_by(PlaceReview.created_at.desc())
+
+    # 페이지네이션
+    reviews = query.offset(offset).limit(limit).all()
 
     # 사용자 닉네임 조회
     review_data = []
@@ -147,7 +278,11 @@ def get_place_reviews(
             created_at=review.created_at
         ))
 
-    total = db.query(PlaceReview).filter(PlaceReview.place_id == place_id).count()
+    # total도 같은 필터 적용
+    total_query = db.query(PlaceReview).filter(PlaceReview.place_id == place_id)
+    if has_image:
+        total_query = total_query.filter(PlaceReview.image_url.isnot(None))
+    total = total_query.count()
 
     return {
         "page": page,

@@ -49,12 +49,12 @@ app.add_middleware(
 model = None
 
 # ---------------------------------------------------------
-# ★ DB 설정 (형님 설정 유지)
+# ★ DB 설정 
 # ---------------------------------------------------------
-DB_HOST = "db"
-DB_NAME = "korea_travel_db"
-DB_USER = "myuser"
-DB_PASS = "mypassword"
+DB_HOST = os.getenv("DB_HOST", "db")
+DB_NAME = os.getenv("DB_NAME", "korea_travel_db")
+DB_USER = os.getenv("DB_USER", "myuser")
+DB_PASS = os.getenv("DB_PASSWORD", "mypassword")
 
 @app.on_event("startup")
 async def startup_event():
