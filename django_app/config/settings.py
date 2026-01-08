@@ -295,4 +295,27 @@ SPECTACULAR_SETTINGS = {
     # 한국어/영어 모두 지원
     'SCHEMA_PATH_PREFIX': r'/api/',
     'COMPONENT_SPLIT_REQUEST': True,
+    # JWT 인증 스키마 추가
+    'SECURITY': [
+        {
+            'BearerAuth': []
+        }
+    ],
+    'SECURITY_DEFINITIONS': {
+        'BearerAuth': {
+            'type': 'http',
+            'scheme': 'bearer',
+            'bearerFormat': 'JWT',
+        }
+    },
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+                'description': 'JWT 인증 토큰을 입력하세요. 로그인 API를 통해 발급받은 access_token을 입력하면 됩니다.'
+            }
+        }
+    },
 }

@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, get_user_model
 from django.utils import timezone
 from django.shortcuts import render
 from datetime import timedelta
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 
 from .models import (
     UserPreference, LoginSession, LoginHistory,
@@ -49,6 +50,39 @@ class LoginView(APIView):
     """로그인 API"""
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        summary="로그인",
+        description="사용자 아이디와 비밀번호로 로그인하여 JWT 토큰을 발급받습니다.",
+        request=LoginSerializer,
+        responses={
+            200: OpenApiResponse(
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'message': {'type': 'string', 'example': '로그인 성공'},
+                        'access_token': {'type': 'string', 'example': 'eyJ0eXAiOiJKV1QiLCJhbGc...'},
+                        'refresh_token': {'type': 'string', 'example': 'eyJ0eXAiOiJKV1QiLCJhbGc...'},
+                        'user': {'type': 'object'}
+                    }
+                },
+                description="로그인 성공 시 JWT 토큰과 사용자 정보 반환"
+            ),
+            401: OpenApiResponse(description="이메일 또는 비밀번호가 올바르지 않습니다."),
+            403: OpenApiResponse(description="비활성화된 계정입니다.")
+        },
+        examples=[
+            OpenApiExample(
+                'Login Example',
+                value={
+                    'username': 'testuser',
+                    'password': 'password123',
+                    'remember_me': False
+                },
+                request_only=True,
+            ),
+        ],
+        tags=['인증']
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
