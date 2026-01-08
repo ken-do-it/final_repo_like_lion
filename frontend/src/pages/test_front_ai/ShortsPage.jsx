@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './TestFrontAI.css'
 
@@ -75,39 +75,40 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         return map
     }, [baseTexts, langCode])
 
-    useEffect(() => {
-        const fetchShortforms = async () => {
-            try {
-                setLoading(true)
-                setError('')
-                const res = await fetch(`/api/shortforms/?lang=${langCode}`)
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`)
-                }
-                const data = await res.json()
-                const listData = Array.isArray(data) ? data : data.results || []
-                const mapped = listData.map((item) => ({
-                    id: item.id,
-                    title: item.title_translated || item.title || 'Untitled',
-                    desc: item.content_translated || item.content || '',
-                    thumb: item.thumbnail_url,
-                    video: item.video_url,
-                    duration:
-                        typeof item.duration === 'number'
-                            ? `${String(Math.floor(item.duration / 60)).padStart(2, '0')}:${String(item.duration % 60).padStart(2, '0')}`
-                            : '',
-                    lang: item.source_lang || 'N/A',
-                }))
-                setShortforms(mapped)
-            } catch {
-                setError('Failed to load shorts. Please check the server/connection.')
-                setShortforms([])
-            } finally {
-                setLoading(false)
+    const fetchShortforms = useCallback(async () => {
+        try {
+            setLoading(true)
+            setError('')
+            const res = await fetch(`/api/shortforms/?lang=${langCode}`)
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`)
             }
+            const data = await res.json()
+            const listData = Array.isArray(data) ? data : data.results || []
+            const mapped = listData.map((item) => ({
+                id: item.id,
+                title: item.title_translated || item.title || 'Untitled',
+                desc: item.content_translated || item.content || '',
+                thumb: item.thumbnail_url,
+                video: item.video_url,
+                duration:
+                    typeof item.duration === 'number'
+                        ? `${String(Math.floor(item.duration / 60)).padStart(2, '0')}:${String(item.duration % 60).padStart(2, '0')}`
+                        : '',
+                lang: item.source_lang || 'N/A',
+            }))
+            setShortforms(mapped)
+        } catch {
+            setError('Failed to load shorts. Please check the server/connection.')
+            setShortforms([])
+        } finally {
+            setLoading(false)
         }
-        fetchShortforms()
     }, [langCode])
+
+    useEffect(() => {
+        fetchShortforms()
+    }, [fetchShortforms])
 
     const handleUpload = async (event) => {
         event.preventDefault()
@@ -131,6 +132,8 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
             setUploadFile(null)
             setUploadTitle('')
             setUploadDesc('')
+            // Refresh list after upload
+            fetchShortforms()
         } catch (err) {
             setError(`Upload failed: ${err.message}`)
         } finally {
