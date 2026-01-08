@@ -91,6 +91,7 @@ class MSTrainAPIService:
         from_station: str,
         to_station: str,
         depart_date: date,
+        depart_time: Optional[time] = None,  # 시간 정보 추가
         passengers: int = 1,
         filters: Optional[Dict] = None
     ) -> Dict:
@@ -101,6 +102,7 @@ class MSTrainAPIService:
             from_station: 출발역 이름 (예: "서울")
             to_station: 도착역 이름 (예: "부산")
             depart_date: 출발 날짜
+            depart_time: 출발 시간 (선택사항, 예: time(14, 0) = 14:00)
             passengers: 승객 수
             filters: 필터 옵션 (trainType: KTX/SRT/ITX/무궁화 등)
 
@@ -125,6 +127,11 @@ class MSTrainAPIService:
         # 필터 적용 (차량종류 등으로 결과 걸러내기)
         if filters:
             trains = self._ms_apply_filters(trains, filters)
+
+        # 시간 필터링 추가
+        # 사용자가 출발 시간을 지정한 경우, 해당 시간 이후의 기차만 표시
+        if depart_time:
+            trains = self._ms_filter_by_time(trains, depart_time)
 
         # 총 결과 수
         total_count = len(trains)
@@ -486,4 +493,33 @@ class MSTrainAPIService:
             max_fare = filters["maxFare"]
             filtered = [t for t in filtered if t["adultFare"] <= max_fare]
 
+        return filtered
+
+    def _ms_filter_by_time(self, trains: List[Dict], depart_time: time) -> List[Dict]:
+        """
+        출발 시간으로 필터링
+
+        사용자가 지정한 시간 이후에 출발하는 기차만 반환합니다.
+
+        Args:
+            trains: 기차 목록
+            depart_time: 출발 시간 (예: time(14, 0) = 14:00)
+
+        Returns:
+            필터링된 기차 목록
+
+        예시:
+            - 사용자가 14:00을 입력하면
+            - 14:00 이후에 출발하는 기차만 표시
+        """
+        # 시간을 "HH:MM" 형식 문자열로 변환
+        time_str = depart_time.strftime("%H:%M")
+
+        # 해당 시간 이후 출발하는 기차만 필터링
+        filtered = [
+            t for t in trains
+            if t["departureTime"] >= time_str
+        ]
+
+        logger.info(f"⏰ 시간 필터링: {time_str} 이후 출발 → {len(filtered)}개 열차")
         return filtered

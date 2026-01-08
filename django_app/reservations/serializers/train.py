@@ -42,6 +42,15 @@ class MSTrainSearchRequestSerializer(serializers.Serializer):
         help_text="출발일 (YYYY-MM-DD)"
     )
 
+    # 출발 시간 추가 (선택사항)
+    # 예: "14:00" 형식
+    # 지정하지 않으면 모든 시간대 검색
+    departTime = serializers.TimeField(
+        required=False,
+        allow_null=True,
+        help_text="출발 시간 (HH:MM, 선택사항)"
+    )
+
     passengers = serializers.IntegerField(
         min_value=1,
         max_value=9,
@@ -175,6 +184,14 @@ class MSKorailLinkRequestSerializer(serializers.Serializer):
     departDate = serializers.DateField(
         required=True,
         help_text="출발일 (YYYY-MM-DD)"
+    )
+
+    # 출발 시간 추가 (선택사항)
+    # 코레일 예약 페이지로 이동할 때 시간 정보도 전달
+    departTime = serializers.TimeField(
+        required=False,
+        allow_null=True,
+        help_text="출발 시간 (HH:MM, 선택사항)"
     )
 
     passengers = serializers.IntegerField(

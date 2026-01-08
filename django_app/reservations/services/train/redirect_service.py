@@ -31,6 +31,7 @@ class MSKorailRedirectService:
         from_station: str,
         to_station: str,
         depart_date: date,
+        depart_time=None,  # 시간 정보 추가 (선택사항)
         passengers: int = 1
     ) -> str:
         """
@@ -40,6 +41,7 @@ class MSKorailRedirectService:
             from_station: 출발역 이름
             to_station: 도착역 이름
             depart_date: 출발일
+            depart_time: 출발 시간 (선택사항, time 객체)
             passengers: 승객 수
 
         Returns:
@@ -61,6 +63,12 @@ class MSKorailRedirectService:
                 "txtPsgFlg_2": 0,  # 어린이 승객 수
                 "txtPsgFlg_3": 0,  # 경로 승객 수
             }
+
+            # 시간 정보 추가 (선택사항)
+            # 코레일은 보통 시간을 선택할 수 있음 (예: 06시, 08시, 10시 등)
+            if depart_time:
+                # time 객체에서 시간(hour)만 추출하여 전달
+                params["selGoHour"] = f"{depart_time.hour:02d}"  # 출발 시간 (예: "14")
 
             # URL 생성
             url = f"{self.KORAIL_BOOKING_URL}?{urlencode(params)}"

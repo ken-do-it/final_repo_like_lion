@@ -60,6 +60,17 @@ class MSTrainSearchView(APIView):
                 request_only=True,
             ),
             OpenApiExample(
+                name="시간 지정 검색",
+                value={
+                    "fromStation": "서울",
+                    "toStation": "부산",
+                    "departDate": "2025-01-15",
+                    "departTime": "14:00",
+                    "passengers": 1
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
                 name="KTX만 검색",
                 value={
                     "fromStation": "서울",
@@ -137,6 +148,7 @@ class MSTrainSearchView(APIView):
                 from_station=validated_data['fromStation'],
                 to_station=validated_data['toStation'],
                 depart_date=validated_data['departDate'],
+                depart_time=validated_data.get('departTime'),  # 시간 정보 추가
                 passengers=validated_data.get('passengers', 1),
                 filters=validated_data.get('filters')
             )
@@ -187,6 +199,13 @@ class MSTrainSearchView(APIView):
                 required=True
             ),
             OpenApiParameter(
+                name='departTime',
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description='출발 시간 (HH:MM, 선택사항)',
+                required=False
+            ),
+            OpenApiParameter(
                 name='passengers',
                 type=int,
                 location=OpenApiParameter.QUERY,
@@ -213,6 +232,7 @@ class MSTrainSearchView(APIView):
             'fromStation': request.query_params.get('fromStation'),
             'toStation': request.query_params.get('toStation'),
             'departDate': request.query_params.get('departDate'),
+            'departTime': request.query_params.get('departTime'),  # 시간 정보 추가
             'passengers': request.query_params.get('passengers', 1),
         }
 
@@ -244,6 +264,7 @@ class MSTrainSearchView(APIView):
                 from_station=validated_data['fromStation'],
                 to_station=validated_data['toStation'],
                 depart_date=validated_data['departDate'],
+                depart_time=validated_data.get('departTime'),  # 시간 정보 추가
                 passengers=validated_data.get('passengers', 1),
                 filters=validated_data.get('filters')
             )
@@ -283,6 +304,7 @@ class MSTrainSearchView(APIView):
             'fromStation': validated_data['fromStation'],
             'toStation': validated_data['toStation'],
             'departDate': str(validated_data['departDate']),
+            'departTime': str(validated_data.get('departTime')) if validated_data.get('departTime') else None,  # 시간 정보 추가
             'passengers': validated_data.get('passengers', 1),
             'filters': validated_data.get('filters', {})
         }
@@ -332,6 +354,13 @@ class MSKorailLinkView(APIView):
                 required=True
             ),
             OpenApiParameter(
+                name='departTime',
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description='출발 시간 (HH:MM, 선택사항)',
+                required=False
+            ),
+            OpenApiParameter(
                 name='passengers',
                 type=int,
                 location=OpenApiParameter.QUERY,
@@ -371,6 +400,7 @@ class MSKorailLinkView(APIView):
             'from': request.query_params.get('from'),
             'to': request.query_params.get('to'),
             'departDate': request.query_params.get('departDate'),
+            'departTime': request.query_params.get('departTime'),  # 시간 정보 추가
             'passengers': request.query_params.get('passengers', 1),
         }
 
@@ -395,6 +425,7 @@ class MSKorailLinkView(APIView):
                 from_station=validated_data['from'],
                 to_station=validated_data['to'],
                 depart_date=validated_data['departDate'],
+                depart_time=validated_data.get('departTime'),  # 시간 정보 추가
                 passengers=validated_data.get('passengers', 1)
             )
 
