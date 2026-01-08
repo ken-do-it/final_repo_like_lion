@@ -6,6 +6,7 @@ import SearchPage from './pages/SearchPage'
 import GeoImageUploader from './pages/GeoImageUploader'
 import RoadviewGame from './pages/RoadviewGame'
 import TestFrontAI from './pages/test_front_ai/TestFrontAI'
+import AccommodationMap from './pages/AccommodationMap'
 import './App.css'
 
 function App() {
@@ -31,6 +32,12 @@ function App() {
     navigate('/test-front')
     setIsSidebarOpen(false)
   }
+  // 숙소 지도 페이지로 이동
+  const goAccommodationMap = () => {
+    navigate('/accommodations')
+    setIsSidebarOpen(false)
+  }
+
   const handleSearch = (e) => {
     if (e.key === 'Enter') {
       if (!searchQuery.trim()) return;
@@ -82,7 +89,8 @@ function App() {
         <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
           <ul className="sidebar-menu">
             <li onClick={goHome}>🏠 홈</li>
-            <li onClick={goGeoQuiz}>지오 퀴즈 업로더</li>
+            <li onClick={goAccommodationMap}>🏨 숙소 찾기</li>
+            <li onClick={goGeoQuiz}>📸 지오 퀴즈 업로더</li>
             <li onClick={goTestFront}>🚪 테스트 프론트</li>
             <li>📅 AI 일정 만들기</li>
             <li>🥘 현지인 맛집 칼럼</li>
@@ -106,6 +114,9 @@ function App() {
 
             {/* 검색 주소(/search)일 때 -> 검색 결과 페이지 */}
             <Route path="/search" element={<SearchPage />} />
+
+            {/* 숙소 지도 페이지 */}
+            <Route path="/accommodations" element={<AccommodationMap />} />
 
             {/* ★ [4] 지오게서 퀴즈 페이지 라우터 추가 */}
             <Route path="/geo-quiz" element={<GeoImageUploader />} />
