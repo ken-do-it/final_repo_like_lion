@@ -5,7 +5,7 @@ Places API Router
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 
 from models import (
     Place, PlaceReview, PlaceBookmark, LocalBadge,
@@ -404,6 +404,94 @@ def create_review(
         image_url=review.image_url,
         created_at=review.created_at
     )
+
+
+@router.put("/{place_id}/reviews/{review_id}", response_model=ReviewResponse)
+def update_review(
+    place_id: int,
+    review_id: int,
+    review_data: ReviewCreateRequest,
+    user_id: int = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """
+    리뷰 수정
+    """
+    # 리뷰 존재 확인
+    review = db.query(PlaceReview).filter(
+        PlaceReview.id == review_id,
+        PlaceReview.place_id == place_id
+    ).first()
+
+    if not review:
+        raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없습니다")
+
+    # 본인 확인
+    if review.user_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 리뷰만 수정할 수 있습니다")
+
+    # 리뷰 수정
+    review.rating = review_data.rating
+    review.content = review_data.content
+    review.image_url = review_data.image_url
+    review.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(review)
+
+    # 통계 업데이트
+    update_place_review_stats(db, place_id)
+
+    # 썸네일 업데이트 (이미지가 있으면)
+    if review_data.image_url:
+        update_place_thumbnails(db, place_id, review_data.image_url)
+
+    # 사용자 정보 조회
+    user = db.query(User).filter(User.id == user_id).first()
+
+    return ReviewResponse(
+        id=review.id,
+        place_id=review.place_id,
+        user_id=review.user_id,
+        user_nickname=user.nickname if user else None,
+        rating=review.rating,
+        content=review.content,
+        image_url=review.image_url,
+        created_at=review.created_at
+    )
+
+
+@router.delete("/{place_id}/reviews/{review_id}")
+def delete_review(
+    place_id: int,
+    review_id: int,
+    user_id: int = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """
+    리뷰 삭제
+    """
+    # 리뷰 존재 확인
+    review = db.query(PlaceReview).filter(
+        PlaceReview.id == review_id,
+        PlaceReview.place_id == place_id
+    ).first()
+
+    if not review:
+        raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없습니다")
+
+    # 본인 확인
+    if review.user_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 리뷰만 삭제할 수 있습니다")
+
+    # 리뷰 삭제
+    db.delete(review)
+    db.commit()
+
+    # 통계 업데이트
+    update_place_review_stats(db, place_id)
+
+    return {"message": "리뷰가 삭제되었습니다"}
 
 
 # ==================== 북마크 (찜하기) ====================

@@ -12,7 +12,7 @@ from database import Base
 
 class User(Base):
     """사용자 모델 (Django User 테이블)"""
-    __tablename__ = 'users_user'
+    __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
     username = Column(String(150), unique=True, nullable=False)
@@ -55,7 +55,7 @@ class Place(Base):
     review_count = Column(Integer, default=0)
 
     # 등록자
-    created_by_id = Column(Integer, ForeignKey('users_user.id'), nullable=True)
+    created_by_id = Column(Integer, ForeignKey('users.id'), nullable=True)
 
     # 타임스탬프
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -79,7 +79,7 @@ class PlaceReview(Base):
 
     id = Column(Integer, primary_key=True)
     place_id = Column(Integer, ForeignKey('places.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('users_user.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     content = Column(Text, nullable=False)
     source_lang = Column(String(10), default='ko')
@@ -103,7 +103,7 @@ class PlaceBookmark(Base):
     __tablename__ = 'place_bookmarks'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users_user.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     place_id = Column(Integer, ForeignKey('places.id'), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -122,7 +122,7 @@ class LocalBadge(Base):
     __tablename__ = 'local_badges'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users_user.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     city = Column(String(100), nullable=False)
 
     # 레벨 시스템 (1~5)
@@ -145,7 +145,7 @@ class LocalColumn(Base):
     __tablename__ = 'local_columns'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users_user.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     title = Column(String(200), nullable=False)
     thumbnail_url = Column(Text, nullable=True)
