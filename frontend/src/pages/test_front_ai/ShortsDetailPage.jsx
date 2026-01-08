@@ -80,7 +80,7 @@ const mockDataMap = {
   },
 }
 
-function ShortsDetailPage({ videoId: propVideoId, onBack, language: propLanguage }) {
+function ShortsDetailPage({ videoId: propVideoId, onBack, language: propLanguage, accessToken }) {
   const { id: paramId } = useParams()
   const navigate = useNavigate()
   const id = propVideoId || paramId
@@ -104,32 +104,43 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, language: propLanguage
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        setLoading(true)
-        setError('')
-        const res = await fetch(`/api/shortforms/${id}/?lang=${langCode}`)
-        if (!res.ok) {
-          if (res.status === 404) throw new Error('Shortform not found')
-          throw new Error('Failed to load shortform')
-        }
-        const item = await res.json()
-        setShortform({
-          id: item.id,
-          title: item.title_translated || item.title || 'Untitled',
-          desc: item.content_translated || item.content || '',
-          thumb: item.thumbnail_url,
-          video: item.video_url,
-          lang: item.source_lang || 'N/A',
-        })
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
+  // Edit State
+  const [isEditing, setIsEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editContent, setEditContent] = useState('')
+  const [editFile, setEditFile] = useState(null)
 
+  const fetchDetail = async () => {
+    try {
+      setLoading(true)
+      setError('')
+      const res = await fetch(`/api/shortforms/${id}/?lang=${langCode}`)
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('Shortform not found')
+        throw new Error('Failed to load shortform')
+      }
+      const item = await res.json()
+      setShortform({
+        id: item.id,
+        title: item.title_translated || item.title || 'Untitled',
+        desc: item.content_translated || item.content || '',
+        thumb: item.thumbnail_url,
+        video: item.video_url,
+        lang: item.source_lang || 'N/A',
+        ownerId: item.user,
+      })
+      // Initialize edit state
+      setEditTitle(item.title)
+      setEditContent(item.content)
+      setEditFile(null)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     if (id) {
       fetchDetail()
     }
@@ -140,6 +151,73 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, language: propLanguage
       onBack()
     } else {
       navigate('/shorts')
+    }
+  }
+
+  // [TEST] Decode JWT to get user_id (Simple implementation)
+  const currentUserId = useMemo(() => {
+    if (!accessToken) return null
+    try {
+      const payload = JSON.parse(atob(accessToken.split('.')[1]))
+      return payload.user_id
+    } catch (e) {
+      console.error("Invalid Token", e)
+      return null
+    }
+  }, [accessToken])
+
+  const handleSave = async () => {
+    try {
+      const formData = new FormData()
+      formData.append('title', editTitle)
+      formData.append('content', editContent)
+      if (editFile) {
+        formData.append('video_file', editFile)
+      }
+
+      const res = await fetch(`/api/shortforms/${id}/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: formData
+      })
+
+      if (!res.ok) throw new Error("Update failed")
+
+      // Refresh data from server to get clean state & fresh translations
+      await fetchDetail()
+
+      setIsEditing(false)
+      setEditFile(null)
+      alert("Updated successfully!")
+
+      // Reload video element
+      const videoEl = document.querySelector('video')
+      if (videoEl) videoEl.load()
+    } catch (e) {
+      alert("Error updating: " + e.message)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this short?")) return
+
+    try {
+      const res = await fetch(`/api/shortforms/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      })
+      if (res.ok) {
+        alert("Deleted successfully")
+        handleBack()
+      } else {
+        alert("Failed to delete (Permission Denied?)")
+      }
+    } catch (e) {
+      alert("Error deleting: " + e.message)
     }
   }
 
@@ -165,8 +243,72 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, language: propLanguage
         <span style={{ fontSize: '14px', color: '#64748b' }}>
           {t.home} / {t.shorts} /
         </span>
-        <span style={{ fontSize: '14px', color: 'white', fontWeight: 600 }}>{shortform.title}</span>
-        <button onClick={handleBack} className="tfai-close" style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none' }}>
+
+        {isEditing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'white',
+                background: '#334155',
+                border: '1px solid #475569',
+                padding: '6px',
+                borderRadius: '4px',
+                outline: 'none'
+              }}
+            />
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(e) => setEditFile(e.target.files[0])}
+              style={{ fontSize: '12px', color: '#94a3b8' }}
+            />
+          </div>
+        ) : (
+          <span style={{ fontSize: '14px', color: 'white', fontWeight: 600 }}>{shortform.title}</span>
+        )}
+
+        {/* Edit/Delete Buttons for Owner */}
+        {currentUserId && shortform.ownerId === currentUserId && (
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            {isEditing ? (
+              <>
+                <button
+                  onClick={handleSave}
+                  style={{ background: '#22c55e', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  style={{ background: '#64748b', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                >
+                  Delete
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        <button onClick={handleBack} className="tfai-close" style={{ marginLeft: '10px', background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none' }}>
           {t.close}
         </button>
       </div>
@@ -195,7 +337,27 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, language: propLanguage
           </div>
 
           <div className="tfai-video-meta">
-            {shortform.desc}
+            {isEditing ? (
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  color: 'white',
+                  background: '#334155',
+                  border: '1px solid #475569',
+                  fontFamily: 'inherit',
+                  lineHeight: '1.5',
+                  resize: 'vertical',
+                  outline: 'none'
+                }}
+              />
+            ) : (
+              shortform.desc
+            )}
             <div className="tfai-hashtags">{mockData.hashtags}</div>
           </div>
 
