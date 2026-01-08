@@ -17,8 +17,33 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from .models import Shortform, ShortformLike, ShortformComment, ShortformView, TranslationEntry
 from .serializers import ShortformSerializer, ShortformCommentSerializer
+from langdetect import detect, LangDetectException
 
 logger = logging.getLogger(__name__)
+
+# 언어 코드 매핑 (langdetect code -> NLLB code)
+LANG_CODE_MAP = {
+    'ko': 'kor_Hang',
+    'en': 'eng_Latn',
+    'ja': 'jpn_Jpan',
+    'zh-cn': 'zho_Hans',
+    'zh-tw': 'zho_Hans',
+    # 필요 시 추가
+}
+
+def detect_language(text):
+    """
+    텍스트의 언어를 감지하여 NLLB 코드로 반환.
+    감지 실패 시 기본값 'kor_Hang' 반환.
+    """
+    if not text or not text.strip():
+        return 'kor_Hang'
+    try:
+        detected = detect(text)
+        return LANG_CODE_MAP.get(detected, 'kor_Hang') # 매핑 없으면 한국어로 가정 (또는 eng_Latn)
+    except LangDetectException:
+        return 'kor_Hang'
+
 
 # FastAPI 검색 서버
 FASTAPI_SEARCH_URL = "http://fastapi:8000/api/search"
@@ -239,6 +264,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
         meta = extract_metadata(abs_path)
         thumb_path, thumb_url = generate_thumbnail(abs_path)
 
+        # 언어 자동 감지
+        title = serializer.validated_data.get('title', '')
+        content = serializer.validated_data.get('content', '')
+        full_text = f"{title} {content}".strip()
+        detected_lang = detect_language(full_text)
+
         serializer.save(
             user=user,
             video_url=saved_url,
@@ -247,6 +278,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
             width=meta.get("width"),
             height=meta.get("height"),
             thumbnail_url=thumb_url,
+            source_lang=detected_lang,
         )
 
     def _apply_translation_sequential(self, data, target_lang):

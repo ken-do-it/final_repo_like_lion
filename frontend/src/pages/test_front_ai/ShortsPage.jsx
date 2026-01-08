@@ -121,7 +121,6 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         formData.append('video_file', uploadFile)
         formData.append('title', uploadTitle)
         formData.append('content', uploadDesc)
-        formData.append('source_lang', 'kor_Hang')
 
         try {
             const res = await fetch('/api/shortforms/', {
