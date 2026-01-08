@@ -14,14 +14,14 @@ load_dotenv()
 DB_HOST = os.getenv("DB_HOST", "db")
 DB_NAME = os.getenv("DB_NAME", "korea_travel_db")
 DB_USER = os.getenv("DB_USER", "myuser")
-DB_PASS = os.getenv("DB_PASS", "mypassword")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "mypassword")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
 # SQLAlchemy Base (모델 상속용)
 Base = declarative_base()
 
 # SQLAlchemy 엔진 생성
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 engine = create_engine(
     DATABASE_URL,
