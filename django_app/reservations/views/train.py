@@ -326,6 +326,9 @@ class MSKorailLinkView(APIView):
     GET /api/v1/transport/trains/korail-link
 
     인증: 선택 (비회원도 사용 가능)
+
+    현재 상태: 코레일 메인 페이지만 반환
+    향후 개선: 지하철 개발 완료 후, 검색 조건이 포함된 URL 생성
     """
     permission_classes = [AllowAny]
 
@@ -333,14 +336,14 @@ class MSKorailLinkView(APIView):
         tags=['기차'],
         parameters=[
             OpenApiParameter(
-                name='from',
+                name='fromStation',
                 type=str,
                 location=OpenApiParameter.QUERY,
                 description='출발역 이름',
                 required=True
             ),
             OpenApiParameter(
-                name='to',
+                name='toStation',
                 type=str,
                 location=OpenApiParameter.QUERY,
                 description='도착역 이름',
@@ -371,12 +374,18 @@ class MSKorailLinkView(APIView):
         responses={200: MSKorailLinkResponseSerializer},
         summary="코레일 외부 링크 생성",
         description=(
-            "검색 조건을 바탕으로 코레일 예약 페이지 URL을 생성합니다.\n\n"
+            "코레일 예약 페이지 URL을 생성합니다.\n\n"
+            "**현재 상태 (v1.0)**:\n"
+            "- 코레일 메인 페이지 링크만 반환합니다\n"
+            "- 사용자가 직접 검색 조건을 입력해야 합니다\n\n"
             "**사용 시나리오**:\n"
             "1. 사용자가 기차 검색 결과에서 원하는 열차 선택\n"
-            "2. 이 API로 코레일 예약 URL 생성\n"
+            "2. 이 API로 코레일 메인 페이지 URL 생성\n"
             "3. 프론트엔드에서 해당 URL로 리다이렉트\n"
-            "4. 코레일 사이트에서 실제 예약 진행\n\n"
+            "4. 코레일 사이트에서 직접 검색 후 예약 진행\n\n"
+            "**향후 개선 계획 (v2.0)**:\n"
+            "- 검색 조건(출발역, 도착역, 날짜, 시간)이 자동 입력된 URL 생성\n"
+            "- 코레일 실제 API 파라미터 확인 후 업데이트 예정\n\n"
             "**참고**: 외국인 관광객은 Korail Pass 구매를 권장합니다."
         ),
     )
@@ -385,9 +394,10 @@ class MSKorailLinkView(APIView):
         코레일 예약 페이지 링크 생성
 
         쿼리 파라미터:
-        - from: 출발역
-        - to: 도착역
+        - fromStation: 출발역
+        - toStation: 도착역
         - departDate: 출발일 (YYYY-MM-DD)
+        - departTime: 출발 시간 (HH:MM, 선택사항)
         - passengers: 승객 수 (옵션)
 
         응답 예시:
@@ -397,8 +407,8 @@ class MSKorailLinkView(APIView):
         """
         # 1. 요청 데이터 검증
         data = {
-            'from': request.query_params.get('from'),
-            'to': request.query_params.get('to'),
+            'fromStation': request.query_params.get('fromStation'),
+            'toStation': request.query_params.get('toStation'),
             'departDate': request.query_params.get('departDate'),
             'departTime': request.query_params.get('departTime'),  # 시간 정보 추가
             'passengers': request.query_params.get('passengers', 1),
@@ -422,8 +432,8 @@ class MSKorailLinkView(APIView):
         try:
             service = MSKorailRedirectService()
             url = service.ms_generate_korail_link(
-                from_station=validated_data['from'],
-                to_station=validated_data['to'],
+                from_station=validated_data['fromStation'],
+                to_station=validated_data['toStation'],
                 depart_date=validated_data['departDate'],
                 depart_time=validated_data.get('departTime'),  # 시간 정보 추가
                 passengers=validated_data.get('passengers', 1)

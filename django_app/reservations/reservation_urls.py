@@ -24,36 +24,36 @@ app_name = 'reservations_api'
 
 urlpatterns = [
     # 예약 생성 API
-    # POST /api/v1/reservations/flight
+    # POST /api/v1/reservations/flight/
     path(
-        'reservations/flight',
+        'reservations/flight/',
         MSReservationCreateView.as_view(),
         name='reservation-create-flight'
     ),
 
     # TODO: 내 예약 목록 (마이페이지)
-    # GET /api/v1/my/reservations
+    # GET /api/v1/my/reservations/
     # path('my/reservations', MSMyReservationListView.as_view(), name='my-reservations'),
 
     # TODO: 내 예약 상세
-    # GET /api/v1/my/reservations/{reservationId}
+    # GET /api/v1/my/reservations/{reservationId}/
     # path('my/reservations/<uuid:reservation_id>', MSMyReservationDetailView.as_view(), name='my-reservation-detail'),
 
     # ========================================
     # 기차 API
     # ========================================
     # 기차 검색
-    # GET/POST /api/v1/transport/trains/search
+    # GET/POST /api/v1/transport/trains/search/
     path(
-        'transport/trains/search',
+        'transport/trains/search/',
         MSTrainSearchView.as_view(),
         name='train-search'
     ),
 
     # 코레일 외부 링크 생성
-    # GET /api/v1/transport/trains/korail-link
+    # GET /api/v1/transport/trains/korail-link/
     path(
-        'transport/trains/korail-link',
+        'transport/trains/korail-link/',
         MSKorailLinkView.as_view(),
         name='train-korail-link'
     ),
@@ -102,25 +102,25 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += [
         # 결제 테스트 페이지
-        # GET /api/v1/payments/test
+        # GET /api/v1/payments/test/
         path(
-            'payments/test',
+            'payments/test/',
             MSPaymentTestView.as_view(),
             name='payment-test'
         ),
 
         # 결제 성공 페이지
-        # GET /api/v1/payments/success
+        # GET /api/v1/payments/success/
         path(
-            'payments/success',
+            'payments/success/',
             MSPaymentSuccessPageView.as_view(),
             name='payment-success-page'
         ),
 
         # 결제 실패 페이지
-        # GET /api/v1/payments/fail
+        # GET /api/v1/payments/fail/
         path(
-            'payments/fail',
+            'payments/fail/',
             MSPaymentFailPageView.as_view(),
             name='payment-fail-page'
         ),

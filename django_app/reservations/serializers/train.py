@@ -165,17 +165,17 @@ class MSKorailLinkRequestSerializer(serializers.Serializer):
     GET /api/v1/transport/trains/korail-link
 
     쿼리 파라미터 예시:
-    ?from=서울&to=부산&departDate=2025-01-15&passengers=2
+    ?fromStation=서울&toStation=부산&departDate=2025-01-15&passengers=2
     """
-    # from은 Python 예약어이므로 source 사용
-    from_station = serializers.CharField(
-        source='from',
+    # 출발역 (from은 Python 예약어라서 fromStation 사용)
+    fromStation = serializers.CharField(
         max_length=50,
         required=True,
         help_text="출발역 이름"
     )
 
-    to = serializers.CharField(
+    # 도착역
+    toStation = serializers.CharField(
         max_length=50,
         required=True,
         help_text="도착역 이름"
