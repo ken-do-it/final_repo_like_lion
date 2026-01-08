@@ -218,14 +218,61 @@ async def get_google_place_details(place_id: str) -> Optional[Dict]:
         return None
 
 
+# async def search_places_hybrid(query: str, category: Optional[str] = None,
+#                                 city: Optional[str] = None, limit: int = 20) -> List[Dict]:
+#     """
+#     카카오 + 구글 병렬 검색 후 결과 통합
+#     수정전
+#     """
+#     # 병렬 호출로 성능 최적화 (2초 → 1초)
+#     kakao_task = search_kakao_places(query, limit=15)
+#     google_task = search_google_places(query, limit=15)
+
+#     kakao_results, google_results = await asyncio.gather(kakao_task, google_task)
+
+#     # 결과 통합 및 중복 제거
+#     all_results = kakao_results + google_results
+#     unique_results = remove_duplicate_places(all_results)
+
+#     # 필터링 적용
+#     filtered_results = unique_results
+#     if category:
+#         # category_main 또는 category_detail에 포함되어 있으면 매칭
+#         filtered_results = [
+#             r for r in filtered_results
+#             if r.get("category_main") == category
+#             or (isinstance(r.get("category_detail"), list) and category in r.get("category_detail", []))
+#         ]
+#     if city:
+#         filtered_results = [r for r in filtered_results if r.get("city") == city]
+
+#     return filtered_results[:limit]
+
 async def search_places_hybrid(query: str, category: Optional[str] = None,
                                 city: Optional[str] = None, limit: int = 20) -> List[Dict]:
     """
     카카오 + 구글 병렬 검색 후 결과 통합
+    카테고리 포함 검색 수정후
     """
-    # 병렬 호출로 성능 최적화 (2초 → 1초)
-    kakao_task = search_kakao_places(query, limit=15)
-    google_task = search_google_places(query, limit=15)
+    # ★ 추가: 카테고리가 있으면 검색어에 키워드 추가
+    search_query = query
+    if category:
+        category_keywords = {
+            "숙박": "호텔",
+            "호텔": "호텔",
+            "모텔": "모텔", 
+            "펜션": "펜션",
+            "음식점": "맛집",
+            "카페": "카페",
+            "관광명소": "관광",
+        }
+        keyword = category_keywords.get(category, category)
+        if keyword not in query:  # 중복 방지
+            search_query = f"{query} {keyword}"
+    
+    # ★ 수정: query → search_query로 변경
+    kakao_task = search_kakao_places(search_query, limit=15)
+    google_task = search_google_places(search_query, limit=15)
 
     kakao_results, google_results = await asyncio.gather(kakao_task, google_task)
 
@@ -233,19 +280,13 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
     all_results = kakao_results + google_results
     unique_results = remove_duplicate_places(all_results)
 
-    # 필터링 적용
-    filtered_results = unique_results
-    if category:
-        # category_main 또는 category_detail에 포함되어 있으면 매칭
-        filtered_results = [
-            r for r in filtered_results
-            if r.get("category_main") == category
-            or (isinstance(r.get("category_detail"), list) and category in r.get("category_detail", []))
-        ]
+    # ★ 카테고리 필터링은 제거하거나 완화 (검색어에 이미 반영됨)
+    # 기존 필터링 코드 삭제 또는 주석 처리
+    
     if city:
-        filtered_results = [r for r in filtered_results if r.get("city") == city]
+        unique_results = [r for r in unique_results if r.get("city") == city]
 
-    return filtered_results[:limit]
+    return unique_results[:limit]
 
 
 def remove_duplicate_places(places: List[Dict]) -> List[Dict]:
@@ -465,30 +506,64 @@ def extract_city_from_address(address: str) -> Optional[str]:
 
 
 def map_category_to_main(category_detail: List[str]) -> Optional[str]:
+
+    # # """
+    # # 카카오 카테고리 → 메인 카테고리 매핑
+    # # 수정전
+    # # """
+    # if not category_detail:
+    #     return None
+
+    # first_category = category_detail[0] if category_detail else ""
+
+    # mapping = {
+    #     "음식점": "음식점",
+    #     "카페": "카페",
+    #     "관광명소": "관광명소",
+    #     "숙박": "숙박",
+    #     "문화시설": "문화시설",
+    #     "쇼핑": "쇼핑",
+    #     "병원": "병원",
+    #     "편의점": "편의점",
+    #     "은행": "은행",
+    #     "주차장": "주차장"
+    # }
+
+    # for key, value in mapping.items():
+    #     if key in first_category:
+    #         return value
+
+    # return "기타"
+
     """
     카카오 카테고리 → 메인 카테고리 매핑
+    전체 카테고리 리스트를 검사하여 매핑
+    수정본
     """
     if not category_detail:
         return None
 
-    first_category = category_detail[0] if category_detail else ""
+    # 전체 카테고리를 하나의 문자열로 합침
+    full_category = " ".join(category_detail)
 
-    mapping = {
-        "음식점": "음식점",
-        "카페": "카페",
-        "관광명소": "관광명소",
-        "숙박": "숙박",
-        "문화시설": "문화시설",
-        "쇼핑": "쇼핑",
-        "병원": "병원",
-        "편의점": "편의점",
-        "은행": "은행",
-        "주차장": "주차장"
-    }
+    # 우선순위 순으로 매핑 (구체적인 것 먼저)
+    mapping_rules = [
+        (["호텔", "모텔", "펜션", "게스트하우스", "리조트", "민박", "숙박"], "숙박"),
+        (["음식점", "식당", "맛집"], "음식점"),
+        (["카페", "커피"], "카페"),
+        (["관광", "명소", "여행"], "관광명소"),
+        (["문화시설", "박물관", "미술관", "공연장"], "문화시설"),
+        (["쇼핑", "백화점", "마트", "시장"], "쇼핑"),
+        (["병원", "의원", "약국"], "병원"),
+        (["편의점"], "편의점"),
+        (["은행", "ATM"], "은행"),
+        (["주차장"], "주차장"),
+    ]
 
-    for key, value in mapping.items():
-        if key in first_category:
-            return value
+    for keywords, category in mapping_rules:
+        for keyword in keywords:
+            if keyword in full_category:
+                return category
 
     return "기타"
 

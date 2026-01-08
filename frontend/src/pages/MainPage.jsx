@@ -1,8 +1,35 @@
 // frontend/src/pages/MainPage.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../App.css'; // 스타일 공유
 
 const MainPage = () => {
+  const navigate = useNavigate();
+  const [shortforms, setShortforms] = useState([]);
+  const [loadingShorts, setLoadingShorts] = useState(true);
+
+  // 2. 데이터 가져오기
+  useEffect(() => {
+    const fetchShortforms = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/shortforms/");
+        if (response.ok) {
+          const data = await response.json();
+          const list = Array.isArray(data) ? data : (data.results || []);
+          setShortforms(list);
+        } else {
+          console.error("숏폼 불러오기 실패:", response.status);
+        }
+      } catch (error) {
+        console.error("네트워크 에러:", error);
+      } finally {
+        setLoadingShorts(false); // 여기서 loadingShorts를 사용하려면 위에서 선언이 되어 있어야 합니다.
+      }
+    };
+
+    fetchShortforms();
+  }, []);
+
   return (
     <div className="main-container">
       {/* 1. 히어로 섹션 (AI 여행 코스 짜기) - 가장 강조됨 */}
@@ -34,15 +61,42 @@ const MainPage = () => {
         </div>
       </section>
 
-      {/* 3. 여행 꿀팁 숏폼 (세로 영상) */}
+      {/* 3. 여행 꿀팁 숏폼 (API 연동됨) */}
       <section className="feature-section bg-gray">
         <h2>🔥 실시간 인기 여행 숏폼</h2>
         <div className="shorts-grid">
-          {[1, 2, 3, 4, 5].map((item) => (
-            <div key={item} className="placeholder-shorts">
-              <span>Shorts {item}</span>
+          {loadingShorts ? (
+            <p>로딩 중...</p>
+          ) : shortforms.length > 0 ? (
+            shortforms.map((item) => (
+              <div key={item.id} className="placeholder-shorts" style={{ position: 'relative', overflow: 'hidden' }}>
+                {/* 썸네일이 있으면 표시 */}
+                {item.thumbnail_url ? (
+                  <img 
+                    src={item.thumbnail_url.startsWith('http') ? item.thumbnail_url : `http://127.0.0.1:8000${item.thumbnail_url}`}
+                    alt={item.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                    NO IMAGE
+                  </div>
+                )}
+                {/* 제목 오버레이 */}
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0,
+                  padding: '10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+                  color: 'white', fontWeight: 'bold', fontSize: '0.9rem'
+                }}>
+                  {item.title}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="placeholder-shorts">
+              <span>등록된 영상이 없습니다.</span>
             </div>
-          ))}
+          )}
         </div>
       </section>
 
