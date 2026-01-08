@@ -12,5 +12,8 @@ httpx
 # 환경 변수 관리
 python-dotenv
 
+# JWT 인증
+PyJWT==2.8.0
+
 # 테스트용 (선택사항)
 requests

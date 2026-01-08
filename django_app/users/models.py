@@ -8,7 +8,7 @@ class User(AbstractUser):
     - AbstractUser 상속으로 password_hash, username, email 등 기본 처리
     """
     # 기본 ID는 Django가 자동으로 id (BigInt) 생성
-    
+
     nickname = models.CharField(max_length=50, blank=True)
     birth_year = models.IntegerField(null=True, blank=True)
     country = models.CharField(max_length=100, blank=True, null=True)
