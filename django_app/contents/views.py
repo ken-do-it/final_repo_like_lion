@@ -14,11 +14,37 @@ from rest_framework import parsers, exceptions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
 from .models import Shortform, ShortformLike, ShortformComment, ShortformView, TranslationEntry
 from .serializers import ShortformSerializer, ShortformCommentSerializer
+from .permissions import IsOwnerOrReadOnly
+from langdetect import detect, LangDetectException
 
 logger = logging.getLogger(__name__)
+
+# 언어 코드 매핑 (langdetect code -> NLLB code)
+LANG_CODE_MAP = {
+    'ko': 'kor_Hang',
+    'en': 'eng_Latn',
+    'ja': 'jpn_Jpan',
+    'zh-cn': 'zho_Hans',
+    'zh-tw': 'zho_Hans',
+    # 필요 시 추가
+}
+
+def detect_language(text):
+    """
+    텍스트의 언어를 감지하여 NLLB 코드로 반환.
+    감지 실패 시 기본값 'kor_Hang' 반환.
+    """
+    if not text or not text.strip():
+        return 'kor_Hang'
+    try:
+        detected = detect(text)
+        return LANG_CODE_MAP.get(detected, 'kor_Hang') # 매핑 없으면 한국어로 가정 (또는 eng_Latn)
+    except LangDetectException:
+        return 'kor_Hang'
+
 
 # FastAPI 검색 서버
 FASTAPI_SEARCH_URL = "http://fastapi:8000/api/search"
@@ -40,29 +66,7 @@ def resolve_bin(name, env_var):
     return found
 
 
-def get_default_user():
-    """
-    개발 단계에서 인증이 없으므로 기본으로 사용할 관리자(superuser)를 찾는다.
-    반환: User 인스턴스 (없으면 ValueError 발생)
-    """
-    User = get_user_model()
-    user = User.objects.filter(is_superuser=True).first()
-    if not user:
-        raise ValueError("No superuser found. Create a superuser to own uploaded shortforms.")
-    return user
-
-
-# 인증 연동 전까지는 모든 작성자/소유자를 superuser로 처리
-def get_action_user(request):
-    """
-    인증 연동 시 교체 예정.
-    - 현재: request.user가 인증된 경우 해당 사용자 사용.
-    - 미인증: superuser fallback (get_default_user) 사용.
-    TODO: 실제 인증 도입 시 소유자/작성자 검증 로직으로 대체.
-    """
-    if hasattr(request, "user") and getattr(request.user, "is_authenticated", False):
-        return request.user
-    return get_default_user()
+# Helper functions removed (get_default_user, get_action_user)
 
 
 def call_fastapi_translate(text: str, source_lang: str, target_lang: str, timeout: int = 20):
@@ -78,15 +82,16 @@ def call_fastapi_translate(text: str, source_lang: str, target_lang: str, timeou
     
     # 1. 시도: 설정된 URL (Docker Internal or Env)
     try:
-        resp = requests.post(FASTAPI_TRANSLATE_URL, json=payload, timeout=timeout)
+        # (connect timeout, read timeout)
+        resp = requests.post(FASTAPI_TRANSLATE_URL, json=payload, timeout=(3, timeout))
         resp.raise_for_status()
         data = resp.json()
         return data.get("translated_text"), data.get("provider", "fastapi")
     except Exception as first_error:
         # 2. 시도: 로컬호스트 Fallback (개발 편의성)
-        # 만약 기본 URL이 'fastapi:8000' 형태라면, 로컬 8001포트로 재시도
+        # 만약 기본 URL이 'fastapi:8000' 형태라면, 로컬 8003포트로 재시도
         if "fastapi" in FASTAPI_TRANSLATE_URL:
-            fallback_url = "http://127.0.0.1:8001/api/ai/translate"
+            fallback_url = "http://127.0.0.1:8003/api/ai/translate"  # Port 8003으로 수정됨
             try:
                 logger.info(f"Primary translation URL failed. Retrying fallback: {fallback_url}")
                 resp = requests.post(fallback_url, json=payload, timeout=timeout)
@@ -221,13 +226,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
 
     queryset = Shortform.objects.order_by('-created_at')
     serializer_class = ShortformSerializer
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def perform_create(self, serializer):
-        try:
-            user = get_action_user(self.request)
-        except ValueError as e:
-            raise exceptions.ValidationError({"detail": str(e)})
+        user = self.request.user
+        if not user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to upload.")
 
         video_file = self.request.FILES.get('video_file') or serializer.validated_data.get('video_file')
         if not video_file:
@@ -238,6 +242,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
         meta = extract_metadata(abs_path)
         thumb_path, thumb_url = generate_thumbnail(abs_path)
 
+        # 언어 자동 감지
+        title = serializer.validated_data.get('title', '')
+        content = serializer.validated_data.get('content', '')
+        full_text = f"{title} {content}".strip()
+        detected_lang = detect_language(full_text)
+
         serializer.save(
             user=user,
             video_url=saved_url,
@@ -246,9 +256,156 @@ class ShortformViewSet(viewsets.ModelViewSet):
             width=meta.get("width"),
             height=meta.get("height"),
             thumbnail_url=thumb_url,
+            source_lang=detected_lang,
         )
 
-    def _apply_translation(self, data, target_lang):
+    def perform_update(self, serializer):
+        user = self.request.user
+        # Owner check is handled by permission_classes
+
+        video_file = self.request.FILES.get('video_file')
+        
+        # If a new video file is provided, process it
+        if video_file:
+            saved_path, saved_url = save_video_file(video_file)
+            abs_path = default_storage.path(saved_path)
+            meta = extract_metadata(abs_path)
+            thumb_path, thumb_url = generate_thumbnail(abs_path)
+
+            # Update language detection if title/content changed or just re-detect from file?
+            # Ideally detect from text. If text changed, re-detect.
+            title = serializer.validated_data.get('title', self.get_object().title)
+            content = serializer.validated_data.get('content', self.get_object().content)
+            full_text = f"{title} {content}".strip()
+            detected_lang = detect_language(full_text)
+
+            serializer.save(
+                video_url=saved_url,
+                file_size=video_file.size,
+                duration=meta.get("duration"),
+                width=meta.get("width"),
+                height=meta.get("height"),
+                thumbnail_url=thumb_url,
+                source_lang=detected_lang,
+            )
+        else:
+            # Just content update
+            # Re-detect language if title or content changed
+            title = serializer.validated_data.get('title')
+            content = serializer.validated_data.get('content')
+            
+            if title is not None or content is not None:
+                current = self.get_object()
+                t = title if title is not None else current.title
+                c = content if content is not None else current.content
+                full_text = f"{t} {c}".strip()
+                detected_lang = detect_language(full_text)
+                serializer.save(source_lang=detected_lang)
+            else:
+                serializer.save()
+
+        # [FIX] Invalidate Translation Cache
+        # 내용이 수정되었으므로 기존 번역 캐시를 삭제하여 다시 번역하게 함
+        try:
+            instance = self.get_object()
+            TranslationEntry.objects.filter(
+                entity_type="shortform", 
+                entity_id=instance.id
+            ).delete()
+        except Exception as e:
+            print(f"Cache invalidation failed: {e}")
+
+    def _apply_translation_sequential(self, data, target_lang):
+        """
+        [DEMO]: 하나씩 순차적으로 번역 API를 호출하는 느린 버전 (최적화 전)
+        """
+        if not target_lang:
+            return data
+
+        # 1. 데이터 정규화 (리스트로 변환)
+        items = []
+        if isinstance(data, dict):
+            if 'results' in data and isinstance(data['results'], list):
+                items = data['results']
+            else:
+                items = [data]
+        elif isinstance(data, list):
+            items = data
+        else:
+            return data
+        
+        if not items:
+            return data
+
+        # 2. 순차적으로 하나씩 처리
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            src_lang = item.get("source_lang") or "kor_Hang"
+            if src_lang == target_lang:
+                item["title_translated"] = item.get("title", "")
+                item["content_translated"] = item.get("content", "")
+                continue
+
+            entity_id = item.get("id") or 0
+            
+            # Title Processing
+            t_text = item.get("title") or ""
+            if t_text:
+                # 2-1. DB 캐시 확인
+                entry = TranslationEntry.objects.filter(
+                    entity_type="shortform", entity_id=entity_id, field="title", target_lang=target_lang
+                ).first()
+                
+                if entry:
+                    item["title_translated"] = entry.translated_text
+                else:
+                    # 2-2. API 호출 (Single) - 여기서 시간이 걸림!
+                    try:
+                        translated_text, provider = call_fastapi_translate(t_text, src_lang, target_lang)
+                        # DB 저장
+                        TranslationEntry.objects.create(
+                            entity_type="shortform", entity_id=entity_id, field="title",
+                            source_lang=src_lang, target_lang=target_lang,
+                            source_hash=hashlib.sha256(t_text.encode("utf-8")).hexdigest(),
+                            translated_text=translated_text, provider=provider,
+                            model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+                            last_used_at=timezone.now(),
+                        )
+                        item["title_translated"] = translated_text
+                    except Exception as e:
+                        logger.error(f"Sequential translation failed: {e}")
+                        item["title_translated"] = t_text # Fallback
+            else:
+                item["title_translated"] = ""
+
+            # Content Processing (위와 동일 반복)
+            c_text = item.get("content") or ""
+            if c_text:
+                entry = TranslationEntry.objects.filter(
+                    entity_type="shortform", entity_id=entity_id, field="content", target_lang=target_lang
+                ).first()
+                if entry:
+                    item["content_translated"] = entry.translated_text
+                else:
+                    try:
+                        translated_text, provider = call_fastapi_translate(c_text, src_lang, target_lang)
+                        TranslationEntry.objects.create(
+                            entity_type="shortform", entity_id=entity_id, field="content",
+                            source_lang=src_lang, target_lang=target_lang,
+                            source_hash=hashlib.sha256(c_text.encode("utf-8")).hexdigest(),
+                            translated_text=translated_text, provider=provider,
+                            model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+                            last_used_at=timezone.now(),
+                        )
+                        item["content_translated"] = translated_text
+                    except Exception:
+                        item["content_translated"] = c_text
+
+        return data
+
+    def _apply_translation_batch(self, data, target_lang):
         """
         serializer.data(dict 또는 list)에 title/content 번역 필드를 추가.
         (Batch API 사용 버전)
@@ -444,22 +601,31 @@ class ShortformViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         resp = super().list(request, *args, **kwargs)
         target_lang = request.query_params.get("lang")
+        use_batch = request.query_params.get("batch", "true") == "true"
+        
         if target_lang:
             try:
-                resp.data = self._apply_translation(resp.data, target_lang)
+                if use_batch:
+                    resp.data = self._apply_translation_batch(resp.data, target_lang)
+                else:
+                    resp.data = self._apply_translation_sequential(resp.data, target_lang)
             except Exception as e:
-                logger.exception("Graceful handled: Error in _apply_translation during list")
-                # 실패해도 원본 데이터는 이미 resp.data에 들어있으므로 그대로 반환 가능
+                logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during list")
         return resp
 
     def retrieve(self, request, *args, **kwargs):
         resp = super().retrieve(request, *args, **kwargs)
         target_lang = request.query_params.get("lang")
+        use_batch = request.query_params.get("batch", "true") == "true"      
+
         if target_lang:
             try:
-                resp.data = self._apply_translation(resp.data, target_lang)
+                if use_batch:
+                    resp.data = self._apply_translation_batch(resp.data, target_lang)
+                else:
+                    resp.data = self._apply_translation_sequential(resp.data, target_lang)
             except Exception as e:
-                logger.exception("Graceful handled: Error in _apply_translation during retrieve")
+                logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during retrieve")
         return resp
 
     @action(detail=True, methods=['post'])
@@ -468,10 +634,9 @@ class ShortformViewSet(viewsets.ModelViewSet):
         POST: 좋아요 추가 (이미 좋아요면 그대로 유지)
         """
         shortform = self.get_object()
-        try:
-            user = get_action_user(request)
-        except ValueError as e:
-            raise exceptions.ValidationError({"detail": str(e)})
+        user = request.user
+        if not user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to like.")
 
         obj, created = ShortformLike.objects.get_or_create(shortform=shortform, user=user)
         if created:
@@ -485,10 +650,9 @@ class ShortformViewSet(viewsets.ModelViewSet):
         DELETE: 좋아요 취소 (없으면 무시)
         """
         shortform = self.get_object()
-        try:
-            user = get_action_user(request)
-        except ValueError as e:
-            raise exceptions.ValidationError({"detail": str(e)})
+        user = request.user
+        if not user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to unlike.")
 
         deleted, _ = ShortformLike.objects.filter(shortform=shortform, user=user).delete()
         if deleted:
@@ -509,10 +673,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
         # POST
-        try:
-            user = get_action_user(request)
-        except ValueError as e:
-            raise exceptions.ValidationError({"detail": str(e)})
+        # POST
+        if not request.user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to comment.")
+        
+        user = request.user
 
         serializer = ShortformCommentSerializer(data=request.data)
         if serializer.is_valid():
@@ -530,10 +695,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         """
         shortform = self.get_object()
         ip = request.META.get('REMOTE_ADDR')
-        try:
-            user = get_action_user(request)
-        except ValueError:
-            user = None  # superuser가 없을 때는 익명으로 기록
+        user = request.user if request.user.is_authenticated else None
 
         if user:
             exists = ShortformView.objects.filter(
@@ -634,8 +796,11 @@ def call_fastapi_translate_batch(texts: list[str], source_lang: str, target_lang
     url = f"{FASTAPI_TRANSLATE_URL.replace('/translate', '')}/translate/batch"
     
     # 1. 시도: Docker Internal URL
+    # 로컬 개발 환경(Window/Mac Host)에서는 이 URL 접근 불가하여 TimeOut 발생 가능성 높음
+    # 따라서 connect timeout을 짧게 설정하여 빠르게 Fallback으로 넘어가도록 함.
     try:
-        resp = requests.post(url, json=payload, timeout=timeout)
+        # (connect timeout, read timeout)
+        resp = requests.post(url, json=payload, timeout=(3, timeout))
         resp.raise_for_status()
         data = resp.json()
         return data.get("translations", []), data.get("provider", "fastapi-batch")

@@ -156,6 +156,26 @@ function TestFrontAI() {
   const [language, setLanguage] = useState('English')
   const [currentView, setCurrentView] = useState('home')
   const [selectedShortId, setSelectedShortId] = useState(null)
+  // [TEST] Access Token State
+  const [accessToken, setAccessToken] = useState(() => {
+    return localStorage.getItem('accessToken') || ''
+  })
+
+  const handleLogin = (e) => {
+    e.preventDefault()
+    if (accessToken) {
+      if (confirm("Logout?")) {
+        setAccessToken('')
+        localStorage.removeItem('accessToken')
+      }
+    } else {
+      const token = window.prompt("Enter JWT Access Token:")
+      if (token) {
+        setAccessToken(token)
+        localStorage.setItem('accessToken', token)
+      }
+    }
+  }
 
   const baseTexts = useMemo(
     () => ({
@@ -231,73 +251,82 @@ function TestFrontAI() {
           >
             {t.navShorts}
           </span>
-          <a href="#">{t.navLogin}</a>
-          <a href="#">{t.navSignup}</a>
+
+          <a href="#" onClick={handleLogin}>
+            {accessToken ? "Log out (Test)" : t.navLogin}
+          </a>
+          {!accessToken && <a href="#">{t.navSignup}</a>}
           <button className="tfai-cta">{t.navStart}</button>
         </div>
       </div>
 
-      {currentView === 'home' && (
-        <>
-          <section className="tfai-hero">
-            <div className="tfai-hero-overlay" />
-            <div className="tfai-hero-content">
-              <p className="tfai-badge">{t.heroBadge}</p>
-              <h1>
-                {t.heroTitle1}
-                <br />
-                <span>{t.heroTitle2}</span>
-              </h1>
-              <p className="tfai-hero-sub">{t.heroSub}</p>
-              <div className="tfai-hero-actions">
-                <button className="primary">
-                  <span className="material-symbols-outlined">auto_awesome</span>
-                  {t.ctaAI}
-                </button>
-                <button className="ghost">
-                  <span className="material-symbols-outlined">edit_location_alt</span>
-                  {t.ctaSelf}
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <ShortsPage embed onShortClick={handleShortClick} language={language} />
-
-          <section className="tfai-section">
-            <div className="tfai-section-heading tfai-section-heading-row">
-              <h2>{t.popularTitle}</h2>
-              <a href="#" className="tfai-link">
-                {t.viewAll}
-              </a>
-            </div>
-            <div className="tfai-destinations">
-              {destinations.map((d) => (
-                <div key={d.id} className="tfai-dest-card">
-                  <div className="image" style={{ backgroundImage: `url(${d.image})` }} aria-label={d.name} />
-                  <div>
-                    <p className="name">{d.name}</p>
-                    <p className="desc">{d.desc}</p>
-                  </div>
+      {
+        currentView === 'home' && (
+          <>
+            <section className="tfai-hero">
+              <div className="tfai-hero-overlay" />
+              <div className="tfai-hero-content">
+                <p className="tfai-badge">{t.heroBadge}</p>
+                <h1>
+                  {t.heroTitle1}
+                  <br />
+                  <span>{t.heroTitle2}</span>
+                </h1>
+                <p className="tfai-hero-sub">{t.heroSub}</p>
+                <div className="tfai-hero-actions">
+                  <button className="primary">
+                    <span className="material-symbols-outlined">auto_awesome</span>
+                    {t.ctaAI}
+                  </button>
+                  <button className="ghost">
+                    <span className="material-symbols-outlined">edit_location_alt</span>
+                    {t.ctaSelf}
+                  </button>
                 </div>
-              ))}
-            </div>
-          </section>
-        </>
-      )}
+              </div>
+            </section>
 
-      {currentView === 'shorts' && (
-        <div style={{ marginTop: '20px' }}>
-          <ShortsPage onShortClick={handleShortClick} language={language} />
-        </div>
-      )}
+            <ShortsPage embed onShortClick={handleShortClick} language={language} accessToken={accessToken} />
 
-      {currentView === 'shorts_detail' && selectedShortId && (
-        <div style={{ marginTop: '20px' }}>
-          <ShortsDetailPage videoId={selectedShortId} onBack={handleBackToShorts} language={language} />
-        </div>
-      )}
-    </div>
+            <section className="tfai-section">
+              <div className="tfai-section-heading tfai-section-heading-row">
+                <h2>{t.popularTitle}</h2>
+                <a href="#" className="tfai-link">
+                  {t.viewAll}
+                </a>
+              </div>
+              <div className="tfai-destinations">
+                {destinations.map((d) => (
+                  <div key={d.id} className="tfai-dest-card">
+                    <div className="image" style={{ backgroundImage: `url(${d.image})` }} aria-label={d.name} />
+                    <div>
+                      <p className="name">{d.name}</p>
+                      <p className="desc">{d.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )
+      }
+
+      {
+        currentView === 'shorts' && (
+          <div style={{ marginTop: '20px' }}>
+            <ShortsPage onShortClick={handleShortClick} language={language} accessToken={accessToken} />
+          </div>
+        )
+      }
+
+      {
+        currentView === 'shorts_detail' && selectedShortId && (
+          <div style={{ marginTop: '20px' }}>
+            <ShortsDetailPage videoId={selectedShortId} onBack={handleBackToShorts} language={language} accessToken={accessToken} />
+          </div>
+        )
+      }
+    </div >
   )
 }
 

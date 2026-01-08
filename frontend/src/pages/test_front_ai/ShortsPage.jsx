@@ -30,7 +30,7 @@ const uiGlossary = {
     },
 }
 
-function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
+function ShortsPage({ onShortClick, embed = false, language: propLanguage, accessToken }) {
     const navigate = useNavigate()
     const [language, setLanguage] = useState(propLanguage || 'English')
     const [shortforms, setShortforms] = useState([])
@@ -40,6 +40,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
     const [uploadFile, setUploadFile] = useState(null)
     const [uploadTitle, setUploadTitle] = useState('')
     const [uploadDesc, setUploadDesc] = useState('')
+    const [useBatch, setUseBatch] = useState(true)
     const [isUploading, setIsUploading] = useState(false)
 
     useEffect(() => {
@@ -59,6 +60,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
             nowPlaying: 'Now Playing',
             loading: 'Loading...',
             noShorts: 'No shorts available.',
+            batchLabel: 'Batch Optimization',
         }),
         []
     )
@@ -79,7 +81,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         try {
             setLoading(true)
             setError('')
-            const res = await fetch(`/api/shortforms/?lang=${langCode}`)
+            const res = await fetch(`/api/shortforms/?lang=${langCode}&batch=${useBatch}`)
             if (!res.ok) {
                 throw new Error(`HTTP ${res.status}`)
             }
@@ -104,7 +106,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         } finally {
             setLoading(false)
         }
-    }, [langCode])
+    }, [langCode, useBatch])
 
     useEffect(() => {
         fetchShortforms()
@@ -114,16 +116,23 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
         event.preventDefault()
         if (!uploadFile) return
 
+        if (!accessToken) {
+            alert("Login required for uploading! (Click 'Login' in top nav)")
+            return
+        }
+
         setIsUploading(true)
         const formData = new FormData()
         formData.append('video_file', uploadFile)
         formData.append('title', uploadTitle)
         formData.append('content', uploadDesc)
-        formData.append('source_lang', 'kor_Hang')
 
         try {
             const res = await fetch('/api/shortforms/', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
                 body: formData,
             })
             if (!res.ok) throw new Error('Upload failed')
@@ -160,20 +169,36 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                         </div>
                     </div>
                 )}
+
+                {/* Batch Toggle - Always visible for Demo */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 4px 10px 0' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', color: '#64748b' }}>
+                        <input
+                            type="checkbox"
+                            checked={useBatch}
+                            onChange={(e) => setUseBatch(e.target.checked)}
+                            style={{ marginRight: '6px' }}
+                        />
+                        {t.batchLabel || 'Batch Opt'}
+                    </label>
+                </div>
+
                 <div className="tfai-section-heading tfai-section-heading-row">
                     <div>
                         <h2>{t.shortsTitle}</h2>
                         <p>{t.shortsSub}</p>
                     </div>
-                    <button className="tfai-cta" onClick={() => setShowUpload(true)} style={{ fontSize: '14px' }}>
-                        <span
-                            className="material-symbols-outlined"
-                            style={{ fontSize: '18px', verticalAlign: 'bottom', marginRight: '4px' }}
-                        >
-                            upload
-                        </span>
-                        {t.upload}
-                    </button>
+                    {accessToken && (
+                        <button className="tfai-cta" onClick={() => setShowUpload(true)} style={{ fontSize: '14px' }}>
+                            <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: '18px', verticalAlign: 'bottom', marginRight: '4px' }}
+                            >
+                                upload
+                            </span>
+                            {t.upload}
+                        </button>
+                    )}
                 </div>
                 <div className="tfai-feature-grid">
                     {!loading && !error && shortforms.length === 0 && (
@@ -219,7 +244,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                     {error && <p className="tfai-error">{error}</p>}
                     {loading && <p className="tfai-loading">{t.loading}</p>}
                 </div>
-            </section>
+            </section >
 
             {showUpload && (
                 <div className="tfai-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowUpload(false)}>
@@ -271,7 +296,7 @@ function ShortsPage({ onShortClick, embed = false, language: propLanguage }) {
                     </div>
                 </div>
             )}
-        </div>
+        </div >
     )
 }
 
