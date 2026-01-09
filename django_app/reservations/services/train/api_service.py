@@ -233,7 +233,7 @@ class MSTrainAPIService:
                 if train:
                     trains.append(train)
 
-            logger.info(f"✅ {len(trains)}개 열차 검색 완료")
+            logger.info(f"{len(trains)}개 열차 검색 완료")
             return trains
 
         except requests.exceptions.Timeout:
@@ -521,5 +521,5 @@ class MSTrainAPIService:
             if t["departureTime"] >= time_str
         ]
 
-        logger.info(f"⏰ 시간 필터링: {time_str} 이후 출발 → {len(filtered)}개 열차")
+        logger.info(f"시간 필터링: {time_str} 이후 출발 → {len(filtered)}개 열차")
         return filtered
