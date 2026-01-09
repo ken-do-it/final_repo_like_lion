@@ -633,7 +633,7 @@
             if (!token) {
                 // 토큰이 없으면 로그인 페이지로 리다이렉트
                 alert('로그인이 필요한 페이지입니다.');
-                window.location.href = '/users/login-page/';
+                window.location.href = '/api/users/login-page/';
                 return false;
             }
             return true;
@@ -706,7 +706,7 @@
                                 <div style="font-size: 12px; color: #9CA3AF;">${user.email}</div>
                                 ${user.social_provider !== 'LOCAL' ? `<div style="font-size: 11px; color: #00C9A7; margin-top: 4px;">🔗 ${user.social_provider}</div>` : ''}
                             </div>
-                            <a href="/users/mypage/" class="user-dropdown-item">
+                            <a href="/api/users/mypage/" class="user-dropdown-item">
                                 <span>📋</span>
                                 <span>My Page</span>
                             </a>
