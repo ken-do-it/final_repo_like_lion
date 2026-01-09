@@ -27,6 +27,13 @@ class SubwayError(Exception):
 logger = logging.getLogger(__name__)
 
 
+# 간단한 인메모리 캐시 (프로세스 생애 동안만 유지)
+from datetime import datetime, timedelta, timezone
+
+STATION_COORD_CACHE = {}  # key: norm_name -> {lat,lng,expires}
+ROUTE_CACHE = {}          # key: (norm_from,norm_to,option,include_stops,coords_key) -> {data,expires}
+
+
 class MSSubwayAPIService:
     """
     ODsay API 연동 서비스
@@ -74,6 +81,26 @@ class MSSubwayAPIService:
         return f"{key[:3]}****{key[-3:]}"
 
     # =============== 외부 API 호출 ===============
+    def _norm_station_name(self, name: str) -> str:
+        """캐시 키 통일을 위한 정규화(공백/대소문/접미사 '역' 제거)."""
+        return (name or "").strip().lower().replace("역", "")
+
+    def _cache_get(self, store: dict, key):
+        item = store.get(key)
+        if not item:
+            return None
+        if item.get('expires') and item['expires'] < datetime.now(timezone.utc):
+            # 만료된 항목은 제거
+            store.pop(key, None)
+            return None
+        return item
+
+    def _cache_set(self, store: dict, key, value, ttl_seconds: int):
+        store[key] = {
+            **value,
+            'expires': datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds),
+        }
+
     def _ms_get_station_coords(self, station_name: str) -> dict:
         """
         역 이름으로 좌표를 조회합니다(searchStation).
@@ -82,6 +109,12 @@ class MSSubwayAPIService:
         - 다국어/다도시 혼재 시에는 '도시 바운딩박스 필터'를 추가로 적용할 수 있어요(선택).
         """
         query = station_name.replace("역", "").strip()
+        norm = self._norm_station_name(station_name)
+
+        # 1) 캐시 조회(24시간)
+        cached = self._cache_get(STATION_COORD_CACHE, norm)
+        if cached:
+            return {"lng": cached["lng"], "lat": cached["lat"]}
 
         url = f"{self.BASE_URL}/searchStation"
         params = {
@@ -109,7 +142,10 @@ class MSSubwayAPIService:
 
             # 간단화: 최상위 1개 사용(도시 필터/이름 완전일치/거리 근접 로직은 선택 구현)
             top = stations[0]
-            return {"lng": float(top.get("x")), "lat": float(top.get("y"))}
+            coords = {"lng": float(top.get("x")), "lat": float(top.get("y"))}
+            # 캐시 저장
+            self._cache_set(STATION_COORD_CACHE, norm, coords, ttl_seconds=60 * 60 * 24)
+            return coords
 
         except requests.RequestException as e:
             logger.error("searchStation 네트워크 오류: %s", e)
@@ -121,6 +157,12 @@ class MSSubwayAPIService:
         from_station: str,
         to_station: str,
         option: str = "FAST",
+        *,
+        from_lat: float | None = None,
+        from_lng: float | None = None,
+        to_lat: float | None = None,
+        to_lng: float | None = None,
+        include_stops: bool = False,
     ) -> dict:
         """
         지하철 경로를 검색합니다(좌표 기반 경로검색).
@@ -129,9 +171,16 @@ class MSSubwayAPIService:
         2) 좌표 → 경로(searchPubTransPathT)
         3) 옵션 정렬 후 최대 3개 반환
         """
-        # 1. 출발/도착 좌표 조회
-        from_xy = self._ms_get_station_coords(from_station)
-        to_xy = self._ms_get_station_coords(to_station)
+        # 1. 출발/도착 좌표 조회 (좌표가 주어지면 역검색 생략)
+        if from_lat is not None and from_lng is not None:
+            from_xy = {"lat": float(from_lat), "lng": float(from_lng)}
+        else:
+            from_xy = self._ms_get_station_coords(from_station)
+
+        if to_lat is not None and to_lng is not None:
+            to_xy = {"lat": float(to_lat), "lng": float(to_lng)}
+        else:
+            to_xy = self._ms_get_station_coords(to_station)
 
         # 2. searchPubTransPathT 호출(지하철 위주: SearchPathType=1, 추천: OPT=0)
         url = f"{self.BASE_URL}/searchPubTransPathT"
@@ -144,6 +193,32 @@ class MSSubwayAPIService:
             "SearchPathType": 1,  # 지하철 위주
             "OPT": 0,              # 추천(서버에서 재정렬)
         }
+
+        # 2.5. 라우트 캐시 키 구성 (좌표가 있으면 반영, include_stops 별도 캐시)
+        coords_key = None
+        try:
+            coords_key = (
+                round(float(from_xy["lat"]), 5),
+                round(float(from_xy["lng"]), 5),
+                round(float(to_xy["lat"]), 5),
+                round(float(to_xy["lng"]), 5),
+            )
+        except Exception:
+            coords_key = None
+
+        cache_key = (
+            self._norm_station_name(from_station),
+            self._norm_station_name(to_station),
+            option,
+            bool(include_stops),
+            coords_key,
+        )
+
+        # include_stops=False 인 경우 캐시 적중 시 바로 반환
+        if not include_stops:
+            cached = self._cache_get(ROUTE_CACHE, cache_key)
+            if cached:
+                return cached["data"]
 
         try:
             logger.debug(
@@ -163,25 +238,28 @@ class MSSubwayAPIService:
                 raise SubwayError(SubwayError.ODSAY_ERROR)
 
             # 3. 응답 변환 → 옵션 정렬 → 상위 3개
-            routes = self._ms_transform_odsay_response(data)
+            routes = self._ms_transform_odsay_response(data, include_stops=include_stops)
             if not routes:
                 raise SubwayError(SubwayError.NO_ROUTE)
 
             routes = self._ms_sort_routes(routes, option)
-            return {"routes": routes[:3]}
+            result = {"routes": routes[:3]}
+            # 캐시 저장 (include_stops 구분하여 캐시)
+            self._cache_set(ROUTE_CACHE, cache_key, {"data": result}, ttl_seconds=60 * 60 * 12)
+            return result
 
         except requests.RequestException as e:
             logger.error("경로검색 네트워크 오류: %s", e)
             raise SubwayError(SubwayError.ODSAY_ERROR)
 
     # =============== 변환/정렬 ===============
-    def _ms_transform_odsay_response(self, data: dict) -> list:
+    def _ms_transform_odsay_response(self, data: dict, *, include_stops: bool = False) -> list:
         """
         ODsay searchPubTransPathT 응답을 우리 스키마로 변환합니다.
         - duration: 총 소요시간(분)
         - transfers: 환승 횟수
         - fare: {card, cash}
-        - steps: [{ line, lineColor, from, to, stations, duration }]
+        - steps: [{ line, lineColor, from, to, stations, duration, stops?[] }]
         """
         result = data.get("result", {})
         path_list = result.get("path", [])
@@ -207,16 +285,45 @@ class MSSubwayAPIService:
                 if sub_path.get("trafficType") == 1:  # 지하철만
                     lane = (sub_path.get("lane") or [{}])[0]
                     line_name = lane.get("name", "")
-                    steps.append(
-                        {
-                            "line": line_name,
-                            "lineColor": self.LINE_COLORS.get(line_name, "#999999"),
-                            "from": sub_path.get("startName", ""),
-                            "to": sub_path.get("endName", ""),
-                            "stations": sub_path.get("stationCount", 0),
-                            "duration": sub_path.get("sectionTime", 0),  # 분
-                        }
-                    )
+                    step = {
+                        "line": line_name,
+                        "lineColor": self.LINE_COLORS.get(line_name, "#999999"),
+                        "from": sub_path.get("startName", ""),
+                        "to": sub_path.get("endName", ""),
+                        "stations": sub_path.get("stationCount", 0),
+                        "duration": sub_path.get("sectionTime", 0),  # 분
+                    }
+
+                    # 필요 시 stops 생성
+                    if include_stops:
+                        stops = []
+                        pass_list = (sub_path.get("passStopList") or {}).get("stations") if isinstance(sub_path.get("passStopList"), dict) else None
+                        if pass_list:
+                            for st in pass_list:
+                                try:
+                                    stops.append({
+                                        "name": st.get("stationName", ""),
+                                        "lat": float(st.get("y")),
+                                        "lng": float(st.get("x")),
+                                    })
+                                except Exception:
+                                    continue
+                        else:
+                            # fallback: 시작/끝 역 좌표만이라도 제공(캐시 활용)
+                            try:
+                                s_from = self._ms_get_station_coords(step["from"]) if step.get("from") else None
+                                s_to = self._ms_get_station_coords(step["to"]) if step.get("to") else None
+                                if s_from:
+                                    stops.append({"name": step["from"], "lat": s_from["lat"], "lng": s_from["lng"]})
+                                if s_to and (not stops or stops[-1]["name"] != step["to"]):
+                                    stops.append({"name": step["to"], "lat": s_to["lat"], "lng": s_to["lng"]})
+                            except Exception:
+                                pass
+
+                        if stops:
+                            step["stops"] = stops
+
+                    steps.append(step)
 
             routes.append(
                 {
@@ -238,4 +345,6 @@ class MSSubwayAPIService:
         else:  # FAST
             routes.sort(key=lambda x: x.get("duration", 0))
         return routes
+
+    # (자동완성 기능은 제거되었습니다)
 

@@ -102,13 +102,28 @@ class MSSubwayRouteView(APIView):
         to_station = serializer.validated_data["toStation"]
         option = serializer.validated_data.get("option", "FAST")
 
+        # 호출 수 줄이기 위한 선택 파라미터들
+        from_lat = serializer.validated_data.get("fromLat")
+        from_lng = serializer.validated_data.get("fromLng")
+        to_lat = serializer.validated_data.get("toLat")
+        to_lng = serializer.validated_data.get("toLng")
+
+        include_raw = serializer.validated_data.get("include", "") or ""
+        include_tokens = {t.strip().lower() for t in include_raw.split(',') if t.strip()}
+        include_stops = 'stops' in include_tokens
+
         try:
             # 지하철 경로 검색
             service = MSSubwayAPIService()
             result = service.ms_search_subway_route(
                 from_station=from_station,
                 to_station=to_station,
-                option=option
+                option=option,
+                from_lat=from_lat,
+                from_lng=from_lng,
+                to_lat=to_lat,
+                to_lng=to_lng,
+                include_stops=include_stops,
             )
 
             # 응답 반환

@@ -21,7 +21,7 @@ from .views.train import (
 # 지하철 관련 뷰 (화면)
 from .views.subway import (
     MSSubwayRouteView,      # 지하철 경로 검색
-    MSSubwayMapMetaView     # 노선도 메타 정보
+    MSSubwayMapMetaView,    # 노선도 메타 정보
 )
 
 app_name = 'reservations'
@@ -80,6 +80,7 @@ urlpatterns = [
         MSSubwayRouteView.as_view(),
         name='subway-route'
     ),
+
 
     # 노선도 메타 정보 API (선택사항)
     # GET /api/v1/transport/subway/map-meta/
