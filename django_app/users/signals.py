@@ -77,7 +77,7 @@ def create_jwt_tokens(sender, request, user, **kwargs):
     request.session['username'] = user.username
     request.session['email'] = user.email
     request.session['nickname'] = user.nickname
-    request.session['social_provider'] = user.social_provider
+    request.session['social_provider'] = user.provider_type
 
     # 클라이언트 정보
     client_ip = get_client_ip(request)

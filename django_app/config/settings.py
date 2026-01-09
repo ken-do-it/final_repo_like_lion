@@ -282,7 +282,7 @@ USE_TZ = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# drf-spectacular Settings (통합)
+# drf-spectacular Settings (API Documentation)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Korea Travel API',
     'DESCRIPTION': '외국인 관광객을 위한 한국 여행 서비스 API',
@@ -291,18 +291,6 @@ SPECTACULAR_SETTINGS = {
     'SCHEMA_PATH_PREFIX': r'/api/',
     'COMPONENT_SPLIT_REQUEST': True,
     # JWT 인증 스키마 추가
-    'SECURITY': [
-        {
-            'BearerAuth': []
-        }
-    ],
-    'SECURITY_DEFINITIONS': {
-        'BearerAuth': {
-            'type': 'http',
-            'scheme': 'bearer',
-            'bearerFormat': 'JWT',
-        }
-    },
     'APPEND_COMPONENTS': {
         # 전역 Authorize 버튼(Bearer JWT) 활성화
         'COMPONENTS': {

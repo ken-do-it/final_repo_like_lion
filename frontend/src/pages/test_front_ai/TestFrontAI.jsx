@@ -156,9 +156,33 @@ function TestFrontAI() {
   const [language, setLanguage] = useState('English')
   const [currentView, setCurrentView] = useState('home')
   const [selectedShortId, setSelectedShortId] = useState(null)
+  // [TEST] Helper: Simple JWT Decoder
+  const parseJwt = (token) => {
+    try {
+      const base64Url = token.split('.')[1]
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      }).join(''))
+      return JSON.parse(jsonPayload)
+    } catch (e) {
+      return null
+    }
+  }
+
   // [TEST] Access Token State
   const [accessToken, setAccessToken] = useState(() => {
-    return localStorage.getItem('accessToken') || ''
+    const saved = localStorage.getItem('accessToken')
+    if (saved) {
+      const decoded = parseJwt(saved)
+      if (decoded && decoded.exp * 1000 > Date.now()) {
+        return saved // Valid
+      } else {
+        console.log("Token expired, clearing.")
+        localStorage.removeItem('accessToken')
+      }
+    }
+    return ''
   })
 
   const handleLogin = (e) => {
@@ -171,6 +195,15 @@ function TestFrontAI() {
     } else {
       const token = window.prompt("Enter JWT Access Token:")
       if (token) {
+        const decoded = parseJwt(token)
+        if (!decoded) {
+          alert("Invalid Token Format")
+          return
+        }
+        if (decoded.exp * 1000 < Date.now()) {
+          alert("This token has expired!")
+          return
+        }
         setAccessToken(token)
         localStorage.setItem('accessToken', token)
       }
