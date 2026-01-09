@@ -4,7 +4,8 @@ from .views import (
     SendVerificationView, VerifyEmailView,
     PasswordResetRequestView, PasswordResetConfirmView, PasswordChangeView,
     ProfileView, PreferencesView, MainPageView, SavedIdCheckView,
-    login_page, register_page, main_page, api_test_page, social_callback_page
+    login_page, register_page, main_page, api_test_page, social_callback_page, mypage_page,
+    SavedPlacesView, SavedPlaceDetailView, MyReviewsView, MyReviewDetailView
 )
 from .social_auth import SocialLoginCallbackView, SocialLoginAPIView
 
@@ -15,6 +16,7 @@ urlpatterns = [
     path('', main_page, name='main-page'),
     path('login-page/', login_page, name='login-page'),
     path('register-page/', register_page, name='register-page'),
+    path('mypage/', mypage_page, name='mypage'),
     path('api-test/', api_test_page, name='api-test'),
     path('social-callback/', social_callback_page, name='social-callback-page'),
 
@@ -40,6 +42,14 @@ urlpatterns = [
     # 프로필 및 설정
     path('api/profile/', ProfileView.as_view(), name='profile'),
     path('api/preferences/', PreferencesView.as_view(), name='preferences'),
+
+    # 마이페이지 - 저장한 장소
+    path('api/mypage/saved-places/', SavedPlacesView.as_view(), name='saved-places'),
+    path('api/mypage/saved-places/<int:pk>/', SavedPlaceDetailView.as_view(), name='saved-place-detail'),
+
+    # 마이페이지 - 내 리뷰
+    path('api/mypage/reviews/', MyReviewsView.as_view(), name='my-reviews'),
+    path('api/mypage/reviews/<int:pk>/', MyReviewDetailView.as_view(), name='my-review-detail'),
 
     # 소셜 로그인 API
     path('api/social/login/<str:provider>/', SocialLoginAPIView.as_view(), name='social-login-api'),
