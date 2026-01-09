@@ -283,3 +283,39 @@ django_app/
 1.  **수동 검증**: 프론트엔드를 통해 업로드 및 번역 기능이 여전히 잘 동작하는지 확인.
 2.  **인프라 구축**: Redis 및 Celery 설치.
 3.  **비동기 전환**: `VideoService`의 메서드들을 Celery 비동기 작업으로 전환하여 사용자 응답 속도 개선.
+
+---
+
+## 👨‍💻 팀원을 위한 환경 설정 가이드 (Model Switching Guide)
+
+이 프로젝트는 **Ollama(Llama 3)**, **NLLB**, **ChatGPT(OpenAI)** 3가지 모드를 지원합니다.
+`.env` 파일을 수정하여 상황에 맞게 번역 엔진을 선택하세요.
+
+### 옵션 1: 고성능 모드 (Ollama - 권장, RTX 3060 이상)
+내 컴퓨터 로컬 GPU를 사용하여 Llama 3를 돌립니다. 무료이며 창의적인 번역이 가능합니다.
+```ini
+# .env
+AI_ENGINE=ollama
+OLLAMA_MODEL=llama3
+OLLAMA_URL=http://host.docker.internal:11434
+```
+
+### 옵션 2: 일반 모드 (NLLB - 팀원/저사양용)
+Ollama 설치가 귀찮거나 컴퓨터가 느린 경우, 가벼운 모델을 사용합니다.
+```ini
+# .env
+AI_ENGINE=nllb
+HF_MODEL=facebook/nllb-200-distilled-600M
+# HF_MODEL=facebook/nllb-200-1.3B  <-- 좀 더 좋은 품질 (1.3GB 다운로드)
+```
+
+### 옵션 3: 클라우드 API 모드 (ChatGPT - 최고 성능)
+OpenAI API를 사용하여 서버 부하 없이 최고의 퀄리티를 보장합니다. (API 키 필요)
+```ini
+# .env
+AI_ENGINE=openai
+OPENAI_API_KEY=sk-proj-xxxx...
+# OPENAI_MODEL=gpt-4o  <-- 모델 지정 가능 (기본값: gpt-4o-mini)
+```
+💡 설정을 변경한 후에는 반드시 `docker-compose up -d --build fastapi-ai-translation` 및 `docker-compose restart django`를 실행해야 적용됩니다.
+
