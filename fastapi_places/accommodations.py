@@ -2,11 +2,12 @@
 Accommodations API Router
 숙소 검색 전용 엔드포인트
 """
+import httpx
 from fastapi import APIRouter, Query
 from typing import Optional, List
 import asyncio
 
-from service import search_kakao_places, search_google_places, remove_duplicate_places
+from service import search_kakao_places, search_google_places, remove_duplicate_places, KAKAO_REST_API_KEY
 
 router = APIRouter(prefix="/api/v1/accommodations", tags=["Accommodations"])
 
@@ -125,3 +126,93 @@ async def get_popular_cities():
     return {
         "cities": ["서울", "부산", "제주", "강릉", "경주", "여수", "속초", "전주"]
     }
+
+
+# 좌표 기반 검색 
+@router.get("/nearby")
+async def search_nearby_accommodations(
+    lat: float = Query(..., description="위도"),
+    lng: float = Query(..., description="경도"),
+    radius: int = Query(5000, ge=100, le=20000, description="검색 반경 (미터)"),
+    type: Optional[str] = Query(None, description="숙소 유형: 호텔, 모텔, 펜션, 게스트하우스, 리조트, 민박"),
+    limit: int = Query(15, ge=1, le=50, description="결과 개수")
+):
+    """
+    좌표 기반 숙소 검색 (거리순 정렬)
+    
+    사용 예시:
+    - GET /api/v1/accommodations/nearby?lat=37.5665&lng=126.978
+    - GET /api/v1/accommodations/nearby?lat=37.5665&lng=126.978&radius=3000
+    - GET /api/v1/accommodations/nearby?lat=37.5665&lng=126.978&type=호텔
+    """
+    
+    type_keywords = {
+        "호텔": "호텔",
+        "모텔": "모텔",
+        "펜션": "펜션",
+        "게스트하우스": "게스트하우스",
+        "리조트": "리조트",
+        "민박": "민박",
+    }
+    
+    search_keyword = type_keywords.get(type, "숙박")
+    
+    # 카카오 API 좌표 기반 검색
+    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
+    params = {
+        "query": search_keyword,
+        "x": lng,
+        "y": lat,
+        "radius": radius,
+        "sort": "distance",
+        "size": 15
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            results = []
+            accommodation_keywords = [
+                "호텔", "모텔", "펜션", "게스트하우스", "리조트", "민박", "숙박", "여관",
+                "hotel", "motel", "resort", "inn", "lodging", "hostel"
+            ]
+            
+            for doc in data.get("documents", []):
+                name = doc.get("place_name", "").lower()
+                category_str = doc.get("category_name", "").lower()
+                
+                # 숙소 필터링
+                is_accommodation = any(
+                    kw.lower() in name or kw.lower() in category_str
+                    for kw in accommodation_keywords
+                )
+                
+                if is_accommodation:
+                    results.append({
+                        "provider": "KAKAO",
+                        "place_api_id": doc.get("id"),
+                        "name": doc.get("place_name"),
+                        "address": doc.get("address_name") or doc.get("road_address_name", ""),
+                        "latitude": float(doc.get("y", 0)),
+                        "longitude": float(doc.get("x", 0)),
+                        "distance": int(doc.get("distance", 0)),
+                        "category_main": "숙박",
+                        "category_detail": doc.get("category_name", "").split(" > "),
+                        "thumbnail_url": None
+                    })
+            
+            return {
+                "lat": lat,
+                "lng": lng,
+                "radius": radius,
+                "type": type,
+                "total": len(results),
+                "results": results[:limit]
+            }
+    
+    except Exception as e:
+        return {"error": f"검색 실패: {str(e)}"}
