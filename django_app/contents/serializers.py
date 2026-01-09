@@ -52,7 +52,8 @@ class ShortformSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        if not attrs.get('video_file'):
+        # 생성(create) 시에만 비디오 파일 필수 체크
+        if not self.instance and not attrs.get('video_file'):
             raise serializers.ValidationError({"video_file": "This field is required."})
         return attrs
 

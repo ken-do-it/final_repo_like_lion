@@ -292,19 +292,18 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True,
     # JWT 인증 스키마 추가
     'APPEND_COMPONENTS': {
-        'securitySchemes': {
-            'BearerAuth': {
-                'type': 'http',
-                'scheme': 'bearer',
-                'bearerFormat': 'JWT',
-                'description': 'JWT 인증 토큰을 입력하세요. 로그인 API를 통해 발급받은 access_token을 입력하면 됩니다.'
+        # 전역 Authorize 버튼(Bearer JWT) 활성화
+        'COMPONENTS': {
+            'securitySchemes': {
+                'BearerAuth': {
+                    'type': 'http',
+                    'scheme': 'bearer',
+                    'bearerFormat': 'JWT',
+                    'description': 'JWT 인증 토큰을 입력하세요. 로그인 API를 통해 발급받은 access_token을 입력하면 됩니다.'
+                }
             }
         }
     },
-    # 기본 보안 요구사항
-    'SECURITY': [
-        {'BearerAuth': []}
-    ],
 }
 
 # TAGO API Settings (국토교통부 항공 API)
@@ -320,3 +319,6 @@ TOSS_PAYMENTS = {
     'SUCCESS_URL': os.getenv('TOSS_SUCCESS_URL', 'http://localhost:3000/payment/success'),
     'FAIL_URL': os.getenv('TOSS_FAIL_URL', 'http://localhost:3000/payment/fail'),
 }
+
+# ODsay API Settings (지하철 경로 검색)
+ODSAY_API_KEY = os.getenv('ODSAY_API_KEY', '')

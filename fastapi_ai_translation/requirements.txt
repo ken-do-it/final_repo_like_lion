@@ -9,3 +9,4 @@ transformers
 torch
 sentencepiece
 huggingface-hub
+openai>=1.0.0
