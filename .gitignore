@@ -228,4 +228,5 @@ clear_data.py
 #최진석 부하테스트용
 load_test.js
 node_modules/
-node_modules/
+package-lock.json
+package.json

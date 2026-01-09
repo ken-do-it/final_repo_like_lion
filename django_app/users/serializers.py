@@ -5,6 +5,13 @@ from .models import UserPreference, LoginSession, EmailVerification, PasswordRes
 
 User = get_user_model()
 
+# places 앱의 모델 import
+try:
+    from places.models import PlaceBookmark, PlaceReview
+except ImportError:
+    PlaceBookmark = None
+    PlaceReview = None
+
 
 class UserPreferenceSerializer(serializers.ModelSerializer):
     """사용자 설정 Serializer"""
@@ -205,3 +212,37 @@ class UserWithdrawalSerializer(serializers.Serializer):
     )
     withdrawal_reason = serializers.CharField(required=False, allow_blank=True)
     withdrawal_detail = serializers.CharField(required=False, allow_blank=True)
+
+
+# ============================================================================
+# 마이페이지 Serializers
+# ============================================================================
+
+class SavedPlaceSerializer(serializers.ModelSerializer):
+    """저장한 장소 Serializer"""
+    place_name = serializers.CharField(source='place.name', read_only=True)
+    place_address = serializers.CharField(source='place.address', read_only=True)
+    place_category = serializers.CharField(source='place.category_main', read_only=True)
+    place_rating = serializers.DecimalField(source='place.average_rating', read_only=True, max_digits=3, decimal_places=2)
+
+    class Meta:
+        model = PlaceBookmark
+        fields = [
+            'id', 'place', 'place_name', 'place_address',
+            'place_category', 'place_rating', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+
+class MyReviewSerializer(serializers.ModelSerializer):
+    """내 리뷰 Serializer"""
+    place_name = serializers.CharField(source='place.name', read_only=True)
+    place_address = serializers.CharField(source='place.address', read_only=True)
+
+    class Meta:
+        model = PlaceReview
+        fields = [
+            'id', 'place', 'place_name', 'place_address',
+            'rating', 'content', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
