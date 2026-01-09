@@ -355,10 +355,10 @@ def calculate_next_due(current_level: int, auth_count: int) -> date:
     """
     레벨별 다음 인증 예정일 계산
 
-    Level 1: 1주일 (3번 인증 필요)
-    Level 2: 1개월
-    Level 3: 6개월
-    Level 4: 1년
+    Level 1→2: 1주일
+    Level 2→3: 1주일
+    Level 3→4: 6개월
+    Level 4→5: 1년
     Level 5: 1년 (반복)
     """
     today = date.today()
@@ -366,7 +366,7 @@ def calculate_next_due(current_level: int, auth_count: int) -> date:
     if current_level == 1:
         return today + timedelta(weeks=1)
     elif current_level == 2:
-        return today + timedelta(days=30)
+        return today + timedelta(weeks=1)
     elif current_level == 3:
         return today + timedelta(days=180)
     elif current_level in [4, 5]:
@@ -383,6 +383,14 @@ async def authenticate_local_badge(
 ) -> Tuple[LocalBadge, str]:
     """
     현지인 인증 처리
+
+    로직:
+    - Level 1: 첫 인증
+    - Level 2: 1주일 후 재인증
+    - Level 3: 또 1주일 후 재인증 (글 작성 가능)
+    - Level 4: 6개월 후 재인증
+    - Level 5: 1년 후 재인증, 이후 1년 주기
+    - 인증일 지나면 비활성화, 재인증 시 이전 레벨 유지
 
     Returns:
         (LocalBadge, message)
@@ -407,59 +415,78 @@ async def authenticate_local_badge(
             is_active=True,
             first_authenticated_at=date.today(),
             last_authenticated_at=date.today(),
-            next_authentication_due=calculate_next_due(1, 1),
+            next_authentication_due=calculate_next_due(1, 0),
             maintenance_months=0
         )
         db.add(badge)
         db.commit()
         db.refresh(badge)
-        return badge, f"{city} 현지인 인증을 시작했습니다! (Level 1)"
+        return badge, f"{city} 현지인 인증을 시작했습니다! (Level 1) 1주일 후 재인증 가능합니다."
 
-    # 4. 재인증 (만료된 경우)
+    # 4. 인증일 확인
+    today = date.today()
+
+    # 4-1. 인증일이 지나서 비활성화된 경우 → 재활성화 (레벨 유지)
     if not badge.is_active:
-        badge.level = 2
         badge.city = city
         badge.is_active = True
-        badge.last_authenticated_at = date.today()
-        badge.next_authentication_due = calculate_next_due(2, 1)
+        badge.last_authenticated_at = today
+        badge.next_authentication_due = calculate_next_due(badge.level, 0)
         db.commit()
         db.refresh(badge)
-        return badge, f"{city} 현지인 인증을 재개했습니다! (Level 2)"
+        return badge, f"{city} 현지인 인증을 재개했습니다! (Level {badge.level} 유지)"
 
-    # 5. 정상 인증 (레벨 업그레이드 로직)
-    badge.last_authenticated_at = date.today()
+    # 4-2. 아직 인증일이 안 됨 → 에러
+    if today < badge.next_authentication_due:
+        days_left = (badge.next_authentication_due - today).days
+        raise HTTPException(
+            status_code=400,
+            detail=f"다음 인증일은 {badge.next_authentication_due}입니다. ({days_left}일 남음)"
+        )
+
+    # 4-3. 인증일이 지났지만 아직 활성화 상태 → 비활성화 처리
+    # (실제로는 배치 작업으로 해야 하지만, 여기서 처리)
+    if today > badge.next_authentication_due:
+        badge.is_active = False
+        badge.city = city
+        badge.last_authenticated_at = today
+        badge.next_authentication_due = calculate_next_due(badge.level, 0)
+        db.commit()
+        db.refresh(badge)
+        return badge, f"인증 기한이 지나 재인증했습니다. (Level {badge.level} 유지)"
+
+    # 5. 정상 인증 (레벨 업그레이드)
+    badge.last_authenticated_at = today
     old_level = badge.level
 
-    # Level 1 → 2 (3번 인증)
+    # Level 1 → 2
     if badge.level == 1:
-        # authentication_count는 모델에 없으므로 간단히 처리
-        # 실제로는 별도 카운트 필드 필요
         badge.level = 2
-        badge.maintenance_months = 1
-        message = f"{city} 현지인 Level 2 달성! 이제 칼럼을 작성할 수 있습니다."
+        badge.maintenance_months = 0
+        message = f"{city} 현지인 Level 2 달성! 1주일 후 재인증 가능합니다."
 
     # Level 2 → 3
     elif badge.level == 2:
         badge.level = 3
-        badge.maintenance_months += 1
-        message = f"{city} 현지인 Level 3 달성!"
+        badge.maintenance_months = 0
+        message = f"{city} 현지인 Level 3 달성! 이제 칼럼을 작성할 수 있습니다. 6개월 후 재인증 가능합니다."
 
     # Level 3 → 4
     elif badge.level == 3:
         badge.level = 4
-        badge.maintenance_months += 6
-        message = f"{city} 현지인 Level 4 달성!"
+        badge.maintenance_months = 6
+        message = f"{city} 현지인 Level 4 달성! 1년 후 재인증 가능합니다."
 
     # Level 4 → 5
     elif badge.level == 4:
         badge.level = 5
-        badge.maintenance_months += 12
-        message = f"{city} 현지인 Level 5 달성! 최고 레벨입니다."
+        badge.maintenance_months = 12
+        message = f"{city} 현지인 Level 5 달성! 최고 레벨입니다. 1년 후 재인증 필요합니다."
 
     # Level 5 유지
     else:
         badge.maintenance_months += 12
-        message = f"{city} 현지인 Level 5 유지 중"
+        message = f"{city} 현지인 Level 5 유지! 1년 후 재인증 필요합니다."
 
     badge.next_authentication_due = calculate_next_due(badge.level, 0)
     db.commit()
@@ -471,16 +498,28 @@ async def authenticate_local_badge(
 def check_local_badge_active(db: Session, user_id: int) -> LocalBadge:
     """
     현지인 칼럼 작성 권한 확인
+    Level 3 이상, 활성화 상태여야 가능
     """
     badge = db.query(LocalBadge).filter(LocalBadge.user_id == user_id).first()
 
     if not badge:
         raise HTTPException(status_code=403, detail="현지인 인증이 필요합니다")
 
+    if badge.level < 3:
+        raise HTTPException(
+            status_code=403,
+            detail=f"칼럼 작성은 Level 3부터 가능합니다. (현재 Level {badge.level})"
+        )
+
+    # 만료 체크: 인증일이 지났으면 자동으로 비활성화
+    if badge.is_active and date.today() > badge.next_authentication_due:
+        badge.is_active = False
+        db.commit()
+
     if not badge.is_active:
         raise HTTPException(
             status_code=403,
-            detail=f"인증이 만료되었습니다. 다음 인증 예정일: {badge.next_authentication_due}"
+            detail="인증이 만료되었습니다. 재인증이 필요합니다."
         )
 
     return badge
