@@ -331,3 +331,6 @@ TOSS_PAYMENTS = {
     'SUCCESS_URL': os.getenv('TOSS_SUCCESS_URL', 'http://localhost:3000/payment/success'),
     'FAIL_URL': os.getenv('TOSS_FAIL_URL', 'http://localhost:3000/payment/fail'),
 }
+
+# ODsay API Settings (지하철 경로 검색)
+ODSAY_API_KEY = os.getenv('ODSAY_API_KEY', '')
