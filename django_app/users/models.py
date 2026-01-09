@@ -9,6 +9,9 @@ class User(AbstractUser):
     """
     # 기본 ID는 Django가 자동으로 id (BigInt) 생성
 
+    # username을 nullable로 오버라이드 (소셜 로그인 사용자를 위해)
+    username = models.CharField(max_length=150, unique=True, null=True, blank=True)
+
     nickname = models.CharField(max_length=50, blank=True)
     birth_year = models.IntegerField(null=True, blank=True)
     country = models.CharField(max_length=100, blank=True, null=True)

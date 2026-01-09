@@ -627,6 +627,24 @@
     </footer>
 
     <script>
+        // 로그인 체크 - 메인페이지는 로그인 필수
+        function checkAuthentication() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                // 토큰이 없으면 로그인 페이지로 리다이렉트
+                alert('로그인이 필요한 페이지입니다.');
+                window.location.href = '/users/login-page/';
+                return false;
+            }
+            return true;
+        }
+
+        // 페이지 로드 시 인증 체크
+        if (!checkAuthentication()) {
+            // 인증 실패 시 여기서 멈춤
+            throw new Error('Authentication required');
+        }
+
         const API_BASE_URL = 'http://localhost:8000/api/users/api';
 
         // 메인페이지 데이터 로드
@@ -688,6 +706,10 @@
                                 <div style="font-size: 12px; color: #9CA3AF;">${user.email}</div>
                                 ${user.social_provider !== 'LOCAL' ? `<div style="font-size: 11px; color: #00C9A7; margin-top: 4px;">🔗 ${user.social_provider}</div>` : ''}
                             </div>
+                            <a href="/users/mypage/" class="user-dropdown-item">
+                                <span>📋</span>
+                                <span>My Page</span>
+                            </a>
                             <a href="#" class="user-dropdown-item" onclick="navigateToProfile(event)">
                                 <span>👤</span>
                                 <span>Profile</span>

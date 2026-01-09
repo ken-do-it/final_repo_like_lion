@@ -76,27 +76,30 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
 
 # drf-spectacular를 위한 인증 스키마 정의
-from drf_spectacular.extensions import OpenApiAuthenticationExtension
+try:
+    from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
-
-class JWTAuthenticationScheme(OpenApiAuthenticationExtension):
-    """
-    drf-spectacular(Swagger)에게 JWT 인증 방식을 알려주는 클래스
-
-    이 클래스가 없으면 Swagger UI에 Authorize 버튼이 나타나지 않습니다.
-    """
-    target_class = 'users.authentication.JWTAuthentication'
-    name = 'BearerAuth'
-
-    def get_security_definition(self, auto_schema):
+    class JWTAuthenticationScheme(OpenApiAuthenticationExtension):
         """
-        Swagger에 표시될 인증 스키마 정의
+        drf-spectacular(Swagger)에게 JWT 인증 방식을 알려주는 클래스
 
-        Returns:
-            dict: Bearer JWT 인증 스키마
+        이 클래스가 없으면 Swagger UI에 Authorize 버튼이 나타나지 않습니다.
         """
-        return {
-            'type': 'http',
-            'scheme': 'bearer',
-            'bearerFormat': 'JWT',
-        }
+        target_class = 'users.authentication.JWTAuthentication'
+        name = 'BearerAuth'
+
+        def get_security_definition(self, auto_schema):
+            """
+            Swagger에 표시될 인증 스키마 정의
+
+            Returns:
+                dict: Bearer JWT 인증 스키마
+            """
+            return {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+except ImportError:
+    # drf-spectacular가 설치되지 않은 경우 무시
+    pass
