@@ -92,79 +92,51 @@ const AccommodationMap = () => {
   }, [selectedType]);
 
   // FastAPI 숙소 API 호출
-  const fetchAccommodations = async (lat, lng) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // 역지오코딩으로 도시명 얻기 (Google Geocoder 사용)
-      const geocoder = new window.google.maps.Geocoder();
-      const response = await new Promise((resolve, reject) => {
-        geocoder.geocode({ location: { lat, lng }, language: 'ko' }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            resolve(results[0]);
-          } else {
-            reject(new Error('Geocoding failed'));
-          }
-        });
-      });
-
-      // 주소에서 도시명 추출
-      let city = '';
-      for (const component of response.address_components) {
-        if (component.types.includes('locality') || 
-            component.types.includes('sublocality_level_1') ||
-            component.types.includes('administrative_area_level_1')) {
-          city = component.long_name;
-          break;
-        }
-      }
-
-      if (!city) {
-        city = '서울'; // 기본값
-      }
-
-      setSearchCity(city);
-
-      // FastAPI 숙소 API 호출 (Nginx 프록시: /places/ -> fastapi_places:8002)
-      let url = `/places/api/v1/accommodations?city=${encodeURIComponent(city)}&limit=15`;
-      if (selectedType) {
-        url += `&type=${encodeURIComponent(selectedType)}`;
-      }
-
-      const apiResponse = await fetch(url);
-      
-      if (!apiResponse.ok) {
-        throw new Error(`API Error: ${apiResponse.status}`);
-      }
-
-      const data = await apiResponse.json();
-      
-      // 위치 정보가 있는 숙소만 필터링
-      const validAccommodations = (data.results || []).filter(
-        (acc) => acc.latitude && acc.longitude
-      );
-
-      setAccommodations(validAccommodations);
-
-      // 검색 결과가 있으면 지도 범위 조정
-      if (validAccommodations.length > 0 && mapRef.current) {
-        const bounds = new window.google.maps.LatLngBounds();
-        bounds.extend({ lat, lng }); // 클릭한 위치도 포함
-        validAccommodations.forEach((acc) => {
-          bounds.extend({ lat: acc.latitude, lng: acc.longitude });
-        });
-        mapRef.current.fitBounds(bounds);
-      }
-
-    } catch (err) {
-      console.error('숙소 검색 실패:', err);
-      setError('숙소 검색에 실패했습니다. 다시 시도해주세요.');
-      setAccommodations([]);
-    } finally {
-      setLoading(false);
+const fetchAccommodations = async (lat, lng) => {
+  setLoading(true);
+  setError(null);
+  
+  try {
+    // 좌표 기반 검색 API 호출 (거리순)
+    let url = `/places/api/v1/accommodations/nearby?lat=${lat}&lng=${lng}&radius=5000&limit=15`;
+    if (selectedType) {
+      url += `&type=${encodeURIComponent(selectedType)}`;
     }
-  };
+
+    const apiResponse = await fetch(url);
+    
+    if (!apiResponse.ok) {
+      throw new Error(`API Error: ${apiResponse.status}`);
+    }
+
+    const data = await apiResponse.json();
+    
+    // 위치 정보가 있는 숙소만 필터링
+    const validAccommodations = (data.results || []).filter(
+      (acc) => acc.latitude && acc.longitude
+    );
+
+    setAccommodations(validAccommodations);
+    setSearchCity(`반경 ${data.radius / 1000}km 내`);
+
+    // 검색 결과가 있으면 지도 범위 조정
+    if (validAccommodations.length > 0 && mapRef.current) {
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend({ lat, lng }); // 클릭한 위치도 포함
+      validAccommodations.forEach((acc) => {
+        bounds.extend({ lat: acc.latitude, lng: acc.longitude });
+      });
+      mapRef.current.fitBounds(bounds);
+    }
+
+  } catch (err) {
+    console.error('숙소 검색 실패:', err);
+    setError('숙소 검색에 실패했습니다. 다시 시도해주세요.');
+    setAccommodations([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // 마커 클릭 시 상세 정보 표시
   const handleMarkerClick = (accommodation) => {

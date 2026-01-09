@@ -7,6 +7,7 @@ import GeoImageUploader from './pages/GeoImageUploader'
 import RoadviewGame from './pages/RoadviewGame'
 import TestFrontAI from './pages/test_front_ai/TestFrontAI'
 import AccommodationMap from './pages/AccommodationMap'
+import TripleIntroPage from './pages/anti_test/TripleIntroPage'
 import './App.css'
 
 function App() {
@@ -122,6 +123,7 @@ function App() {
             <Route path="/geo-quiz" element={<GeoImageUploader />} />
             <Route path="/game" element={<RoadviewGame />} />
             <Route path="/test-front" element={<TestFrontAI />} />
+            <Route path="/anti-test" element={<TripleIntroPage />} />
           </Routes>
         </main>
 
