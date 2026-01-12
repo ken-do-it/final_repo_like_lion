@@ -230,3 +230,6 @@ load_test.js
 node_modules/
 package-lock.json
 package.json
+
+# 김미숙 클로드코드 임시파일 ignore
+tmpclaude-*
