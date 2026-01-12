@@ -17,3 +17,5 @@ requests
 django-prometheus
 PyJWT==2.10.1
 drf-spectacular==0.27.2
+openai==1.109.1
+httpx==0.28.1

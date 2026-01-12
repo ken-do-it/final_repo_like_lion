@@ -17,7 +17,8 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / '.env')
+# Load .env from project root (final_repo/.env)
+load_dotenv(BASE_DIR.parent / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -27,6 +28,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 
 # DEBUG = True
 
