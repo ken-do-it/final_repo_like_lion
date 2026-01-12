@@ -17,7 +17,11 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+<<<<<<< HEAD
 # Load .env from project root (final_repo/.env)
+=======
+# .env 파일을 루트 폴더(00000-final_repo)에서 읽어옵니다
+>>>>>>> c7f7e72152c7747087c51a439d5d655735970cd8
 load_dotenv(BASE_DIR.parent / '.env')
 
 # Quick-start development settings - unsuitable for production
@@ -284,7 +288,7 @@ USE_TZ = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# drf-spectacular Settings (통합)
+# drf-spectacular Settings (API Documentation)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Korea Travel API',
     'DESCRIPTION': '외국인 관광객을 위한 한국 여행 서비스 API',
@@ -292,4 +296,35 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': r'/api/',
     'COMPONENT_SPLIT_REQUEST': True,
+    # JWT 인증 스키마 추가
+    'APPEND_COMPONENTS': {
+        # 전역 Authorize 버튼(Bearer JWT) 활성화
+        'COMPONENTS': {
+            'securitySchemes': {
+                'BearerAuth': {
+                    'type': 'http',
+                    'scheme': 'bearer',
+                    'bearerFormat': 'JWT',
+                    'description': 'JWT 인증 토큰을 입력하세요. 로그인 API를 통해 발급받은 access_token을 입력하면 됩니다.'
+                }
+            }
+        }
+    },
 }
+
+# TAGO API Settings (국토교통부 항공 API)
+TAGO_SERVICE_KEY = os.getenv('TAGO_SERVICE_KEY', '')
+
+# 한국공항공사 API Settings
+KAC_SERVICE_KEY = os.getenv('KAC_SERVICE_KEY', '')
+
+# 토스페이먼츠 Settings
+TOSS_PAYMENTS = {
+    'CLIENT_KEY': os.getenv('TOSS_CLIENT_KEY', 'test_ck_default'),
+    'SECRET_KEY': os.getenv('TOSS_SECRET_KEY', 'test_sk_default'),
+    'SUCCESS_URL': os.getenv('TOSS_SUCCESS_URL', 'http://localhost:3000/payment/success'),
+    'FAIL_URL': os.getenv('TOSS_FAIL_URL', 'http://localhost:3000/payment/fail'),
+}
+
+# ODsay API Settings (지하철 경로 검색)
+ODSAY_API_KEY = os.getenv('ODSAY_API_KEY', '')

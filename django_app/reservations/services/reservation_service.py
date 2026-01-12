@@ -29,7 +29,7 @@ class MSReservationService:
     - 여러 테이블에 걸쳐 있는 데이터를 한 번에 저장 (트랜잭션)
     """
 
-    @transaction.atomic  # 🔹 트랜잭션: 모두 성공하거나 모두 실패
+    @transaction.atomic  # 트랜잭션: 모두 성공하거나 모두 실패
     def ms_create_flight_reservation(
         self,
         user,

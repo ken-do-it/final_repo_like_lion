@@ -180,14 +180,99 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
         return []
 
 
+async def get_google_place_details(place_id: str) -> Optional[Dict]:
+    """
+    구글 Place Details API로 영업시간 등 상세 정보 조회
+    """
+    if not GOOGLE_MAPS_API_KEY:
+        return None
+
+    url = "https://maps.googleapis.com/maps/api/place/details/json"
+    params = {
+        "place_id": place_id,
+        "fields": "opening_hours,formatted_phone_number,website",
+        "key": GOOGLE_MAPS_API_KEY,
+        "language": "ko"
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("status") != "OK":
+                return None
+
+            result = data.get("result", {})
+            opening_hours = result.get("opening_hours", {})
+
+            return {
+                "opening_hours": opening_hours.get("weekday_text", []),
+                "phone": result.get("formatted_phone_number", ""),
+                "website": result.get("website", "")
+            }
+
+    except Exception as e:
+        print(f"❌ 구글 Place Details API 에러: {e}")
+        return None
+
+
+# async def search_places_hybrid(query: str, category: Optional[str] = None,
+#                                 city: Optional[str] = None, limit: int = 20) -> List[Dict]:
+#     """
+#     카카오 + 구글 병렬 검색 후 결과 통합
+#     수정전
+#     """
+#     # 병렬 호출로 성능 최적화 (2초 → 1초)
+#     kakao_task = search_kakao_places(query, limit=15)
+#     google_task = search_google_places(query, limit=15)
+
+#     kakao_results, google_results = await asyncio.gather(kakao_task, google_task)
+
+#     # 결과 통합 및 중복 제거
+#     all_results = kakao_results + google_results
+#     unique_results = remove_duplicate_places(all_results)
+
+#     # 필터링 적용
+#     filtered_results = unique_results
+#     if category:
+#         # category_main 또는 category_detail에 포함되어 있으면 매칭
+#         filtered_results = [
+#             r for r in filtered_results
+#             if r.get("category_main") == category
+#             or (isinstance(r.get("category_detail"), list) and category in r.get("category_detail", []))
+#         ]
+#     if city:
+#         filtered_results = [r for r in filtered_results if r.get("city") == city]
+
+#     return filtered_results[:limit]
+
 async def search_places_hybrid(query: str, category: Optional[str] = None,
                                 city: Optional[str] = None, limit: int = 20) -> List[Dict]:
     """
     카카오 + 구글 병렬 검색 후 결과 통합
+    카테고리 포함 검색 수정후
     """
-    # 병렬 호출로 성능 최적화 (2초 → 1초)
-    kakao_task = search_kakao_places(query, limit=15)
-    google_task = search_google_places(query, limit=15)
+    # ★ 추가: 카테고리가 있으면 검색어에 키워드 추가
+    search_query = query
+    if category:
+        category_keywords = {
+            "숙박": "호텔",
+            "호텔": "호텔",
+            "모텔": "모텔", 
+            "펜션": "펜션",
+            "음식점": "맛집",
+            "카페": "카페",
+            "관광명소": "관광",
+        }
+        keyword = category_keywords.get(category, category)
+        if keyword not in query:  # 중복 방지
+            search_query = f"{query} {keyword}"
+    
+    # ★ 수정: query → search_query로 변경
+    kakao_task = search_kakao_places(search_query, limit=15)
+    google_task = search_google_places(search_query, limit=15)
 
     kakao_results, google_results = await asyncio.gather(kakao_task, google_task)
 
@@ -195,19 +280,13 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
     all_results = kakao_results + google_results
     unique_results = remove_duplicate_places(all_results)
 
-    # 필터링 적용
-    filtered_results = unique_results
-    if category:
-        # category_main 또는 category_detail에 포함되어 있으면 매칭
-        filtered_results = [
-            r for r in filtered_results
-            if r.get("category_main") == category
-            or (isinstance(r.get("category_detail"), list) and category in r.get("category_detail", []))
-        ]
+    # ★ 카테고리 필터링은 제거하거나 완화 (검색어에 이미 반영됨)
+    # 기존 필터링 코드 삭제 또는 주석 처리
+    
     if city:
-        filtered_results = [r for r in filtered_results if r.get("city") == city]
+        unique_results = [r for r in unique_results if r.get("city") == city]
 
-    return filtered_results[:limit]
+    return unique_results[:limit]
 
 
 def remove_duplicate_places(places: List[Dict]) -> List[Dict]:
@@ -276,10 +355,10 @@ def calculate_next_due(current_level: int, auth_count: int) -> date:
     """
     레벨별 다음 인증 예정일 계산
 
-    Level 1: 1주일 (3번 인증 필요)
-    Level 2: 1개월
-    Level 3: 6개월
-    Level 4: 1년
+    Level 1→2: 1주일
+    Level 2→3: 1주일
+    Level 3→4: 6개월
+    Level 4→5: 1년
     Level 5: 1년 (반복)
     """
     today = date.today()
@@ -287,7 +366,7 @@ def calculate_next_due(current_level: int, auth_count: int) -> date:
     if current_level == 1:
         return today + timedelta(weeks=1)
     elif current_level == 2:
-        return today + timedelta(days=30)
+        return today + timedelta(weeks=1)
     elif current_level == 3:
         return today + timedelta(days=180)
     elif current_level in [4, 5]:
@@ -304,6 +383,14 @@ async def authenticate_local_badge(
 ) -> Tuple[LocalBadge, str]:
     """
     현지인 인증 처리
+
+    로직:
+    - Level 1: 첫 인증
+    - Level 2: 1주일 후 재인증
+    - Level 3: 또 1주일 후 재인증 (글 작성 가능)
+    - Level 4: 6개월 후 재인증
+    - Level 5: 1년 후 재인증, 이후 1년 주기
+    - 인증일 지나면 비활성화, 재인증 시 이전 레벨 유지
 
     Returns:
         (LocalBadge, message)
@@ -328,59 +415,78 @@ async def authenticate_local_badge(
             is_active=True,
             first_authenticated_at=date.today(),
             last_authenticated_at=date.today(),
-            next_authentication_due=calculate_next_due(1, 1),
+            next_authentication_due=calculate_next_due(1, 0),
             maintenance_months=0
         )
         db.add(badge)
         db.commit()
         db.refresh(badge)
-        return badge, f"{city} 현지인 인증을 시작했습니다! (Level 1)"
+        return badge, f"{city} 현지인 인증을 시작했습니다! (Level 1) 1주일 후 재인증 가능합니다."
 
-    # 4. 재인증 (만료된 경우)
+    # 4. 인증일 확인
+    today = date.today()
+
+    # 4-1. 인증일이 지나서 비활성화된 경우 → 재활성화 (레벨 유지)
     if not badge.is_active:
-        badge.level = 2
         badge.city = city
         badge.is_active = True
-        badge.last_authenticated_at = date.today()
-        badge.next_authentication_due = calculate_next_due(2, 1)
+        badge.last_authenticated_at = today
+        badge.next_authentication_due = calculate_next_due(badge.level, 0)
         db.commit()
         db.refresh(badge)
-        return badge, f"{city} 현지인 인증을 재개했습니다! (Level 2)"
+        return badge, f"{city} 현지인 인증을 재개했습니다! (Level {badge.level} 유지)"
 
-    # 5. 정상 인증 (레벨 업그레이드 로직)
-    badge.last_authenticated_at = date.today()
+    # 4-2. 아직 인증일이 안 됨 → 에러
+    if today < badge.next_authentication_due:
+        days_left = (badge.next_authentication_due - today).days
+        raise HTTPException(
+            status_code=400,
+            detail=f"다음 인증일은 {badge.next_authentication_due}입니다. ({days_left}일 남음)"
+        )
+
+    # 4-3. 인증일이 지났지만 아직 활성화 상태 → 비활성화 처리
+    # (실제로는 배치 작업으로 해야 하지만, 여기서 처리)
+    if today > badge.next_authentication_due:
+        badge.is_active = False
+        badge.city = city
+        badge.last_authenticated_at = today
+        badge.next_authentication_due = calculate_next_due(badge.level, 0)
+        db.commit()
+        db.refresh(badge)
+        return badge, f"인증 기한이 지나 재인증했습니다. (Level {badge.level} 유지)"
+
+    # 5. 정상 인증 (레벨 업그레이드)
+    badge.last_authenticated_at = today
     old_level = badge.level
 
-    # Level 1 → 2 (3번 인증)
+    # Level 1 → 2
     if badge.level == 1:
-        # authentication_count는 모델에 없으므로 간단히 처리
-        # 실제로는 별도 카운트 필드 필요
         badge.level = 2
-        badge.maintenance_months = 1
-        message = f"{city} 현지인 Level 2 달성! 이제 칼럼을 작성할 수 있습니다."
+        badge.maintenance_months = 0
+        message = f"{city} 현지인 Level 2 달성! 1주일 후 재인증 가능합니다."
 
     # Level 2 → 3
     elif badge.level == 2:
         badge.level = 3
-        badge.maintenance_months += 1
-        message = f"{city} 현지인 Level 3 달성!"
+        badge.maintenance_months = 0
+        message = f"{city} 현지인 Level 3 달성! 이제 칼럼을 작성할 수 있습니다. 6개월 후 재인증 가능합니다."
 
     # Level 3 → 4
     elif badge.level == 3:
         badge.level = 4
-        badge.maintenance_months += 6
-        message = f"{city} 현지인 Level 4 달성!"
+        badge.maintenance_months = 6
+        message = f"{city} 현지인 Level 4 달성! 1년 후 재인증 가능합니다."
 
     # Level 4 → 5
     elif badge.level == 4:
         badge.level = 5
-        badge.maintenance_months += 12
-        message = f"{city} 현지인 Level 5 달성! 최고 레벨입니다."
+        badge.maintenance_months = 12
+        message = f"{city} 현지인 Level 5 달성! 최고 레벨입니다. 1년 후 재인증 필요합니다."
 
     # Level 5 유지
     else:
         badge.maintenance_months += 12
-        message = f"{city} 현지인 Level 5 유지 중"
+        message = f"{city} 현지인 Level 5 유지! 1년 후 재인증 필요합니다."
 
     badge.next_authentication_due = calculate_next_due(badge.level, 0)
     db.commit()
@@ -392,16 +498,28 @@ async def authenticate_local_badge(
 def check_local_badge_active(db: Session, user_id: int) -> LocalBadge:
     """
     현지인 칼럼 작성 권한 확인
+    Level 3 이상, 활성화 상태여야 가능
     """
     badge = db.query(LocalBadge).filter(LocalBadge.user_id == user_id).first()
 
     if not badge:
         raise HTTPException(status_code=403, detail="현지인 인증이 필요합니다")
 
+    if badge.level < 3:
+        raise HTTPException(
+            status_code=403,
+            detail=f"칼럼 작성은 Level 3부터 가능합니다. (현재 Level {badge.level})"
+        )
+
+    # 만료 체크: 인증일이 지났으면 자동으로 비활성화
+    if badge.is_active and date.today() > badge.next_authentication_due:
+        badge.is_active = False
+        db.commit()
+
     if not badge.is_active:
         raise HTTPException(
             status_code=403,
-            detail=f"인증이 만료되었습니다. 다음 인증 예정일: {badge.next_authentication_due}"
+            detail="인증이 만료되었습니다. 재인증이 필요합니다."
         )
 
     return badge
@@ -427,30 +545,64 @@ def extract_city_from_address(address: str) -> Optional[str]:
 
 
 def map_category_to_main(category_detail: List[str]) -> Optional[str]:
+
+    # # """
+    # # 카카오 카테고리 → 메인 카테고리 매핑
+    # # 수정전
+    # # """
+    # if not category_detail:
+    #     return None
+
+    # first_category = category_detail[0] if category_detail else ""
+
+    # mapping = {
+    #     "음식점": "음식점",
+    #     "카페": "카페",
+    #     "관광명소": "관광명소",
+    #     "숙박": "숙박",
+    #     "문화시설": "문화시설",
+    #     "쇼핑": "쇼핑",
+    #     "병원": "병원",
+    #     "편의점": "편의점",
+    #     "은행": "은행",
+    #     "주차장": "주차장"
+    # }
+
+    # for key, value in mapping.items():
+    #     if key in first_category:
+    #         return value
+
+    # return "기타"
+
     """
     카카오 카테고리 → 메인 카테고리 매핑
+    전체 카테고리 리스트를 검사하여 매핑
+    수정본
     """
     if not category_detail:
         return None
 
-    first_category = category_detail[0] if category_detail else ""
+    # 전체 카테고리를 하나의 문자열로 합침
+    full_category = " ".join(category_detail)
 
-    mapping = {
-        "음식점": "음식점",
-        "카페": "카페",
-        "관광명소": "관광명소",
-        "숙박": "숙박",
-        "문화시설": "문화시설",
-        "쇼핑": "쇼핑",
-        "병원": "병원",
-        "편의점": "편의점",
-        "은행": "은행",
-        "주차장": "주차장"
-    }
+    # 우선순위 순으로 매핑 (구체적인 것 먼저)
+    mapping_rules = [
+        (["호텔", "모텔", "펜션", "게스트하우스", "리조트", "민박", "숙박"], "숙박"),
+        (["음식점", "식당", "맛집"], "음식점"),
+        (["카페", "커피"], "카페"),
+        (["관광", "명소", "여행"], "관광명소"),
+        (["문화시설", "박물관", "미술관", "공연장"], "문화시설"),
+        (["쇼핑", "백화점", "마트", "시장"], "쇼핑"),
+        (["병원", "의원", "약국"], "병원"),
+        (["편의점"], "편의점"),
+        (["은행", "ATM"], "은행"),
+        (["주차장"], "주차장"),
+    ]
 
-    for key, value in mapping.items():
-        if key in first_category:
-            return value
+    for keywords, category in mapping_rules:
+        for keyword in keywords:
+            if keyword in full_category:
+                return category
 
     return "기타"
 

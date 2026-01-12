@@ -17,7 +17,15 @@ logger = logging.getLogger(__name__)
 # FastAPI 앱 생성
 app = FastAPI(
     title="Korea Trip - Places API",
-    description="외국인 대상 한국 여행 플랫폼 - 장소 검색 및 현지인 추천",
+    description="""
+    외국인 대상 한국 여행 플랫폼 - 장소 검색 및 현지인 추천
+
+    ## 인증 방법
+    1. Django API에서 로그인하여 JWT Access Token 발급받기
+    2. 우측 상단 'Authorize' 버튼 클릭
+    3. Bearer 토큰 입력 (예: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...)
+    4. 인증 필요한 API 호출 가능
+    """,
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -35,6 +43,10 @@ app.add_middleware(
 # Places Router 등록
 from router import router as places_router
 app.include_router(places_router)
+
+# 숙소 전용 라우터 등록
+from accommodations import router as accommodations_router
+app.include_router(accommodations_router)
 
 
 # 테이블 생성은 Django 마이그레이션으로 처리
