@@ -149,9 +149,9 @@ class Comment(models.Model):
     """
     post = models.ForeignKey(TravelPost, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    
+
     content = models.TextField()
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -162,3 +162,80 @@ class Comment(models.Model):
             models.Index(fields=['user']),
             models.Index(fields=['created_at']),
         ]
+
+
+class AITravelRequest(models.Model):
+    """
+    AI 여행 추천 요청 (ai_travel_requests)
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='ai_travel_requests'
+    )
+
+    DESTINATION_CHOICES = [
+        ('gapyeong_yangpyeong', '가평/양평'),
+        ('gangneung_sokcho', '강릉/속초'),
+        ('gyeongju', '경주'),
+        ('busan', '부산'),
+        ('yeosu', '여수'),
+        ('incheon', '인천'),
+        ('jeonju', '전주'),
+        ('jeju', '제주'),
+        ('chuncheon_hongcheon', '춘천/홍천'),
+        ('taean', '태안'),
+    ]
+    destination = models.CharField(max_length=50, choices=DESTINATION_CHOICES)
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    TRAVEL_STYLE_CHOICES = [
+        ('healing', '힐링/휴양'),
+        ('activity', '액티비티'),
+        ('culture', '문화/역사'),
+        ('food', '맛집 투어'),
+        ('nature', '자연 경관'),
+    ]
+    travel_style = models.CharField(max_length=20, choices=TRAVEL_STYLE_CHOICES)
+
+    companions = models.IntegerField(default=1)
+    additional_request = models.TextField(blank=True)
+
+    ai_response = models.JSONField(blank=True, null=True)
+
+    created_plan = models.ForeignKey(
+        TravelPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ai_requests'
+    )
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'ai_travel_requests'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_destination_display()} ({self.start_date} ~ {self.end_date})"
+
+    @property
+    def duration_days(self):
+        """여행 기간 (일)"""
+        return (self.end_date - self.start_date).days + 1
