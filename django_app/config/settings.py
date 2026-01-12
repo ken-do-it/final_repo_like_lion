@@ -17,7 +17,11 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+<<<<<<< HEAD
+# Load .env from project root (final_repo/.env)
+=======
 # .env 파일을 루트 폴더(00000-final_repo)에서 읽어옵니다
+>>>>>>> c7f7e72152c7747087c51a439d5d655735970cd8
 load_dotenv(BASE_DIR.parent / '.env')
 
 # Quick-start development settings - unsuitable for production
@@ -28,6 +32,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 
 # DEBUG = True
 
