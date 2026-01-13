@@ -28,6 +28,11 @@ export default defineConfig({
       //   secure: false,
       //   rewrite: (path) => path.replace(/^\/places/, ''), // '/places' 제거 (Nginx와 동일한 동작)
       // },
+      '/search': {
+        target: 'http://localhost:8001', // 로컬 FastAPI 포트
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

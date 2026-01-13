@@ -17,6 +17,7 @@ const SearchPage = () => {
 
       setLoading(true);
       try {
+        // searchAxios는 baseURL 설정에 따라 '/search' 또는 'http://.../search'로 요청됨
         const response = await searchAxios.post('/search', { query });
         setResults(response.data);
       } catch (error) {
@@ -42,9 +43,22 @@ const SearchPage = () => {
   const hasResults = (type) => {
     if (!results) return false;
     if (type === 'All') {
-      return (results.places?.length > 0 || results.reviews?.length > 0 || results.plans?.length > 0);
+      return (
+        results.places?.length > 0 || 
+        results.reviews?.length > 0 || 
+        results.plans?.length > 0 ||
+        results.others?.length > 0
+      );
     }
     return results[type.toLowerCase()]?.length > 0;
+  };
+
+  // 거리(0~2)를 점수(100점 만점)로 변환하는 함수
+  const getMatchScore = (distance) => {
+    // Cosine Distance는 0이 완전 일치, 1이 직교, 2가 반대
+    // 따라서 (1 - distance)가 유사도입니다.
+    const similarity = Math.max(0, 1 - distance); 
+    return (similarity * 100).toFixed(0);
   };
 
   return (
@@ -97,7 +111,7 @@ const SearchPage = () => {
         <div className="w-full border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#101a22]">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
-              {['All', 'Places', 'Plans', 'Reviews'].map((tab) => (
+              {['All', 'Places', 'Plans', 'Reviews', 'Others'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -152,7 +166,8 @@ const SearchPage = () => {
                           <h3 className="line-clamp-1 text-lg font-bold group-hover:text-[#1392ec]">{place.content?.split('\n')[0] || 'Unknown Place'}</h3>
                           <div className="flex items-center gap-1 text-[#1392ec]">
                             <span>★</span>
-                            <span className="text-sm font-bold">{(place.distance * 100).toFixed(1)}</span>
+                            {/* 점수 계산 로직 수정 (1 - distance) */}
+                            <span className="text-sm font-bold">{getMatchScore(place.distance)}</span>
                           </div>
                         </div>
                         <p className="text-sm text-gray-500 line-clamp-2">{place.content}</p>
@@ -173,7 +188,6 @@ const SearchPage = () => {
                   {results.plans.map((plan) => (
                     <div key={plan.id} className="group flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1e2b36] shadow-sm transition-all hover:shadow-md border border-gray-100 dark:border-gray-700 sm:flex-row">
                       <div className="h-48 w-full shrink-0 overflow-hidden bg-gray-200 dark:bg-gray-700 sm:h-auto sm:w-2/5 relative">
-                        {/* Image Placeholder */}
                         <div className="absolute inset-0 flex items-center justify-center text-gray-400">Map/Image</div>
                       </div>
                       <div className="flex flex-1 flex-col justify-between p-5">
@@ -185,7 +199,6 @@ const SearchPage = () => {
                           <h3 className="mb-3 text-xl font-bold leading-tight group-hover:text-[#1392ec] line-clamp-2">
                             {plan.content.substring(0, 50)}...
                           </h3>
-
                           {/* Timeline Visualization (Mock) */}
                           <div className="relative flex items-center gap-3 py-2">
                             <div className="absolute left-1 top-1/2 h-[calc(100%-8px)] w-0.5 -translate-y-1/2 bg-gray-200 dark:bg-gray-700"></div>
@@ -238,12 +251,29 @@ const SearchPage = () => {
                         "{review.content}"
                       </p>
                       <div className="mt-4 flex items-center gap-1 text-xs font-medium text-gray-500">
-                        <span>Match Score: {(review.distance * 100).toFixed(0)}%</span>
+                        {/* 점수 계산 로직 수정 */}
+                        <span>Match Score: {getMatchScore(review.distance)}%</span>
                       </div>
                     </div>
                   ))}
                 </div>
               </section>
+            )}
+            
+            {/* Others Section (Added) */}
+            {(activeTab === 'All' || activeTab === 'Others') && results.others?.length > 0 && (
+               <section className="flex flex-col gap-5 pb-10">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold tracking-tight">Other Results</h2>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {results.others.map((item) => (
+                    <div key={item.id} className="rounded-xl bg-gray-50 dark:bg-[#1e2b36] p-4 border border-gray-200 dark:border-gray-700">
+                       <p className="text-sm text-gray-700 dark:text-gray-300">{item.content}</p>
+                    </div>
+                  ))}
+                </div>
+               </section>
             )}
 
             {!hasResults('All') && (
