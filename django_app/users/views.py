@@ -746,3 +746,118 @@ def social_callback_page(request):
         'social_provider': request.session.get('social_provider', ''),
     }
     return render(request, 'users/social_callback.html', context)
+
+
+def mypage_page(request):
+    """마이페이지 렌더링"""
+    return render(request, 'users/mypage.html')
+
+
+# ============================================================================
+# 마이페이지 API Views
+# ============================================================================
+
+try:
+    from places.models import PlaceBookmark, PlaceReview
+    from .serializers import SavedPlaceSerializer, MyReviewSerializer
+
+    class SavedPlacesView(generics.ListCreateAPIView):
+        """저장한 장소 목록 조회 및 저장"""
+        permission_classes = [IsAuthenticated]
+        serializer_class = SavedPlaceSerializer
+
+        @extend_schema(
+            summary="저장한 장소 목록",
+            description="사용자가 저장한 장소(찜) 목록을 조회합니다.",
+            responses={200: SavedPlaceSerializer(many=True)},
+            tags=['마이페이지']
+        )
+        def get(self, request, *args, **kwargs):
+            return super().get(request, *args, **kwargs)
+
+        @extend_schema(
+            summary="장소 저장",
+            description="장소를 찜 목록에 추가합니다.",
+            request=SavedPlaceSerializer,
+            responses={201: SavedPlaceSerializer},
+            tags=['마이페이지']
+        )
+        def post(self, request, *args, **kwargs):
+            return super().post(request, *args, **kwargs)
+
+        def get_queryset(self):
+            return PlaceBookmark.objects.filter(user=self.request.user).select_related('place')
+
+        def perform_create(self, serializer):
+            serializer.save(user=self.request.user)
+
+
+    class SavedPlaceDetailView(generics.RetrieveDestroyAPIView):
+        """저장한 장소 상세 조회 및 삭제"""
+        permission_classes = [IsAuthenticated]
+        serializer_class = SavedPlaceSerializer
+
+        @extend_schema(
+            summary="저장한 장소 삭제",
+            description="찜 목록에서 장소를 제거합니다.",
+            responses={204: None},
+            tags=['마이페이지']
+        )
+        def delete(self, request, *args, **kwargs):
+            return super().delete(request, *args, **kwargs)
+
+        def get_queryset(self):
+            return PlaceBookmark.objects.filter(user=self.request.user)
+
+
+    class MyReviewsView(generics.ListAPIView):
+        """내 리뷰 목록"""
+        permission_classes = [IsAuthenticated]
+        serializer_class = MyReviewSerializer
+
+        @extend_schema(
+            summary="내 리뷰 목록",
+            description="사용자가 작성한 리뷰 목록을 조회합니다.",
+            responses={200: MyReviewSerializer(many=True)},
+            tags=['마이페이지']
+        )
+        def get(self, request, *args, **kwargs):
+            return super().get(request, *args, **kwargs)
+
+        def get_queryset(self):
+            return PlaceReview.objects.filter(user=self.request.user).select_related('place')
+
+
+    class MyReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+        """내 리뷰 상세 조회/수정/삭제"""
+        permission_classes = [IsAuthenticated]
+        serializer_class = MyReviewSerializer
+
+        @extend_schema(
+            summary="리뷰 수정",
+            description="작성한 리뷰를 수정합니다.",
+            request=MyReviewSerializer,
+            responses={200: MyReviewSerializer},
+            tags=['마이페이지']
+        )
+        def put(self, request, *args, **kwargs):
+            return super().put(request, *args, **kwargs)
+
+        @extend_schema(
+            summary="리뷰 삭제",
+            description="작성한 리뷰를 삭제합니다.",
+            responses={204: None},
+            tags=['마이페이지']
+        )
+        def delete(self, request, *args, **kwargs):
+            return super().delete(request, *args, **kwargs)
+
+        def get_queryset(self):
+            return PlaceReview.objects.filter(user=self.request.user)
+
+except ImportError:
+    # places 앱이 없는 경우 더미 뷰
+    SavedPlacesView = None
+    SavedPlaceDetailView = None
+    MyReviewsView = None
+    MyReviewDetailView = None

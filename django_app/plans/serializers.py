@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TravelPlan, PlanDetail, PlanDetailImage
+from .models import TravelPlan, PlanDetail, PlanDetailImage, AITravelRequest
 from places.models import Place
 
 class PlanDetailImageCreateSerializer(serializers.ModelSerializer):
@@ -74,47 +74,75 @@ class TravelPlanCreateSerializer(serializers.ModelSerializer):
 
 
 class PlanDetailCreateSerializer(serializers.ModelSerializer):
-    """날짜별 장소 생성용"""
-    
-    images = PlanDetailImageCreateSerializer(many=True, required=False)
-    place_name = serializers.CharField(required=False, write_only=True)
+    """날짜별 장소 생성/수정용"""
+
+    place_name = serializers.CharField(
+        required=False,
+        write_only=True,
+        help_text="장소 이름으로 검색 (예: '경복궁', 'N Seoul Tower'). place와 place_name 중 하나만 제공"
+    )
+    place = serializers.PrimaryKeyRelatedField(
+        queryset=Place.objects.all(),
+        required=False,
+        allow_null=True,
+        help_text="기존 장소 ID (place_name과 함께 사용 불가)"
+    )
+    date = serializers.DateField(
+        required=False,
+        help_text="방문 날짜 (YYYY-MM-DD)"
+    )
+    description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        help_text="메모"
+    )
+    order_index = serializers.IntegerField(
+        required=False,
+        default=0,
+        help_text="순서"
+    )
 
     class Meta:
         model = PlanDetail
-        fields = ['place', 'date', 'description', 'order_index', 'images','place_name']
+        fields = ['place', 'place_name', 'date', 'description', 'order_index']
     
     def validate(self, data):
-        """place와 place_name 중 하나만 있어야 함"""
+        """place와 place_name 검증"""
         place = data.get('place')
         place_name = data.get('place_name')
+        date = data.get('date')
 
-        if not place and not place_name:
-            raise serializers.ValidationError(
-                "place 또는 place_name 중 하나는 반드시 제공해야 합니다."
-            )
+        # 생성 시 검증
+        if not self.instance:
+            # place 또는 place_name 중 하나는 필수
+            if not place and not place_name:
+                raise serializers.ValidationError({
+                    "place": "place 또는 place_name 중 하나는 반드시 제공해야 합니다.",
+                    "place_name": "place 또는 place_name 중 하나는 반드시 제공해야 합니다."
+                })
 
+            # date는 생성 시 필수
+            if not date:
+                raise serializers.ValidationError({
+                    "date": "날짜는 필수입니다."
+                })
+
+        # 둘 다 제공하면 안 됨 (생성/수정 공통)
         if place and place_name:
-            raise serializers.ValidationError(
-                "place와 place_name을 동시에 제공할 수 없습니다."
-            )
+            raise serializers.ValidationError({
+                "place": "place와 place_name을 동시에 제공할 수 없습니다.",
+                "place_name": "place와 place_name을 동시에 제공할 수 없습니다."
+            })
 
         return data
 
     def create(self, validated_data):
-        # images 데이터 분리
-        images_data = validated_data.pop('images', [])
         # place_name은 views.py에서 처리하므로 제거
         validated_data.pop('place_name', None)
 
         # PlanDetail 생성
         plan_detail = PlanDetail.objects.create(**validated_data)
-
-        # PlanDetailImage 생성
-        for image_data in images_data:
-            PlanDetailImage.objects.create(
-                detail=plan_detail,
-                **image_data
-            )
 
         return plan_detail
 
@@ -154,7 +182,7 @@ class TravelPlanListSerializer(serializers.ModelSerializer):
 
 class TravelPlanUpdateSerializer(serializers.ModelSerializer):
     """여행 일정 수정용"""
-    
+
     class Meta:
         model = TravelPlan
         fields = [
@@ -162,26 +190,65 @@ class TravelPlanUpdateSerializer(serializers.ModelSerializer):
             'start_date', 'end_date', 'is_public'
         ]
 
-class PlanDetailEditSerializer(serializers.ModelSerializer):
-    """장소 수정용 (이미지 제외)"""
-    
+
+class AITravelRequestSerializer(serializers.ModelSerializer):
+    """AI 여행 추천 요청 생성용"""
+
     class Meta:
-        model = PlanDetail
-        fields = ['place', 'date', 'description', 'order_index']
-    
-def validate(self, data):
-    """날짜 유효성 검사"""
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
-        
-    # 인스턴스가 있으면 (수정 시) 기존 값 사용
-    if self.instance:
-        start_date = start_date or self.instance.start_date
-        end_date = end_date or self.instance.end_date
-        
-    if start_date and end_date and start_date > end_date:
-        raise serializers.ValidationError(
-            "종료 날짜는 시작 날짜보다 늦어야 합니다."
-        )
-        
-    return data
+        model = AITravelRequest
+        fields = [
+            'destination', 'start_date', 'end_date',
+            'travel_style', 'companions', 'additional_request'
+        ]
+
+    def validate(self, data):
+        """날짜 및 인원 검증"""
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+
+        if start_date and end_date:
+            if start_date >= end_date:
+                raise serializers.ValidationError({
+                    'end_date': '종료일은 시작일보다 이후여야 합니다.'
+                })
+
+            duration = (end_date - start_date).days + 1
+            if duration > 30:
+                raise serializers.ValidationError({
+                    'end_date': '여행 기간은 최대 30일까지 가능합니다.'
+                })
+
+        companions = data.get('companions', 1)
+        if companions < 1:
+            raise serializers.ValidationError({
+                'companions': '동행 인원은 최소 1명 이상이어야 합니다.'
+            })
+
+        return data
+
+
+class AITravelRequestDetailSerializer(serializers.ModelSerializer):
+    """AI 여행 추천 요청 조회용"""
+
+    destination_display = serializers.CharField(source='get_destination_display', read_only=True)
+    travel_style_display = serializers.CharField(source='get_travel_style_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    duration_days = serializers.IntegerField(read_only=True)
+    created_plan_detail = TravelPlanDetailSerializer(source='created_plan', read_only=True)
+
+    class Meta:
+        model = AITravelRequest
+        fields = [
+            'id', 'user', 'destination', 'destination_display',
+            'start_date', 'end_date', 'duration_days',
+            'travel_style', 'travel_style_display',
+            'companions', 'additional_request',
+            'status', 'status_display', 'error_message',
+            'ai_response', 'created_plan', 'created_plan_detail',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'user', 'status', 'error_message',
+            'ai_response', 'created_plan', 'created_at', 'updated_at'
+        ]
+

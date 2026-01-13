@@ -1,9 +1,12 @@
 """Translation API: local transformers inference with in-memory cache."""
 
 import logging
+import os
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from .client import TranslationClient
+from .adapter import OllamaAdapter
+from .openai_adapter import OpenAIAdapter
 from .cache import TranslationCache
 
 logger = logging.getLogger(__name__)
@@ -13,9 +16,18 @@ router = APIRouter()
 cache = TranslationCache(ttl_seconds=300)
 
 try:
-    client = TranslationClient()
+    engine = os.getenv("AI_ENGINE", "ollama") # Default to Ollama now
+    if engine == "openai":
+         logger.info("Initializing OpenAI Adapter...")
+         client = OpenAIAdapter()
+    elif engine == "ollama":
+        logger.info("Initializing Ollama Adapter...")
+        client = OllamaAdapter()
+    else:
+        logger.info("Initializing NLLB Client...")
+        client = TranslationClient()
 except Exception as e:
-    logger.error("TranslationClient init failed: %s", e)
+    logger.error(f"TranslationClient init failed (engine={os.getenv('AI_ENGINE')}): {e}", exc_info=True)
     client = None
 
 

@@ -224,7 +224,13 @@ media/
 stitch_front/
 clear_cache.py
 clear_data.py
+front_role.txt
+stitch_travel_shorts_feed/
+
+
 
 #최진석 부하테스트용
 load_test.js
-
+node_modules/
+package-lock.json
+package.json

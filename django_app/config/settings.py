@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load .env from project root (final_repo/.env)
 # .env 파일을 루트 폴더(00000-final_repo)에서 읽어옵니다
 load_dotenv(BASE_DIR.parent / '.env')
 
@@ -28,6 +29,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 
 # DEBUG = True
 
@@ -282,7 +285,7 @@ USE_TZ = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# drf-spectacular Settings (통합)
+# drf-spectacular Settings (API Documentation)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Korea Travel API',
     'DESCRIPTION': '외국인 관광객을 위한 한국 여행 서비스 API',
@@ -291,18 +294,6 @@ SPECTACULAR_SETTINGS = {
     'SCHEMA_PATH_PREFIX': r'/api/',
     'COMPONENT_SPLIT_REQUEST': True,
     # JWT 인증 스키마 추가
-    'SECURITY': [
-        {
-            'BearerAuth': []
-        }
-    ],
-    'SECURITY_DEFINITIONS': {
-        'BearerAuth': {
-            'type': 'http',
-            'scheme': 'bearer',
-            'bearerFormat': 'JWT',
-        }
-    },
     'APPEND_COMPONENTS': {
         # 전역 Authorize 버튼(Bearer JWT) 활성화
         'COMPONENTS': {
@@ -331,3 +322,6 @@ TOSS_PAYMENTS = {
     'SUCCESS_URL': os.getenv('TOSS_SUCCESS_URL', 'http://localhost:3000/payment/success'),
     'FAIL_URL': os.getenv('TOSS_FAIL_URL', 'http://localhost:3000/payment/fail'),
 }
+
+# ODsay API Settings (지하철 경로 검색)
+ODSAY_API_KEY = os.getenv('ODSAY_API_KEY', '')
