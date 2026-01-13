@@ -249,10 +249,10 @@ async def get_google_place_details(place_id: str) -> Optional[Dict]:
 #     return filtered_results[:limit]
 
 async def search_places_hybrid(query: str, category: Optional[str] = None,
-                                city: Optional[str] = None, limit: int = 20) -> List[Dict]:
+                                city: Optional[str] = None) -> List[Dict]:
     """
     카카오 + 구글 병렬 검색 후 결과 통합
-    카테고리 포함 검색 수정후
+    모든 결과 반환 (페이지네이션 없음)
     """
     # ★ 추가: 카테고리가 있으면 검색어에 키워드 추가
     search_query = query
@@ -260,7 +260,7 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
         category_keywords = {
             "숙박": "호텔",
             "호텔": "호텔",
-            "모텔": "모텔", 
+            "모텔": "모텔",
             "펜션": "펜션",
             "음식점": "맛집",
             "카페": "카페",
@@ -269,7 +269,7 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
         keyword = category_keywords.get(category, category)
         if keyword not in query:  # 중복 방지
             search_query = f"{query} {keyword}"
-    
+
     # ★ 수정: query → search_query로 변경
     kakao_task = search_kakao_places(search_query, limit=15)
     google_task = search_google_places(search_query, limit=15)
@@ -282,11 +282,11 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
 
     # ★ 카테고리 필터링은 제거하거나 완화 (검색어에 이미 반영됨)
     # 기존 필터링 코드 삭제 또는 주석 처리
-    
+
     if city:
         unique_results = [r for r in unique_results if r.get("city") == city]
 
-    return unique_results[:limit]
+    return unique_results
 
 
 def remove_duplicate_places(places: List[Dict]) -> List[Dict]:
@@ -337,6 +337,53 @@ async def reverse_geocode(latitude: float, longitude: float) -> Optional[str]:
 
     except Exception as e:
         print(f"❌ 역지오코딩 에러: {e}")
+
+    return None
+
+
+async def geocode_address(address: str) -> Optional[dict]:
+    """
+    주소 → 좌표 + 도로명 주소 변환 (카카오 주소 검색 API)
+
+    Returns:
+        {
+            "road_address": "서울 강남구 테헤란로 123",
+            "latitude": 37.5665,
+            "longitude": 126.9780
+        }
+        또는 None (주소를 찾을 수 없는 경우)
+    """
+    if not KAKAO_REST_API_KEY:
+        return None
+
+    url = "https://dapi.kakao.com/v2/local/search/address.json"
+    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
+    params = {"query": address}
+
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            response = await client.get(url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("documents"):
+                doc = data["documents"][0]
+
+                # 도로명 주소 우선, 없으면 지번 주소
+                road_address = doc.get("road_address")
+                if road_address:
+                    address_name = road_address.get("address_name")
+                else:
+                    address_name = doc.get("address", {}).get("address_name")
+
+                return {
+                    "road_address": address_name,
+                    "latitude": float(doc.get("y")),
+                    "longitude": float(doc.get("x"))
+                }
+
+    except Exception as e:
+        print(f"❌ 주소 검색 에러: {e}")
 
     return None
 
