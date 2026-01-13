@@ -62,7 +62,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
+        # [1] 구글 맵 키
         VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
+        # [2] 백엔드 API 주소들 (이게 없으면 코드 내의 기본값(localhost) 등이 사용됨)
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_SEARCH_API_URL: ${VITE_SEARCH_API_URL}
+        VITE_PLACES_API_URL: ${VITE_PLACES_API_URL}
     ports:
       - "80:80"
     depends_on:
