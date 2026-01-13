@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axios';
-import '../App.css';
 
 const MainPage = () => {
   const navigate = useNavigate();
@@ -12,8 +11,6 @@ const MainPage = () => {
   useEffect(() => {
     const fetchShortforms = async () => {
       try {
-        // Using axiosInstance, base URL is already set to /api or http://localhost:8000/api
-        // The endpoint requested is '/shortforms/'
         const response = await axiosInstance.get('/shortforms/');
         const data = response.data;
         const list = Array.isArray(data) ? data : (data.results || []);
@@ -29,116 +26,253 @@ const MainPage = () => {
   }, []);
 
   return (
-    <div className="bg-[#f6f7f8] dark:bg-[#101a22] min-h-screen text-[#111111] dark:text-[#f1f5f9] transition-colors duration-300 pb-20">
-      {/* 1. Hero Section */}
-      <section className="relative w-full py-20 px-4 bg-gradient-to-r from-blue-50 to-white dark:from-[#1e2b36] dark:to-[#101a22]">
-        <div className="container mx-auto max-w-screen-xl text-center md:text-left">
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
-            🚀 AI와 함께 떠나는 <br />
-            <span className="text-[#1392ec]">한국 여행</span>
+    <div className="bg-[#f6f7f8] dark:bg-[#101a22] min-h-screen text-slate-900 dark:text-white font-sans transition-colors duration-300">
+      {/* Main Content Container (matches max-w-7xl form reference HTML) */}
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+        {/* 1. Hero Section: Heading + Search + Quick Filters */}
+        <section className="flex flex-col items-center justify-center pt-8 pb-4 space-y-6">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-center text-slate-900 dark:text-white tracking-tight leading-tight">
+            Where to next? <br />
+            <span className="text-[#1392ec]">Korea awaits.</span>
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl">
-            어디로 떠나고 싶으신가요? AI가 당신의 취향을 분석하여 최적의 여행 코스를 제안해 드립니다.
-          </p>
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <button
-              className="px-8 py-4 bg-[#1392ec] hover:bg-blue-600 text-white text-lg font-bold rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 w-full md:w-auto"
-              onClick={() => alert("AI 기능은 커밍순!")}
-            >
-              AI 일정 생성하기
+
+          {/* Search Bar */}
+          <div className="w-full max-w-2xl relative group">
+            <div className="absolute inset-0 bg-[#1392ec]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative flex items-center w-full h-16 rounded-2xl bg-white dark:bg-[#1e2b36] shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 focus-within:ring-2 focus-within:ring-[#1392ec] transition-all overflow-hidden">
+              <div className="pl-6 pr-4 text-slate-400">
+                <span className="text-2xl">🔍</span>
+              </div>
+              <input
+                className="w-full h-full bg-transparent border-none text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-0 text-lg"
+                placeholder="Search destinations, flights, hotels..."
+                type="text"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    navigate(`/search?query=${encodeURIComponent(e.target.value)}`);
+                  }
+                }}
+              />
+              <button className="mr-2 px-6 py-2.5 bg-[#1392ec] hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors">
+                Search
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Chips */}
+          <div className="flex gap-3 overflow-x-auto w-full justify-center py-2 no-scrollbar">
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1392ec] text-white shadow-md shadow-blue-500/20 transition-transform hover:-translate-y-0.5">
+              <span className="text-[20px]">▦</span>
+              <span className="text-sm font-bold">All</span>
             </button>
-            {/* Placeholder Search Box */}
-            <div className="bg-white dark:bg-[#1e2b36] border border-gray-200 dark:border-gray-700 rounded-full px-6 py-3 flex items-center shadow-sm w-full md:w-96 text-gray-500">
-              <span>🔍 여행지 검색 (준비중)</span>
-            </div>
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2b36] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-[#1392ec]/50 hover:text-[#1392ec] transition-all hover:-translate-y-0.5" onClick={() => navigate('/game')}>
+              <span className="text-[20px]">📸</span>
+              <span className="text-sm font-medium">GeoQuiz</span>
+            </button>
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2b36] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-[#1392ec]/50 hover:text-[#1392ec] transition-all hover:-translate-y-0.5" onClick={() => navigate('/accommodations')}>
+              <span className="text-[20px]">🏨</span>
+              <span className="text-sm font-medium">Stays</span>
+            </button>
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2b36] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-[#1392ec]/50 hover:text-[#1392ec] transition-all hover:-translate-y-0.5">
+              <span className="text-[20px]">✈️</span>
+              <span className="text-sm font-medium">Flights</span>
+            </button>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* 2. Local Recommendations (Horizontal Scroll) */}
-      <section className="container mx-auto px-4 max-w-screen-xl py-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">🥘 현지인이 알려주는 추천 장소</h2>
-          <button className="text-[#1392ec] hover:underline text-sm font-medium">전체보기</button>
-        </div>
+        {/* 2. Quick Actions Grid (Static for visuals, wired slightly) */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          <div className="bg-white dark:bg-[#1e2b36] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
+              ✈️
+            </div>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">Book Flight</span>
+          </div>
+          <div onClick={() => navigate('/accommodations')} className="bg-white dark:bg-[#1e2b36] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+            <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
+              🏨
+            </div>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">Find Stays</span>
+          </div>
+          <div className="bg-white dark:bg-[#1e2b36] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
+              🚗
+            </div>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">Rentals</span>
+          </div>
+          <div className="bg-white dark:bg-[#1e2b36] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+            <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
+              🎉
+            </div>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">Activities</span>
+          </div>
+        </section>
 
-        <div className="flex space-x-6 overflow-x-auto pb-6 scrollbar-hide">
-          {[1, 2, 3, 4, 5].map((item) => (
-            <div key={item} className="min-w-[280px] bg-white dark:bg-[#1e2b36] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-100 dark:border-gray-700">
-              <div className="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400">
-                이미지 영역
+        {/* 3. Upcoming Adventure Section (Mock/Static Premium Visual) */}
+        <section className="max-w-5xl mx-auto w-full">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Upcoming Adventure</h2>
+            <button className="text-[#1392ec] text-sm font-bold hover:underline">View all trips</button>
+          </div>
+          {/* Ticket/Card */}
+          <div className="bg-white dark:bg-[#1e2b36] rounded-3xl shadow-lg border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col md:flex-row group cursor-pointer hover:shadow-xl transition-shadow relative">
+            {/* Image side */}
+            <div className="relative w-full md:w-2/5 h-48 md:h-auto overflow-hidden">
+              <img
+                alt="Seoul Street"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                src="https://images.unsplash.com/photo-1538485399081-7191377e8241?auto=format&fit=crop&q=80&w=600"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden"></div>
+              <div className="absolute bottom-4 left-4 text-white md:hidden">
+                <p className="font-bold text-xl">Seoul, Korea</p>
               </div>
-              <div className="p-4">
-                <h3 className="font-bold text-lg mb-1 truncate">숨겨진 명소 {item}</h3>
-                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                  <span className="bg-blue-100 dark:bg-blue-900 text-[#1392ec] text-xs px-2 py-0.5 rounded-full mr-2">현지인</span>
-                  <span>작성자 {item}</span>
+              <div className="absolute top-4 left-4">
+                <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  In 5 days
+                </span>
+              </div>
+            </div>
+            {/* Content side */}
+            <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white hidden md:block">Seoul, Korea</h3>
+                  <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                    <span>📅</span>
+                    Oct 15 - Oct 22, 2026
+                  </p>
+                </div>
+                <div className="text-right hidden md:block">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white">
+                    <span className="text-amber-500 text-xl">☀️</span>
+                    <span className="font-bold text-lg">18°C</span>
+                  </div>
+                  <p className="text-slate-400 text-sm">Clear Sky</p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. Short-form Videos */}
-      <section className="bg-gray-50 dark:bg-[#15202b] py-16">
-        <div className="container mx-auto px-4 max-w-screen-xl">
-          <h2 className="text-2xl font-bold mb-8">🔥 실시간 인기 여행 숏폼</h2>
-
-          {loadingShorts ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#1392ec]"></div>
-            </div>
-          ) : shortforms.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {shortforms.map((item) => (
-                <div key={item.id} className="relative aspect-[9/16] bg-black rounded-xl overflow-hidden shadow-lg group cursor-pointer transform hover:scale-[1.02] transition-transform duration-300">
-                  {item.thumbnail_url ? (
-                    <img
-                      src={item.thumbnail_url.startsWith('http') ? item.thumbnail_url : `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}${item.thumbnail_url}`}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 bg-gray-900">
-                      <span className="text-xs">NO IMAGE</span>
-                    </div>
-                  )}
-                  {/* Overlay */}
-                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12">
-                    <h3 className="text-white font-bold text-sm md:text-base line-clamp-2 leading-snug">
-                      {item.title}
-                    </h3>
+              {/* Timeline/Steps */}
+              <div className="my-6 space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#1392ec] flex items-center justify-center shrink-0">
+                    ✈️
                   </div>
-                  {/* Play Icon on Hover */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
-                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                      <span className="text-white text-xl">▶</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Flight to ICN</p>
+                    <p className="text-xs text-slate-500">KE 082 • 10:45 AM</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">Confirmed</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-500 flex items-center justify-center shrink-0">
+                    🏨
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Signiel Seoul</p>
+                    <p className="text-xs text-slate-500">Check-in • 03:00 PM</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 mt-2">
+                <button className="flex-1 bg-[#1392ec] hover:bg-blue-600 text-white h-12 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-blue-500/20">
+                  View Itinerary
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. Recommended Cities / Trending Shorts (Merged) */}
+        <section className="max-w-7xl mx-auto w-full pb-12">
+          <div className="flex items-center justify-between mb-6 px-2">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Trending Shorts & Cities</h2>
+            <div className="flex gap-2">
+              <button className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                ←
+              </button>
+              <button className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                →
+              </button>
+            </div>
+          </div>
+
+          {/* Grid of Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {loadingShorts ? (
+              [1, 2, 3, 4].map(n => (
+                <div key={n} className="h-[400px] w-full rounded-2xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+              ))
+            ) : shortforms.length > 0 ? (
+              shortforms.map((item) => (
+                <div key={item.id} className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
+                  {/* Image */}
+                  <img
+                    src={item.thumbnail_url ? (item.thumbnail_url.startsWith('http') ? item.thumbnail_url : `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}${item.thumbnail_url}`) : 'https://via.placeholder.com/300x500?text=No+Image'}
+                    alt={item.title}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+
+                  {/* Overlay Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+
+                  {/* Top Right Heart */}
+                  <div className="absolute top-4 right-4">
+                    <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
+                      ♥
+                    </button>
+                  </div>
+
+                  {/* Bottom Content */}
+                  <div className="absolute bottom-0 left-0 p-6 w-full">
+                    <h3 className="text-xl font-bold text-white mb-2 leading-tight line-clamp-2">{item.title}</h3>
+                    <div className="flex items-center gap-1 text-white/80 text-sm mb-3">
+                      <span>📍</span>
+                      Korea
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-400">★</span>
+                        <span className="text-white font-bold text-sm">{(4 + Math.random()).toFixed(1)}</span>
+                      </div>
+                      <span className="text-white font-bold text-sm bg-white/20 px-2 py-1 rounded backdrop-blur-sm">View</span>
+                    </div>
+                  </div>
+
+                  {/* Play Icon (Optional Hover) */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    <div className="w-14 h-14 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
+                      <span className="text-white text-2xl ml-1">▶</span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              등록된 숏폼 영상이 없습니다.
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 4. Flight Banner */}
-      <section className="container mx-auto px-4 max-w-screen-xl py-12">
-        <div className="bg-gradient-to-r from-blue-600 to-[#1392ec] rounded-2xl p-8 md:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between">
-          <div className="mb-6 md:mb-0">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">✈️ 최저가 항공권을 찾고 계신가요?</h2>
-            <p className="text-blue-100">가장 저렴한 시기에 떠나는 여행, 지금 바로 확인하세요.</p>
+              ))
+            ) : (
+              // Fallback if no shorts - Static Mock Data matching reference to look good
+              <>
+                <div className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all">
+                  <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Mock 1" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                  <div className="absolute bottom-6 left-6 text-white">
+                    <h3 className="text-2xl font-bold">Busan</h3>
+                    <p className="opacity-80">Sea & City</p>
+                  </div>
+                </div>
+                <div className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all">
+                  <img src="https://images.unsplash.com/photo-1492571350019-22de08371fd3?q=80&w=600&auto=format&fit=crop" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Mock 2" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                  <div className="absolute bottom-6 left-6 text-white">
+                    <h3 className="text-2xl font-bold">Jeju Island</h3>
+                    <p className="opacity-80">Nature Paradise</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-          <button className="px-8 py-3 bg-white text-[#1392ec] font-bold rounded-lg shadow-md hover:bg-gray-100 transition-colors">
-            항공권 검색하기
-          </button>
-        </div>
-      </section>
+        </section>
+      </main>
     </div>
   );
 };
