@@ -25,9 +25,9 @@ const uiGlossary = {
     langLabel: { kor_Hang: '언어', jpn_Jpan: '言語', zho_Hans: '语言' },
     loading: { kor_Hang: '로딩 중...', jpn_Jpan: '読み込み中...', zho_Hans: '加载中...' },
     noShorts: {
-        kor_Hang: '준비된 쇼츠가 없습니다.',
-        jpn_Jpan: '準備されたショート動画がありません。',
-        zho_Hans: '没有准备好的短视频。',
+        kor_Hang: '불러올 쇼츠가 없습니다. 로그인해서 업로드 해보세요.',
+        jpn_Jpan: '動画がありません。ログインしてアップロードしてください。',
+        zho_Hans: '没有视频。请登录并上传。',
     },
     batchLabel: { kor_Hang: '배치 최적화', jpn_Jpan: 'バッチ最適化', zho_Hans: '批量优化' },
 }
@@ -63,7 +63,7 @@ function ShortsPage({ onShortClick, embed = false, accessToken }) {
         langLabel: 'Lang',
         nowPlaying: 'Now Playing',
         loading: 'Loading...',
-        noShorts: 'No shorts available.',
+        noShorts: 'No shorts available. Log in to upload.',
         batchLabel: 'Batch Optimization'
     }), [])
 
