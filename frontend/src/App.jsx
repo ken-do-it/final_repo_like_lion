@@ -8,7 +8,10 @@ import RoadviewGame from './pages/RoadviewGame'
 import TestFrontAI from './pages/test_front_ai/TestFrontAI'
 import AccommodationMap from './pages/AccommodationMap'
 import TripleIntroPage from './pages/anti_test/TripleIntroPage'
+import TripStylePage from './pages/trip_style/TripStylePage'
 import './App.css'
+// import './App_test_stitch.css'
+
 
 function App() {
   // 1. 상태 관리
@@ -124,6 +127,9 @@ function App() {
             <Route path="/game" element={<RoadviewGame />} />
             <Route path="/test-front" element={<TestFrontAI />} />
             <Route path="/anti-test" element={<TripleIntroPage />} />
+
+            {/* [New] Triple-like Trip Style Test Page */}
+            <Route path="/test-trip-style" element={<TripStylePage />} />
           </Routes>
         </main>
 
