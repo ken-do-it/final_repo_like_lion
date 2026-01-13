@@ -1,53 +1,31 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { placesAxios } from '../api/axios';
 
 const containerStyle = {
   width: '100%',
-  height: 'calc(100vh - 150px)',
-  borderRadius: '16px',
+  height: '100%',
+  borderRadius: '0.75rem', // rounded-xl check
 };
 
-// 서울 중심
 const defaultCenter = {
   lat: 37.5665,
   lng: 126.9780,
 };
 
-const libraries = ['places'];
+const libraries = ['places', 'geometry'];
 
 const mapOptions = {
   disableDefaultUI: false,
   zoomControl: true,
   streetViewControl: false,
   mapTypeControl: false,
-  // 기본 POI(관심 장소) 마커 숨기기
+  fullscreenControl: false,
   styles: [
-    {
-      featureType: 'poi',
-      elementType: 'labels',
-      stylers: [{ visibility: 'off' }]
-    },
-    {
-      featureType: 'poi.business',
-      stylers: [{ visibility: 'off' }]
-    },
-    {
-      featureType: 'transit',
-      elementType: 'labels.icon',
-      stylers: [{ visibility: 'off' }]
-    }
+    { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+    { featureType: 'transit', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] } // Cleaner map
   ]
-};
-
-// 숙소 타입별 마커 색상
-const typeColors = {
-  '호텔': '#FF5733',
-  '모텔': '#33A1FF',
-  '펜션': '#33FF57',
-  '게스트하우스': '#FF33F5',
-  '리조트': '#FFD700',
-  '민박': '#8B4513',
-  'default': '#FF0000',
 };
 
 const AccommodationMap = () => {
@@ -66,7 +44,7 @@ const AccommodationMap = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedType, setSelectedType] = useState('');
-  const [searchCity, setSearchCity] = useState('');
+  const [searchStatus, setSearchStatus] = useState('Click on the map to search');
 
   const mapRef = useRef(null);
 
@@ -79,367 +57,242 @@ const AccommodationMap = () => {
     setMap(null);
   }, []);
 
-  // 지도 클릭 시 해당 위치 근처 숙소 검색
+  const fetchAccommodations = async (lat, lng) => {
+    setLoading(true);
+    setError(null);
+    setSearchStatus(`Searching...`);
+
+    try {
+      const params = {
+        lat,
+        lng,
+        radius: 5000,
+        limit: 20, // Increased limit for better list view
+        type: selectedType || undefined
+      };
+
+      const response = await placesAxios.get('/places/api/v1/accommodations/nearby', { params });
+      const data = response.data;
+      const validAccommodations = (data.results || []).filter(
+        (acc) => acc.latitude && acc.longitude
+      );
+
+      setAccommodations(validAccommodations);
+      setSearchStatus(validAccommodations.length > 0 ? `Found ${validAccommodations.length} places` : 'No places found nearby');
+
+      if (validAccommodations.length > 0 && mapRef.current) {
+        const bounds = new window.google.maps.LatLngBounds();
+        bounds.extend({ lat, lng }); // Include search center
+        validAccommodations.forEach((acc) => {
+          bounds.extend({ lat: acc.latitude, lng: acc.longitude });
+        });
+        mapRef.current.fitBounds(bounds);
+      }
+
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError('Failed to load accommodations.');
+      setAccommodations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onMapClick = useCallback(async (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-    
     setClickedPosition({ lat, lng });
     setSelectedAccommodation(null);
-    
-    // 역지오코딩으로 도시명 추출 (간단히 위치 기반으로 검색)
     await fetchAccommodations(lat, lng);
   }, [selectedType]);
 
-  // FastAPI 숙소 API 호출
-const fetchAccommodations = async (lat, lng) => {
-  setLoading(true);
-  setError(null);
-  
-  try {
-    // 좌표 기반 검색 API 호출 (거리순)
-    let url = `/places/api/v1/accommodations/nearby?lat=${lat}&lng=${lng}&radius=5000&limit=15`;
-    if (selectedType) {
-      url += `&type=${encodeURIComponent(selectedType)}`;
-    }
-
-    const apiResponse = await fetch(url);
-    
-    if (!apiResponse.ok) {
-      throw new Error(`API Error: ${apiResponse.status}`);
-    }
-
-    const data = await apiResponse.json();
-    
-    // 위치 정보가 있는 숙소만 필터링
-    const validAccommodations = (data.results || []).filter(
-      (acc) => acc.latitude && acc.longitude
-    );
-
-    setAccommodations(validAccommodations);
-    setSearchCity(`반경 ${data.radius / 1000}km 내`);
-
-    // 검색 결과가 있으면 지도 범위 조정
-    if (validAccommodations.length > 0 && mapRef.current) {
-      const bounds = new window.google.maps.LatLngBounds();
-      bounds.extend({ lat, lng }); // 클릭한 위치도 포함
-      validAccommodations.forEach((acc) => {
-        bounds.extend({ lat: acc.latitude, lng: acc.longitude });
-      });
-      mapRef.current.fitBounds(bounds);
-    }
-
-  } catch (err) {
-    console.error('숙소 검색 실패:', err);
-    setError('숙소 검색에 실패했습니다. 다시 시도해주세요.');
-    setAccommodations([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // 마커 클릭 시 상세 정보 표시
-  const handleMarkerClick = (accommodation) => {
-    setSelectedAccommodation(accommodation);
-  };
-
-  // 외부 지도 서비스로 이동
-  const openExternalMap = (accommodation) => {
-    let url = '';
-    
-    if (accommodation.provider === 'KAKAO') {
-      // 카카오맵 상세 페이지
-      url = `https://place.map.kakao.com/${accommodation.place_api_id}`;
-    } else if (accommodation.provider === 'GOOGLE') {
-      // 구글맵 상세 페이지
-      url = `https://www.google.com/maps/place/?q=place_id:${accommodation.place_api_id}`;
-    } else {
-      // 기본: 구글맵 좌표 검색
-      url = `https://www.google.com/maps/search/?api=1&query=${accommodation.latitude},${accommodation.longitude}`;
-    }
-    
-    window.open(url, '_blank');
-  };
-
-  // 숙소 타입 필터 변경
-  const handleTypeChange = (e) => {
-    setSelectedType(e.target.value);
-    // 이미 클릭한 위치가 있으면 다시 검색
+  useEffect(() => {
     if (clickedPosition) {
       fetchAccommodations(clickedPosition.lat, clickedPosition.lng);
     }
+  }, [selectedType]);
+
+  const handleMarkerClick = (accommodation) => {
+    setSelectedAccommodation(accommodation);
+    // Scroll list item into view logic could be added here
   };
 
-  if (loadError) {
-    return (
-      <div style={{ padding: '50px', textAlign: 'center', color: 'red' }}>
-        <h3>⚠️ Google Maps 로딩 실패</h3>
-        <p>API Key를 확인해주세요.</p>
-      </div>
-    );
-  }
+  const handleListClick = (acc) => {
+    setSelectedAccommodation(acc);
+    if (mapRef.current) {
+      mapRef.current.panTo({ lat: acc.latitude, lng: acc.longitude });
+      mapRef.current.setZoom(16);
+    }
+  };
 
-  if (!isLoaded) {
-    return (
-      <div style={{ padding: '50px', textAlign: 'center' }}>
-        <h3>⏳ 지도 로딩 중...</h3>
-      </div>
-    );
-  }
+  const openExternalMap = (accommodation) => {
+    let url = `https://www.google.com/maps/search/?api=1&query=${accommodation.latitude},${accommodation.longitude}`;
+    if (accommodation.provider === 'KAKAO') {
+      url = `https://place.map.kakao.com/${accommodation.place_api_id}`;
+    }
+    window.open(url, '_blank');
+  };
+
+  if (loadError) return <div className="flex h-screen items-center justify-center text-red-500">Error loading maps</div>;
+  if (!isLoaded) return <div className="flex h-screen items-center justify-center dark:bg-[#101a22] text-white">Loading Maps...</div>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      {/* 헤더 */}
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ margin: '0 0 10px 0' }}>🏨 숙소 찾기</h2>
-        <p style={{ margin: '0 0 15px 0', color: '#666' }}>
-          지도를 클릭하면 해당 위치 근처의 숙소를 찾아드립니다!
-        </p>
+    <div className="flex flex-col h-screen bg-[#f6f7f8] dark:bg-[#101a22] transition-colors overflow-hidden">
 
-        {/* 필터 */}
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>숙소 유형:</span>
+      {/* Header Container */}
+      <div className="container mx-auto px-4 max-w-screen-xl py-4 flex-none z-10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-[#111111] dark:text-[#f1f5f9]">Find Stays</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{searchStatus}</p>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="flex items-center gap-3 bg-white dark:bg-[#1e2b36] px-4 py-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <label className="text-sm font-bold text-gray-700 dark:text-gray-200">Type:</label>
             <select
               value={selectedType}
-              onChange={handleTypeChange}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '8px',
-                border: '1px solid #ddd',
-                fontSize: '14px',
-              }}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="bg-transparent border-none text-sm font-medium focus:ring-0 text-[#111111] dark:text-[#f1f5f9] cursor-pointer"
             >
-              <option value="">전체</option>
-              <option value="호텔">호텔</option>
-              <option value="모텔">모텔</option>
-              <option value="펜션">펜션</option>
-              <option value="게스트하우스">게스트하우스</option>
-              <option value="리조트">리조트</option>
-              <option value="민박">민박</option>
+              <option value="">All Stays</option>
+              <option value="호텔">Hotel</option>
+              <option value="모텔">Motel</option>
+              <option value="펜션">Pension</option>
+              <option value="게스트하우스">Guesthouse</option>
+              <option value="리조트">Resort</option>
             </select>
-          </label>
+          </div>
+        </div>
+      </div>
 
-          {searchCity && (
-            <span style={{ 
-              padding: '6px 12px', 
-              backgroundColor: '#e3f2fd', 
-              borderRadius: '20px',
-              fontSize: '14px',
-            }}>
-              📍 검색 지역: {searchCity}
-            </span>
+      {/* Main Content: Split Pane */}
+      <div className="container mx-auto px-4 max-w-screen-xl flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-6 pb-6 min-h-0">
+
+        {/* Left: List View (Scrollable) */}
+        <div className="lg:col-span-4 flex flex-col h-full bg-white dark:bg-[#1e2b36] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+
+          {accommodations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500">
+              <span className="text-4xl mb-4">🗺️</span>
+              <p>Click on the map area to search for accommodations.</p>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {accommodations.map((acc, i) => (
+                <div
+                  key={i}
+                  onClick={() => handleListClick(acc)}
+                  className={`group flex gap-4 p-3 rounded-xl border transition-all cursor-pointer
+                                ${selectedAccommodation?.place_api_id === acc.place_api_id
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border-[#1392ec] ring-1 ring-[#1392ec]'
+                      : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
+                    }
+                            `}
+                >
+                  {/* Image Placeholder */}
+                  <div className="w-24 h-24 shrink-0 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-500 overflow-hidden relative">
+                    {/* Mock Image using color hash or just standard placeholder */}
+                    <span className="z-10">Image</span>
+                    <div className="absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 opacity-50"></div>
+                  </div>
+
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <h3 className={`font-bold text-base truncate pr-2 ${selectedAccommodation?.place_api_id === acc.place_api_id ? 'text-[#1392ec]' : 'text-[#111111] dark:text-[#f1f5f9]'}`}>
+                          {acc.name}
+                        </h3>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                        {acc.address}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                        {acc.category_main || 'Stay'}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${acc.provider === 'KAKAO' ? 'bg-[#fee500]/20 text-[#3c1e1e] dark:text-[#fee500]' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'}`}>
+                        {acc.provider}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           {loading && (
-            <span style={{ color: '#1976d2', fontWeight: 'bold' }}>
-              🔄 검색 중...
-            </span>
+            <div className="p-4 border-t border-gray-100 dark:border-gray-700 text-center text-sm text-[#1392ec] font-bold animate-pulse">
+              Updating results...
+            </div>
           )}
         </div>
 
-        {error && (
-          <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>
-        )}
-      </div>
+        {/* Right: Map View (Full Height) */}
+        <div className="lg:col-span-8 h-[50vh] lg:h-full rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-800 relative ring-1 ring-black/5">
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={clickedPosition || defaultCenter}
+            zoom={13}
+            onClick={onMapClick}
+            onLoad={onLoad}
+            onUnmount={onUnmount}
+            options={mapOptions}
+          >
+            {/* Search Center Marker */}
+            {clickedPosition && (
+              <Marker
+                position={clickedPosition}
+                icon={{
+                  url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                }}
+              />
+            )}
 
-      {/* 지도 */}
-      <div style={{ position: 'relative' }}>
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={clickedPosition || defaultCenter}
-          zoom={13}
-          onClick={onMapClick}
-          onLoad={onLoad}
-          onUnmount={onUnmount}
-          options={mapOptions}
-        >
-          {/* 클릭한 위치 마커 */}
-          {clickedPosition && (
-            <Marker
-              position={clickedPosition}
-              icon={{
-                url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-              }}
-              title="검색 위치"
-            />
-          )}
+            {/* Accommodation Markers */}
+            {accommodations.map((acc, i) => (
+              <Marker
+                key={`${acc.place_api_id}-${i}`}
+                position={{ lat: acc.latitude, lng: acc.longitude }}
+                onClick={() => handleMarkerClick(acc)}
+                animation={selectedAccommodation?.place_api_id === acc.place_api_id ? window.google.maps.Animation.BOUNCE : null}
+              />
+            ))}
 
-          {/* 숙소 마커들 */}
-          {accommodations.map((acc, index) => (
-            <Marker
-              key={`${acc.place_api_id}-${index}`}
-              position={{ lat: acc.latitude, lng: acc.longitude }}
-              onClick={() => handleMarkerClick(acc)}
-              icon={{
-                url: `http://maps.google.com/mapfiles/ms/icons/red-dot.png`,
-              }}
-              title={acc.name}
-            />
-          ))}
-
-          {/* 선택된 숙소 InfoWindow */}
-          {selectedAccommodation && (
-            <InfoWindow
-              position={{
-                lat: selectedAccommodation.latitude,
-                lng: selectedAccommodation.longitude,
-              }}
-              onCloseClick={() => setSelectedAccommodation(null)}
-            >
-              <div style={{ 
-                padding: '10px', 
-                maxWidth: '280px',
-                fontFamily: 'system-ui, sans-serif',
-              }}>
-                <h3 style={{ 
-                  margin: '0 0 8px 0', 
-                  fontSize: '16px',
-                  color: '#333',
-                }}>
-                  {selectedAccommodation.name}
-                </h3>
-                
-                <p style={{ 
-                  margin: '0 0 8px 0', 
-                  fontSize: '13px',
-                  color: '#666',
-                }}>
-                  📍 {selectedAccommodation.address}
-                </p>
-
-                {selectedAccommodation.category_detail && (
-                  <p style={{ 
-                    margin: '0 0 8px 0', 
-                    fontSize: '12px',
-                    color: '#888',
-                  }}>
-                    🏷️ {selectedAccommodation.category_detail.join(' > ')}
-                  </p>
-                )}
-
-                <div style={{ 
-                  display: 'flex', 
-                  gap: '8px', 
-                  marginTop: '12px',
-                  flexWrap: 'wrap',
-                }}>
-                  <span style={{
-                    padding: '4px 8px',
-                    backgroundColor: selectedAccommodation.provider === 'KAKAO' ? '#FFEB00' : '#4285F4',
-                    color: selectedAccommodation.provider === 'KAKAO' ? '#000' : '#fff',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                  }}>
-                    {selectedAccommodation.provider}
-                  </span>
-
+            {/* Info Window */}
+            {selectedAccommodation && (
+              <InfoWindow
+                position={{ lat: selectedAccommodation.latitude, lng: selectedAccommodation.longitude }}
+                onCloseClick={() => setSelectedAccommodation(null)}
+              >
+                <div className="p-2 min-w-[200px] max-w-[250px]">
+                  <h3 className="font-bold text-[#111111] text-sm mb-1">{selectedAccommodation.name}</h3>
+                  <p className="text-xs text-gray-600 mb-2">{selectedAccommodation.address}</p>
                   <button
                     onClick={() => openExternalMap(selectedAccommodation)}
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#1976d2',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold',
-                    }}
+                    className="w-full bg-[#1392ec] hover:bg-blue-600 text-white text-xs font-bold py-1.5 rounded transition-colors"
                   >
-                    🔗 상세보기
+                    View Details ↗
                   </button>
                 </div>
+              </InfoWindow>
+            )}
+          </GoogleMap>
+
+          {/* Loading Overlay Map */}
+          {loading && (
+            <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center z-10">
+              <div className="bg-white dark:bg-[#1e2b36] px-6 py-3 rounded-full shadow-xl flex items-center gap-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1392ec] border-t-transparent"></div>
+                <span className="text-sm font-bold text-[#111111] dark:text-white">Finding places...</span>
               </div>
-            </InfoWindow>
+            </div>
           )}
-        </GoogleMap>
-
-        {/* 검색 결과 카운트 */}
-        {accommodations.length > 0 && (
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            padding: '12px 20px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
-            zIndex: 10,
-          }}>
-            <span style={{ fontWeight: 'bold', color: '#333' }}>
-              🏨 {accommodations.length}개의 숙소를 찾았습니다
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* 숙소 리스트 (선택사항) */}
-      {accommodations.length > 0 && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>검색된 숙소 목록</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '15px',
-            marginTop: '15px',
-          }}>
-            {accommodations.map((acc, index) => (
-              <div
-                key={`list-${acc.place_api_id}-${index}`}
-                onClick={() => {
-                  setSelectedAccommodation(acc);
-                  // 지도 중심 이동
-                  if (mapRef.current) {
-                    mapRef.current.panTo({ lat: acc.latitude, lng: acc.longitude });
-                    mapRef.current.setZoom(16);
-                  }
-                }}
-                style={{
-                  padding: '15px',
-                  backgroundColor: '#fff',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  boxShadow: selectedAccommodation?.place_api_id === acc.place_api_id 
-                    ? '0 4px 12px rgba(25, 118, 210, 0.3)' 
-                    : '0 2px 4px rgba(0,0,0,0.05)',
-                  borderColor: selectedAccommodation?.place_api_id === acc.place_api_id 
-                    ? '#1976d2' 
-                    : '#e0e0e0',
-                }}
-              >
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>
-                  {acc.name}
-                </h4>
-                <p style={{ margin: '0', fontSize: '13px', color: '#666' }}>
-                  {acc.address}
-                </p>
-                <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
-                  <span style={{
-                    padding: '3px 8px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                  }}>
-                    {acc.category_main || '숙박'}
-                  </span>
-                  <span style={{
-                    padding: '3px 8px',
-                    backgroundColor: acc.provider === 'KAKAO' ? '#FFF9C4' : '#E3F2FD',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                  }}>
-                    {acc.provider}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
-      )}
+
+      </div>
     </div>
   );
 };
