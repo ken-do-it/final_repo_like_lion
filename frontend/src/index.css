@@ -46,3 +46,10 @@
     @apply bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700;
   }
 }
+
+/* 4. Cross-browser fixes */
+/* Force options to have readable contrast regardless of system theme */
+select option {
+  color: #111111;
+  background-color: #ffffff;
+}

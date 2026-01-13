@@ -5,7 +5,8 @@ import SearchPage from './pages/SearchPage';
 import GeoImageUploader from './pages/GeoImageUploader';
 import RoadviewGame from './pages/RoadviewGame';
 import AccommodationMap from './pages/AccommodationMap';
-import TestFrontAI from './pages/test_front_ai/TestFrontAI';
+import ShortsPage from './pages/shorts/ShortsPage';
+import ShortsDetailPage from './pages/shorts/ShortsDetailPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
 import Navbar from './components/Navbar';
@@ -15,29 +16,23 @@ import './App.css'; // Global styles if any, strictly Tailwind preferred
 function App() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    const storedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return storedTheme === 'dark' || (!storedTheme && systemPrefersDark);
+  });
 
   // 1. Global Dark Mode Initialization (System + Manual)
   useEffect(() => {
-    const storedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (storedTheme === 'dark' || (!storedTheme && systemPrefersDark)) {
-      document.documentElement.classList.add('dark');
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove('dark');
-      setIsDarkMode(false);
-    }
-  }, []);
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, [isDarkMode]);
 
   const toggleTheme = () => {
     if (isDarkMode) {
-      document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
       setIsDarkMode(false);
     } else {
-      document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
       setIsDarkMode(true);
     }
@@ -73,13 +68,14 @@ function App() {
         {/* Features */}
         <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
         <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
+        <Route path="/shorts" element={<ShortsPage />} />
+        <Route path="/shorts/:id" element={<ShortsDetailPage />} />
 
         <Route path="/geo-quiz" element={<GeoImageUploader />} />
         <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
         <Route path="/game" element={<RoadviewGame />} />
 
         {/* Development / Test Pages */}
-        <Route path="/test-front" element={<TestFrontAI />} />
         <Route path="/anti-test" element={<TripleIntroPage />} />
         <Route path="/anti-test-page" element={<AntiTestPage />} />
 
