@@ -17,9 +17,6 @@ requests
 django-prometheus
 PyJWT==2.10.1
 drf-spectacular==0.27.2
-<<<<<<< HEAD
 openai==1.109.1
 httpx==0.28.1
-=======
 langdetect==1.0.9  #텍스트 언어를 자동으로 파악하여 언어코드로 변환하는 라이브러리
->>>>>>> c7f7e72152c7747087c51a439d5d655735970cd8
