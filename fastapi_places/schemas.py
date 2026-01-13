@@ -73,6 +73,42 @@ class PlaceDetailResponse(BaseModel):
         from_attributes = True
 
 
+class PlaceCreateRequest(BaseModel):
+    """사용자 직접 장소 등록 요청"""
+    name: str = Field(..., min_length=1, max_length=200, description="장소명")
+    address: str = Field(..., min_length=1, description="주소")
+    latitude: float = Field(..., ge=-90, le=90, description="위도")
+    longitude: float = Field(..., ge=-180, le=180, description="경도")
+    category_main: Optional[str] = Field(None, max_length=50, description="주요 카테고리")
+    category_detail: Optional[List[str]] = Field(default_factory=list, description="상세 카테고리")
+
+    @field_validator('latitude', 'longitude')
+    @classmethod
+    def validate_korea_bounds(cls, v, info):
+        """한국 범위 검증"""
+        field_name = info.field_name
+        if field_name == 'latitude' and not (33 <= v <= 43):
+            raise ValueError('위도는 한국 범위(33~43) 내여야 합니다')
+        if field_name == 'longitude' and not (124 <= v <= 132):
+            raise ValueError('경도는 한국 범위(124~132) 내여야 합니다')
+        return v
+
+
+class SimilarPlace(BaseModel):
+    """유사 장소 정보"""
+    id: int
+    name: str
+    address: str
+    city: Optional[str] = None
+    provider: str
+
+
+class PlaceCreateConflictResponse(BaseModel):
+    """장소 등록 중복 응답"""
+    detail: str
+    similar_places: List[SimilarPlace]
+
+
 # ==================== 리뷰 ====================
 
 class ReviewCreateRequest(BaseModel):

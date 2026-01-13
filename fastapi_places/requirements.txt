@@ -1,6 +1,7 @@
 # FastAPI 핵심
 fastapi==0.128.0
 uvicorn==0.40.0
+python-multipart==0.0.9
 
 # 데이터베이스
 psycopg2-binary
