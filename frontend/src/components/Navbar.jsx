@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const Navbar = ({ toggleSidebar }) => {
+const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchInput, setSearchInput] = useState('');
@@ -39,10 +39,19 @@ const Navbar = ({ toggleSidebar }) => {
                         <div className="flex items-center justify-center size-8 rounded-lg bg-[#1392ec] text-white font-bold text-xl">
                             T
                         </div>
-                        <span className="text-xl font-bold tracking-tight text-[#111111] dark:text-[#f1f5f9]">
+                        <span className="text-xl font-bold tracking-tight text-[#111111] dark:text-[#f1f5f9] hidden sm:block">
                             Tripko
                         </span>
                     </div>
+
+                    {/* Dark/Light Toggle Button */}
+                    <button
+                        onClick={toggleTheme}
+                        className="flex items-center justify-center p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-yellow-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Toggle Dark Mode"
+                    >
+                        {isDarkMode ? '☀️' : '🌙'}
+                    </button>
                 </div>
 
                 {/* 2. Center Menu / Search */}

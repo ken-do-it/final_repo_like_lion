@@ -15,27 +15,33 @@ import './App.css'; // Global styles if any, strictly Tailwind preferred
 function App() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
 
-  // 1. Global Dark Mode Initialization
+  // 1. Global Dark Mode Initialization (System + Manual)
   useEffect(() => {
-    // Check system preference
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const storedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    const applyTheme = (e) => {
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-
-    // Initial check
-    applyTheme(mediaQuery);
-
-    // Listener for changes
-    mediaQuery.addEventListener('change', applyTheme);
-    return () => mediaQuery.removeEventListener('change', applyTheme);
+    if (storedTheme === 'dark' || (!storedTheme && systemPrefersDark)) {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      setIsDarkMode(false);
+    }
   }, []);
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDarkMode(true);
+    }
+  };
 
   // 2. Scroll to top on route change
   useEffect(() => {
@@ -51,7 +57,13 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] font-sans">
-      {showNavbar && <Navbar toggleSidebar={() => setIsSidebarOpen(true)} />}
+      {showNavbar && (
+        <Navbar
+          toggleSidebar={() => setIsSidebarOpen(true)}
+          toggleTheme={toggleTheme}
+          isDarkMode={isDarkMode}
+        />
+      )}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <Routes>
         {/* Core Pages */}
