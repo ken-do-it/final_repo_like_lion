@@ -15,7 +15,7 @@ export const searchAxios = axios.create({
 });
 
 export const placesAxios = axios.create({
-    baseURL: import.meta.env.VITE_PLACES_API_URL, // Root for places api
+    baseURL: import.meta.env.VITE_PLACES_API_URL || 'http://localhost:8002/api/v1',
     headers: {
         'Content-Type': 'application/json',
     },
