@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import MainPage from './pages/MainPage';
 import SearchPage from './pages/SearchPage';
+import PlaceSearch from './pages/places/PlaceSearch';
 import GeoImageUploader from './pages/GeoImageUploader';
 import RoadviewGame from './pages/RoadviewGame';
 import AccommodationMap from './pages/AccommodationMap';
@@ -70,6 +71,9 @@ function App() {
         <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
         <Route path="/shorts" element={<ShortsPage />} />
         <Route path="/shorts/:id" element={<ShortsDetailPage />} />
+
+        {/* Place Pages */}
+        <Route path="/places/search" element={<PlaceSearch />} />
 
         <Route path="/geo-quiz" element={<GeoImageUploader />} />
         <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
