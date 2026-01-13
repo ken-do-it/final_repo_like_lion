@@ -2,10 +2,14 @@
 Places API Router
 장소 검색, 리뷰, 현지인 인증, 칼럼 관련 엔드포인트
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import date, datetime
+import os
+import uuid
+import json
+from pathlib import Path
 
 from models import (
     Place, PlaceReview, PlaceBookmark, LocalBadge,
@@ -13,20 +17,77 @@ from models import (
 )
 from schemas import (
     PlaceSearchRequest, PlaceSearchResult, PlaceAutocompleteRequest,
-    PlaceAutocompleteSuggestion, PlaceDetailResponse, ReviewCreateRequest,
-    ReviewResponse, BookmarkResponse, LocalBadgeAuthRequest, LocalBadgeAuthResponse,
-    LocalBadgeStatusResponse, LocalColumnCreateRequest, LocalColumnResponse,
-    LocalColumnListResponse, CityContentResponse, PopularCityResponse
+    PlaceAutocompleteSuggestion, PlaceDetailResponse, PlaceCreateRequest,
+    ReviewCreateRequest, ReviewResponse, BookmarkResponse, LocalBadgeAuthRequest,
+    LocalBadgeAuthResponse, LocalBadgeStatusResponse, LocalColumnCreateRequest,
+    LocalColumnResponse, LocalColumnListResponse, CityContentResponse, PopularCityResponse
 )
 from service import (
     search_places_hybrid, authenticate_local_badge, check_local_badge_active,
     update_place_review_stats, update_place_thumbnails, get_or_create_place_by_api_id,
-    search_kakao_places, search_google_places, get_google_place_details
+    search_kakao_places, search_google_places, get_google_place_details, reverse_geocode,
+    geocode_address
 )
 from database import get_db
 from auth import get_current_user, require_auth
 
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])
+
+
+# ==================== 이미지 저장 헬퍼 함수 ====================
+
+async def save_image_file(image: UploadFile, subfolder: str = "place_images") -> str:
+    """
+    이미지 파일을 저장하고 URL 반환
+
+    Args:
+        image: 업로드된 이미지 파일
+        subfolder: media 하위 폴더명 (기본: place_images)
+
+    Returns:
+        저장된 이미지 URL
+    """
+    # 1. 파일 확장자 검증
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".gif"}
+    file_ext = os.path.splitext(image.filename)[1].lower()
+
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"지원하지 않는 파일 형식입니다. 허용: {', '.join(allowed_extensions)}"
+        )
+
+    # 2. 파일 크기 검증 (10MB)
+    image.file.seek(0, 2)
+    file_size = image.file.tell()
+    image.file.seek(0)
+
+    max_size = 10 * 1024 * 1024  # 10MB
+    if file_size > max_size:
+        raise HTTPException(
+            status_code=400,
+            detail=f"파일 크기가 너무 큽니다. 최대 {max_size // (1024*1024)}MB"
+        )
+
+    # 3. 고유 파일명 생성 (UUID)
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+
+    # 4. 저장 경로 설정
+    media_dir = Path(f"/app/django_app/media/{subfolder}")
+    media_dir.mkdir(parents=True, exist_ok=True)
+
+    file_path = media_dir / unique_filename
+
+    # 5. 파일 저장
+    try:
+        with open(file_path, "wb") as f:
+            content = await image.read()
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"파일 저장 실패: {str(e)}")
+
+    # 6. URL 반환
+    return f"http://localhost:8000/media/{subfolder}/{unique_filename}"
 
 
 # ==================== 장소 검색 ====================
@@ -35,36 +96,19 @@ router = APIRouter(prefix="/api/v1/places", tags=["Places"])
 async def search_places(
     query: str = Query(..., min_length=1, description="검색어"),
     category: Optional[str] = Query(None, description="카테고리 필터"),
-    city: Optional[str] = Query(None, description="도시 필터"),
-    page: int = Query(1, ge=1, description="페이지 번호")
+    city: Optional[str] = Query(None, description="도시 필터")
 ):
     """
     장소 검색 (카카오맵 + 구글맵 통합)
 
-    페이지네이션:
-    - page: 페이지 번호 (1부터 시작)
-    - 페이지당 15개 고정
-
     참고: API 특성상 총 결과 수는 제한적일 수 있음 (카카오+구글 합쳐서 최대 ~45개)
     """
-    limit = 15  # 페이지당 개수 고정
-
-    # API에서 더 많은 결과를 가져옴 (페이지네이션 대비)
-    fetch_limit = page * limit + 10  # 여유분 포함
-
-    all_results = await search_places_hybrid(query, category, city, fetch_limit)
-
-    # 페이지네이션 적용
-    offset = (page - 1) * limit
-    paginated_results = all_results[offset:offset + limit]
+    all_results = await search_places_hybrid(query, category, city)
 
     return {
         "query": query,
-        "page": page,
-        "limit": limit,
-        "total": len(all_results),  # 필터링 후 전체 개수
-        "count": len(paginated_results),  # 현재 페이지 개수
-        "results": paginated_results
+        "total": len(all_results),
+        "results": all_results
     }
 
 
@@ -281,6 +325,144 @@ async def get_place_detail_by_db_id(
     }
 
 
+# ==================== 장소 등록 (사용자) ====================
+
+@router.post("/create", response_model=PlaceDetailResponse)
+async def create_user_place(
+    place_data: PlaceCreateRequest,
+    force: bool = Query(False, description="중복 체크 무시하고 강제 등록"),
+    user_id: int = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """
+    사용자가 직접 장소 등록
+
+    전제 조건: API(카카오/구글)에서 검색되지 않는 장소여야 함
+    주소: 도로명 주소로 등록 권장 (자동 변환)
+    - provider: USER
+    - place_api_id: null
+    - created_by_id: 등록한 사용자 ID
+
+    force=true: 중복 체크 없이 강제 등록
+    """
+    # 1. 주소 검증 및 정규화 (카카오 주소 검색 API)
+    geocode_result = await geocode_address(place_data.address)
+    if not geocode_result:
+        raise HTTPException(
+            status_code=400,
+            detail="유효하지 않은 주소입니다. 정확한 주소를 입력해주세요."
+        )
+
+    # 도로명 주소와 정확한 좌표 사용
+    verified_address = geocode_result["road_address"]
+    verified_lat = geocode_result["latitude"]
+    verified_lng = geocode_result["longitude"]
+
+    # 2. 좌표 비교 (프론트가 보낸 좌표 vs API 좌표)
+    lat_diff = abs(verified_lat - place_data.latitude)
+    lng_diff = abs(verified_lng - place_data.longitude)
+
+    # 허용 오차: 0.001도 (약 100m)
+    if lat_diff > 0.001 or lng_diff > 0.001:
+        raise HTTPException(
+            status_code=400,
+            detail="주소와 좌표가 일치하지 않습니다. 정확한 위치를 확인해주세요."
+        )
+
+    # 도시명 추출
+    city = await reverse_geocode(verified_lat, verified_lng)
+
+    # 3. force=false일 때만 중복 체크
+    if not force:
+        # 3-1. 카카오 장소 API 확인 (최우선)
+        kakao_results = await search_kakao_places(place_data.name, verified_address)
+        if kakao_results:
+            raise HTTPException(
+                status_code=400,
+                detail="카카오맵에 이미 있는 장소입니다. 검색 후 이용해주세요."
+            )
+
+        # 3-2. 구글 장소 API 확인
+        google_results = await search_google_places(f"{place_data.name} {verified_address}")
+        if google_results:
+            raise HTTPException(
+                status_code=400,
+                detail="구글맵에 이미 있는 장소입니다. 검색 후 이용해주세요."
+            )
+
+        # 3-3. DB에서 비슷한 장소 확인 (같은 도시 내 유사한 이름)
+        if city:
+            # 이름에서 주요 키워드 추출 (공백 기준 첫 단어)
+            search_keyword = place_data.name.split()[0] if place_data.name.split() else place_data.name
+
+            similar_places = db.query(Place).filter(
+                Place.city == city,
+                Place.name.contains(search_keyword)
+            ).limit(5).all()
+
+            if similar_places:
+                # 409 Conflict 응답
+                similar_list = [
+                    {
+                        "id": p.id,
+                        "name": p.name,
+                        "address": p.address,
+                        "city": p.city,
+                        "provider": p.provider
+                    }
+                    for p in similar_places
+                ]
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "message": "비슷한 장소가 이미 있습니다. 그래도 등록하시겠어요?",
+                        "similar_places": similar_list
+                    }
+                )
+
+    # 4. 장소 생성 (검증된 도로명 주소와 좌표로 저장)
+    new_place = Place(
+        provider="USER",
+        place_api_id=None,
+        name=place_data.name,
+        address=verified_address,  # 도로명 주소
+        city=city,
+        latitude=verified_lat,  # 검증된 좌표
+        longitude=verified_lng,
+        category_main=place_data.category_main,
+        category_detail=place_data.category_detail or [],
+        thumbnail_urls=[],
+        average_rating=0.00,
+        review_count=0,
+        created_by_id=user_id
+    )
+
+    db.add(new_place)
+    db.commit()
+    db.refresh(new_place)
+
+    return PlaceDetailResponse(
+        id=new_place.id,
+        provider=new_place.provider,
+        place_api_id=new_place.place_api_id,
+        name=new_place.name,
+        address=new_place.address,
+        city=new_place.city,
+        latitude=new_place.latitude,
+        longitude=new_place.longitude,
+        category_main=new_place.category_main,
+        category_detail=new_place.category_detail,
+        thumbnail_urls=new_place.thumbnail_urls,
+        average_rating=new_place.average_rating,
+        review_count=new_place.review_count,
+        created_at=new_place.created_at,
+        updated_at=new_place.updated_at,
+        phone="",
+        place_url="",
+        opening_hours=[]
+    )
+
+
 # ==================== 리뷰 ====================
 
 @router.get("/{place_id}/reviews")
@@ -348,14 +530,20 @@ def get_place_reviews(
 
 
 @router.post("/{place_id}/reviews", response_model=ReviewResponse)
-def create_review(
+async def create_review(
     place_id: int,
-    review_data: ReviewCreateRequest,
+    rating: int = Form(..., ge=1, le=5, description="별점 (1~5)"),
+    content: str = Form(..., min_length=1, max_length=1000, description="리뷰 내용"),
+    image: Optional[UploadFile] = File(None, description="이미지 파일 (선택)"),
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
     """
-    리뷰 작성
+    리뷰 작성 (이미지 파일 업로드 포함)
+
+    - rating: 별점 (1~5)
+    - content: 리뷰 내용
+    - image: 이미지 파일 (선택, jpg/jpeg/png/gif, 최대 10MB)
     """
     # 장소 존재 확인
     place = db.query(Place).filter(Place.id == place_id).first()
@@ -371,13 +559,18 @@ def create_review(
     if existing:
         raise HTTPException(status_code=400, detail="이미 리뷰를 작성했습니다")
 
+    # 이미지 저장 (있으면)
+    image_url = None
+    if image:
+        image_url = await save_image_file(image, "place_images")
+
     # 리뷰 생성
     review = PlaceReview(
         place_id=place_id,
         user_id=user_id,
-        rating=review_data.rating,
-        content=review_data.content,
-        image_url=review_data.image_url
+        rating=rating,
+        content=content,
+        image_url=image_url
     )
 
     db.add(review)
@@ -388,8 +581,8 @@ def create_review(
     update_place_review_stats(db, place_id)
 
     # 썸네일 업데이트 (이미지가 있으면)
-    if review_data.image_url:
-        update_place_thumbnails(db, place_id, review_data.image_url)
+    if image_url:
+        update_place_thumbnails(db, place_id, image_url)
 
     # 사용자 정보 조회
     user = db.query(User).filter(User.id == user_id).first()
@@ -407,15 +600,21 @@ def create_review(
 
 
 @router.put("/{place_id}/reviews/{review_id}", response_model=ReviewResponse)
-def update_review(
+async def update_review(
     place_id: int,
     review_id: int,
-    review_data: ReviewCreateRequest,
+    rating: int = Form(..., ge=1, le=5, description="별점 (1~5)"),
+    content: str = Form(..., min_length=1, max_length=1000, description="리뷰 내용"),
+    image: Optional[UploadFile] = File(None, description="이미지 파일 (선택)"),
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
     """
-    리뷰 수정
+    리뷰 수정 (이미지 파일 업로드 포함)
+
+    - rating: 별점 (1~5)
+    - content: 리뷰 내용
+    - image: 이미지 파일 (선택, jpg/jpeg/png/gif, 최대 10MB)
     """
     # 리뷰 존재 확인
     review = db.query(PlaceReview).filter(
@@ -430,10 +629,15 @@ def update_review(
     if review.user_id != user_id:
         raise HTTPException(status_code=403, detail="본인의 리뷰만 수정할 수 있습니다")
 
+    # 이미지 저장 (새 이미지가 있으면)
+    image_url = review.image_url  # 기존 이미지 유지
+    if image:
+        image_url = await save_image_file(image, "place_images")
+
     # 리뷰 수정
-    review.rating = review_data.rating
-    review.content = review_data.content
-    review.image_url = review_data.image_url
+    review.rating = rating
+    review.content = content
+    review.image_url = image_url
     review.updated_at = datetime.utcnow()
 
     db.commit()
@@ -443,8 +647,8 @@ def update_review(
     update_place_review_stats(db, place_id)
 
     # 썸네일 업데이트 (이미지가 있으면)
-    if review_data.image_url:
-        update_place_thumbnails(db, place_id, review_data.image_url)
+    if image_url:
+        update_place_thumbnails(db, place_id, image_url)
 
     # 사용자 정보 조회
     user = db.query(User).filter(User.id == user_id).first()
@@ -724,60 +928,143 @@ def get_local_column_detail(
 
 
 @router.post("/local-columns", response_model=LocalColumnResponse)
-def create_local_column(
-    column_data: LocalColumnCreateRequest,
+async def create_local_column(
+    request: Request,
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
     """
     현지인 칼럼 작성 (현지인 인증 필요)
+
+    multipart/form-data 형식으로 전송:
+    - thumbnail: 파일 (필수)
+    - intro_image: 파일 (선택)
+    - title: 문자열 (필수)
+    - content: 문자열 (필수)
+    - representative_place_id: 숫자 (선택)
+    - sections: JSON 문자열 (섹션 메타데이터)
+        [{
+            "title": "섹션1",
+            "content": "내용1",
+            "place_id": 123,
+            "order": 0,
+            "image_count": 2
+        }]
+    - section_0_image_0: 파일 (섹션0의 첫번째 이미지)
+    - section_0_image_1: 파일 (섹션0의 두번째 이미지)
+    - section_1_image_0: 파일 (섹션1의 첫번째 이미지)
+    - ...
     """
     # 현지인 뱃지 확인
     check_local_badge_active(db, user_id)
 
-    # 칼럼 생성
+    # Form 데이터 가져오기
+    form_data = await request.form()
+
+    # 1. 기본 필드 추출
+    title = form_data.get('title')
+    content = form_data.get('content')
+    representative_place_id = form_data.get('representative_place_id')
+    sections_json = form_data.get('sections')
+
+    if not title or not content:
+        raise HTTPException(status_code=400, detail="title과 content는 필수입니다")
+
+    # representative_place_id 변환
+    if representative_place_id:
+        try:
+            representative_place_id = int(representative_place_id)
+        except:
+            representative_place_id = None
+
+    # 2. 썸네일 이미지 저장 (필수)
+    thumbnail = form_data.get('thumbnail')
+    if not thumbnail or not isinstance(thumbnail, UploadFile):
+        raise HTTPException(status_code=400, detail="thumbnail 이미지는 필수입니다")
+
+    thumbnail_url = await save_image_file(thumbnail, "place_images")
+
+    # 3. 인트로 이미지 저장 (선택)
+    intro_image = form_data.get('intro_image')
+    intro_image_url = None
+    if intro_image and isinstance(intro_image, UploadFile):
+        intro_image_url = await save_image_file(intro_image, "place_images")
+
+    # 4. 섹션 데이터 파싱
+    if not sections_json:
+        raise HTTPException(status_code=400, detail="sections는 필수입니다")
+
+    try:
+        sections = json.loads(sections_json)
+    except:
+        raise HTTPException(status_code=400, detail="sections는 유효한 JSON이어야 합니다")
+
+    # 5. 섹션 이미지 파일들 수집 (section_X_image_Y 패턴)
+    section_images = {}
+    for key, value in form_data.items():
+        if key.startswith('section_') and isinstance(value, UploadFile):
+            # section_0_image_1 -> (0, 1)
+            parts = key.replace('section_', '').split('_image_')
+            if len(parts) == 2:
+                try:
+                    section_idx = int(parts[0])
+                    image_idx = int(parts[1])
+                    if section_idx not in section_images:
+                        section_images[section_idx] = {}
+                    section_images[section_idx][image_idx] = value
+                except:
+                    pass
+
+    # 6. 칼럼 생성
     column = LocalColumn(
         user_id=user_id,
-        title=column_data.title,
-        content=column_data.content,
-        thumbnail_url=column_data.thumbnail_url,
-        intro_image_url=column_data.intro_image_url,
-        representative_place_id=column_data.representative_place_id
+        title=title,
+        content=content,
+        thumbnail_url=thumbnail_url,
+        intro_image_url=intro_image_url,
+        representative_place_id=representative_place_id
     )
 
     db.add(column)
     db.commit()
     db.refresh(column)
 
-    # 섹션 생성
+    # 7. 섹션 생성
     section_data = []
-    for idx, section_req in enumerate(column_data.sections):
+    for idx, section_req in enumerate(sections):
         section = LocalColumnSection(
             column_id=column.id,
-            place_id=section_req.place_id,
-            order=section_req.order if section_req.order else idx,
-            title=section_req.title,
-            content=section_req.content
+            place_id=section_req.get('place_id'),
+            order=section_req.get('order', idx),
+            title=section_req.get('title', ''),
+            content=section_req.get('content', '')
         )
 
         db.add(section)
         db.commit()
         db.refresh(section)
 
-        # 섹션 이미지 생성
+        # 8. 섹션 이미지 저장 및 생성
         images = []
-        for img_idx, img_req in enumerate(section_req.images):
-            image = LocalColumnSectionImage(
-                section_id=section.id,
-                image_url=img_req.image_url,
-                order=img_req.order if img_req.order else img_idx
-            )
-            db.add(image)
-            images.append(image)
+        if idx in section_images:
+            # 이미지 인덱스 순으로 정렬
+            sorted_images = sorted(section_images[idx].items())
+            for img_idx, img_file in sorted_images:
+                # 이미지 파일 저장
+                img_url = await save_image_file(img_file, "place_images")
+
+                # DB에 이미지 저장
+                image = LocalColumnSectionImage(
+                    section_id=section.id,
+                    image_url=img_url,
+                    order=img_idx
+                )
+                db.add(image)
+                images.append(image)
 
         db.commit()
 
-        from .schemas import LocalColumnSectionImageResponse, LocalColumnSectionResponse
+        from schemas import LocalColumnSectionImageResponse, LocalColumnSectionResponse
         section_data.append(LocalColumnSectionResponse(
             id=section.id,
             title=section.title,
