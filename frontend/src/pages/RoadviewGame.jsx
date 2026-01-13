@@ -1,57 +1,53 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, StreetViewPanorama, Marker, Polyline } from '@react-google-maps/api';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const containerStyle = {
-  width: '100%',
-  height: '100%'
+const libraries = ['places', 'geometry'];
+
+const streetViewOptions = {
+  disableDefaultUI: true,
+  zoom: 1,
+  pov: { heading: 0, pitch: 0 },
+  visible: true,
+  showRoadLabels: false,
+  addressControl: false,
+  linksControl: true,
+  panControl: true,
+  enableCloseButton: false,
 };
 
-// 기본 화면 (초기 로딩 시 보여줄 위치 등 - 사실 로드뷰가 메인이라 크게 중요하진 않음)
+const mapOptions = {
+  disableDefaultUI: true,
+  clickableIcons: false,
+  mapTypeControl: false,
+  streetViewControl: false,
+  zoomControl: false,
+};
+
 const defaultCenter = {
   lat: 36.3504119,
   lng: 127.3845475
 };
 
-const libraries = ['places', 'geometry'];
-
-// 옵션 객체를 컴포넌트 밖으로 빼서 절대 변하지 않게 함 (Memoization보다 더 확실)
-const streetViewOptions = {
-  disableDefaultUI: false,
-  zoom: 1,
-  pov: { heading: 0, pitch: 0 },
-  visible: true
-};
-
-const mapOptions = {
-  streetViewControl: false,
-};
-
-import { useLocation, useNavigate } from 'react-router-dom';
-
-const RoadviewGame = (props) => {
+const RoadviewGame = () => {
   const locationState = useLocation().state;
   const navigate = useNavigate();
 
-  // Props로 받거나(기존 호환), router state로 받거나
-  const lat = props.lat || locationState?.lat;
-  const lng = props.lng || locationState?.lng;
+  // Coordinates
+  const lat = locationState?.lat;
+  const lng = locationState?.lng;
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-  if (!lat || !lng) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: '50px' }}>
-        <h2>⚠️ 잘못된 접근입니다.</h2>
-        <p>위치 정보가 없습니다. 사진을 먼저 업로드해주세요.</p>
-        <button onClick={() => navigate('/geo-quiz')}>돌아가기</button>
-      </div>
-    );
-  }
+  // Game State
+  const [guess, setGuess] = useState(null);
+  const [result, setResult] = useState(null);
+  const [showResult, setShowResult] = useState(false);
 
-  if (!apiKey) {
-    console.error("VITE_GOOGLE_MAPS_API_KEY is missing!");
-    alert("Google Maps API Key가 설정되지 않았습니다. .env 파일을 확인해주세요!");
-  }
+  // UI State (Mocking for visuals)
+  const [round, setRound] = useState(1);
+  const [totalRounds, setTotalRounds] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -59,17 +55,23 @@ const RoadviewGame = (props) => {
     libraries: libraries
   });
 
-  const [guess, setGuess] = useState(null);
-  const [result, setResult] = useState(null);
-  const [showResult, setShowResult] = useState(false);
-
-  console.log("RoadviewGame Mounted with coords:", lat, lng);
-  console.log("Maps loaded:", isLoaded, "Error:", loadError);
-
-  // 문제의 정답 위치 (사진 속 위치)
   const answerLocation = useMemo(() => ({ lat, lng }), [lat, lng]);
 
+  // Timer Effect
+  useEffect(() => {
+    if (showResult) return;
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [showResult]);
 
+  // Format Time 00:00
+  const formattedTime = useMemo(() => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }, [timeLeft]);
 
   const onMapClick = useCallback((e) => {
     if (showResult) return;
@@ -79,11 +81,10 @@ const RoadviewGame = (props) => {
     });
   }, [showResult]);
 
-  // 거리 계산 (Haversine Formula) 및 점수 내기
   const handleSubmit = () => {
     if (!guess) return;
 
-    const R = 6371; // 지구 반지름 (km)
+    const R = 6371;
     const dLat = (guess.lat - lat) * (Math.PI / 180);
     const dLng = (guess.lng - lng) * (Math.PI / 180);
     const a =
@@ -91,16 +92,11 @@ const RoadviewGame = (props) => {
       Math.cos(lat * (Math.PI / 180)) * Math.cos(guess.lat * (Math.PI / 180)) *
       Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distanceKm = R * c; // 거리 (km)
+    const distanceKm = R * c;
 
     let score = 0;
-    // 5000점 만점 공식 (GeoGuessr 스타일 대략적)
-    // 거리가 0이면 5000점, 멀어질수록 감점 (exponential decay)
-    // 2000km 이상이면 0점 처리
-    if (distanceKm < 0.05) score = 5000; // 50m 이내 만점
-    else {
-      score = Math.floor(5000 * Math.exp(-distanceKm / 2000));
-    }
+    if (distanceKm < 0.05) score = 5000;
+    else score = Math.floor(5000 * Math.exp(-distanceKm / 2000));
 
     setResult({
       distance: distanceKm,
@@ -109,53 +105,78 @@ const RoadviewGame = (props) => {
     setShowResult(true);
   };
 
-  const handleRetry = () => {
-    window.location.reload(); // 간단히 새로고침으로 초기화 (또는 상위에서 초기화 함수 받기)
+  const handleNext = () => {
+    // Mock functionality for next round
+    navigate('/'); // Go home for now or would trigger next round fetch
   };
 
-  if (loadError) {
+  if (!lat || !lng) {
     return (
-      <div style={{ padding: '50px', textAlign: 'center', color: 'red' }}>
-        <h3>⚠️ Google Maps 로딩 실패</h3>
-        <p>API Key를 확인해주세요. ({loadError.message})</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f6f7f8] dark:bg-[#101a22]">
+        <h2 className="text-2xl font-bold dark:text-white">Invalid Location</h2>
+        <button onClick={() => navigate('/')} className="mt-4 px-6 py-2 bg-[#1392ec] text-white rounded-lg">Go Home</button>
       </div>
     );
   }
 
-  if (!isLoaded) {
-    return (
-      <div style={{ padding: '50px', textAlign: 'center' }}>
-        <h3>⏳ Google Maps 로딩 중...</h3>
-        <p>잠시만 기다려주세요.</p>
-      </div>
-    );
+  if (!isLoaded || loadError) {
+    return <div className="min-h-screen flex items-center justify-center dark:bg-[#101a22] text-white">Loading...</div>;
   }
 
   return (
-    <div className="game-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)', padding: '10px', gap: '10px' }}>
-      <header style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <h2>🌍 GeoGuessr Challenge 🇰🇷</h2>
-        {!showResult ? (
-          <p>아래 로드뷰를 보고, 지도를 클릭해서 위치를 맞춰보세요! (현재 위치: {lat.toFixed(4)}, {lng.toFixed(4)})</p>
-        ) : (
-          <div style={{ padding: '10px', backgroundColor: '#e6fffa', borderRadius: '10px', border: '2px solid #38b2ac' }}>
-            <h3>🎉 결과 발표!</h3>
-            <p style={{ fontSize: '1.2rem' }}>거리 오차: <b>{result.distance < 1 ? (result.distance * 1000).toFixed(0) + 'm' : result.distance.toFixed(3) + 'km'}</b></p>
-            <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2c7a7b' }}>점수: {result.score} / 5000 점</p>
-            <button onClick={handleRetry} style={{ marginTop: '10px', padding: '10px 20px', fontSize: '1rem', cursor: 'pointer', backgroundColor: '#3182ce', color: 'white', border: 'none', borderRadius: '5px' }}>
-              다시 하기
-            </button>
+    <div className="bg-[#f6f7f8] dark:bg-[#101a22] text-[#0d161b] dark:text-white font-sans min-h-screen flex flex-col">
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e7eef3] dark:border-slate-800 bg-white/80 dark:bg-[#101a22]/90 backdrop-blur-md px-6 py-3 lg:px-10">
+        <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
+          <div className="flex items-center justify-center size-10 rounded-xl bg-[#1392ec]/10 text-[#1392ec]">
+            <span className="text-[24px]">🌍</span>
           </div>
-        )}
+          <h2 className="text-xl font-bold leading-tight tracking-tight">Tripko Roadview</h2>
+        </div>
+
+        {/* Desktop Level Indicator */}
+        <div className="hidden md:flex flex-1 max-w-[400px] mx-10 flex-col gap-1">
+          <div className="flex justify-between items-end px-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Level 5</span>
+            <span className="text-xs font-bold text-[#1392ec]">4,500 XP</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div className="h-full rounded-full bg-[#1392ec] transition-all duration-500" style={{ width: '75%' }}></div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end mr-2 hidden sm:flex">
+            <span className="text-sm font-bold">Explorer</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Pro Traveler</span>
+          </div>
+          <div className="bg-gray-300 rounded-full size-10 ring-2 ring-white dark:ring-slate-800 shadow-sm cursor-pointer overflow-hidden">
+            <img src="https://via.placeholder.com/40" alt="User" />
+          </div>
+        </div>
       </header>
 
-      <div style={{ display: 'flex', flex: 1, gap: '10px', minHeight: '0' }}>
-        {/* 왼쪽: 로드뷰 (문제) */}
-        <div style={{ flex: 1, position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '2px solid #ddd' }}>
+      {/* Main Game Area */}
+      {/* Height calculation to fit viewport minus header */}
+      <main className="flex-1 w-full max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row gap-6 h-[calc(100vh-80px)]">
+
+        {/* Left Column: Panorama */}
+        <div className="relative flex-1 group w-full h-[50vh] lg:h-auto rounded-2xl overflow-hidden shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+          <div className="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-md text-white px-3 py-1.5 rounded-full flex items-center gap-2 pointer-events-none">
+            <span className="text-[18px]">📷</span>
+            <span className="text-xs font-bold">Street View</span>
+          </div>
+
+          {/* Compass (Visual Only) */}
+          <div className="absolute top-4 right-4 z-20 bg-white/90 dark:bg-slate-900/90 p-2 rounded-full shadow-lg cursor-pointer hover:bg-white transition-colors">
+            <span className="text-slate-700 dark:text-slate-200 material-icons">🧭</span>
+          </div>
+
           <GoogleMap
-            mapContainerStyle={containerStyle}
+            mapContainerClassName="w-full h-full"
             center={answerLocation}
             zoom={14}
+            options={{ disableDefaultUI: true, gestureHandling: 'none' }}
           >
             <StreetViewPanorama
               position={answerLocation}
@@ -165,80 +186,138 @@ const RoadviewGame = (props) => {
           </GoogleMap>
         </div>
 
-        {/* 오른쪽: 지도 (정답지) */}
-        <div style={{ flex: 1, position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '2px solid #ddd' }}>
-          <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={defaultCenter}
-            zoom={7} // 대한민국 전체 보일 정도
-            onClick={onMapClick}
-            options={mapOptions}
-          >
-            {/* 유저가 찍은 위치 마커 */}
-            {guess && (
-              <Marker
-                position={guess}
-                icon={{
-                  url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
-                }}
-              />
-            )}
+        {/* Right Column: Controls & Map */}
+        <aside className="w-full lg:w-[400px] xl:w-[440px] flex flex-col gap-4 lg:h-full overflow-y-auto scrollbar-hide">
+          {/* Game Info Card */}
+          <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-5 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
+                <span>🚩</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Round</span>
+                <span className="text-lg font-bold">{round} <span className="text-slate-400 text-sm">/ {totalRounds}</span></span>
+              </div>
+            </div>
+            <div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-700"></div>
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg">
+                <span>⏱️</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</span>
+                <span className={`text-lg font-bold font-mono ${timeLeft < 30 ? 'text-red-500 animate-pulse' : ''}`}>{formattedTime}</span>
+              </div>
+            </div>
+          </div>
 
-            {/* 결과 화면: 정답 위치 마커 & 선 긋기 */}
-            {showResult && (
-              <>
-                <Marker
-                  position={answerLocation}
-                  label="정답"
-                  icon={{
-                    url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-                  }}
-                />
+          {/* Guessing Interface */}
+          <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-5 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 flex flex-col flex-1 gap-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-bold text-[#0d161b] dark:text-white">Where was this taken?</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Drop a pin on the map to guess the location.</p>
+            </div>
 
-                <Polyline
-                  path={[guess, answerLocation]}
-                  options={{
-                    strokeColor: "#FF0000",
-                    strokeOpacity: 1.0,
-                    strokeWeight: 2,
-                    geodesic: true, // 지구 곡면 따라 그리기
-                    icons: [{
-                      icon: { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 2 },
-                      offset: "0",
-                      repeat: "10px"
-                    }]
-                  }}
-                />
-              </>
-            )}
-          </GoogleMap>
+            {/* Interactive Map Container */}
+            <div className="relative w-full aspect-square lg:aspect-auto lg:flex-1 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden ring-1 ring-slate-200 dark:ring-slate-700">
+              <GoogleMap
+                mapContainerClassName="w-full h-full"
+                center={defaultCenter}
+                zoom={6}
+                onClick={onMapClick}
+                options={mapOptions}
+              >
+                {guess && (
+                  <Marker
+                    position={guess}
+                    icon="http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                  />
+                )}
+                {showResult && (
+                  <>
+                    <Marker
+                      position={answerLocation}
+                      icon="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                    />
+                    <Polyline
+                      path={[guess, answerLocation]}
+                      options={{
+                        strokeColor: "#FF0000",
+                        strokeOpacity: 0.8,
+                        strokeWeight: 4,
+                        geodesic: true,
+                      }}
+                    />
+                  </>
+                )}
+              </GoogleMap>
 
-          {/* 제출 버튼 (지도 위에 둥둥 떠있게) */}
-          {!showResult && guess && (
-            <button
-              onClick={handleSubmit}
-              style={{
-                position: 'absolute',
-                bottom: '20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                padding: '15px 30px',
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                backgroundColor: '#e53e3e',
-                color: 'white',
-                border: 'none',
-                borderRadius: '30px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-                cursor: 'pointer',
-                zIndex: 10
-              }}
-            >
-              🚀 정답 제출!
-            </button>
+              {/* Overlay Animation for User Guess */}
+              {!showResult && guess && (
+                <div className="absolute top-[10px] left-1/2 -translate-x-1/2 bg-[#1392ec] text-white text-xs font-bold px-3 py-1 rounded shadow animate-bounce">
+                  Pin Placed!
+                </div>
+              )}
+
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-3 pt-2">
+              {!showResult ? (
+                <>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!guess}
+                    className={`w-full h-12 flex items-center justify-center gap-2 text-white rounded-xl font-bold text-base shadow-lg transition-all ${guess
+                        ? 'bg-[#1392ec] hover:bg-blue-600 active:scale-[0.98] shadow-blue-500/20'
+                        : 'bg-gray-300 cursor-not-allowed'
+                      }`}
+                  >
+                    <span>✅</span>
+                    Confirm Guess
+                  </button>
+                  <button onClick={handleNext} className="w-full h-10 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-medium text-sm transition-colors">
+                    I don't know (Skip)
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="w-full h-12 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-base shadow-lg transition-all shadow-green-500/20"
+                >
+                  <span>➡️</span>
+                  Next Round
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Result Card (When showResult is true) */}
+          {showResult && result && (
+            <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-4 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 animate-fade-in-up">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Round Result</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Distance</p>
+                  <p className="text-2xl font-mono text-[#1392ec]">
+                    {result.distance < 1
+                      ? `${(result.distance * 1000).toFixed(0)}m`
+                      : `${result.distance.toFixed(2)}km`}
+                  </p>
+                </div>
+                <div className="w-[1px] h-10 bg-gray-200 dark:bg-gray-700"></div>
+                <div className="flex-1 text-right">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Score</p>
+                  <div className="flex items-end justify-end gap-1">
+                    <span className="text-2xl font-bold text-[#1392ec]">{result.score}</span>
+                    <span className="text-xs text-gray-500 pb-1">pts</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
-        </div>
-      </div>
+        </aside>
+      </main>
     </div>
   );
 };

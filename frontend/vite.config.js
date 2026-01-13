@@ -22,6 +22,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // '/places': {
+      //   target: 'http://localhost:8002',
+      //   changeOrigin: true,
+      //   secure: false,
+      //   rewrite: (path) => path.replace(/^\/places/, ''), // '/places' 제거 (Nginx와 동일한 동작)
+      // },
     },
   },
 })

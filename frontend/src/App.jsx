@@ -1,141 +1,87 @@
-// frontend/src/App.jsx
-import { useState } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
-import MainPage from './pages/MainPage'
-import SearchPage from './pages/SearchPage'
-import GeoImageUploader from './pages/GeoImageUploader'
-import RoadviewGame from './pages/RoadviewGame'
-import TestFrontAI from './pages/test_front_ai/TestFrontAI'
-import AccommodationMap from './pages/AccommodationMap'
-import TripleIntroPage from './pages/anti_test/TripleIntroPage'
-import TripStylePage from './pages/trip_style/TripStylePage'
-import './App.css'
-// import './App_test_stitch.css'
-
+import React, { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import MainPage from './pages/MainPage';
+import SearchPage from './pages/SearchPage';
+import GeoImageUploader from './pages/GeoImageUploader';
+import RoadviewGame from './pages/RoadviewGame';
+import AccommodationMap from './pages/AccommodationMap';
+import TestFrontAI from './pages/test_front_ai/TestFrontAI';
+import AntiTestPage from './pages/anti_test/AntiTestPage';
+import TripleIntroPage from './pages/anti_test/TripleIntroPage';
+import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import './App.css'; // Global styles if any, strictly Tailwind preferred
 
 function App() {
-  // 1. 상태 관리
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
-  // 페이지 이동을 위한 훅
-  const navigate = useNavigate();
+  // 1. Global Dark Mode Initialization
+  useEffect(() => {
+    // Check system preference
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev)
-  const goHome = () => {
-    setSearchQuery("");
-    navigate("/");
-  };
+    const applyTheme = (e) => {
+      if (e.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
 
-  // ★ [2] 지오게서(퀴즈) 페이지로 이동하는 함수 추가
-  const goGeoQuiz = () => {
-    navigate('/geo-quiz')
-    setIsSidebarOpen(false)
-  }
-  const goTestFront = () => {
-    navigate('/test-front')
-    setIsSidebarOpen(false)
-  }
-  // 숙소 지도 페이지로 이동
-  const goAccommodationMap = () => {
-    navigate('/accommodations')
-    setIsSidebarOpen(false)
-  }
+    // Initial check
+    applyTheme(mediaQuery);
 
-  const handleSearch = (e) => {
-    if (e.key === 'Enter') {
-      if (!searchQuery.trim()) return;
-      console.log("페이지 이동:", searchQuery);
-      navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
-      setIsSidebarOpen(false);
-    }
-  }
+    // Listener for changes
+    mediaQuery.addEventListener('change', applyTheme);
+    return () => mediaQuery.removeEventListener('change', applyTheme);
+  }, []);
+
+  // 2. Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  // Define routes where the global navbar should be hidden
+  const hideNavbarRoutes = ['/game', '/search']; // SearchPage has its own header, Game needs full immersion
+  const showNavbar = !hideNavbarRoutes.includes(location.pathname);
+
+  console.log("Current Path:", location.pathname);
+  console.log("Show Navbar:", showNavbar);
 
   return (
-    <div className="app-container">
-      {/* ------------------------------------------------------
-          1. 상단 Navbar
-      ------------------------------------------------------- */}
-      <nav className="navbar">
-        <div className="navbar-left">
-          <button className="icon-btn menu-toggle" onClick={toggleSidebar}>
-            메뉴
-          </button>
-          <span className="logo-text" onClick={goHome} style={{ cursor: 'pointer' }}>
-            KOREA TRIP
-          </span>
-        </div>
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] font-sans">
+      {showNavbar && <Navbar toggleSidebar={() => setIsSidebarOpen(true)} />}
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Routes>
+        {/* Core Pages */}
+        <Route path="/" element={<MainPage />} />
+        <Route path="/search" element={<SearchPage />} />
 
-        <div className="navbar-center">
-          <div className="search-wrapper">
-            <span className="search-icon">🔍</span>
-            <input
-              type="text"
-              className="main-search-input"
-              placeholder="어디로 떠나고 싶으신가요? (AI 의미 검색)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch}
-            />
+        {/* Features */}
+        <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
+        <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
+
+        <Route path="/geo-quiz" element={<GeoImageUploader />} />
+        <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
+        <Route path="/game" element={<RoadviewGame />} />
+
+        {/* Development / Test Pages */}
+        <Route path="/test-front" element={<TestFrontAI />} />
+        <Route path="/anti-test" element={<TripleIntroPage />} />
+        <Route path="/anti-test-page" element={<AntiTestPage />} />
+
+        {/* Fallback */}
+        <Route path="*" element={
+          <div className="flex h-screen items-center justify-center flex-col">
+            <h1 className="text-4xl font-bold mb-4">404</h1>
+            <p>Page not found</p>
+            <a href="/" className="mt-4 text-blue-500 hover:underline">Go Home</a>
           </div>
-        </div>
-
-        <div className="navbar-right">
-          <button className="icon-btn">알림</button>
-          <div className="profile-avatar">🙂</div>
-        </div>
-      </nav>
-
-      <div className="content-wrapper">
-        {/* ------------------------------------------------------
-            2. 사이드바 (Navigation)
-        ------------------------------------------------------- */}
-        <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-          <ul className="sidebar-menu">
-            <li onClick={goHome}>🏠 홈</li>
-            <li onClick={goAccommodationMap}>🏨 숙소 찾기</li>
-            <li onClick={goGeoQuiz}>📸 지오 퀴즈 업로더</li>
-            <li onClick={goTestFront}>🚪 테스트 프론트</li>
-            <li>📅 AI 일정 만들기</li>
-            <li>🥘 현지인 맛집 칼럼</li>
-            <li>🔥 실시간 숏폼</li>
-            <li>✈️ 항공권 예약</li>
-            <div className="divider"></div>
-            <li>❤️ 찜한 장소</li>
-            <li>⚙️ 설정</li>
-            <li>📞 고객센터</li>
-            <li>버전 정보</li>
-          </ul>
-        </aside>
-
-        {/* ------------------------------------------------------
-            3. 메인 컨텐츠 영역 (라우팅 적용)
-        ------------------------------------------------------- */}
-        <main className={`main-content ${isSidebarOpen ? 'shifted' : ''}`}>
-          <Routes>
-            {/* 기본 주소(/)일 때 -> 메인 페이지 */}
-            <Route path="/" element={<MainPage />} />
-
-            {/* 검색 주소(/search)일 때 -> 검색 결과 페이지 */}
-            <Route path="/search" element={<SearchPage />} />
-
-            {/* 숙소 지도 페이지 */}
-            <Route path="/accommodations" element={<AccommodationMap />} />
-
-            {/* ★ [4] 지오게서 퀴즈 페이지 라우터 추가 */}
-            <Route path="/geo-quiz" element={<GeoImageUploader />} />
-            <Route path="/game" element={<RoadviewGame />} />
-            <Route path="/test-front" element={<TestFrontAI />} />
-            <Route path="/anti-test" element={<TripleIntroPage />} />
-
-            {/* [New] Triple-like Trip Style Test Page */}
-            <Route path="/test-trip-style" element={<TripStylePage />} />
-          </Routes>
-        </main>
-
-      </div>
+        } />
+      </Routes>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
