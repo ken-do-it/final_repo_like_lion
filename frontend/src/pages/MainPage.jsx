@@ -1,29 +1,27 @@
-// frontend/src/pages/MainPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../App.css'; // 스타일 공유
+import axiosInstance from '../api/axios';
+import '../App.css';
 
 const MainPage = () => {
   const navigate = useNavigate();
   const [shortforms, setShortforms] = useState([]);
   const [loadingShorts, setLoadingShorts] = useState(true);
 
-  // 2. 데이터 가져오기
+  // Fetch Shortforms
   useEffect(() => {
     const fetchShortforms = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/shortforms/");
-        if (response.ok) {
-          const data = await response.json();
-          const list = Array.isArray(data) ? data : (data.results || []);
-          setShortforms(list);
-        } else {
-          console.error("숏폼 불러오기 실패:", response.status);
-        }
+        // Using axiosInstance, base URL is already set to /api or http://localhost:8000/api
+        // The endpoint requested is '/shortforms/'
+        const response = await axiosInstance.get('/shortforms/');
+        const data = response.data;
+        const list = Array.isArray(data) ? data : (data.results || []);
+        setShortforms(list);
       } catch (error) {
-        console.error("네트워크 에러:", error);
+        console.error("Shortform fetch error:", error);
       } finally {
-        setLoadingShorts(false); // 여기서 loadingShorts를 사용하려면 위에서 선언이 되어 있어야 합니다.
+        setLoadingShorts(false);
       }
     };
 
@@ -31,80 +29,114 @@ const MainPage = () => {
   }, []);
 
   return (
-    <div className="main-container">
-      {/* 1. 히어로 섹션 (AI 여행 코스 짜기) - 가장 강조됨 */}
-      <section className="hero-section">
-        <h1>🚀 AI와 함께 떠나는 한국 여행</h1>
-        <p>어디로 떠나고 싶으신가요? AI가 최적의 코스를 짜드립니다.</p>
-        <div className="placeholder-box search-box">
-          <span>🔍 (나중에 여기에 '여행지 입력' 기능이 들어갑니다)</span>
+    <div className="bg-[#f6f7f8] dark:bg-[#101a22] min-h-screen text-[#111111] dark:text-[#f1f5f9] transition-colors duration-300 pb-20">
+      {/* 1. Hero Section */}
+      <section className="relative w-full py-20 px-4 bg-gradient-to-r from-blue-50 to-white dark:from-[#1e2b36] dark:to-[#101a22]">
+        <div className="container mx-auto max-w-screen-xl text-center md:text-left">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+            🚀 AI와 함께 떠나는 <br />
+            <span className="text-[#1392ec]">한국 여행</span>
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl">
+            어디로 떠나고 싶으신가요? AI가 당신의 취향을 분석하여 최적의 여행 코스를 제안해 드립니다.
+          </p>
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <button
+              className="px-8 py-4 bg-[#1392ec] hover:bg-blue-600 text-white text-lg font-bold rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 w-full md:w-auto"
+              onClick={() => alert("AI 기능은 커밍순!")}
+            >
+              AI 일정 생성하기
+            </button>
+            {/* Placeholder Search Box */}
+            <div className="bg-white dark:bg-[#1e2b36] border border-gray-200 dark:border-gray-700 rounded-full px-6 py-3 flex items-center shadow-sm w-full md:w-96 text-gray-500">
+              <span>🔍 여행지 검색 (준비중)</span>
+            </div>
+          </div>
         </div>
-        <button className="cta-button" onClick={() => alert("AI 기능은 커밍순!")}>
-          AI 일정 생성하기
-        </button>
       </section>
 
-      {/* 2. 현지인 추천 칼럼 (가로 스크롤 카드) */}
-      <section className="feature-section">
-        <h2>🥘 현지인이 알려주는 추천 장소</h2>
-        <div className="card-grid">
-          {/* 나중에 데이터가 들어오면 map()으로 돌릴 부분 */}
-          {[1, 2, 3, 4].map((item) => (
-            <div key={item} className="placeholder-card">
-              <div className="image-area">이미지 영역</div>
-              <div className="text-area">
-                <h3>추천 칼럼 제목 {item}</h3>
-                <p>작성자: 현지인 뱃지</p>
+      {/* 2. Local Recommendations (Horizontal Scroll) */}
+      <section className="container mx-auto px-4 max-w-screen-xl py-12">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">🥘 현지인이 알려주는 추천 장소</h2>
+          <button className="text-[#1392ec] hover:underline text-sm font-medium">전체보기</button>
+        </div>
+
+        <div className="flex space-x-6 overflow-x-auto pb-6 scrollbar-hide">
+          {[1, 2, 3, 4, 5].map((item) => (
+            <div key={item} className="min-w-[280px] bg-white dark:bg-[#1e2b36] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-100 dark:border-gray-700">
+              <div className="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400">
+                이미지 영역
+              </div>
+              <div className="p-4">
+                <h3 className="font-bold text-lg mb-1 truncate">숨겨진 명소 {item}</h3>
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                  <span className="bg-blue-100 dark:bg-blue-900 text-[#1392ec] text-xs px-2 py-0.5 rounded-full mr-2">현지인</span>
+                  <span>작성자 {item}</span>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 3. 여행 꿀팁 숏폼 (API 연동됨) */}
-      <section className="feature-section bg-gray">
-        <h2>🔥 실시간 인기 여행 숏폼</h2>
-        <div className="shorts-grid">
+      {/* 3. Short-form Videos */}
+      <section className="bg-gray-50 dark:bg-[#15202b] py-16">
+        <div className="container mx-auto px-4 max-w-screen-xl">
+          <h2 className="text-2xl font-bold mb-8">🔥 실시간 인기 여행 숏폼</h2>
+
           {loadingShorts ? (
-            <p>로딩 중...</p>
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#1392ec]"></div>
+            </div>
           ) : shortforms.length > 0 ? (
-            shortforms.map((item) => (
-              <div key={item.id} className="placeholder-shorts" style={{ position: 'relative', overflow: 'hidden' }}>
-                {/* 썸네일이 있으면 표시 */}
-                {item.thumbnail_url ? (
-                  <img 
-                    src={item.thumbnail_url.startsWith('http') ? item.thumbnail_url : `http://127.0.0.1:8000${item.thumbnail_url}`}
-                    alt={item.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                    NO IMAGE
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {shortforms.map((item) => (
+                <div key={item.id} className="relative aspect-[9/16] bg-black rounded-xl overflow-hidden shadow-lg group cursor-pointer transform hover:scale-[1.02] transition-transform duration-300">
+                  {item.thumbnail_url ? (
+                    <img
+                      src={item.thumbnail_url.startsWith('http') ? item.thumbnail_url : `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}${item.thumbnail_url}`}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 bg-gray-900">
+                      <span className="text-xs">NO IMAGE</span>
+                    </div>
+                  )}
+                  {/* Overlay */}
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12">
+                    <h3 className="text-white font-bold text-sm md:text-base line-clamp-2 leading-snug">
+                      {item.title}
+                    </h3>
                   </div>
-                )}
-                {/* 제목 오버레이 */}
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0,
-                  padding: '10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-                  color: 'white', fontWeight: 'bold', fontSize: '0.9rem'
-                }}>
-                  {item.title}
+                  {/* Play Icon on Hover */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <span className="text-white text-xl">▶</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
-            <div className="placeholder-shorts">
-              <span>등록된 영상이 없습니다.</span>
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              등록된 숏폼 영상이 없습니다.
             </div>
           )}
         </div>
       </section>
 
-      {/* 4. 항공권/예약 (간단 배너) */}
-      <section className="feature-section">
-        <h2>✈️ 최저가 항공권 찾기</h2>
-        <div className="placeholder-box wide-banner">
-          <span>(나중에 여기에 '날짜/인원 선택' 위젯이 들어갑니다)</span>
+      {/* 4. Flight Banner */}
+      <section className="container mx-auto px-4 max-w-screen-xl py-12">
+        <div className="bg-gradient-to-r from-blue-600 to-[#1392ec] rounded-2xl p-8 md:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between">
+          <div className="mb-6 md:mb-0">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">✈️ 최저가 항공권을 찾고 계신가요?</h2>
+            <p className="text-blue-100">가장 저렴한 시기에 떠나는 여행, 지금 바로 확인하세요.</p>
+          </div>
+          <button className="px-8 py-3 bg-white text-[#1392ec] font-bold rounded-lg shadow-md hover:bg-gray-100 transition-colors">
+            항공권 검색하기
+          </button>
         </div>
       </section>
     </div>

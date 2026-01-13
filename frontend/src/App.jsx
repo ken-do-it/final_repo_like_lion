@@ -8,6 +8,7 @@ import RoadviewGame from './pages/RoadviewGame'
 import TestFrontAI from './pages/test_front_ai/TestFrontAI'
 import AccommodationMap from './pages/AccommodationMap'
 import TripleIntroPage from './pages/anti_test/TripleIntroPage'
+import AntiTestPage from './pages/anti_test/AntiTestPage'
 import './App.css'
 
 function App() {
@@ -124,6 +125,7 @@ function App() {
             <Route path="/game" element={<RoadviewGame />} />
             <Route path="/test-front" element={<TestFrontAI />} />
             <Route path="/anti-test" element={<TripleIntroPage />} />
+            <Route path="/anti-test-page" element={<AntiTestPage />} />
           </Routes>
         </main>
 
