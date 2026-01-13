@@ -9,6 +9,7 @@
 */
 
 @layer base {
+
   /* 1. 기본 폰트 및 렌더링 최적화 */
   html {
     font-family: 'Noto Sans KR', sans-serif;
@@ -21,7 +22,8 @@
     /* tailwind.config.js에 정의된 커스텀 컬러 적용 (이제 에러가 나지 않습니다) */
     @apply bg-background-light text-gray-900;
     @apply min-h-screen min-w-[320px];
-    @apply transition-colors duration-200; /* 다크모드 전환 부드럽게 */
+    @apply transition-colors duration-200;
+    /* 다크모드 전환 부드럽게 */
   }
 
   /* 3. 다크 모드 스타일 (Dark Mode) */
@@ -33,11 +35,12 @@
 
 /* Custom Components (Optional) */
 @layer components {
+
   /* 자주 쓰는 버튼 스타일 */
   .btn-primary {
     @apply px-6 py-3 rounded-lg bg-primary text-white font-medium hover:opacity-90 transition-opacity;
   }
-  
+
   /* 자주 쓰는 카드 스타일 */
   .card-base {
     @apply bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700;
