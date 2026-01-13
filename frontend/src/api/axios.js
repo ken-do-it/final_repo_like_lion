@@ -8,7 +8,7 @@ const axiosInstance = axios.create({
 });
 
 export const searchAxios = axios.create({
-    baseURL: import.meta.env.VITE_SEARCH_API_URL || 'http://127.0.0.1:8001',
+    baseURL: import.meta.env.VITE_SEARCH_API_URL,
     headers: {
         'Content-Type': 'application/json',
     },

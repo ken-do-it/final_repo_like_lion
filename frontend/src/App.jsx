@@ -6,7 +6,8 @@ import PlaceSearch from './pages/places/PlaceSearch';
 import GeoImageUploader from './pages/GeoImageUploader';
 import RoadviewGame from './pages/RoadviewGame';
 import AccommodationMap from './pages/AccommodationMap';
-import TestFrontAI from './pages/test_front_ai/TestFrontAI';
+import ShortsPage from './pages/shorts/ShortsPage';
+import ShortsDetailPage from './pages/shorts/ShortsDetailPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
 import Navbar from './components/Navbar';
@@ -16,27 +17,27 @@ import './App.css'; // Global styles if any, strictly Tailwind preferred
 function App() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    const storedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return storedTheme === 'dark' || (!storedTheme && systemPrefersDark);
+  });
 
-  // 1. Global Dark Mode Initialization
+  // 1. Global Dark Mode Initialization (System + Manual)
   useEffect(() => {
-    // Check system preference
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, [isDarkMode]);
 
-    const applyTheme = (e) => {
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-
-    // Initial check
-    applyTheme(mediaQuery);
-
-    // Listener for changes
-    mediaQuery.addEventListener('change', applyTheme);
-    return () => mediaQuery.removeEventListener('change', applyTheme);
-  }, []);
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      localStorage.setItem('theme', 'light');
+      setIsDarkMode(false);
+    } else {
+      localStorage.setItem('theme', 'dark');
+      setIsDarkMode(true);
+    }
+  };
 
   // 2. Scroll to top on route change
   useEffect(() => {
@@ -52,7 +53,13 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] font-sans">
-      {showNavbar && <Navbar toggleSidebar={() => setIsSidebarOpen(true)} />}
+      {showNavbar && (
+        <Navbar
+          toggleSidebar={() => setIsSidebarOpen(true)}
+          toggleTheme={toggleTheme}
+          isDarkMode={isDarkMode}
+        />
+      )}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <Routes>
         {/* Core Pages */}
@@ -62,6 +69,8 @@ function App() {
         {/* Features */}
         <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
         <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
+        <Route path="/shorts" element={<ShortsPage />} />
+        <Route path="/shorts/:id" element={<ShortsDetailPage />} />
 
         {/* Place Pages */}
         <Route path="/places/search" element={<PlaceSearch />} />
@@ -71,7 +80,6 @@ function App() {
         <Route path="/game" element={<RoadviewGame />} />
 
         {/* Development / Test Pages */}
-        <Route path="/test-front" element={<TestFrontAI />} />
         <Route path="/anti-test" element={<TripleIntroPage />} />
         <Route path="/anti-test-page" element={<AntiTestPage />} />
 

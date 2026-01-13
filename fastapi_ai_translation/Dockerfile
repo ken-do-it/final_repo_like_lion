@@ -1,4 +1,7 @@
-FROM python:3.11-slim
+# FROM python:3.11-slim
+# [Optimization] Use pre-built PyTorch image with CUDA support
+# This skips downloading GBs of PyTorch libraries during build
+FROM pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
 
 WORKDIR /app
 

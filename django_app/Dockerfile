@@ -3,7 +3,10 @@ FROM python:3.12-slim
 
 # 2. 작업 폴더 설정
 # 1.5. 시스템 패키지 설치 (FFmpeg 포함)
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+# 1.5. 시스템 패키지 설치 (FFmpeg 포함) - 안정성 개선
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
 # 2. 작업 폴더 설정
 WORKDIR /app
