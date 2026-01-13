@@ -6,9 +6,13 @@ import App from './App.jsx'
 // import App from './App_test.jsx'
 import './index.css'
 
+import { LanguageProvider } from './context/LanguageContext';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
-    <App />
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
   </BrowserRouter>
 )
 
