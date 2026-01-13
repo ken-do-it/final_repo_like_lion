@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 
-const Navbar = ({ toggleSidebar }) => {
+const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [searchInput, setSearchInput] = useState('');
     const { language, setLanguage, t } = useLanguage();
 
     // ... existing code ...
@@ -28,12 +27,26 @@ const Navbar = ({ toggleSidebar }) => {
                         </svg>
                     </button>
 
-                    {/* Logo */}
-                    <div className="flex flex-shrink-0 items-center cursor-pointer" onClick={() => navigate('/')}>
-                        <span className="text-2xl font-black bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                    <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onClick={() => navigate('/')}
+                    >
+                        <div className="flex items-center justify-center size-8 rounded-lg bg-[#1392ec] text-white font-bold text-xl">
+                            T
+                        </div>
+                        <span className="text-xl font-bold tracking-tight text-[#111111] dark:text-[#f1f5f9] hidden sm:block">
                             Tripko
                         </span>
                     </div>
+
+                    {/* Dark/Light Toggle Button */}
+                    <button
+                        onClick={toggleTheme}
+                        className="flex items-center justify-center p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-yellow-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Toggle Dark Mode"
+                    >
+                        {isDarkMode ? '☀️' : '🌙'}
+                    </button>
                 </div>
 
                 {/* 2. Center Navigation Links (Desktop) */}
