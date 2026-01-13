@@ -5,7 +5,8 @@ import SearchPage from './pages/SearchPage';
 import GeoImageUploader from './pages/GeoImageUploader';
 import RoadviewGame from './pages/RoadviewGame';
 import AccommodationMap from './pages/AccommodationMap';
-import TestFrontAI from './pages/test_front_ai/TestFrontAI';
+import ShortsPage from './pages/shorts/ShortsPage';
+import ShortsDetailPage from './pages/shorts/ShortsDetailPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
 import Navbar from './components/Navbar';
@@ -16,25 +17,9 @@ function App() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
-  // 1. Global Dark Mode Initialization
+  // 1. Global Dark Mode Initialization - Disabled as per user request (Default to Light)
   useEffect(() => {
-    // Check system preference
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const applyTheme = (e) => {
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-
-    // Initial check
-    applyTheme(mediaQuery);
-
-    // Listener for changes
-    mediaQuery.addEventListener('change', applyTheme);
-    return () => mediaQuery.removeEventListener('change', applyTheme);
+    document.documentElement.classList.remove('dark');
   }, []);
 
   // 2. Scroll to top on route change
@@ -61,13 +46,14 @@ function App() {
         {/* Features */}
         <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
         <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
+        <Route path="/shorts" element={<ShortsPage />} />
+        <Route path="/shorts/:id" element={<ShortsDetailPage />} />
 
         <Route path="/geo-quiz" element={<GeoImageUploader />} />
         <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
         <Route path="/game" element={<RoadviewGame />} />
 
         {/* Development / Test Pages */}
-        <Route path="/test-front" element={<TestFrontAI />} />
         <Route path="/anti-test" element={<TripleIntroPage />} />
         <Route path="/anti-test-page" element={<AntiTestPage />} />
 
