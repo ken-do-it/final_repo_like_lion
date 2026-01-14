@@ -161,7 +161,7 @@ const LoginPage = () => {
 
                 <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
                     {t('no_account')}{' '}
-                    <Link to="/signup-page" className="text-primary hover:text-primary-hover font-semibold">
+                    <Link to="/register-page" className="text-primary hover:text-primary-hover font-semibold">
                         {t('signup_btn')}
                     </Link>
                 </div>
