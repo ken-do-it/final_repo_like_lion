@@ -187,13 +187,13 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                                         }}
                                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                     >
-                                        마이페이지
+                                        {t('nav_mypage')}
                                     </button>
                                     <button
                                         onClick={handleLogout}
                                         className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                     >
-                                        로그아웃
+                                        {t('nav_logout')}
                                     </button>
                                 </div>
                             )}
@@ -204,13 +204,13 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                                 onClick={() => navigate('/login-page')}
                                 className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-[#1392ec] dark:hover:text-[#1392ec] px-3 py-2 transition-colors"
                             >
-                                로그인
+                                {t('nav_login')}
                             </button>
                             <button
                                 onClick={() => navigate('/register-page')}
                                 className="hidden sm:block text-sm font-medium text-white bg-[#1392ec] hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors shadow-sm hover:shadow-md"
                             >
-                                회원가입
+                                {t('nav_signup')}
                             </button>
                         </div>
                     )}

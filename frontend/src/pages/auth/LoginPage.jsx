@@ -5,10 +5,12 @@ import Button from '../../components/ui/Button';
 import api from '../../api/axios';
 
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const LoginPage = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
+    const { t } = useLanguage();
     const [formData, setFormData] = useState({
         username: '',
         password: '',
@@ -58,9 +60,6 @@ const LoginPage = () => {
     };
 
     const handleSocialLogin = (provider) => {
-        // Construct the social login URL dynamic base URL
-        // Assumes VITE_API_BASE_URL ends with /api (e.g. http://localhost:8000/api)
-        // We need http://localhost:8000/accounts/...
         const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
         const backendUrl = apiBase.replace(/\/api\/?$/, '');
         window.location.href = `${backendUrl}/accounts/${provider}/login/`;
@@ -70,8 +69,8 @@ const LoginPage = () => {
         <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[calc(100vh-64px-130px)]">
             <div className="w-full max-w-md bg-surface-light dark:bg-surface-dark p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 transition-colors">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">환영합니다!</h1>
-                    <p className="text-gray-500 dark:text-gray-400">여행을 시작하려면 로그인하세요</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('login_title')}</h1>
+                    <p className="text-gray-500 dark:text-gray-400">{t('login_subtitle')}</p>
                 </div>
 
                 {error && (
@@ -83,8 +82,8 @@ const LoginPage = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Input
                         id="username"
-                        label="아이디"
-                        placeholder="아이디를 입력하세요"
+                        label={t('id_label')}
+                        placeholder={t('id_label')}
                         value={formData.username}
                         onChange={handleChange}
                         required
@@ -92,8 +91,8 @@ const LoginPage = () => {
                     <Input
                         id="password"
                         type="password"
-                        label="비밀번호"
-                        placeholder="비밀번호를 입력하세요"
+                        label={t('password_label')}
+                        placeholder={t('password_label')}
                         value={formData.password}
                         onChange={handleChange}
                         required
@@ -108,10 +107,10 @@ const LoginPage = () => {
                                 onChange={handleChange}
                                 className="rounded border-gray-300 text-primary focus:ring-primary"
                             />
-                            <span className="text-gray-600 dark:text-gray-400">로그인 상태 유지</span>
+                            <span className="text-gray-600 dark:text-gray-400">Remember me</span>
                         </label>
                         <Link to="/find-account" className="text-primary hover:text-primary-hover font-medium">
-                            계정 찾기
+                            {t('forgot_password')}
                         </Link>
                     </div>
 
@@ -121,7 +120,7 @@ const LoginPage = () => {
                         disabled={isLoading}
                         className="text-lg font-semibold"
                     >
-                        {isLoading ? '로그인 중...' : '로그인'}
+                        {isLoading ? t('loading') : t('login_btn')}
                     </Button>
                 </form>
 
@@ -131,7 +130,7 @@ const LoginPage = () => {
                             <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-surface-light dark:bg-surface-dark text-gray-500 transition-colors">SNS 계정으로 로그인</span>
+                            <span className="px-2 bg-surface-light dark:bg-surface-dark text-gray-500 transition-colors">SNS Login</span>
                         </div>
                     </div>
 
@@ -141,29 +140,29 @@ const LoginPage = () => {
                             className="w-full text-sm"
                             onClick={() => handleSocialLogin('google')}
                         >
-                            구글
+                            Google
                         </Button>
                         <Button
                             variant="outline"
                             className="w-full text-sm"
                             onClick={() => handleSocialLogin('kakao')}
                         >
-                            카카오
+                            Kakao
                         </Button>
                         <Button
                             variant="outline"
                             className="w-full text-sm"
                             onClick={() => handleSocialLogin('naver')}
                         >
-                            네이버
+                            Naver
                         </Button>
                     </div>
                 </div>
 
                 <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-                    계정이 없으신가요?{' '}
-                    <Link to="/register-page" className="text-primary hover:text-primary-hover font-semibold">
-                        회원가입
+                    {t('no_account')}{' '}
+                    <Link to="/signup-page" className="text-primary hover:text-primary-hover font-semibold">
+                        {t('signup_btn')}
                     </Link>
                 </div>
             </div>

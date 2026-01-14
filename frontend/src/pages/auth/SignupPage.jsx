@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../api/axios';
+import { useLanguage } from '../../context/LanguageContext';
 
 const SignupPage = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [formData, setFormData] = useState({
         username: '', // Required by backend
         email: '',
@@ -79,14 +81,12 @@ const SignupPage = () => {
         }
     };
 
-
-
     return (
         <div className="container mx-auto px-4 py-12 flex items-center justify-center">
             <div className="w-full max-w-2xl bg-surface-light dark:bg-surface-dark p-8 sm:p-10 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 transition-colors">
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">회원가입</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Tripko와 함께 완벽한 여행을 떠나보세요</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('signup_title')}</h1>
+                    <p className="text-gray-500 dark:text-gray-400">{t('signup_subtitle')}</p>
                 </div>
 
                 {error && (
@@ -100,8 +100,8 @@ const SignupPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Input
                             id="username"
-                            label="아이디"
-                            placeholder="사용하실 아이디를 입력하세요"
+                            label={t('id_label')}
+                            placeholder={t('id_label')}
                             value={formData.username}
                             onChange={handleChange}
                             required
@@ -109,7 +109,7 @@ const SignupPage = () => {
                         <Input
                             id="email"
                             type="email"
-                            label="이메일"
+                            label={t('email_label')}
                             placeholder="name@example.com"
                             value={formData.email}
                             onChange={handleChange}
@@ -121,8 +121,8 @@ const SignupPage = () => {
                         <Input
                             id="password"
                             type="password"
-                            label="비밀번호"
-                            placeholder="최소 8자 이상"
+                            label={t('password_label')}
+                            placeholder={t('password_label')}
                             value={formData.password}
                             onChange={handleChange}
                             required
@@ -130,8 +130,8 @@ const SignupPage = () => {
                         <Input
                             id="password_confirm"
                             type="password"
-                            label="비밀번호 확인"
-                            placeholder="비밀번호를 한번 더 입력하세요"
+                            label={t('password_confirm_label')}
+                            placeholder={t('password_confirm_label')}
                             value={formData.password_confirm}
                             onChange={handleChange}
                             required
@@ -144,8 +144,8 @@ const SignupPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Input
                             id="nickname"
-                            label="닉네임"
-                            placeholder="화면에 표시될 이름"
+                            label={t('nickname_label')}
+                            placeholder={t('nickname_label')}
                             value={formData.nickname}
                             onChange={handleChange}
                             required
@@ -153,7 +153,7 @@ const SignupPage = () => {
                         <Input
                             id="phone_number"
                             type="tel"
-                            label="전화번호"
+                            label={t('phone_label')}
                             placeholder="+82 10-1234-5678"
                             value={formData.phone_number}
                             onChange={handleChange}
@@ -164,7 +164,7 @@ const SignupPage = () => {
                         <Input
                             id="birth_year"
                             type="number"
-                            label="출생연도"
+                            label="Birth Year"
                             placeholder="YYYY"
                             value={formData.birth_year}
                             onChange={handleChange}
@@ -172,16 +172,16 @@ const SignupPage = () => {
                         />
                         <Input
                             id="country"
-                            label="국가"
-                            placeholder="예: 대한민국"
+                            label="Country"
+                            placeholder="e.g. South Korea"
                             value={formData.country}
                             onChange={handleChange}
                             required
                         />
                         <Input
                             id="city"
-                            label="도시"
-                            placeholder="예: 서울"
+                            label="City"
+                            placeholder={t('location_label')}
                             value={formData.city}
                             onChange={handleChange}
                             required
@@ -195,15 +195,15 @@ const SignupPage = () => {
                             disabled={isLoading}
                             className="text-lg font-semibold"
                         >
-                            {isLoading ? '가입 처리 중...' : '회원가입'}
+                            {isLoading ? t('loading') : t('signup_btn')}
                         </Button>
                     </div>
                 </form>
 
                 <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-                    이미 계정이 있으신가요?{' '}
+                    {t('have_account')}{' '}
                     <Link to="/login-page" className="text-primary hover:text-primary-hover font-semibold">
-                        로그인
+                        {t('login_btn')}
                     </Link>
                 </div>
             </div>
