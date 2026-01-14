@@ -219,9 +219,9 @@ const RoadviewGame = () => {
             </div>
 
             {/* Interactive Map Container */}
-            <div className="relative w-full aspect-square lg:aspect-auto lg:flex-1 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden ring-1 ring-slate-200 dark:ring-slate-700">
+            <div className="relative w-full aspect-square lg:aspect-auto lg:flex-1 min-h-[400px] bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden ring-1 ring-slate-200 dark:ring-slate-700">
               <GoogleMap
-                mapContainerClassName="w-full h-full"
+                mapContainerStyle={{ width: '100%', height: '100%', minHeight: '400px' }}
                 center={defaultCenter}
                 zoom={6}
                 onClick={onMapClick}
@@ -269,8 +269,8 @@ const RoadviewGame = () => {
                     onClick={handleSubmit}
                     disabled={!guess}
                     className={`w-full h-12 flex items-center justify-center gap-2 text-white rounded-xl font-bold text-base shadow-lg transition-all ${guess
-                        ? 'bg-[#1392ec] hover:bg-blue-600 active:scale-[0.98] shadow-blue-500/20'
-                        : 'bg-gray-300 cursor-not-allowed'
+                      ? 'bg-[#1392ec] hover:bg-blue-600 active:scale-[0.98] shadow-blue-500/20'
+                      : 'bg-gray-300 cursor-not-allowed'
                       }`}
                   >
                     <span>✅</span>
