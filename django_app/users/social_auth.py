@@ -102,7 +102,7 @@ class SocialLoginCallbackView(APIView):
                     'nickname': user.nickname,
                     'social_provider': user.social_provider
                 })}));
-                window.location.href = '/api/users/';
+                window.location.href = 'http://localhost:5173/';
             </script>
         </body>
         </html>
