@@ -4,6 +4,8 @@ import axiosInstance from '../api/axios';
 import { useLanguage } from '../context/LanguageContext';
 import { API_LANG_CODES } from '../constants/translations';
 
+
+
 const MainPage = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();

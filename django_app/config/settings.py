@@ -276,6 +276,12 @@ EMAIL_HOST_PASSWORD = ''
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:80",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+]
 
 # Time Zone
 TIME_ZONE = 'Asia/Seoul'

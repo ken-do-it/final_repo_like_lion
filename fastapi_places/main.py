@@ -48,6 +48,10 @@ app.include_router(places_router)
 from accommodations import router as accommodations_router
 app.include_router(accommodations_router)
 
+# Roadview 라우터 등록
+from roadview import router as roadview_router
+app.include_router(roadview_router)
+
 
 # 테이블 생성은 Django 마이그레이션으로 처리
 # FastAPI는 기존 테이블을 읽기만 함
