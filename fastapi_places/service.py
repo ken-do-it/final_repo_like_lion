@@ -317,10 +317,11 @@ async def get_google_place_details(place_id: str) -> Optional[Dict]:
 #     return filtered_results[:limit]
 
 async def search_places_hybrid(query: str, category: Optional[str] = None,
-                                city: Optional[str] = None) -> List[Dict]:
+                                city: Optional[str] = None, db: Session = None) -> List[Dict]:
     """
     카카오 + 구글 병렬 검색 후 결과 통합
     모든 결과 반환 (페이지네이션 없음)
+    DB에 이미 있는 장소인지 확인하여 id 포함
     """
     # ★ 추가: 카테고리가 있으면 검색어에 키워드 추가
     search_query = query
@@ -348,12 +349,27 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
     all_results = kakao_results + google_results
     unique_results = remove_duplicate_places(all_results)
 
-    # ★ 카테고리 필터링은 제거하거나 완화 (검색어에 이미 반영됨)
-    # 기존 필터링 코드 삭제 또는 주석 처리
-
     if city:
         unique_results = [r for r in unique_results if r.get("city") == city]
 
+    # ★ DB 존재 여부 확인 및 ID 주입
+    if db:
+        # 검색 결과의 API ID 목록 추출
+        api_ids = [r["place_api_id"] for r in unique_results if r.get("place_api_id")]
+        
+        if api_ids:
+            # DB에서 해당 API ID를 가진 장소 조회
+            existing_places = db.query(Place).filter(Place.place_api_id.in_(api_ids)).all()
+            
+            # {place_api_id: id} 매핑 생성
+            id_map = {p.place_api_id: p.id for p in existing_places}
+            
+            # 결과에 id 추가
+            for result in unique_results:
+                api_id = result.get("place_api_id")
+                if api_id and api_id in id_map:
+                    result["id"] = id_map[api_id]
+    
     return unique_results
 
 

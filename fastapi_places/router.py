@@ -125,14 +125,15 @@ async def save_image_file(image: UploadFile, subfolder: str = "place_images") ->
 async def search_places(
     query: str = Query(..., min_length=1, description="검색어"),
     category: Optional[str] = Query(None, description="카테고리 필터"),
-    city: Optional[str] = Query(None, description="도시 필터")
+    city: Optional[str] = Query(None, description="도시 필터"),
+    db: Session = Depends(get_db)
 ):
     """
     장소 검색 (카카오맵 + 구글맵 통합)
 
     참고: API 특성상 총 결과 수는 제한적일 수 있음 (카카오+구글 합쳐서 최대 ~45개)
     """
-    all_results = await search_places_hybrid(query, category, city)
+    all_results = await search_places_hybrid(query, category, city, db=db)
 
     return {
         "query": query,

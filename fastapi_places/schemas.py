@@ -20,6 +20,7 @@ class PlaceSearchRequest(BaseModel):
 
 class PlaceSearchResult(BaseModel):
     """장소 검색 결과 (통합)"""
+    id: Optional[int] = Field(None, description="DB 저장 ID (있을 경우)")
     provider: str = Field(..., description="출처: KAKAO, GOOGLE, USER")
     place_api_id: Optional[str] = Field(None, description="외부 API ID")
     name: str

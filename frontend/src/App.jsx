@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import MainPage from './pages/MainPage';
 import SearchPage from './pages/SearchPage';
 import PlaceSearch from './pages/places/PlaceSearch';
+import PlaceDetailPage from './pages/places/PlaceDetailPage';
 import GeoImageUploader from './pages/GeoImageUploader';
 import RoadviewGame from './pages/RoadviewGame';
 import AccommodationMap from './pages/AccommodationMap';
@@ -74,6 +75,8 @@ function App() {
 
         {/* Place Pages */}
         <Route path="/places/search" element={<PlaceSearch />} />
+        <Route path="/places/detail" element={<PlaceDetailPage />} />
+        <Route path="/places/:id" element={<PlaceDetailPage />} />
 
         <Route path="/geo-quiz" element={<GeoImageUploader />} />
         <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
