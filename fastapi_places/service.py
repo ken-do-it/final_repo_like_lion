@@ -27,6 +27,63 @@ KOREA_LAT_MAX = float(os.getenv("KOREA_LAT_MAX", "43"))
 KOREA_LON_MIN = float(os.getenv("KOREA_LON_MIN", "124"))
 KOREA_LON_MAX = float(os.getenv("KOREA_LON_MAX", "132"))
 
+# 구글 카테고리 영어 → 한국어 매핑
+GOOGLE_CATEGORY_MAP = {
+    # 음식/음료
+    "restaurant": "음식점",
+    "cafe": "카페",
+    "bakery": "베이커리",
+    "bar": "바",
+    "food": "음식점",
+    "meal_delivery": "배달음식",
+    "meal_takeaway": "포장음식",
+    # 숙박
+    "lodging": "숙박",
+    "hotel": "호텔",
+    "motel": "모텔",
+    "guest_house": "게스트하우스",
+    # 관광/레저
+    "tourist_attraction": "관광명소",
+    "museum": "박물관",
+    "art_gallery": "미술관",
+    "park": "공원",
+    "amusement_park": "놀이공원",
+    "aquarium": "아쿠아리움",
+    "zoo": "동물원",
+    "stadium": "경기장",
+    "casino": "카지노",
+    "night_club": "나이트클럽",
+    # 쇼핑
+    "shopping_mall": "쇼핑몰",
+    "department_store": "백화점",
+    "store": "상점",
+    "convenience_store": "편의점",
+    "supermarket": "슈퍼마켓",
+    "clothing_store": "의류매장",
+    "shoe_store": "신발매장",
+    "jewelry_store": "보석상",
+    "book_store": "서점",
+    # 교통
+    "airport": "공항",
+    "train_station": "기차역",
+    "subway_station": "지하철역",
+    "bus_station": "버스터미널",
+    "taxi_stand": "택시승강장",
+    "parking": "주차장",
+    # 기타
+    "spa": "스파",
+    "gym": "헬스장",
+    "beauty_salon": "미용실",
+    "hospital": "병원",
+    "pharmacy": "약국",
+    "bank": "은행",
+    "atm": "ATM",
+    "church": "교회",
+    "temple": "사찰",
+    "point_of_interest": "명소",
+    "establishment": "시설",
+}
+
 
 # ==================== 외부 API 통합 ====================
 
@@ -160,6 +217,17 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
                 if not is_korea_location(float(lat), float(lng)):
                     continue
 
+                # 카테고리 영어 → 한국어 변환
+                types_en = place.get("types", [])
+                types_ko = [GOOGLE_CATEGORY_MAP.get(t, t) for t in types_en]
+
+                # category_main 추출 (첫 번째 의미있는 카테고리)
+                category_main = None
+                for t in types_en:
+                    if t in GOOGLE_CATEGORY_MAP and t not in ["point_of_interest", "establishment"]:
+                        category_main = GOOGLE_CATEGORY_MAP[t]
+                        break
+
                 results.append({
                     "provider": "GOOGLE",
                     "place_api_id": place.get("place_id"),
@@ -168,8 +236,8 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
                     "city": extract_city_from_address(place.get("formatted_address", "")),
                     "latitude": lat,
                     "longitude": lng,
-                    "category_main": None,  # 구글은 카테고리 매핑 복잡
-                    "category_detail": place.get("types", []),
+                    "category_main": category_main,
+                    "category_detail": types_ko,
                     "thumbnail_url": None  # 썸네일은 별도 API 필요
                 })
 
@@ -249,10 +317,10 @@ async def get_google_place_details(place_id: str) -> Optional[Dict]:
 #     return filtered_results[:limit]
 
 async def search_places_hybrid(query: str, category: Optional[str] = None,
-                                city: Optional[str] = None, limit: int = 20) -> List[Dict]:
+                                city: Optional[str] = None) -> List[Dict]:
     """
     카카오 + 구글 병렬 검색 후 결과 통합
-    카테고리 포함 검색 수정후
+    모든 결과 반환 (페이지네이션 없음)
     """
     # ★ 추가: 카테고리가 있으면 검색어에 키워드 추가
     search_query = query
@@ -260,7 +328,7 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
         category_keywords = {
             "숙박": "호텔",
             "호텔": "호텔",
-            "모텔": "모텔", 
+            "모텔": "모텔",
             "펜션": "펜션",
             "음식점": "맛집",
             "카페": "카페",
@@ -269,7 +337,7 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
         keyword = category_keywords.get(category, category)
         if keyword not in query:  # 중복 방지
             search_query = f"{query} {keyword}"
-    
+
     # ★ 수정: query → search_query로 변경
     kakao_task = search_kakao_places(search_query, limit=15)
     google_task = search_google_places(search_query, limit=15)
@@ -282,25 +350,57 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
 
     # ★ 카테고리 필터링은 제거하거나 완화 (검색어에 이미 반영됨)
     # 기존 필터링 코드 삭제 또는 주석 처리
-    
+
     if city:
         unique_results = [r for r in unique_results if r.get("city") == city]
 
-    return unique_results[:limit]
+    return unique_results
+
+
+def normalize_name(name: str) -> str:
+    """
+    장소명 정규화 (중복 비교용)
+    - 공백, 특수문자 제거
+    - 소문자 변환
+    """
+    import re
+    if not name:
+        return ""
+    # 공백, 특수문자 제거 (한글, 영문, 숫자만 유지)
+    normalized = re.sub(r'[^\w가-힣]', '', name.lower())
+    return normalized
 
 
 def remove_duplicate_places(places: List[Dict]) -> List[Dict]:
     """
-    이름 + 주소 유사도로 중복 제거
+    이름 + 좌표 기반 중복 제거
+    - 이름 정규화 후 완전 일치 비교
+    - 좌표 거리로 중복 판단 (100m 이내)
+    - 카카오 결과 우선 (먼저 들어온 것 유지)
     """
-    seen = set()
     unique = []
 
     for place in places:
-        # 간단한 중복 체크: 이름 + 도시
-        key = (place.get("name", "").lower(), place.get("city", "").lower())
-        if key not in seen:
-            seen.add(key)
+        name = normalize_name(place.get("name", ""))
+        lat = place.get("latitude", 0)
+        lng = place.get("longitude", 0)
+
+        is_duplicate = False
+        for existing in unique:
+            existing_name = normalize_name(existing.get("name", ""))
+            existing_lat = existing.get("latitude", 0)
+            existing_lng = existing.get("longitude", 0)
+
+            # 정규화된 이름이 완전히 같은 경우만 체크
+            if name == existing_name:
+                # 좌표 거리 체크 (약 100m 이내면 중복)
+                lat_diff = abs(lat - existing_lat)
+                lng_diff = abs(lng - existing_lng)
+                if lat_diff < 0.001 and lng_diff < 0.001:
+                    is_duplicate = True
+                    break
+
+        if not is_duplicate:
             unique.append(place)
 
     return unique
@@ -337,6 +437,53 @@ async def reverse_geocode(latitude: float, longitude: float) -> Optional[str]:
 
     except Exception as e:
         print(f"❌ 역지오코딩 에러: {e}")
+
+    return None
+
+
+async def geocode_address(address: str) -> Optional[dict]:
+    """
+    주소 → 좌표 + 도로명 주소 변환 (카카오 주소 검색 API)
+
+    Returns:
+        {
+            "road_address": "서울 강남구 테헤란로 123",
+            "latitude": 37.5665,
+            "longitude": 126.9780
+        }
+        또는 None (주소를 찾을 수 없는 경우)
+    """
+    if not KAKAO_REST_API_KEY:
+        return None
+
+    url = "https://dapi.kakao.com/v2/local/search/address.json"
+    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
+    params = {"query": address}
+
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            response = await client.get(url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("documents"):
+                doc = data["documents"][0]
+
+                # 도로명 주소 우선, 없으면 지번 주소
+                road_address = doc.get("road_address")
+                if road_address:
+                    address_name = road_address.get("address_name")
+                else:
+                    address_name = doc.get("address", {}).get("address_name")
+
+                return {
+                    "road_address": address_name,
+                    "latitude": float(doc.get("y")),
+                    "longitude": float(doc.get("x"))
+                }
+
+    except Exception as e:
+        print(f"❌ 주소 검색 에러: {e}")
 
     return None
 

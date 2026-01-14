@@ -13,6 +13,8 @@ from .models import Shortform, ShortformLike, ShortformComment, ShortformView, T
 from .serializers import ShortformSerializer, ShortformCommentSerializer
 from .permissions import IsOwnerOrReadOnly
 
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+
 # Service Layer Imports
 from .services.video_service import VideoService
 from .services.translation_service import TranslationService
@@ -27,6 +29,35 @@ class ShortformViewSet(viewsets.ModelViewSet):
     queryset = Shortform.objects.order_by('-created_at')
     serializer_class = ShortformSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    @extend_schema(
+        summary="숏폼 업로드 (Create Shortform)",
+        description="동영상 파일을 업로드하면 자동으로 메타데이터(길이, 크기)를 추출하고 썸네일을 생성하며, 제목/내용의 언어를 감지하여 저장합니다.",
+        request={
+            'multipart/form-data': {
+                'type': 'object',
+                'properties': {
+                    'video_file': {'type': 'string', 'format': 'binary'},
+                    'title': {'type': 'string'},
+                    'content': {'type': 'string'},
+                    'visibility': {'type': 'string', 'enum': ['PUBLIC', 'PRIVATE', 'UNLISTED']}
+                },
+                'required': ['video_file']
+            }
+        },
+        responses={201: ShortformSerializer}
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="숏폼 목록 조회 (List Shortforms)",
+        description="업로드된 숏폼 영상 목록을 조회합니다. `lang` 파라미터를 통해 실시간 번역된 결과를 받을 수 있습니다.",
+        parameters=[
+            OpenApiParameter(name='lang', description='타겟 언어 코드 (예: eng_Latn, jpn_Jpan)', required=False, type=str),
+            OpenApiParameter(name='batch', description='배치 번역 사용 여부 (true/false) (기본값: true)', required=False, type=bool),
+        ]
+    )
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -124,6 +155,14 @@ class ShortformViewSet(viewsets.ModelViewSet):
                 logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during list")
         return resp
 
+    @extend_schema(
+        summary="숏폼 상세 조회 (Retrieve Shortform)",
+        description="특정 숏폼의 상세 정보를 조회합니다. `lang` 파라미터로 번역된 제목/내용을 요청할 수 있습니다.",
+        parameters=[
+            OpenApiParameter(name='lang', description='타겟 언어 코드 (예: eng_Latn)', required=False, type=str),
+            OpenApiParameter(name='batch', description='배치 번역 사용 여부 (true/false)', required=False, type=bool),
+        ]
+    )
     def retrieve(self, request, *args, **kwargs):
         resp = super().retrieve(request, *args, **kwargs)
         target_lang = request.query_params.get("lang")
@@ -140,6 +179,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
                 logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during retrieve")
         return resp
 
+    @extend_schema(
+        summary="좋아요 (Like)",
+        description="숏폼 영상에 좋아요를 누릅니다. (중복 방지됨)",
+        request=None,
+        responses={200: {'type': 'object', 'properties': {'liked': {'type': 'boolean'}, 'total_likes': {'type': 'integer'}}}}
+    )
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
         shortform = self.get_object()
@@ -153,6 +198,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
             shortform.refresh_from_db(fields=['total_likes'])
         return Response({"liked": True, "total_likes": shortform.total_likes})
 
+    @extend_schema(
+        summary="좋아요 취소 (Unlike)",
+        description="좋아요를 취소합니다.",
+        responses={200: {'type': 'object', 'properties': {'liked': {'type': 'boolean'}, 'total_likes': {'type': 'integer'}}}}
+    )
     @action(detail=True, methods=['delete'])
     def unlike(self, request, pk=None):
         shortform = self.get_object()
@@ -166,6 +216,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
             shortform.refresh_from_db(fields=['total_likes'])
         return Response({"liked": False, "total_likes": shortform.total_likes})
 
+    @extend_schema(
+        summary="댓글 목록/작성 (Comments)",
+        description="GET: 댓글 목록 조회\nPOST: 새 댓글 작성",
+        responses={200: ShortformCommentSerializer(many=True)}
+    )
     @action(detail=True, methods=['get', 'post'])
     def comments(self, request, pk=None):
         shortform = self.get_object()
@@ -187,6 +242,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=400)
 
+    @extend_schema(
+        summary="조회수 증가 (View Count)",
+        description="숏폼 조회수를 1 증가시킵니다. (user/ip 기준 중복 체크)",
+        request=None,
+        responses={200: {'type': 'object', 'properties': {'viewed': {'type': 'boolean'}, 'total_views': {'type': 'integer'}}}}
+    )
     @action(detail=True, methods=['post'])
     def view(self, request, pk=None):
         shortform = self.get_object()

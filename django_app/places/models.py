@@ -39,6 +39,19 @@ class Place(models.Model):
     # "['음식점', '베이커리', '빵']" 처럼 리스트로 저장하기 위해 JSONField 사용
     # SQLite에서는 텍스트로 저장되지만, PostgreSQL에서는 실제 JSON 타입으로 저장됨 (검색 유리)
     category_detail = models.JSONField(default=list, blank=True, help_text="상세 카테고리 리스트")
+
+    # [
+    #     (["호텔", "모텔", "펜션", "게스트하우스", "리조트", "민박", "숙박"], "숙박"),
+    #     (["음식점", "식당", "맛집"], "음식점"),
+    #     (["카페", "커피"], "카페"),
+    #     (["관광", "명소", "여행"], "관광명소"),
+    #     (["문화시설", "박물관", "미술관", "공연장"], "문화시설"),
+    #     (["쇼핑", "백화점", "마트", "시장"], "쇼핑"),
+    #     (["병원", "의원", "약국"], "병원"),
+    #     (["편의점"], "편의점"),
+    #     (["은행", "ATM"], "은행"),
+    #     (["주차장"], "주차장"),
+    # ]
     
     # [4] 위치 정보
     address = models.TextField(help_text="도로명 주소")
@@ -173,3 +186,23 @@ class LocalColumnSectionImage(models.Model):
     class Meta:
         db_table = 'local_column_section_images'
         ordering = ['section', 'order']
+
+
+class RoadviewGameImage(models.Model):
+    """로드뷰 게임 이미지 모델"""
+    image_url = models.CharField(max_length=500)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    city = models.CharField(max_length=50, null=True, blank=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        db_column='created_by_id' # FastAPI와 컬럼명 통일
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'roadview_game_images' # 테이블 이름을 FastAPI와 똑같이 맞춤

@@ -1,70 +1,55 @@
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
 @import "tailwindcss";
 
+/* ⬇️ 핵심: Tailwind v4에서 설정 파일(tailwind.config.js)을 읽도록 강제 연결 */
+@config "../tailwind.config.js";
 
-/* frontend/src/index.css */
+/* Tripko Global Styles 
+  - 폰트: 본고딕 (Noto Sans KR)
+  - 다크모드: Tailwind 'class' 전략 사용
+*/
 
-:root {
-  /* 🌑 다크 모드 기본값 (Dark Mode Default) */
-  --bg-main: #242424;          /* 전체 배경 */
-  --bg-card: #333333;          /* 카드 배경 */
-  --bg-box: #444444;           /* 박스 배경 */
-  --text-main: rgba(255, 255, 255, 0.87); /* 기본 글자 */
-  --text-muted: #aaaaaa;       /* 흐린 글자 */
-  --border-color: #555555;     /* 테두리 색 */
-  --hero-bg: #2a2a2a;          /* 히어로 섹션 배경 */
-  --primary-color: #646cff;    /* 강조 색상 */
+@layer base {
 
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* 1. 기본 폰트 및 렌더링 최적화 */
+  html {
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-  color-scheme: light dark;
-  color: var(--text-main);
-  background-color: var(--bg-main);
+  /* 2. Body 기본 스타일 (Light Mode) */
+  body {
+    /* tailwind.config.js에 정의된 커스텀 컬러 적용 (이제 에러가 나지 않습니다) */
+    @apply bg-background-light text-gray-900;
+    @apply min-h-screen min-w-[320px];
+    @apply transition-colors duration-200;
+    /* 다크모드 전환 부드럽게 */
+  }
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* ☀️ 라이트 모드 오버라이드 (Light Mode Override) */
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg-main: #ffffff;
-    --bg-card: #ffffff;
-    --bg-box: #f1f5f9;
-    --text-main: #213547;
-    --text-muted: #64748b;
-    --border-color: #e2e8f0;
-    --hero-bg: #f8fafc;
-    --primary-color: #3b82f6;
+  /* 3. 다크 모드 스타일 (Dark Mode) */
+  /* html 태그에 'dark' 클래스가 붙으면 이 스타일이 적용됨 */
+  .dark body {
+    @apply bg-background-dark text-gray-100;
   }
 }
 
-body {
-  margin: 0;
-  display: block; /* flex 대신 block 사용 (전체 스크롤 편하게) */
-  min-width: 320px;
-  min-height: 100vh;
+/* Custom Components (Optional) */
+@layer components {
+
+  /* 자주 쓰는 버튼 스타일 */
+  .btn-primary {
+    @apply px-6 py-3 rounded-lg bg-primary text-white font-medium hover:opacity-90 transition-opacity;
+  }
+
+  /* 자주 쓰는 카드 스타일 */
+  .card-base {
+    @apply bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700;
+  }
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--bg-box); /* 버튼 배경도 변수로 */
-  color: var(--text-main);
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-
-button:hover {
-  border-color: var(--primary-color);
+/* 4. Cross-browser fixes */
+/* Force options to have readable contrast regardless of system theme */
+select option {
+  color: #111111;
+  background-color: #ffffff;
 }

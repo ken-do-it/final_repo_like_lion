@@ -56,9 +56,41 @@ DB_NAME = os.getenv("DB_NAME", "korea_travel_db")
 DB_USER = os.getenv("DB_USER", "myuser")
 DB_PASS = os.getenv("DB_PASSWORD", "mypassword")
 
+def init_db():
+    """서버 시작 시 테이블이 없으면 생성합니다."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # 테이블 생성 (IF NOT EXISTS)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS search_vectors (
+                uid SERIAL PRIMARY KEY,
+                target_id INT,
+                category VARCHAR(50),
+                content TEXT,
+                embedding vector(384) 
+            );
+        """)
+        # 인덱스 생성 (속도 향상을 위해 권장 - ivfflat 방식 예시)
+        # 데이터가 적을 땐 에러가 날 수 있으므로 일단 주석 처리하거나, 데이터 쌓인 후 생성
+        # cur.execute("CREATE INDEX ON search_vectors USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);")
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        logger.info("✅ DB 테이블 초기화 완료 (search_vectors)")
+    except Exception as e:
+        logger.error(f"❌ DB 초기화 실패: {e}")
+
 @app.on_event("startup")
 async def startup_event():
     global model
+    
+    # 1. DB 테이블 먼저 생성 (순서 중요)
+    init_db()
+    
+    # 2. 모델 로딩
     logger.info("🚀 AI 모델 로딩 시작...")
     try:
         model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')

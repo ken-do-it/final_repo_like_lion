@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated , AllowAny
 from rest_framework.response import Response
 from .models import TravelPlan , PlanDetail, PlanDetailImage
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from .services import get_or_create_place_from_search
 from .serializers import (
     TravelPlanCreateSerializer,
@@ -17,8 +17,14 @@ from .serializers import (
     PlanDetailUpdateSerializer,
     PlanDetailImageCreateSerializer,
     PlanDetailImageSerializer,
-    PlanDetailEditSerializer,
+    AITravelRequestSerializer,
+    AITravelRequestDetailSerializer,
 )
+from .models import AITravelRequest
+from .ai_service import generate_travel_recommendation
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 @extend_schema(
@@ -35,8 +41,22 @@ from .serializers import (
 def plan_list_create(request):
     """
     여행 일정 목록 조회 / 생성
+
     GET /api/plans/
+    - 모든 여행 일정 목록 조회
+    - 쿼리 파라미터: is_public=true/false, user=<user_id>
+
     POST /api/plans/
+    - 새 여행 일정 생성
+    - 예시:
+    {
+        "title": "서울 여행",
+        "description": "2박 3일 서울 여행",
+        "plan_type": "personal",
+        "start_date": "2026-02-01",
+        "end_date": "2026-02-03",
+        "is_public": true
+    }
     """
     if request.method == 'GET':
         # 목록 조회
@@ -97,10 +117,19 @@ def plan_list_create(request):
 def plan_retrieve_update_delete(request, plan_id):
     """
     여행 일정 조회 / 수정 / 삭제
+
     GET /api/plans/<plan_id>/
-    PUT /api/plans/<plan_id>/
+    - 특정 일정 상세 조회 (포함된 모든 장소 정보 포함)
+
     PATCH /api/plans/<plan_id>/
+    - 일정 부분 수정
+    - 예시: {"title": "수정된 제목", "is_public": false}
+
+    PUT /api/plans/<plan_id>/
+    - 일정 전체 수정
+
     DELETE /api/plans/<plan_id>/
+    - 일정 삭제 (포함된 모든 장소도 함께 삭제됨)
     """
     try:
         plan = TravelPlan.objects.get(id=plan_id)
@@ -160,15 +189,68 @@ def plan_retrieve_update_delete(request, plan_id):
     responses={
         200: PlanDetailUpdateSerializer(many=True),
         201: PlanDetailUpdateSerializer,
-    }
+    },
+    examples=[
+        OpenApiExample(
+            '장소 이름으로 검색 (권장)',
+            value={
+                'place_name': '경복궁',
+                'date': '2026-02-01',
+                'description': '오전 10시 방문',
+                'order_index': 1
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            '기존 장소 ID 사용',
+            value={
+                'place': 5,
+                'date': '2026-02-01',
+                'description': '오후 3시 방문',
+                'order_index': 2
+            },
+            request_only=True,
+        ),
+    ]
 )
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def detail_list_create(request, plan_id):
     """
     날짜별 장소 목록 조회 / 추가
+
     GET /api/plans/<plan_id>/details/
+    - 특정 일정의 모든 장소 목록 조회
+
     POST /api/plans/<plan_id>/details/
+    - 일정에 새 장소 추가
+    - place_name으로 검색: FastAPI를 통해 자동으로 장소 정보 가져옴
+    - place로 직접 지정: 기존 Place ID 사용 (선택사항)
+
+    ⚠️ place와 place_name 중 하나만 제공해야 합니다!
+
+    예시 1 (장소 이름으로 검색 - 권장):
+    {
+        "place_name": "경복궁",
+        "date": "2026-02-01",
+        "description": "오전 10시 방문",
+        "order_index": 1
+    }
+
+    예시 2 (기존 장소 ID 사용):
+    {
+        "place": 5,
+        "date": "2026-02-01",
+        "description": "오전 10시 방문",
+        "order_index": 1
+    }
+
+    ⚠️ 잘못된 예시 (둘 다 제공 - 에러 발생):
+    {
+        "place": 5,
+        "place_name": "경복궁",
+        ...
+    }
     """
     try:
         plan = TravelPlan.objects.get(id=plan_id)
@@ -224,21 +306,50 @@ def detail_list_create(request, plan_id):
 @extend_schema(
     tags=['장소 관리'],
     summary="장소 상세 조회/수정/삭제",
-    request=PlanDetailEditSerializer,
+    request=PlanDetailCreateSerializer,
     responses={
         200: PlanDetailUpdateSerializer,
         204: None,
-    }
+    },
+    examples=[
+        OpenApiExample(
+            '장소 변경 (place_name 사용)',
+            value={
+                'place_name': '남산타워',
+                'description': '석양 감상',
+                'order_index': 2
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            '메모와 날짜만 수정 (PATCH)',
+            value={
+                'date': '2026-02-02',
+                'description': '일정 변경됨'
+            },
+            request_only=True,
+        ),
+    ]
 )
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([AllowAny])
 def detail_retrieve_update_delete(request, detail_id):
     """
     장소 조회 / 수정 / 삭제
+
     GET /api/plans/details/<detail_id>/
-    PUT /api/plans/details/<detail_id>/
+    - 특정 장소 상세 정보 조회
+
     PATCH /api/plans/details/<detail_id>/
+    - 장소 부분 수정 (일부 필드만 변경 가능)
+    - place_name 제공 시: 새로운 장소로 검색 및 변경
+    - 예시: {"place_name": "남산타워", "description": "석양 감상"}
+
+    PUT /api/plans/details/<detail_id>/
+    - 장소 전체 수정 (모든 필드 필요)
+
     DELETE /api/plans/details/<detail_id>/
+    - 장소 삭제
     """
     try:
         detail = PlanDetail.objects.get(id=detail_id)
@@ -259,14 +370,26 @@ def detail_retrieve_update_delete(request, detail_id):
             data=request.data,
             partial=partial
         )
-        
+
         if serializer.is_valid():
-            # plan은 변경 불가, 기존 plan 유지
-            serializer.save(plan=detail.plan)
-            
+            # place_name이 있으면 장소 검색 후 업데이트
+            place_name = request.data.get('place_name')
+
+            if place_name:
+                try:
+                    place, created = get_or_create_place_from_search(place_name)
+                    serializer.save(plan=detail.plan, place=place)
+                except ValueError as e:
+                    return Response({'error': str(e)}, status=404)
+                except requests.RequestException as e:
+                    return Response({'error': '장소 검색 서버에 연결할 수 없습니다'}, status=503)
+            else:
+                # plan은 변경 불가, 기존 plan 유지
+                serializer.save(plan=detail.plan)
+
             response_serializer = PlanDetailUpdateSerializer(detail)
             return Response(response_serializer.data)
-        
+
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
@@ -381,3 +504,147 @@ def image_retrieve_update_delete(request, image_id):
             {'message': '이미지가 삭제되었습니다.'},
             status=status.HTTP_200_OK
         )
+
+
+# ==================== AI 여행 추천 ====================
+@extend_schema(
+    tags=['AI 여행 추천'],
+    summary="AI 여행 추천 요청",
+    request=AITravelRequestSerializer,
+    responses={
+        201: AITravelRequestDetailSerializer,
+        400: {'description': '잘못된 요청'},
+        503: {'description': 'AI 서비스 연결 실패'}
+    }
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def ai_request_create(request):
+    """
+    AI 여행 추천 요청
+
+    POST /api/plans/ai/request/
+    - AI가 여행 일정을 자동으로 생성합니다
+    - 장소는 FastAPI를 통해 자동으로 검색됩니다
+
+    요청 예시:
+    {
+        "destination": "jeju",
+        "start_date": "2026-02-01",
+        "end_date": "2026-02-03",
+        "travel_style": "healing",
+        "companions": 2,
+        "additional_request": "맛집 위주로 추천해주세요"
+    }
+    """
+    serializer = AITravelRequestSerializer(data=request.data)
+
+    if not serializer.is_valid():
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # 임시: 첫 번째 유저 사용 (나중에 request.user로 변경)
+    user = User.objects.first()
+    if not user:
+        user = User.objects.create_user(
+            username='testuser',
+            password='test1234'
+        )
+
+    # AITravelRequest 생성 (status='pending')
+    ai_request = serializer.save(user=user, status='pending')
+
+    try:
+        # AI 추천 생성
+        logger.info(f"AI 추천 요청 시작: {ai_request.id}")
+        plan = generate_travel_recommendation(ai_request)
+        logger.info(f"AI 추천 완료: Plan {plan.id}")
+
+        # 성공 응답
+        response_serializer = AITravelRequestDetailSerializer(ai_request)
+        return Response(
+            response_serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+
+    except ValueError as e:
+        # JSON 파싱 실패 등
+        ai_request.status = 'failed'
+        ai_request.error_message = str(e)
+        ai_request.save()
+
+        logger.error(f"AI 추천 실패 (ValueError): {str(e)}")
+        return Response(
+            {'error': f'AI 응답 처리 실패: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    except Exception as e:
+        # API 호출 실패, 기타 오류
+        ai_request.status = 'failed'
+        ai_request.error_message = str(e)
+        ai_request.save()
+
+        logger.error(f"AI 추천 실패: {str(e)}")
+        return Response(
+            {'error': f'AI 서비스 오류: {str(e)}'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+
+
+@extend_schema(
+    tags=['AI 여행 추천'],
+    summary="AI 추천 요청 상세 조회",
+    responses={200: AITravelRequestDetailSerializer}
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def ai_request_retrieve(request, request_id):
+    """
+    AI 추천 요청 상세 조회
+
+    GET /api/plans/ai/request/<request_id>/
+    - 요청 상태, AI 응답, 생성된 일정 정보 포함
+    """
+    try:
+        ai_request = AITravelRequest.objects.get(id=request_id)
+    except AITravelRequest.DoesNotExist:
+        return Response(
+            {'error': 'AI 추천 요청을 찾을 수 없습니다.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = AITravelRequestDetailSerializer(ai_request)
+    return Response(serializer.data)
+
+
+@extend_schema(
+    tags=['AI 여행 추천'],
+    summary="AI 추천 요청 목록 조회",
+    responses={200: AITravelRequestDetailSerializer(many=True)}
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def ai_requests_list(request):
+    """
+    AI 추천 요청 목록 조회
+
+    GET /api/plans/ai/requests/
+    - 사용자별 필터링: ?user=<user_id>
+    - 상태별 필터링: ?status=success
+    """
+    ai_requests = AITravelRequest.objects.all().order_by('-created_at')
+
+    # 필터링
+    user_id = request.query_params.get('user')
+    if user_id:
+        ai_requests = ai_requests.filter(user_id=user_id)
+
+    status_filter = request.query_params.get('status')
+    if status_filter:
+        ai_requests = ai_requests.filter(status=status_filter)
+
+    serializer = AITravelRequestDetailSerializer(ai_requests, many=True)
+    return Response(serializer.data)

@@ -1,0 +1,286 @@
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Do+Hyeon&display=swap');
+
+:root {
+    --trip-primary: #FF6B6B;
+    /* Warm Coral */
+    --trip-accent: #FF9F43;
+    /* Soft Orange */
+    --trip-bg: #FAFAFA;
+    /* Off-white */
+    --trip-text: #2D3436;
+    /* Dark Grey */
+    --trip-text-light: #636E72;
+    /* Light Grey */
+    --trip-white: #FFFFFF;
+    --trip-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    --trip-shadow-hover: 0 15px 30px rgba(255, 107, 107, 0.2);
+    --trip-radius: 24px;
+    --trip-radius-sm: 16px;
+}
+
+.trip-container {
+    font-family: 'Nunito', 'Do Hyeon', sans-serif;
+    background-color: var(--trip-bg);
+    min-height: 100vh;
+    color: var(--trip-text);
+    padding-bottom: 80px;
+}
+
+/* Navbar */
+.trip-navbar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(250, 250, 250, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.trip-logo {
+    font-family: 'Do Hyeon', sans-serif;
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, var(--trip-primary), var(--trip-accent));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    cursor: pointer;
+}
+
+.trip-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.lang-selector {
+    border: 1px solid #eee;
+    padding: 0.5rem 1rem;
+    border-radius: var(--trip-radius);
+    background: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--trip-text);
+}
+
+.lang-selector:hover {
+    border-color: var(--trip-primary);
+    color: var(--trip-primary);
+}
+
+.auth-btn {
+    background: linear-gradient(135deg, var(--trip-primary), var(--trip-accent));
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: var(--trip-radius);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+    transition: transform 0.2s;
+}
+
+.auth-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Hero Section */
+.trip-hero {
+    position: relative;
+    padding: 4rem 2rem 6rem;
+    text-align: center;
+    overflow: hidden;
+}
+
+.trip-hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.trip-hero h1 span {
+    color: var(--trip-primary);
+}
+
+.trip-hero p {
+    color: var(--trip-text-light);
+    font-size: 1.2rem;
+    margin-bottom: 3rem;
+}
+
+.ai-search-box {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+    display: flex;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 50px;
+    box-shadow: var(--trip-shadow);
+    border: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.ai-search-box:focus-within {
+    border-color: var(--trip-accent);
+    transform: scale(1.02);
+}
+
+.ai-search-box input {
+    flex: 1;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    outline: none;
+    border-radius: 50px;
+    font-family: inherit;
+}
+
+.ai-magic-btn {
+    background: var(--trip-text);
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: background 0.3s;
+}
+
+.ai-magic-btn:hover {
+    background: var(--trip-primary);
+}
+
+/* Category Pills */
+.category-scroll {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+}
+
+.cat-pill {
+    padding: 0.8rem 1.5rem;
+    background: white;
+    border-radius: var(--trip-radius);
+    font-weight: 700;
+    color: var(--trip-text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.cat-pill:hover,
+.cat-pill.active {
+    background: var(--trip-text);
+    color: white;
+    transform: translateY(-3px);
+}
+
+.cat-pill.active {
+    background: var(--trip-primary);
+}
+
+/* Feed Grid */
+.trip-feed {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.trip-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--trip-shadow);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    position: relative;
+}
+
+.trip-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--trip-shadow-hover);
+}
+
+.card-image-wrapper {
+    height: 350px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.trip-card:hover .card-image-wrapper img {
+    transform: scale(1.1);
+}
+
+.card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 1.5rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+    color: white;
+}
+
+.card-tag {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    padding: 0.3rem 0.8rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+}
+
+.card-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    font-family: 'Do Hyeon', sans-serif;
+}
+
+.card-location {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .trip-hero h1 {
+        font-size: 2.2rem;
+    }
+
+    .trip-feed {
+        grid-template-columns: 1fr;
+    }
+
+    .card-image-wrapper {
+        height: 250px;
+    }
+}

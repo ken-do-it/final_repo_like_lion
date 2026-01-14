@@ -5,8 +5,15 @@ import { BrowserRouter } from 'react-router-dom' // ★ 추가
 import App from './App.jsx'
 import './index.css'
 
+import { LanguageProvider } from './context/LanguageContext';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
-    <App />
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
   </BrowserRouter>
 )
+
+
+
