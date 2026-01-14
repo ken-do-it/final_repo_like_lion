@@ -34,7 +34,14 @@ const GeoImageUploader = () => {
     try {
       const response = await placesAxios.post(`/roadview/start-from-review/${selectedReview.review_id}`);
       const { lat, lng } = response.data;
-      navigate('/game', { state: { lat, lng } });
+      navigate('/game', {
+        state: {
+          lat,
+          lng,
+          imageUrl: selectedReview.image_url,
+          totalPhotos: reviews.length
+        }
+      });
     } catch (error) {
       console.error("Failed to start game from review:", error);
       setError("Failed to start game from review.");
@@ -250,8 +257,8 @@ const GeoImageUploader = () => {
                     key={review.review_id}
                     onClick={() => setSelectedReview(review)}
                     className={`relative aspect-square cursor-pointer rounded-xl overflow-hidden border-2 transition-all ${selectedReview?.review_id === review.review_id
-                        ? 'border-[#1392ec] ring-2 ring-[#1392ec]/20'
-                        : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                      ? 'border-[#1392ec] ring-2 ring-[#1392ec]/20'
+                      : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                   >
                     <img src={review.image_url} alt={review.place_name} className="w-full h-full object-cover" />
