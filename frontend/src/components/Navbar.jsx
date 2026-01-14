@@ -133,15 +133,110 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                     {/* Separator */}
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
 
-                    {/* Login / Profile */}
-                    <button className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer">
-                        <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                        <div className="size-7 rounded-full bg-gradient-to-tr from-blue-400 to-[#1392ec] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-[#1e2b36]">
-                            JS
-                        </div>
-                    </button>
+                    {/* Login / Profile Section */}
+                    {(() => {
+                        const token = localStorage.getItem('access_token');
+                        const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+                        const menuRef = React.useRef(null);
+
+                        // Close menu when clicking outside
+                        React.useEffect(() => {
+                            const handleClickOutside = (event) => {
+                                if (menuRef.current && !menuRef.current.contains(event.target)) {
+                                    setIsMenuOpen(false);
+                                }
+                            };
+                            document.addEventListener('mousedown', handleClickOutside);
+                            return () => document.removeEventListener('mousedown', handleClickOutside);
+                        }, []);
+
+                        const handleLogout = () => {
+                            localStorage.removeItem('access_token');
+                            localStorage.removeItem('refresh_token');
+                            localStorage.removeItem('user');
+                            navigate('/'); // or refresh window.location.reload() if needed to clear state
+                            window.location.reload();
+                        };
+
+                        if (token) {
+                            // Extract user info safely
+                            let user = null;
+                            try {
+                                const storedUser = localStorage.getItem('user');
+                                if (storedUser) {
+                                    user = JSON.parse(storedUser);
+                                }
+                            } catch (e) {
+                                console.error("Failed to parse user data", e);
+                            }
+
+                            // Fallback display values
+                            const initials = user?.nickname
+                                ? user.nickname.substring(0, 2).toUpperCase()
+                                : (user?.username ? user.username.substring(0, 2).toUpperCase() : 'ME');
+
+                            const displayName = user?.nickname || user?.username || 'User';
+                            const displayEmail = user?.email || 'user@example.com';
+
+                            return (
+                                <div className="relative" ref={menuRef}>
+                                    <button
+                                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                        className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer"
+                                    >
+                                        <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                        </svg>
+                                        <div className="size-7 rounded-full bg-gradient-to-tr from-blue-400 to-[#1392ec] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-[#1e2b36] overflow-hidden">
+                                            {initials}
+                                        </div>
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    {isMenuOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-[#1e2b36] shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50 transform origin-top-right transition-all">
+                                            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayName}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{displayEmail}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setIsMenuOpen(false);
+                                                    navigate('/mypage');
+                                                }}
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                            >
+                                                마이페이지
+                                            </button>
+                                            <button
+                                                onClick={handleLogout}
+                                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                            >
+                                                로그아웃
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        } else {
+                            return (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => navigate('/login-page')}
+                                        className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-[#1392ec] dark:hover:text-[#1392ec] px-3 py-2 transition-colors"
+                                    >
+                                        로그인
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/register-page')}
+                                        className="hidden sm:block text-sm font-medium text-white bg-[#1392ec] hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors shadow-sm hover:shadow-md"
+                                    >
+                                        회원가입
+                                    </button>
+                                </div>
+                            );
+                        }
+                    })()}
                 </div>
             </div>
         </nav>
