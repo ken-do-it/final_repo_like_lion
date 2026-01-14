@@ -186,3 +186,23 @@ class LocalColumnSectionImage(models.Model):
     class Meta:
         db_table = 'local_column_section_images'
         ordering = ['section', 'order']
+
+
+class RoadviewGameImage(models.Model):
+    """로드뷰 게임 이미지 모델"""
+    image_url = models.CharField(max_length=500)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    city = models.CharField(max_length=50, null=True, blank=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        db_column='created_by_id' # FastAPI와 컬럼명 통일
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'roadview_game_images' # 테이블 이름을 FastAPI와 똑같이 맞춤
