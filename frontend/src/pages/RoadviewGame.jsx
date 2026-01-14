@@ -125,40 +125,11 @@ const RoadviewGame = () => {
 
   return (
     <div className="bg-[#f6f7f8] dark:bg-[#101a22] text-[#0d161b] dark:text-white font-sans min-h-screen flex flex-col">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e7eef3] dark:border-slate-800 bg-white/80 dark:bg-[#101a22]/90 backdrop-blur-md px-6 py-3 lg:px-10">
-        <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="flex items-center justify-center size-10 rounded-xl bg-[#1392ec]/10 text-[#1392ec]">
-            <span className="text-[24px]">🌍</span>
-          </div>
-          <h2 className="text-xl font-bold leading-tight tracking-tight">Tripko Roadview</h2>
-        </div>
 
-        {/* Desktop Level Indicator */}
-        <div className="hidden md:flex flex-1 max-w-[400px] mx-10 flex-col gap-1">
-          <div className="flex justify-between items-end px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Level 5</span>
-            <span className="text-xs font-bold text-[#1392ec]">4,500 XP</span>
-          </div>
-          <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-            <div className="h-full rounded-full bg-[#1392ec] transition-all duration-500" style={{ width: '75%' }}></div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end mr-2 hidden sm:flex">
-            <span className="text-sm font-bold">Explorer</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Pro Traveler</span>
-          </div>
-          <div className="bg-gray-300 rounded-full size-10 ring-2 ring-white dark:ring-slate-800 shadow-sm cursor-pointer overflow-hidden">
-            <img src="https://via.placeholder.com/40" alt="User" />
-          </div>
-        </div>
-      </header>
 
       {/* Main Game Area */}
-      {/* Height calculation to fit viewport minus header */}
-      <main className="flex-1 w-full max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row gap-6 h-[calc(100vh-80px)]">
+      {/* Height calculation to fit viewport minus global navbar (approx 64px) */}
+      <main className="flex-1 w-full max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row gap-6 h-[calc(100vh-64px)]">
 
         {/* Left Column: Panorama */}
         <div className="relative flex-1 group w-full h-[50vh] lg:h-auto rounded-2xl overflow-hidden shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
@@ -188,6 +159,17 @@ const RoadviewGame = () => {
 
         {/* Right Column: Controls & Map */}
         <aside className="w-full lg:w-[400px] xl:w-[440px] flex flex-col gap-4 lg:h-full overflow-y-auto scrollbar-hide">
+
+          {/* Target Photo Card */}
+          {locationState?.imageUrl && (
+            <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-4 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 flex flex-col gap-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Target Photo</h3>
+              <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <img src={locationState.imageUrl} alt="Target" className="w-full h-full object-contain" />
+              </div>
+            </div>
+          )}
+
           {/* Game Info Card */}
           <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-5 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -196,7 +178,8 @@ const RoadviewGame = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Round</span>
-                <span className="text-lg font-bold">{round} <span className="text-slate-400 text-sm">/ {totalRounds}</span></span>
+                {/* Display Round as 1 / Total Photos */}
+                <span className="text-lg font-bold">{round} <span className="text-slate-400 text-sm">/ {locationState?.totalPhotos || 1}</span></span>
               </div>
             </div>
             <div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-700"></div>
@@ -215,7 +198,7 @@ const RoadviewGame = () => {
           <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-5 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 flex flex-col flex-1 gap-4">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-[#0d161b] dark:text-white">Where was this taken?</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Drop a pin on the map to guess the location.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Find the location in the photo on the map!</p>
             </div>
 
             {/* Interactive Map Container */}
@@ -276,9 +259,7 @@ const RoadviewGame = () => {
                     <span>✅</span>
                     Confirm Guess
                   </button>
-                  <button onClick={handleNext} className="w-full h-10 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-medium text-sm transition-colors">
-                    I don't know (Skip)
-                  </button>
+                  {/* Skip Button Removed */}
                 </>
               ) : (
                 <button

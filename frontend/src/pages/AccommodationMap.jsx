@@ -71,7 +71,7 @@ const AccommodationMap = () => {
         type: selectedType || undefined
       };
 
-      const response = await placesAxios.get('/places/api/v1/accommodations/nearby', { params });
+      const response = await placesAxios.get('/accommodations/nearby', { params });
       const data = response.data;
       const validAccommodations = (data.results || []).filter(
         (acc) => acc.latitude && acc.longitude
