@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { searchAxios } from '../api/axios';
 
 
@@ -7,7 +7,7 @@ import { searchAxios } from '../api/axios';
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('query');
-  const navigate = useNavigate();
+
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
