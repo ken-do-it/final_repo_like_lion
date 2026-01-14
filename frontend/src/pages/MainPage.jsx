@@ -4,7 +4,6 @@ import axiosInstance from '../api/axios';
 import { useLanguage } from '../context/LanguageContext';
 import { API_LANG_CODES } from '../constants/translations';
 
-import Layout from '../components/layout/Layout';
 
 const MainPage = () => {
   const navigate = useNavigate();
