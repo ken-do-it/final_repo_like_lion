@@ -12,7 +12,17 @@ export const translations = {
         nav_shorts: "Shorts",
         nav_game: "Roadview Game",
         nav_stays: "Stays",
+        nav_stays: "Stays",
         nav_mytrips: "My Trips",
+        // Sidebar Specific
+        nav_geoquiz: "Geo Quiz Uploader",
+        nav_ai_plan: "AI Itinerary",
+        nav_column: "Local Food Column",
+        nav_ticket: "Flight Booking",
+        nav_likes: "Liked Places",
+        nav_settings: "Settings",
+        nav_support: "Support",
+        nav_version: "Version Info",
 
         // MainPage Hero
         hero_title_1: "Where to next?",
@@ -60,6 +70,15 @@ export const translations = {
         nav_game: "로드뷰 게임",
         nav_stays: "숙소",
         nav_mytrips: "나의 여행",
+        // Sidebar Specific
+        nav_geoquiz: "지오 퀴즈 업로더",
+        nav_ai_plan: "AI 일정 만들기",
+        nav_column: "현지인 맛집 칼럼",
+        nav_ticket: "항공권 예약",
+        nav_likes: "찜한 장소",
+        nav_settings: "설정",
+        nav_support: "고객센터",
+        nav_version: "버전 정보",
 
         // MainPage Hero
         hero_title_1: "어디로 떠나시나요?",
@@ -107,6 +126,15 @@ export const translations = {
         nav_game: "ロードビュー",
         nav_stays: "宿泊",
         nav_mytrips: "旅程",
+        // Sidebar Specific
+        nav_geoquiz: "ジオクイズ・アップローダー",
+        nav_ai_plan: "AI日程作成",
+        nav_column: "地元グルメコラム",
+        nav_ticket: "航空券予約",
+        nav_likes: "お気に入り",
+        nav_settings: "設定",
+        nav_support: "カスタマーサポート",
+        nav_version: "バージョン情報",
 
         // MainPage Hero
         hero_title_1: "次はどこへ？",
@@ -154,6 +182,15 @@ export const translations = {
         nav_game: "街景游戏",
         nav_stays: "住宿",
         nav_mytrips: "我的行程",
+        // Sidebar Specific
+        nav_geoquiz: "地理测验上传",
+        nav_ai_plan: "AI行程生成",
+        nav_column: "本地美食专栏",
+        nav_ticket: "机票预订",
+        nav_likes: "收藏地点",
+        nav_settings: "设置",
+        nav_support: "客户中心",
+        nav_version: "版本信息",
 
         // MainPage Hero
         hero_title_1: "下个目的地？",

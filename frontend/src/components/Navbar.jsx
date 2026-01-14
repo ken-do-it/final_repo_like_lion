@@ -118,10 +118,10 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                             onChange={(e) => setLanguage(e.target.value)}
                             className="appearance-none bg-transparent font-medium text-sm text-gray-600 dark:text-gray-300 hover:text-[#111111] dark:hover:text-white cursor-pointer outline-none pl-2 pr-6 py-1 focus:ring-0 border-none"
                         >
-                            <option value="en">ENG</option>
-                            <option value="ko">KOR</option>
-                            <option value="jp">JPN</option>
-                            <option value="cn">CHN</option>
+                            <option value="English">ENG</option>
+                            <option value="한국어">KOR</option>
+                            <option value="日本語">JPN</option>
+                            <option value="中文">CHN</option>
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-500">
                             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
