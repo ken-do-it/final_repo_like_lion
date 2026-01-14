@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../../components/layout/Layout';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../api/axios';
@@ -52,66 +51,75 @@ const MyPage = () => {
         }
     };
 
-    if (loading) return <Layout><div className="flex justify-center py-20">로딩 중...</div></Layout>;
+    if (loading) return <div className="flex justify-center py-20">로딩 중...</div>;
 
     const renderProfile = () => (
-        <div className="max-w-2xl">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold dark:text-white">내 정보</h3>
+        <div className="max-w-3xl mx-auto">
+            <div className="flex justify-between items-end mb-8 border-b border-slate-100 dark:border-slate-700 pb-4">
+                <div>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">기본 정보</h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">다른 사용자에게 공개되는 프로필 정보입니다.</p>
+                </div>
                 {!isEditingProfile && (
-                    <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)}>
-                        프로필 수정
+                    <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} className="rounded-lg border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800">
+                        ✏️ 수정하기
                     </Button>
                 )}
             </div>
 
             {isEditingProfile ? (
-                <form onSubmit={handleProfileUpdate} className="space-y-4">
-                    <Input
-                        id="nickname" label="닉네임"
-                        value={profileForm.nickname || ''}
-                        onChange={(e) => setProfileForm({ ...profileForm, nickname: e.target.value })}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                    <div className="grid grid-cols-1 gap-6">
                         <Input
-                            id="country" label="국가"
-                            value={profileForm.country || ''}
-                            onChange={(e) => setProfileForm({ ...profileForm, country: e.target.value })}
+                            id="nickname" label="닉네임"
+                            value={profileForm.nickname || ''}
+                            onChange={(e) => setProfileForm({ ...profileForm, nickname: e.target.value })}
+                            className="bg-slate-50 dark:bg-slate-800/50"
                         />
+                        <div className="grid grid-cols-2 gap-6">
+                            <Input
+                                id="country" label="국가"
+                                value={profileForm.country || ''}
+                                onChange={(e) => setProfileForm({ ...profileForm, country: e.target.value })}
+                            />
+                            <Input
+                                id="city" label="도시"
+                                value={profileForm.city || ''}
+                                onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                            />
+                        </div>
                         <Input
-                            id="city" label="도시"
-                            value={profileForm.city || ''}
-                            onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                            id="phone_number" label="전화번호"
+                            value={profileForm.phone_number || ''}
+                            onChange={(e) => setProfileForm({ ...profileForm, phone_number: e.target.value })}
                         />
                     </div>
-                    <Input
-                        id="phone_number" label="전화번호"
-                        value={profileForm.phone_number || ''}
-                        onChange={(e) => setProfileForm({ ...profileForm, phone_number: e.target.value })}
-                    />
-                    <div className="flex space-x-3 pt-2">
-                        <Button type="submit">저장</Button>
-                        <Button variant="ghost" onClick={() => { setIsEditingProfile(false); setProfileForm(user); }}>취소</Button>
+                    <div className="flex space-x-3 pt-4 border-t border-slate-100 dark:border-slate-700 mt-6">
+                        <Button type="submit" className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6">저장 완료</Button>
+                        <Button variant="ghost" className="hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" onClick={() => { setIsEditingProfile(false); setProfileForm(user); }}>취소</Button>
                     </div>
                 </form>
             ) : (
-                <div className="space-y-4 text-gray-700 dark:text-gray-300">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-4 bg-white dark:bg-dark-surface rounded-lg border border-gray-100 dark:border-gray-700">
-                            <span className="block text-xs text-gray-500 uppercase tracking-wide">아이디</span>
-                            <span className="font-medium text-lg">{user?.username}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors group">
+                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">아이디</div>
+                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                            {user?.username}
+                            <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400">ID</span>
                         </div>
-                        <div className="p-4 bg-white dark:bg-dark-surface rounded-lg border border-gray-100 dark:border-gray-700">
-                            <span className="block text-xs text-gray-500 uppercase tracking-wide">이메일</span>
-                            <span className="font-medium text-lg">{user?.email}</span>
-                        </div>
-                        <div className="p-4 bg-white dark:bg-dark-surface rounded-lg border border-gray-100 dark:border-gray-700">
-                            <span className="block text-xs text-gray-500 uppercase tracking-wide">닉네임</span>
-                            <span className="font-medium text-lg">{user?.nickname}</span>
-                        </div>
-                        <div className="p-4 bg-white dark:bg-dark-surface rounded-lg border border-gray-100 dark:border-gray-700">
-                            <span className="block text-xs text-gray-500 uppercase tracking-wide">위치</span>
-                            <span className="font-medium text-lg">{user?.city}, {user?.country}</span>
+                    </div>
+                    <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
+                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">이메일</div>
+                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100 break-all">{user?.email}</div>
+                    </div>
+                    <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
+                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">닉네임</div>
+                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100">{user?.nickname}</div>
+                    </div>
+                    <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
+                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">위치</div>
+                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                            {user?.city && user?.country ? `${user.city}, ${user.country}` : <span className="text-slate-400 italic">미설정</span>}
                         </div>
                     </div>
                 </div>
@@ -144,30 +152,47 @@ const MyPage = () => {
     };
 
     return (
-        <Layout>
-            <div className="container mx-auto px-4 py-12">
+        <div className="bg-[#f6f7f8] dark:bg-[#101a22] min-h-screen transition-colors duration-300">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+                {/* Header Section */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">마이페이지</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-2">내 계정 정보와 활동을 관리하세요.</p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                     {/* Sidebar */}
                     <div className="md:col-span-3">
-                        <div className="bg-white dark:bg-dark-surface rounded-xl shadow-sm overflow-hidden sticky top-24">
-                            <div className="p-6 text-center border-b border-gray-100 dark:border-gray-700 bg-gradient-to-br from-primary/10 to-transparent">
-                                <div className="w-24 h-24 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full mb-4 flex items-center justify-center">
-                                    <span className="text-3xl">👤</span>
+                        <div className="bg-white dark:bg-[#1e2b36] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden sticky top-24">
+                            <div className="p-8 flex flex-col items-center border-b border-slate-100 dark:border-slate-700">
+                                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-100 to-blue-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center mb-4 ring-4 ring-white dark:ring-[#1e2b36] shadow-lg">
+                                    <span className="text-4xl">😎</span>
                                 </div>
-                                <h2 className="text-xl font-bold dark:text-white">{user?.nickname}</h2>
-                                <p className="text-sm text-gray-500">{user?.email}</p>
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{user?.nickname || '여행자'}</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{user?.email}</p>
                             </div>
-                            <nav className="p-2 space-y-1">
+                            <nav className="p-3 space-y-1">
                                 {['profile', 'shorts', 'schedules', 'columns', 'reservations', 'preferences', 'saved', 'reviews'].map((tab) => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`w-full text-left px-4 py-3 rounded-lg transition-colors
+                                        className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 font-medium flex items-center gap-3
                                             ${activeTab === tab
-                                                ? 'bg-primary text-white font-medium'
-                                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}
+                                                ? 'bg-[#1392ec] text-white shadow-md shadow-blue-500/20 translate-x-1'
+                                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}
                                         `}
                                     >
+                                        <span className="opacity-70">
+                                            {tab === 'profile' && '👤'}
+                                            {tab === 'shorts' && '🎬'}
+                                            {tab === 'schedules' && '🗓️'}
+                                            {tab === 'columns' && '✍️'}
+                                            {tab === 'reservations' && '✈️'}
+                                            {tab === 'preferences' && '⚙️'}
+                                            {tab === 'saved' && '💾'}
+                                            {tab === 'reviews' && '⭐'}
+                                        </span>
                                         {tabNames[tab]}
                                     </button>
                                 ))}
@@ -177,42 +202,44 @@ const MyPage = () => {
 
                     {/* Main Content Area */}
                     <div className="md:col-span-9">
-                        <div className="bg-white/50 dark:bg-dark-surface/50 backdrop-blur-sm rounded-2xl p-6 sm:p-10 border border-gray-200 dark:border-gray-800 min-h-[500px]">
+                        <div className="bg-white dark:bg-[#1e2b36] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 sm:p-10 min-h-[600px]">
                             {activeTab === 'profile' && renderProfile()}
                             {activeTab === 'preferences' && renderPreferences()}
                             {activeTab === 'shorts' && (
-                                <div className="text-center py-20 text-gray-500">
-                                    <h3 className="text-xl font-bold dark:text-white mb-4">내 쇼츠</h3>
+                                <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">🎬</div>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">내 쇼츠</h3>
                                     <p>업로드한 쇼츠 영상이 여기에 표시됩니다.</p>
                                 </div>
                             )}
                             {activeTab === 'schedules' && (
-                                <div className="text-center py-20 text-gray-500">
-                                    <h3 className="text-xl font-bold dark:text-white mb-4">내 일정</h3>
-                                    <p>생성한 여행 일정을 확인하고 관리하세요.</p>
-                                    <Button className="mt-4">새 일정 만들기</Button>
-                                </div>
-                            )}
-                            {activeTab === 'columns' && (
-                                <div className="text-center py-20 text-gray-500">
-                                    <h3 className="text-xl font-bold dark:text-white mb-4">내 칼럼</h3>
-                                    <p>작성한 칼럼과 댓글 내역을 확인할 수 있습니다.</p>
+                                <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">🗓️</div>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">내 일정</h3>
+                                    <p className="mb-6">아직 생성된 일정이 없습니다.</p>
+                                    <Button className="bg-[#1392ec] hover:bg-blue-600 text-white rounded-xl px-8">새 일정 만들기</Button>
                                 </div>
                             )}
                             {activeTab === 'reservations' && (
-                                <div className="text-center py-20 text-gray-500">
-                                    <h3 className="text-xl font-bold dark:text-white mb-4">내 예약</h3>
-                                    <p className="mb-4">항공권 예약 내역을 확인하세요.</p>
-                                    <p className="text-sm">(숙박 및 기타 예약 기능은 추후 제공될 예정입니다)</p>
+                                <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">✈️</div>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">내 예약</h3>
+                                    <p>항공권 예약 내역을 확인하세요.</p>
                                 </div>
                             )}
-                            {activeTab === 'saved' && <div className="text-center py-20 text-gray-500">저장한 장소 기능 준비 중입니다.</div>}
-                            {activeTab === 'reviews' && <div className="text-center py-20 text-gray-500">내 리뷰 기능 준비 중입니다.</div>}
+                            {/* Generic placeholder for others */}
+                            {['columns', 'saved', 'reviews'].includes(activeTab) && (
+                                <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-3xl">🚧</div>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">준비 중</h3>
+                                    <p>{tabNames[activeTab]} 기능은 곧 제공될 예정입니다.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-        </Layout>
+        </div>
     );
 };
 
