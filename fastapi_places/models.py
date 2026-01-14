@@ -198,3 +198,16 @@ class LocalColumnSectionImage(Base):
 
     # Relationships
     section = relationship("LocalColumnSection", back_populates="images")
+
+
+class RoadviewGameImage(Base):
+    """로드뷰 게임 이미지 모델"""
+    __tablename__ = 'roadview_game_images'
+
+    id = Column(Integer, primary_key=True)
+    image_url = Column(String(500), nullable=False)
+    latitude = Column(Numeric(10, 7), nullable=False)
+    longitude = Column(Numeric(10, 7), nullable=False)
+    city = Column(String(50), nullable=True)
+    created_by_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
