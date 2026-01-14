@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { searchAxios } from '../api/axios';
 
+import Layout from '../components/layout/Layout';
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
