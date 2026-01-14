@@ -10,6 +10,17 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
     // Search State
     const [searchQuery, setSearchQuery] = React.useState('');
 
+    // Sync search input with URL query parameter
+    React.useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const query = params.get('query');
+        if (query) {
+            setSearchQuery(query);
+        } else {
+            setSearchQuery('');
+        }
+    }, [location.search]);
+
     const handleSearch = (e) => {
         if (e.key === 'Enter' || e.type === 'click') {
             if (searchQuery.trim()) {
