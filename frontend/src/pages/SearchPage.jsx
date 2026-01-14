@@ -17,8 +17,8 @@ const SearchPage = () => {
 
       setLoading(true);
       try {
-        // searchAxios는 baseURL 설정에 따라 '/search' 또는 'http://.../search'로 요청됨
-        const response = await searchAxios.post('/search', { query });
+        // searchAxios는 baseURL 설정에 따라 '/search' 또는 'http://.../search'로 요청됨 -> baseurl이 이미 /search를 지정하고 있어 빈문자열로 수정
+        const response = await searchAxios.post('', { query });
         setResults(response.data);
       } catch (error) {
         console.error("Search error:", error);
