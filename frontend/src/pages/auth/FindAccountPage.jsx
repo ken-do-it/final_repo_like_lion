@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../api/axios';
@@ -47,86 +46,84 @@ const FindAccountPage = () => {
     };
 
     return (
-        <>
-            <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[calc(100vh-64px-130px)]">
-                <div className="w-full max-w-md bg-white dark:bg-dark-surface p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800">
+        <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[calc(100vh-64px-130px)]">
+            <div className="w-full max-w-md bg-white dark:bg-dark-surface p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800">
 
-                    {/* Tabs */}
-                    <div className="flex border-b border-gray-200 dark:border-gray-700 mb-8">
-                        <button
-                            className={`flex-1 py-4 text-center font-medium transition-colors ${activeTab === 'find_id' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                            onClick={() => { setActiveTab('find_id'); setStep(1); setMessage(''); setEmail(''); }}
-                        >
-                            아이디 찾기
-                        </button>
-                        <button
-                            className={`flex-1 py-4 text-center font-medium transition-colors ${activeTab === 'find_pw' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
-                            onClick={() => { setActiveTab('find_pw'); setStep(1); setMessage(''); setEmail(''); }}
-                        >
-                            비밀번호 재설정
-                        </button>
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200 dark:border-gray-700 mb-8">
+                    <button
+                        className={`flex-1 py-4 text-center font-medium transition-colors ${activeTab === 'find_id' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => { setActiveTab('find_id'); setStep(1); setMessage(''); setEmail(''); }}
+                    >
+                        아이디 찾기
+                    </button>
+                    <button
+                        className={`flex-1 py-4 text-center font-medium transition-colors ${activeTab === 'find_pw' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => { setActiveTab('find_pw'); setStep(1); setMessage(''); setEmail(''); }}
+                    >
+                        비밀번호 재설정
+                    </button>
+                </div>
+
+                <div className="space-y-6">
+                    <div className="text-center mb-4">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                            {activeTab === 'find_id' ? '아이디 찾기' : '비밀번호 재설정'}
+                        </h2>
+                        <p className="text-sm text-gray-500">
+                            {step === 1 && "가입할 때 사용한 이메일 주소를 입력하세요"}
+                            {step === 2 && "이메일로 전송된 인증 코드를 입력하세요"}
+                            {step === 3 && "처리 완료되었습니다"}
+                        </p>
                     </div>
 
-                    <div className="space-y-6">
-                        <div className="text-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                {activeTab === 'find_id' ? '아이디 찾기' : '비밀번호 재설정'}
-                            </h2>
-                            <p className="text-sm text-gray-500">
-                                {step === 1 && "가입할 때 사용한 이메일 주소를 입력하세요"}
-                                {step === 2 && "이메일로 전송된 인증 코드를 입력하세요"}
-                                {step === 3 && "처리 완료되었습니다"}
-                            </p>
+                    {message && (
+                        <div className={`p-3 text-sm rounded ${step === 3 ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
+                            {message}
                         </div>
+                    )}
 
-                        {message && (
-                            <div className={`p-3 text-sm rounded ${step === 3 ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
-                                {message}
-                            </div>
-                        )}
+                    {step === 1 && (
+                        <>
+                            <Input
+                                id="email"
+                                type="email"
+                                label="이메일 주소"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="name@example.com"
+                            />
+                            <Button fullWidth onClick={handleSendVerification} disabled={!email || isLoading}>
+                                {isLoading ? '전송 중...' : '인증 코드 보내기'}
+                            </Button>
+                        </>
+                    )}
 
-                        {step === 1 && (
-                            <>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    label="이메일 주소"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="name@example.com"
-                                />
-                                <Button fullWidth onClick={handleSendVerification} disabled={!email || isLoading}>
-                                    {isLoading ? '전송 중...' : '인증 코드 보내기'}
-                                </Button>
-                            </>
-                        )}
+                    {step === 2 && (
+                        <>
+                            <Input
+                                id="code"
+                                label="인증 코드"
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                placeholder="인증코드 6자리"
+                            />
+                            <Button fullWidth onClick={handleVerify} disabled={!code || isLoading}>
+                                {isLoading ? '확인 중...' : '코드 확인'}
+                            </Button>
+                        </>
+                    )}
 
-                        {step === 2 && (
-                            <>
-                                <Input
-                                    id="code"
-                                    label="인증 코드"
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    placeholder="인증코드 6자리"
-                                />
-                                <Button fullWidth onClick={handleVerify} disabled={!code || isLoading}>
-                                    {isLoading ? '확인 중...' : '코드 확인'}
-                                </Button>
-                            </>
-                        )}
-
-                        {step === 3 && (
-                            <div className="text-center pt-4">
-                                <Link to="/login-page">
-                                    <Button fullWidth variant="outline">로그인 페이지로</Button>
-                                </Link>
-                            </div>
-                        )}
-                    </div>
+                    {step === 3 && (
+                        <div className="text-center pt-4">
+                            <Link to="/login-page">
+                                <Button fullWidth variant="outline">로그인 페이지로</Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 
