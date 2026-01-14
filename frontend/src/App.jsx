@@ -11,6 +11,11 @@ import ShortsPage from './pages/shorts/ShortsPage';
 import ShortsDetailPage from './pages/shorts/ShortsDetailPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
+import FindAccountPage from './pages/auth/FindAccountPage';
+import MyPage from './pages/mypage/MyPage';
+import Footer from './components/Footer';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import './App.css'; // Global styles if any, strictly Tailwind preferred
@@ -66,6 +71,12 @@ function App() {
         {/* Core Pages */}
         <Route path="/" element={<MainPage />} />
         <Route path="/search" element={<SearchPage />} />
+
+        {/* Auth Pages */}
+        <Route path="/login-page" element={<LoginPage />} />
+        <Route path="/register-page" element={<SignupPage />} />
+        <Route path="/find-account" element={<FindAccountPage />} />
+        <Route path="/mypage" element={<MyPage />} />
 
         {/* Features */}
         <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
