@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  envDir: '../', // .env file is in the root directory , places에서 .env를 못찾아서 추가한 코드
   server: {
     proxy: {
       '/api': {

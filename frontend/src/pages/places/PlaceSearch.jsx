@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { placesAxios as api } from '../../api/axios';
 
 const PlaceSearch = () => {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const queryFromUrl = searchParams.get('query') || '';
 
     const [results, setResults] = useState([]);
@@ -48,6 +49,21 @@ const PlaceSearch = () => {
             setError("장소를 불러오는 중 오류가 발생했습니다.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePlaceClick = (place) => {
+        if (place.id) {
+            // DB에 이미 있는 장소 -> DB ID 기반 상세 페이지 이동
+            navigate(`/places/${place.id}`);
+        } else {
+            // 새로운 장소 -> API 정보 기반 상세 페이지 이동 (들어가면서 자동 저장됨)
+            const params = new URLSearchParams({
+                api_id: place.place_api_id,
+                provider: place.provider,
+                name: place.name
+            });
+            navigate(`/places/detail?${params.toString()}`);
         }
     };
 
@@ -116,6 +132,7 @@ const PlaceSearch = () => {
                         {results.map((place) => (
                             <div
                                 key={place.place_api_id || place.id}
+                                onClick={() => handlePlaceClick(place)}
                                 className="group bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-transparent hover:border-blue-500/30 overflow-hidden cursor-pointer flex flex-col h-full"
                             >
                                 {/* Image Area */}
