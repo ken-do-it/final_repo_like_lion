@@ -20,7 +20,7 @@ const FindAccountPage = () => {
             await api.post('/users/send-verification/', { email, purpose });
             setStep(2);
             setMessage('Verification code sent to your email.');
-        } catch (err) {
+        } catch {
             setMessage('Failed to send verification code. User might not exist.');
         } finally {
             setIsLoading(false);
@@ -38,7 +38,7 @@ const FindAccountPage = () => {
             } else {
                 setMessage('Verification successful! Please check your email for the password reset link.');
             }
-        } catch (err) {
+        } catch {
             setMessage('Invalid verification code.');
         } finally {
             setIsLoading(false);

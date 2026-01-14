@@ -79,6 +79,8 @@ const SignupPage = () => {
         }
     };
 
+
+
     return (
         <div className="container mx-auto px-4 py-12 flex items-center justify-center">
             <div className="w-full max-w-2xl bg-surface-light dark:bg-surface-dark p-8 sm:p-10 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 transition-colors">

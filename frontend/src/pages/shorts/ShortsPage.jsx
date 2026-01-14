@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import './shortspage.css'
 import { useLanguage } from '../../context/LanguageContext'
+import { useAuth } from '../../context/AuthContext'
 
 // Language & Glossary Data
 const langToCode = {
@@ -32,10 +33,11 @@ const uiGlossary = {
     batchLabel: { kor_Hang: '배치 최적화', jpn_Jpan: 'バッチ最適化', zho_Hans: '批量优化' },
 }
 
-function ShortsPage({ onShortClick, embed = false, accessToken }) {
+function ShortsPage({ onShortClick, embed = false }) {
     const navigate = useNavigate()
     const { language } = useLanguage()
-    // const [language, setLanguage] = useState(propLanguage || 'English') // Removed local state
+    const { isAuthenticated } = useAuth()
+
     const [shortforms, setShortforms] = useState([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -47,11 +49,6 @@ function ShortsPage({ onShortClick, embed = false, accessToken }) {
     const [uploadDesc, setUploadDesc] = useState('')
     const [isUploading, setIsUploading] = useState(false)
     const [useBatch, setUseBatch] = useState(true)
-
-    // Sync language prop
-    // useEffect(() => {
-    //     if (propLanguage) setLanguage(propLanguage)
-    // }, [propLanguage])
 
     // Translations
     const baseTexts = useMemo(() => ({
@@ -120,8 +117,14 @@ function ShortsPage({ onShortClick, embed = false, accessToken }) {
         event.preventDefault()
         if (!uploadFile) return
 
-        if (!accessToken) {
+        if (!isAuthenticated) {
             alert("Login required for uploading!")
+            return
+        }
+
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) {
+            alert("Auth error. Please login again.")
             return
         }
 
@@ -167,7 +170,7 @@ function ShortsPage({ onShortClick, embed = false, accessToken }) {
                             <p className="text-muted">{t.shortsSub}</p>
                         </div>
 
-                        {accessToken && (
+                        {isAuthenticated && (
                             <button className="btn-primary" onClick={() => setShowUpload(true)}>
                                 <span className="material-symbols-outlined mr-2">upload</span>
                                 {t.upload}
