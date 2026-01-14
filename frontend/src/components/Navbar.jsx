@@ -63,7 +63,7 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                 </div>
 
                 {/* 2. Center Section: Search Bar */}
-                <div className="flex-1 max-w-md hidden sm:block">
+                <div className={`flex-1 max-w-md ${location.pathname === '/search' ? 'block' : 'hidden sm:block'}`}>
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg className="h-5 w-5 text-gray-400 group-focus-within:text-[#1392ec] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,14 +85,16 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
                     {/* Search Icon for Mobile (visible only when search bar is hidden) */}
-                    <button
-                        className="sm:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        onClick={() => navigate('/search')} // Mobile just goes to search page directly
-                    >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </button>
+                    {location.pathname !== '/search' && (
+                        <button
+                            className="sm:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            onClick={() => navigate('/search')} // Mobile just goes to search page directly
+                        >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    )}
 
                     {/* Dark Mode Toggle */}
                     <button
@@ -112,7 +114,7 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                     </button>
 
                     {/* Language Selector */}
-                    <div className="relative hidden sm:block">
+                    <div className="relative">
                         <select
                             value={language}
                             onChange={(e) => setLanguage(e.target.value)}
