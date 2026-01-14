@@ -3,30 +3,38 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const MyPage = () => {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const { user, isAuthenticated, logout } = useAuth(); // Use Global Auth
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('profile'); // profile, preferences, saved, reviews
+    const [activeTab, setActiveTab] = useState('profile');
 
     // Edit States
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [profileForm, setProfileForm] = useState({});
 
+    // Local state for full profile data (if detailed fields are needed beyond context)
+    const [detailedUser, setDetailedUser] = useState(null);
+
     useEffect(() => {
+        if (!isAuthenticated) {
+            // If context says not logged in, redirect immediately
+            // specific timing might need handling if auth check is async
+        }
         fetchProfile();
-    }, []);
+    }, [isAuthenticated]);
 
     const fetchProfile = async () => {
         try {
             const response = await api.get('/users/profile/');
-            setUser(response.data);
+            setDetailedUser(response.data);
             setProfileForm(response.data);
         } catch (err) {
             console.error(err);
-            // If unauthorized, redirect to login
             if (err.response?.status === 401) {
+                logout(); // Sync context
                 navigate('/login-page');
             }
         } finally {
@@ -43,7 +51,12 @@ const MyPage = () => {
                 city: profileForm.city,
                 phone_number: profileForm.phone_number
             });
-            setUser(prev => ({ ...prev, ...response.data }));
+            // Update local state
+            setDetailedUser(prev => ({ ...prev, ...response.data }));
+            setProfileForm(response.data);
+
+            // NOTE: Ideally, we should also update the global AuthContext user here if nickname changed
+            // But for now, local update is sufficient for this page
             setIsEditingProfile(false);
         } catch (err) {
             console.error("Update failed", err);
@@ -52,6 +65,10 @@ const MyPage = () => {
     };
 
     if (loading) return <div className="flex justify-center py-20">로딩 중...</div>;
+
+    // Use detailedUser for display as it has fresh data from API
+    // Fallback to 'user' from context if needed
+    const displayUser = detailedUser || user;
 
     const renderProfile = () => (
         <div className="max-w-3xl mx-auto">
@@ -96,7 +113,7 @@ const MyPage = () => {
                     </div>
                     <div className="flex space-x-3 pt-4 border-t border-slate-100 dark:border-slate-700 mt-6">
                         <Button type="submit" className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6">저장 완료</Button>
-                        <Button variant="ghost" className="hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" onClick={() => { setIsEditingProfile(false); setProfileForm(user); }}>취소</Button>
+                        <Button variant="ghost" className="hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" onClick={() => { setIsEditingProfile(false); setProfileForm(displayUser); }}>취소</Button>
                     </div>
                 </form>
             ) : (
@@ -104,22 +121,22 @@ const MyPage = () => {
                     <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors group">
                         <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">아이디</div>
                         <div className="text-lg font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                            {user?.username}
+                            {displayUser?.username}
                             <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400">ID</span>
                         </div>
                     </div>
                     <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
                         <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">이메일</div>
-                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100 break-all">{user?.email}</div>
+                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100 break-all">{displayUser?.email}</div>
                     </div>
                     <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
                         <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">닉네임</div>
-                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100">{user?.nickname}</div>
+                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100">{displayUser?.nickname}</div>
                     </div>
                     <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
                         <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">위치</div>
                         <div className="text-lg font-medium text-slate-900 dark:text-slate-100">
-                            {user?.city && user?.country ? `${user.city}, ${user.country}` : <span className="text-slate-400 italic">미설정</span>}
+                            {displayUser?.city && displayUser?.country ? `${displayUser.city}, ${displayUser.country}` : <span className="text-slate-400 italic">미설정</span>}
                         </div>
                     </div>
                 </div>
@@ -133,8 +150,8 @@ const MyPage = () => {
             <div className="p-6 bg-white dark:bg-dark-surface rounded-lg border border-gray-100 dark:border-gray-700 text-center text-gray-500">
                 <p>언어 및 통화 설정은 곧 구현될 예정입니다.</p>
                 <div className="mt-4 flex justify-center gap-4">
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">언어: {user?.preferences?.language || 'en'}</span>
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">통화: {user?.preferences?.currency || 'USD'}</span>
+                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">언어: {displayUser?.preferences?.language || 'en'}</span>
+                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">통화: {displayUser?.preferences?.currency || 'USD'}</span>
                 </div>
             </div>
         </div>
@@ -169,8 +186,8 @@ const MyPage = () => {
                                 <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-100 to-blue-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center mb-4 ring-4 ring-white dark:ring-[#1e2b36] shadow-lg">
                                     <span className="text-4xl">😎</span>
                                 </div>
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{user?.nickname || '여행자'}</h2>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{user?.email}</p>
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{displayUser?.nickname || '여행자'}</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{displayUser?.email}</p>
                             </div>
                             <nav className="p-3 space-y-1">
                                 {['profile', 'shorts', 'schedules', 'columns', 'reservations', 'preferences', 'saved', 'reviews'].map((tab) => (

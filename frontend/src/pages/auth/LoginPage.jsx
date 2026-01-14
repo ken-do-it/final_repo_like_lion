@@ -4,8 +4,11 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../api/axios';
 
+import { useAuth } from '../../context/AuthContext';
+
 const LoginPage = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [formData, setFormData] = useState({
         username: '',
         password: '',
@@ -33,10 +36,12 @@ const LoginPage = () => {
                 password: formData.password,
             });
 
-            // Store tokens
-            localStorage.setItem('access_token', response.data.access_token);
-            localStorage.setItem('refresh_token', response.data.refresh_token);
-            localStorage.setItem('user', JSON.stringify(response.data.user)); // Optional: store minimal user info locally
+            // Update Auth Context
+            login(
+                response.data.access_token,
+                response.data.refresh_token,
+                response.data.user
+            );
 
             // Navigate to home or stored redirect
             navigate('/');
