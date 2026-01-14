@@ -34,7 +34,36 @@ from auth import get_current_user, require_auth
 router = APIRouter(prefix="/api/v1/places", tags=["Places"])
 
 
-# ==================== 이미지 저장 헬퍼 함수 ====================
+# ==================== 이미지 헬퍼 함수 ====================
+
+def delete_image_file(image_url: str) -> bool:
+    """
+    이미지 파일 삭제
+
+    Args:
+        image_url: 이미지 URL (예: http://localhost:8000/media/place_images/xxx.jpg)
+
+    Returns:
+        삭제 성공 여부
+    """
+    if not image_url:
+        return False
+
+    try:
+        # URL에서 파일 경로 추출
+        # http://localhost:8000/media/place_images/xxx.jpg -> /app/django_app/media/place_images/xxx.jpg
+        if "/media/" in image_url:
+            relative_path = image_url.split("/media/")[-1]
+            file_path = Path(f"/app/django_app/media/{relative_path}")
+
+            if file_path.exists():
+                file_path.unlink()
+                return True
+    except Exception as e:
+        print(f"이미지 파일 삭제 실패: {e}")
+
+    return False
+
 
 async def save_image_file(image: UploadFile, subfolder: str = "place_images") -> str:
     """
@@ -606,6 +635,7 @@ async def update_review(
     rating: int = Form(..., ge=1, le=5, description="별점 (1~5)"),
     content: str = Form(..., min_length=1, max_length=1000, description="리뷰 내용"),
     image: Optional[UploadFile] = File(None, description="이미지 파일 (선택)"),
+    remove_image: bool = Form(False, description="기존 이미지 삭제 여부"),
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
@@ -615,6 +645,7 @@ async def update_review(
     - rating: 별점 (1~5)
     - content: 리뷰 내용
     - image: 이미지 파일 (선택, jpg/jpeg/png/gif, 최대 10MB)
+    - remove_image: true면 기존 이미지 삭제 (새 이미지 없이 삭제만 할 때)
     """
     # 리뷰 존재 확인
     review = db.query(PlaceReview).filter(
@@ -629,10 +660,18 @@ async def update_review(
     if review.user_id != user_id:
         raise HTTPException(status_code=403, detail="본인의 리뷰만 수정할 수 있습니다")
 
-    # 이미지 저장 (새 이미지가 있으면)
+    # 이미지 처리
     image_url = review.image_url  # 기존 이미지 유지
     if image:
+        # 새 이미지 업로드 시 기존 이미지 파일 삭제
+        if review.image_url:
+            delete_image_file(review.image_url)
         image_url = await save_image_file(image, "place_images")
+    elif remove_image:
+        # 이미지 삭제만 요청한 경우
+        if review.image_url:
+            delete_image_file(review.image_url)
+        image_url = None
 
     # 리뷰 수정
     review.rating = rating
@@ -687,6 +726,10 @@ def delete_review(
     # 본인 확인
     if review.user_id != user_id:
         raise HTTPException(status_code=403, detail="본인의 리뷰만 삭제할 수 있습니다")
+
+    # 이미지 파일 삭제
+    if review.image_url:
+        delete_image_file(review.image_url)
 
     # 리뷰 삭제
     db.delete(review)
@@ -1097,6 +1140,247 @@ async def create_local_column(
         created_at=column.created_at,
         sections=section_data
     )
+
+
+@router.put("/local-columns/{column_id}", response_model=LocalColumnResponse)
+async def update_local_column(
+    column_id: int,
+    request: Request,
+    user_id: int = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """
+    현지인 칼럼 수정 (이미지 삭제/변경 포함)
+
+    multipart/form-data 형식으로 전송:
+    - title: 문자열 (선택)
+    - content: 문자열 (선택)
+    - representative_place_id: 숫자 (선택)
+    - thumbnail: 파일 (선택, 새 썸네일로 교체)
+    - remove_thumbnail: "true" (선택, 썸네일 삭제 - 새 파일 없이)
+    - intro_image: 파일 (선택, 새 인트로 이미지로 교체)
+    - remove_intro_image: "true" (선택, 인트로 이미지 삭제)
+    - sections: JSON 문자열 (선택, 섹션 전체 교체)
+    - section_X_image_Y: 파일 (섹션 이미지)
+    """
+    # 칼럼 존재 확인
+    column = db.query(LocalColumn).filter(LocalColumn.id == column_id).first()
+
+    if not column:
+        raise HTTPException(status_code=404, detail="칼럼을 찾을 수 없습니다")
+
+    # 본인 확인
+    if column.user_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 칼럼만 수정할 수 있습니다")
+
+    # Form 데이터 가져오기
+    form_data = await request.form()
+
+    # 1. 기본 필드 수정
+    title = form_data.get('title')
+    content = form_data.get('content')
+    representative_place_id = form_data.get('representative_place_id')
+
+    if title:
+        column.title = title
+    if content:
+        column.content = content
+    if representative_place_id:
+        try:
+            column.representative_place_id = int(representative_place_id)
+        except:
+            pass
+
+    # 2. 썸네일 이미지 처리
+    thumbnail = form_data.get('thumbnail')
+    remove_thumbnail = form_data.get('remove_thumbnail') == 'true'
+
+    if thumbnail and isinstance(thumbnail, UploadFile):
+        # 기존 썸네일 삭제 후 새 이미지 저장
+        if column.thumbnail_url:
+            delete_image_file(column.thumbnail_url)
+        column.thumbnail_url = await save_image_file(thumbnail, "place_images")
+    elif remove_thumbnail:
+        # 썸네일 삭제만 (주의: 썸네일은 필수일 수 있음)
+        if column.thumbnail_url:
+            delete_image_file(column.thumbnail_url)
+            column.thumbnail_url = None
+
+    # 3. 인트로 이미지 처리
+    intro_image = form_data.get('intro_image')
+    remove_intro_image = form_data.get('remove_intro_image') == 'true'
+
+    if intro_image and isinstance(intro_image, UploadFile):
+        # 기존 인트로 이미지 삭제 후 새 이미지 저장
+        if column.intro_image_url:
+            delete_image_file(column.intro_image_url)
+        column.intro_image_url = await save_image_file(intro_image, "place_images")
+    elif remove_intro_image:
+        # 인트로 이미지 삭제만
+        if column.intro_image_url:
+            delete_image_file(column.intro_image_url)
+            column.intro_image_url = None
+
+    # 4. 섹션 수정 (전체 교체 방식)
+    sections_json = form_data.get('sections')
+    if sections_json:
+        try:
+            new_sections = json.loads(sections_json)
+
+            # 기존 섹션 및 이미지 삭제
+            old_sections = db.query(LocalColumnSection).filter(
+                LocalColumnSection.column_id == column_id
+            ).all()
+
+            for old_section in old_sections:
+                old_images = db.query(LocalColumnSectionImage).filter(
+                    LocalColumnSectionImage.section_id == old_section.id
+                ).all()
+                for old_img in old_images:
+                    delete_image_file(old_img.image_url)
+                    db.delete(old_img)
+                db.delete(old_section)
+
+            db.flush()
+
+            # 섹션 이미지 파일들 수집
+            section_images = {}
+            for key, value in form_data.items():
+                if key.startswith('section_') and isinstance(value, UploadFile):
+                    parts = key.replace('section_', '').split('_image_')
+                    if len(parts) == 2:
+                        try:
+                            section_idx = int(parts[0])
+                            image_idx = int(parts[1])
+                            if section_idx not in section_images:
+                                section_images[section_idx] = {}
+                            section_images[section_idx][image_idx] = value
+                        except:
+                            pass
+
+            # 새 섹션 생성
+            for idx, section_req in enumerate(new_sections):
+                section = LocalColumnSection(
+                    column_id=column.id,
+                    place_id=section_req.get('place_id'),
+                    order=section_req.get('order', idx),
+                    title=section_req.get('title', ''),
+                    content=section_req.get('content', '')
+                )
+                db.add(section)
+                db.flush()
+
+                # 섹션 이미지 저장
+                if idx in section_images:
+                    sorted_images = sorted(section_images[idx].items())
+                    for img_idx, img_file in sorted_images:
+                        img_url = await save_image_file(img_file, "place_images")
+                        image = LocalColumnSectionImage(
+                            section_id=section.id,
+                            image_url=img_url,
+                            order=img_idx
+                        )
+                        db.add(image)
+
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="sections는 유효한 JSON이어야 합니다")
+
+    db.commit()
+    db.refresh(column)
+
+    # 응답 데이터 구성
+    sections = db.query(LocalColumnSection).filter(
+        LocalColumnSection.column_id == column_id
+    ).order_by(LocalColumnSection.order).all()
+
+    section_data = []
+    for section in sections:
+        images = db.query(LocalColumnSectionImage).filter(
+            LocalColumnSectionImage.section_id == section.id
+        ).order_by(LocalColumnSectionImage.order).all()
+
+        from .schemas import LocalColumnSectionImageResponse, LocalColumnSectionResponse
+        section_data.append(LocalColumnSectionResponse(
+            id=section.id,
+            title=section.title,
+            content=section.content,
+            place_id=section.place_id,
+            order=section.order,
+            images=[
+                LocalColumnSectionImageResponse(
+                    id=img.id,
+                    image_url=img.image_url,
+                    order=img.order
+                )
+                for img in images
+            ]
+        ))
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    return LocalColumnResponse(
+        id=column.id,
+        user_id=column.user_id,
+        user_nickname=user.nickname if user else None,
+        title=column.title,
+        content=column.content,
+        thumbnail_url=column.thumbnail_url,
+        intro_image_url=column.intro_image_url,
+        representative_place_id=column.representative_place_id,
+        view_count=column.view_count,
+        created_at=column.created_at,
+        sections=section_data
+    )
+
+
+@router.delete("/local-columns/{column_id}")
+def delete_local_column(
+    column_id: int,
+    user_id: int = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """
+    현지인 칼럼 삭제 (이미지 파일 포함)
+    """
+    # 칼럼 존재 확인
+    column = db.query(LocalColumn).filter(LocalColumn.id == column_id).first()
+
+    if not column:
+        raise HTTPException(status_code=404, detail="칼럼을 찾을 수 없습니다")
+
+    # 본인 확인
+    if column.user_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 칼럼만 삭제할 수 있습니다")
+
+    # 1. 섹션 이미지 파일 삭제
+    sections = db.query(LocalColumnSection).filter(
+        LocalColumnSection.column_id == column_id
+    ).all()
+
+    for section in sections:
+        images = db.query(LocalColumnSectionImage).filter(
+            LocalColumnSectionImage.section_id == section.id
+        ).all()
+
+        for img in images:
+            delete_image_file(img.image_url)
+            db.delete(img)
+
+        db.delete(section)
+
+    # 2. 칼럼 썸네일 이미지 파일 삭제
+    if column.thumbnail_url:
+        delete_image_file(column.thumbnail_url)
+
+    # 3. 칼럼 인트로 이미지 파일 삭제
+    if column.intro_image_url:
+        delete_image_file(column.intro_image_url)
+
+    # 4. 칼럼 삭제
+    db.delete(column)
+    db.commit()
+
+    return {"message": "칼럼이 삭제되었습니다"}
 
 
 # ==================== 도시별 콘텐츠 ====================

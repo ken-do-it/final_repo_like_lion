@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import api from '../../api/axios'; // Default export based on check
+import { placesAxios as api } from '../../api/axios';
 
 const PlaceSearch = () => {
     const [searchParams] = useSearchParams();
@@ -30,13 +30,10 @@ const PlaceSearch = () => {
         setLoading(true);
         setError(null);
         try {
-            // Using /v1/places/search as per router.py prefix /api/v1/places and axios base /api
-            // If axios base is /api, then we need /v1/places/search to start from there.
-            // Let's try relative path first. 
-            // router prefix: /api/v1/places
-            // axios default base: /api
-            // request: /v1/places/search -> /api/v1/places/search
-            const response = await api.get('/v1/places/search', {
+            // placesAxios baseURL: http://localhost:8002/api/v1
+            // request path: /places/search
+            // final URL: http://localhost:8002/api/v1/places/search
+            const response = await api.get('/places/search', {
                 params: { query: query }
             });
 
@@ -62,12 +59,12 @@ const PlaceSearch = () => {
             <main className="container mx-auto px-4 max-w-screen-xl py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold mb-6">
+                    <h1 className="text-3xl font-bold mb-6 text-center">
                         {queryFromUrl ? `'${queryFromUrl}' 검색 결과` : '장소 검색'}
                     </h1>
 
                     {/* Dedicated Search Input */}
-                    <form onSubmit={handleSearchSubmit} className="max-w-2xl mb-4">
+                    <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl mx-auto mb-4">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <span className="text-xl">🔍</span>
@@ -88,7 +85,7 @@ const PlaceSearch = () => {
                         </div>
                     </form>
 
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-600 dark:text-gray-400 text-center">
                         {loading
                             ? '검색 중입니다...'
                             : queryFromUrl
@@ -146,6 +143,15 @@ const PlaceSearch = () => {
                                         <h3 className="font-bold text-lg line-clamp-1 group-hover:text-[#1392ec] transition-colors">
                                             {place.name}
                                         </h3>
+                                    </div>
+
+                                    <div className="text-sm text-[#1392ec] font-medium mb-1">
+                                        {place.category_main || '장소'}
+                                        {place.category_detail && place.category_detail.length > 0 && (
+                                            <span className="text-gray-400 font-normal ml-1">
+                                                | {place.category_detail.join(', ')}
+                                            </span>
+                                        )}
                                     </div>
 
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2 min-h-[40px]">
