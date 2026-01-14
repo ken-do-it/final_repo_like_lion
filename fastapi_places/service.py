@@ -27,6 +27,63 @@ KOREA_LAT_MAX = float(os.getenv("KOREA_LAT_MAX", "43"))
 KOREA_LON_MIN = float(os.getenv("KOREA_LON_MIN", "124"))
 KOREA_LON_MAX = float(os.getenv("KOREA_LON_MAX", "132"))
 
+# 구글 카테고리 영어 → 한국어 매핑
+GOOGLE_CATEGORY_MAP = {
+    # 음식/음료
+    "restaurant": "음식점",
+    "cafe": "카페",
+    "bakery": "베이커리",
+    "bar": "바",
+    "food": "음식점",
+    "meal_delivery": "배달음식",
+    "meal_takeaway": "포장음식",
+    # 숙박
+    "lodging": "숙박",
+    "hotel": "호텔",
+    "motel": "모텔",
+    "guest_house": "게스트하우스",
+    # 관광/레저
+    "tourist_attraction": "관광명소",
+    "museum": "박물관",
+    "art_gallery": "미술관",
+    "park": "공원",
+    "amusement_park": "놀이공원",
+    "aquarium": "아쿠아리움",
+    "zoo": "동물원",
+    "stadium": "경기장",
+    "casino": "카지노",
+    "night_club": "나이트클럽",
+    # 쇼핑
+    "shopping_mall": "쇼핑몰",
+    "department_store": "백화점",
+    "store": "상점",
+    "convenience_store": "편의점",
+    "supermarket": "슈퍼마켓",
+    "clothing_store": "의류매장",
+    "shoe_store": "신발매장",
+    "jewelry_store": "보석상",
+    "book_store": "서점",
+    # 교통
+    "airport": "공항",
+    "train_station": "기차역",
+    "subway_station": "지하철역",
+    "bus_station": "버스터미널",
+    "taxi_stand": "택시승강장",
+    "parking": "주차장",
+    # 기타
+    "spa": "스파",
+    "gym": "헬스장",
+    "beauty_salon": "미용실",
+    "hospital": "병원",
+    "pharmacy": "약국",
+    "bank": "은행",
+    "atm": "ATM",
+    "church": "교회",
+    "temple": "사찰",
+    "point_of_interest": "명소",
+    "establishment": "시설",
+}
+
 
 # ==================== 외부 API 통합 ====================
 
@@ -160,6 +217,17 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
                 if not is_korea_location(float(lat), float(lng)):
                     continue
 
+                # 카테고리 영어 → 한국어 변환
+                types_en = place.get("types", [])
+                types_ko = [GOOGLE_CATEGORY_MAP.get(t, t) for t in types_en]
+
+                # category_main 추출 (첫 번째 의미있는 카테고리)
+                category_main = None
+                for t in types_en:
+                    if t in GOOGLE_CATEGORY_MAP and t not in ["point_of_interest", "establishment"]:
+                        category_main = GOOGLE_CATEGORY_MAP[t]
+                        break
+
                 results.append({
                     "provider": "GOOGLE",
                     "place_api_id": place.get("place_id"),
@@ -168,8 +236,8 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
                     "city": extract_city_from_address(place.get("formatted_address", "")),
                     "latitude": lat,
                     "longitude": lng,
-                    "category_main": None,  # 구글은 카테고리 매핑 복잡
-                    "category_detail": place.get("types", []),
+                    "category_main": category_main,
+                    "category_detail": types_ko,
                     "thumbnail_url": None  # 썸네일은 별도 API 필요
                 })
 
@@ -289,18 +357,50 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
     return unique_results
 
 
+def normalize_name(name: str) -> str:
+    """
+    장소명 정규화 (중복 비교용)
+    - 공백, 특수문자 제거
+    - 소문자 변환
+    """
+    import re
+    if not name:
+        return ""
+    # 공백, 특수문자 제거 (한글, 영문, 숫자만 유지)
+    normalized = re.sub(r'[^\w가-힣]', '', name.lower())
+    return normalized
+
+
 def remove_duplicate_places(places: List[Dict]) -> List[Dict]:
     """
-    이름 + 주소 유사도로 중복 제거
+    이름 + 좌표 기반 중복 제거
+    - 이름 정규화 후 완전 일치 비교
+    - 좌표 거리로 중복 판단 (100m 이내)
+    - 카카오 결과 우선 (먼저 들어온 것 유지)
     """
-    seen = set()
     unique = []
 
     for place in places:
-        # 간단한 중복 체크: 이름 + 도시
-        key = (place.get("name", "").lower(), place.get("city", "").lower())
-        if key not in seen:
-            seen.add(key)
+        name = normalize_name(place.get("name", ""))
+        lat = place.get("latitude", 0)
+        lng = place.get("longitude", 0)
+
+        is_duplicate = False
+        for existing in unique:
+            existing_name = normalize_name(existing.get("name", ""))
+            existing_lat = existing.get("latitude", 0)
+            existing_lng = existing.get("longitude", 0)
+
+            # 정규화된 이름이 완전히 같은 경우만 체크
+            if name == existing_name:
+                # 좌표 거리 체크 (약 100m 이내면 중복)
+                lat_diff = abs(lat - existing_lat)
+                lng_diff = abs(lng - existing_lng)
+                if lat_diff < 0.001 and lng_diff < 0.001:
+                    is_duplicate = True
+                    break
+
+        if not is_duplicate:
             unique.append(place)
 
     return unique
