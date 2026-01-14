@@ -45,7 +45,7 @@ function App() {
   }, [location.pathname]);
 
   // Define routes where the global navbar should be hidden
-  const hideNavbarRoutes = ['/game', '/search']; // SearchPage has its own header, Game needs full immersion
+  const hideNavbarRoutes = ['/game']; // SearchPage has its own header, Game needs full immersion
   const showNavbar = !hideNavbarRoutes.includes(location.pathname);
 
   console.log("Current Path:", location.pathname);

@@ -17,8 +17,8 @@ const SearchPage = () => {
 
       setLoading(true);
       try {
-        // searchAxios는 baseURL 설정에 따라 '/search' 또는 'http://.../search'로 요청됨
-        const response = await searchAxios.post('/search', { query });
+        // searchAxios는 baseURL 설정에 따라 '/search' 또는 'http://.../search'로 요청됨 -> baseurl이 이미 /search를 지정하고 있어 빈문자열로 수정
+        const response = await searchAxios.post('', { query });
         setResults(response.data);
       } catch (error) {
         console.error("Search error:", error);
@@ -44,8 +44,8 @@ const SearchPage = () => {
     if (!results) return false;
     if (type === 'All') {
       return (
-        results.places?.length > 0 || 
-        results.reviews?.length > 0 || 
+        results.places?.length > 0 ||
+        results.reviews?.length > 0 ||
         results.plans?.length > 0 ||
         results.others?.length > 0
       );
@@ -57,76 +57,31 @@ const SearchPage = () => {
   const getMatchScore = (distance) => {
     // Cosine Distance는 0이 완전 일치, 1이 직교, 2가 반대
     // 따라서 (1 - distance)가 유사도입니다.
-    const similarity = Math.max(0, 1 - distance); 
+    const similarity = Math.max(0, 1 - distance);
     return (similarity * 100).toFixed(0);
   };
 
   return (
     <div className="bg-[#f6f7f8] dark:bg-[#101a22] min-h-screen text-slate-900 dark:text-white font-sans transition-colors duration-300">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-[#101a22]/95 backdrop-blur-md">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Left: Back */}
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <span className="text-2xl">←</span>
-            </button>
-            <div onClick={() => navigate('/')} className="hidden md:flex size-8 items-center justify-center rounded-lg bg-[#1392ec] text-white cursor-pointer">
-              <span className="text-xl">✈️</span>
-            </div>
-          </div>
-
-          {/* Center: Search Bar */}
-          <div className="flex flex-1 max-w-2xl px-4 md:px-8">
-            <label className="flex h-12 w-full items-center rounded-xl bg-gray-100 px-4 focus-within:ring-2 ring-[#1392ec] dark:bg-gray-800 transition-all">
-              <span className="text-gray-400 text-xl mr-3">🔍</span>
-              <input
-                className="flex-1 bg-transparent text-base font-medium text-slate-900 placeholder-gray-400 focus:outline-none dark:text-white"
-                placeholder="Where to?"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={handleSearch}
-              />
-              {searchInput && (
-                <button onClick={() => setSearchInput('')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                  ✕
-                </button>
-              )}
-            </label>
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-4">
-            <button className="hidden md:flex items-center gap-2 rounded-xl px-4 py-2 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <span>📅</span>
-              <span className="text-sm">Any dates</span>
-            </button>
-            <div className="size-10 rounded-full bg-gray-300 ring-2 ring-white dark:ring-gray-800 cursor-pointer overflow-hidden">
-              <img src="https://via.placeholder.com/40" alt="Profile" />
-            </div>
+      {/* Sticky Tabs Sub-header */}
+      <div className="sticky top-16 z-40 w-full border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#101a22]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
+            {['All', 'Places', 'Plans', 'Reviews', 'Others'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`whitespace-nowrap rounded-xl px-5 py-2 text-sm font-bold transition-all ${activeTab === tab
+                  ? 'bg-[#1392ec] text-white shadow-md'
+                  : 'bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ring-1 ring-gray-200 dark:ring-gray-700'
+                  }`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
         </div>
-
-        {/* Tabs */}
-        <div className="w-full border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#101a22]">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
-              {['All', 'Places', 'Plans', 'Reviews', 'Others'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`whitespace-nowrap rounded-xl px-5 py-2 text-sm font-bold transition-all ${activeTab === tab
-                      ? 'bg-[#1392ec] text-white shadow-md'
-                      : 'bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ring-1 ring-gray-200 dark:ring-gray-700'
-                    }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 px-4 py-8 sm:px-6 lg:px-8">
@@ -259,21 +214,21 @@ const SearchPage = () => {
                 </div>
               </section>
             )}
-            
+
             {/* Others Section (Added) */}
             {(activeTab === 'All' || activeTab === 'Others') && results.others?.length > 0 && (
-               <section className="flex flex-col gap-5 pb-10">
+              <section className="flex flex-col gap-5 pb-10">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold tracking-tight">Other Results</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {results.others.map((item) => (
                     <div key={item.id} className="rounded-xl bg-gray-50 dark:bg-[#1e2b36] p-4 border border-gray-200 dark:border-gray-700">
-                       <p className="text-sm text-gray-700 dark:text-gray-300">{item.content}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{item.content}</p>
                     </div>
                   ))}
                 </div>
-               </section>
+              </section>
             )}
 
             {!hasResults('All') && (
