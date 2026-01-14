@@ -12,7 +12,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: '🚪 테스트 프론트', path: '/test-front' },
         { label: '📅 AI 일정 만들기', path: null }, // Placeholder
         { label: '🥘 현지인 맛집 칼럼', path: null },
-        { label: '🔥 실시간 숏폼', path: null },
+        { label: '🔥 실시간 숏폼', path: '/shorts' },
         { label: '✈️ 항공권 예약', path: null },
     ];
 
