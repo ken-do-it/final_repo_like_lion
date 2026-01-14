@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { searchAxios } from '../api/axios';
 
-import Layout from '../components/layout/Layout';
+
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
@@ -11,7 +11,6 @@ const SearchPage = () => {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
-  const [searchInput, setSearchInput] = useState(query || '');
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -19,7 +18,6 @@ const SearchPage = () => {
 
       setLoading(true);
       try {
-        // searchAxios는 baseURL 설정에 따라 '/search' 또는 'http://.../search'로 요청됨 -> baseurl이 이미 /search를 지정하고 있어 빈문자열로 수정
         const response = await searchAxios.post('', { query });
         setResults(response.data);
       } catch (error) {
@@ -32,15 +30,9 @@ const SearchPage = () => {
 
     if (query) {
       fetchSearchResults();
-      setSearchInput(query);
     }
   }, [query]);
 
-  const handleSearch = (e) => {
-    if (e.key === 'Enter') {
-      navigate(`/search?query=${encodeURIComponent(searchInput)}`);
-    }
-  };
 
   const hasResults = (type) => {
     if (!results) return false;
