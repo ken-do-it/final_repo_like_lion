@@ -14,6 +14,11 @@ export const translations = {
         nav_stays: "Stays",
         nav_stays: "Stays",
         nav_mytrips: "My Trips",
+        // Navbar Dropdown
+        nav_mypage: "My Page",
+        nav_logout: "Logout",
+        nav_login: "Login",
+        nav_signup: "Sign Up",
         // Sidebar Specific
         nav_geoquiz: "Geo Quiz Uploader",
         nav_ai_plan: "AI Itinerary",
@@ -62,6 +67,45 @@ export const translations = {
         save: "Save",
         comments: "Comments",
         add_comment: "Add a comment...",
+
+        // Auth Pages (Login / Signup)
+        login_title: "Login",
+        login_subtitle: "Access your personalized travel experience.",
+        signup_title: "Sign Up",
+        signup_subtitle: "Join us and start your journey.",
+        email_label: "Email",
+        password_label: "Password",
+        password_confirm_label: "Confirm Password",
+        nickname_label: "Nickname",
+        login_btn: "Login",
+        signup_btn: "Sign Up",
+        google_login: "Continue with Google",
+        kakao_login: "Continue with Kakao",
+        no_account: "Don't have an account?",
+        have_account: "Already have an account?",
+        forgot_password: "Forgot password?",
+
+        // MyPage
+        mypage_title: "My Page",
+        mypage_desc: "Manage your account and activities.",
+        tab_profile: "Profile",
+        tab_shorts: "My Shorts",
+        tab_schedules: "Schedules",
+        tab_columns: "Columns",
+        tab_reservations: "Reservations",
+        tab_preferences: "Preferences",
+        tab_saved: "Saved",
+        tab_reviews: "Reviews",
+
+        profile_basic: "Basic Info",
+        profile_basic_desc: "This information will be displayed to other users.",
+        edit_btn: "Edit",
+        save_btn: "Save Changes",
+        cancel_btn: "Cancel",
+
+        id_label: "ID",
+        location_label: "Location",
+        phone_label: "Phone Number",
     },
     한국어: {
         // Navbar
@@ -70,6 +114,11 @@ export const translations = {
         nav_game: "로드뷰 게임",
         nav_stays: "숙소",
         nav_mytrips: "나의 여행",
+        // Navbar Dropdown
+        nav_mypage: "마이페이지",
+        nav_logout: "로그아웃",
+        nav_login: "로그인",
+        nav_signup: "회원가입",
         // Sidebar Specific
         nav_geoquiz: "지오 퀴즈 업로더",
         nav_ai_plan: "AI 일정 만들기",
@@ -118,6 +167,45 @@ export const translations = {
         save: "저장",
         comments: "댓글",
         add_comment: "댓글 추가...",
+
+        // Auth Pages (Login / Signup)
+        login_title: "로그인",
+        login_subtitle: "개인화된 여행 경험을 만나보세요.",
+        signup_title: "회원가입",
+        signup_subtitle: "지금 가입하고 여행을 시작하세요.",
+        email_label: "이메일",
+        password_label: "비밀번호",
+        password_confirm_label: "비밀번호 확인",
+        nickname_label: "닉네임",
+        login_btn: "로그인",
+        signup_btn: "회원가입",
+        google_login: "Google로 계속하기",
+        kakao_login: "Kakao로 계속하기",
+        no_account: "계정이 없으신가요?",
+        have_account: "이미 계정이 있으신가요?",
+        forgot_password: "비밀번호를 잊으셨나요?",
+
+        // MyPage
+        mypage_title: "마이페이지",
+        mypage_desc: "내 계정 정보와 활동을 관리하세요.",
+        tab_profile: "내 정보",
+        tab_shorts: "내 쇼츠",
+        tab_schedules: "내 일정",
+        tab_columns: "내 칼럼",
+        tab_reservations: "내 예약",
+        tab_preferences: "설정",
+        tab_saved: "저장한 장소",
+        tab_reviews: "내 리뷰",
+
+        profile_basic: "기본 정보",
+        profile_basic_desc: "다른 사용자에게 공개되는 프로필 정보입니다.",
+        edit_btn: "수정하기",
+        save_btn: "저장 완료",
+        cancel_btn: "취소",
+
+        id_label: "아이디",
+        location_label: "위치",
+        phone_label: "전화번호",
     },
     日本語: {
         // Navbar
@@ -126,6 +214,11 @@ export const translations = {
         nav_game: "ロードビュー",
         nav_stays: "宿泊",
         nav_mytrips: "旅程",
+        // Navbar Dropdown
+        nav_mypage: "マイページ",
+        nav_logout: "ログアウト",
+        nav_login: "ログイン",
+        nav_signup: "会員登録",
         // Sidebar Specific
         nav_geoquiz: "ジオクイズ・アップローダー",
         nav_ai_plan: "AI日程作成",
@@ -174,6 +267,45 @@ export const translations = {
         save: "保存",
         comments: "コメント",
         add_comment: "コメントを追加...",
+
+        // Auth Pages
+        login_title: "ログイン",
+        login_subtitle: "あなただけの旅行体験へ。",
+        signup_title: "会員登録",
+        signup_subtitle: "今すぐ登録して旅を始めましょう。",
+        email_label: "メールアドレス",
+        password_label: "パスワード",
+        password_confirm_label: "パスワード確認",
+        nickname_label: "ニックネーム",
+        login_btn: "ログイン",
+        signup_btn: "会員登録",
+        google_login: "Googleで続ける",
+        kakao_login: "Kakaoで続ける",
+        no_account: "アカウントをお持ちでないですか？",
+        have_account: "すでにアカウントをお持ちですか？",
+        forgot_password: "パスワードをお忘れですか？",
+
+        // MyPage
+        mypage_title: "マイページ",
+        mypage_desc: "アカウント情報と活動を管理します。",
+        tab_profile: "プロフィール",
+        tab_shorts: "マイショート",
+        tab_schedules: "スケジュール",
+        tab_columns: "コラム",
+        tab_reservations: "予約",
+        tab_preferences: "設定",
+        tab_saved: "保存済み",
+        tab_reviews: "レビュー",
+
+        profile_basic: "基本情報",
+        profile_basic_desc: "他のユーザーに公開されるプロフィール情報です。",
+        edit_btn: "編集する",
+        save_btn: "保存完了",
+        cancel_btn: "キャンセル",
+
+        id_label: "ID",
+        location_label: "位置",
+        phone_label: "電話番号",
     },
     中文: {
         // Navbar
@@ -182,6 +314,11 @@ export const translations = {
         nav_game: "街景游戏",
         nav_stays: "住宿",
         nav_mytrips: "我的行程",
+        // Navbar Dropdown
+        nav_mypage: "我的页面",
+        nav_logout: "退出登录",
+        nav_login: "登录",
+        nav_signup: "注册",
         // Sidebar Specific
         nav_geoquiz: "地理测验上传",
         nav_ai_plan: "AI行程生成",
@@ -230,5 +367,44 @@ export const translations = {
         save: "保存",
         comments: "评论",
         add_comment: "添加评论...",
+
+        // Auth Pages
+        login_title: "登录",
+        login_subtitle: "开启您的个性化旅行体验。",
+        signup_title: "注册",
+        signup_subtitle: "立即加入，开始您的旅程。",
+        email_label: "电子邮件",
+        password_label: "密码",
+        password_confirm_label: "确认密码",
+        nickname_label: "昵称",
+        login_btn: "登录",
+        signup_btn: "注册",
+        google_login: "通过Google继续",
+        kakao_login: "通过Kakao继续",
+        no_account: "还没有账号？",
+        have_account: "已有账号？",
+        forgot_password: "忘记密码？",
+
+        // MyPage
+        mypage_title: "我的页面",
+        mypage_desc: "管理您的账号和活动。",
+        tab_profile: "个人资料",
+        tab_shorts: "我的短视频",
+        tab_schedules: "行程",
+        tab_columns: "专栏",
+        tab_reservations: "预订",
+        tab_preferences: "设置",
+        tab_saved: "收藏",
+        tab_reviews: "评论",
+
+        profile_basic: "基本信息",
+        profile_basic_desc: "向其他用户显示的个人资料信息。",
+        edit_btn: "编辑",
+        save_btn: "保存",
+        cancel_btn: "取消",
+
+        id_label: "ID",
+        location_label: "位置",
+        phone_label: "电话号码",
     }
 };

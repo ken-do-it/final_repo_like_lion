@@ -15,7 +15,7 @@ from .permissions import IsOwnerOrReadOnly
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
-# Service Layer Imports
+# 서비스 레이어 임포트
 from .services.video_service import VideoService
 from .services.translation_service import TranslationService
 
@@ -68,17 +68,17 @@ class ShortformViewSet(viewsets.ModelViewSet):
         if not video_file:
             raise exceptions.ValidationError({"video_file": ["This field is required."]})
 
-        # [Service Layer] Video Processing
+        # [서비스 레이어] 비디오 처리
         saved_path, saved_url = VideoService.save_video_file(video_file)
         
-        # VideoService creates absolute path internally for its methods, but extract_metadata needs full path
+        # VideoService는 내부적으로 절대 경로를 생성하지만, extract_metadata는 전체 경로가 필요함
         from django.core.files.storage import default_storage
         abs_path = default_storage.path(saved_path)
         
         meta = VideoService.extract_metadata(abs_path)
         thumb_path, thumb_url = VideoService.generate_thumbnail(abs_path)
 
-        # [Service Layer] Language Detection
+        # [서비스 레이어] 언어 감지
         title = serializer.validated_data.get('title', '')
         content = serializer.validated_data.get('content', '')
         full_text = f"{title} {content}".strip()
@@ -100,7 +100,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         video_file = self.request.FILES.get('video_file')
         
         if video_file:
-            # [Service Layer] Video Processing
+            # [서비스 레이어] 비디오 처리
             saved_path, saved_url = VideoService.save_video_file(video_file)
             from django.core.files.storage import default_storage
             abs_path = default_storage.path(saved_path)
@@ -136,24 +136,54 @@ class ShortformViewSet(viewsets.ModelViewSet):
             else:
                 serializer.save()
 
-        # [Service Layer] Cache Invalidation
+        # [서비스 레이어] 캐시 무효화
         TranslationService.invalidate_cache("shortform", self.get_object().id)
 
     def list(self, request, *args, **kwargs):
-        resp = super().list(request, *args, **kwargs)
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # [필터] 작성자 (사용자)
+        writer_param = request.query_params.get("writer")
+        if writer_param:
+            if writer_param == 'me':
+                if request.user.is_authenticated:
+                    queryset = queryset.filter(user=request.user)
+                else:
+                    raise exceptions.NotAuthenticated("Authentication required to filter by 'me'.")
+            else:
+                try:
+                    queryset = queryset.filter(user_id=int(writer_param))
+                except ValueError:
+                    pass # 잘못된 ID는 무시
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            resp_data = serializer.data
+            # DRF 설정에 따라 페이지네이션 응답 구조 처리가 필요할 수 있음
+            # 하지만 나중에 resp.data를 수정하는 기존 패턴을 따름
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+            resp_data = serializer.data
+
+        # 기존 번역 로직
         target_lang = request.query_params.get("lang")
         use_batch = request.query_params.get("batch", "true") == "true"
         
         if target_lang:
             try:
-                # [Service Layer] Apply Translation
+                # [서비스 레이어] 번역 적용
                 if use_batch:
-                    resp.data = TranslationService.apply_translation_batch(resp.data, target_lang)
+                    resp_data = TranslationService.apply_translation_batch(resp_data, target_lang)
                 else:
-                    resp.data = TranslationService.apply_translation_sequential(resp.data, target_lang)
+                    resp_data = TranslationService.apply_translation_sequential(resp_data, target_lang)
             except Exception as e:
                 logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during list")
-        return resp
+        
+        if page is not None:
+            return self.get_paginated_response(resp_data)
+        
+        return Response(resp_data)
 
     @extend_schema(
         summary="숏폼 상세 조회 (Retrieve Shortform)",
@@ -167,10 +197,10 @@ class ShortformViewSet(viewsets.ModelViewSet):
         resp = super().retrieve(request, *args, **kwargs)
         target_lang = request.query_params.get("lang")
         use_batch = request.query_params.get("batch", "true") == "true"      
-
+        
         if target_lang:
             try:
-                # [Service Layer] Apply Translation
+                # [서비스 레이어] 번역 적용
                 if use_batch:
                     resp.data = TranslationService.apply_translation_batch(resp.data, target_lang)
                 else:
@@ -285,7 +315,7 @@ class TranslationProxyView(APIView):
         if not text:
             return Response({"detail": "text is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Service Layer Logic: Check Cache first
+        # [서비스 레이어] 로직: 캐시 먼저 확인
         entry = TranslationEntry.objects.filter(
             entity_type=entity_type, entity_id=entity_id, field=field, target_lang=target_lang
         ).first()
@@ -300,13 +330,12 @@ class TranslationProxyView(APIView):
 
         try:
             translated_text, provider = TranslationService.call_fastapi_translate(text, source_lang, target_lang)
-            # Service should ideally handle saving, but TranslationService.call_fastapi_translate only returns text.
-            # However, `TranslationService._translate_field_single` handles saving but strictly for Shortform.
-            # We can replicate standard saving here or add a `translate_and_save_generic` to Service.
-            # For now, explicit save here is fine or we can use existing utility if I moved it.
-            # Wait, `translate_and_cache` was removed from views.py.
+            # 서비스는 저장을 처리해야 하지만, TranslationService.call_fastapi_translate는 텍스트만 반환함.
+            # 하지만 `TranslationService._translate_field_single`은 Shortform에 대해 저장을 처리함.
+            # 여기서 표준 저장을 복제하거나 서비스에 `translate_and_save_generic`을 추가할 수 있음.
+            # 일단은 여기서 수동으로 명시적 저장을 함.
             
-            # Let's save it here manually as before, but cleaner.
+            # 여기서 수동으로 저장
             TranslationEntry.objects.create(
                 entity_type=entity_type, entity_id=entity_id, field=field,
                 source_lang=source_lang, target_lang=target_lang,
@@ -339,8 +368,8 @@ class TranslationBatchView(APIView):
 
         if not items: return Response({"results": {}})
         
-        # This view is complex to fully refactor 100% into Service without changing interface.
-        # But we can reuse the heaviest part: the batch API call.
+        # 이 뷰는 인터페이스를 변경하지 않고 서비스로 100% 리팩토링하기 복잡함.
+        # 하지만 가장 무거운 부분인 배치 API 호출은 재사용 가능함.
         
         results = {}
         to_translate_indices = []
@@ -359,7 +388,7 @@ class TranslationBatchView(APIView):
             entity_id = item.get("entity_id", 0)
             field = item.get("field", "text")
             
-            # Cache Check
+            # 캐시 확인
             entry = TranslationEntry.objects.filter(
                 entity_type=entity_type, entity_id=entity_id, field=field, target_lang=target_lang
             ).first()
@@ -372,7 +401,7 @@ class TranslationBatchView(APIView):
         
         if to_translate_texts:
             try:
-                # Use Service for API call
+                # API 호출을 위해 서비스 사용
                 translated_list, provider = TranslationService.call_fastapi_translate_batch(to_translate_texts, source_lang, target_lang)
                 
                 for internal_idx, translated_text in enumerate(translated_list):
@@ -381,7 +410,7 @@ class TranslationBatchView(APIView):
                     
                     original_item = items[original_idx]
                     
-                    # Save Cache
+                    # 캐시 저장
                     TranslationEntry.objects.create(
                         entity_type=original_item.get("entity_type", "raw"),
                         entity_id=original_item.get("entity_id", 0),
