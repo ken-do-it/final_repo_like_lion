@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Layout from '../../components/layout/Layout';
+
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../api/axios';
@@ -53,8 +53,10 @@ const LoginPage = () => {
         }
     };
 
+
+
     return (
-        <Layout>
+        <>
             <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[calc(100vh-64px-130px)]">
                 <div className="w-full max-w-md bg-white dark:bg-dark-surface p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800">
                     <div className="text-center mb-8">
@@ -156,7 +158,7 @@ const LoginPage = () => {
                     </div>
                 </div>
             </div>
-        </Layout>
+        </>
     );
 };
 

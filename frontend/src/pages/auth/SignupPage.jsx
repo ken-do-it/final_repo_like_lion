@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Layout from '../../components/layout/Layout';
+
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../api/axios';
@@ -80,8 +80,10 @@ const SignupPage = () => {
         }
     };
 
+
+
     return (
-        <Layout>
+        <>
             <div className="container mx-auto px-4 py-12 flex items-center justify-center">
                 <div className="w-full max-w-2xl bg-white dark:bg-dark-surface p-8 sm:p-10 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800">
                     <div className="text-center mb-10">
@@ -208,7 +210,7 @@ const SignupPage = () => {
                     </div>
                 </div>
             </div>
-        </Layout>
+        </>
     );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '../../components/layout/Layout';
+
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../api/axios';
@@ -21,7 +21,7 @@ const FindAccountPage = () => {
             await api.post('/users/send-verification/', { email, purpose });
             setStep(2);
             setMessage('Verification code sent to your email.');
-        } catch (err) {
+        } catch {
             setMessage('Failed to send verification code. User might not exist.');
         } finally {
             setIsLoading(false);
@@ -39,7 +39,7 @@ const FindAccountPage = () => {
             } else {
                 setMessage('Verification successful! Please check your email for the password reset link.');
             }
-        } catch (err) {
+        } catch {
             setMessage('Invalid verification code.');
         } finally {
             setIsLoading(false);
@@ -47,7 +47,7 @@ const FindAccountPage = () => {
     };
 
     return (
-        <Layout>
+        <>
             <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[calc(100vh-64px-130px)]">
                 <div className="w-full max-w-md bg-white dark:bg-dark-surface p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800">
 
@@ -126,7 +126,7 @@ const FindAccountPage = () => {
                     </div>
                 </div>
             </div>
-        </Layout>
+        </>
     );
 };
 
