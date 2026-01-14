@@ -1,26 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
 
     const menuItems = [
-        { label: '🏠 홈', path: '/' },
-        { label: '🏨 숙소 찾기', path: '/stays' },
-        { label: '📸 지오 퀴즈 업로더', path: '/geo-quiz' },
-        { label: '🎮 로드뷰 게임', path: '/game' },
-        { label: '🚪 테스트 프론트', path: '/test-front' },
-        { label: '📅 AI 일정 만들기', path: null }, // Placeholder
-        { label: '🥘 현지인 맛집 칼럼', path: null },
-        { label: '🔥 실시간 숏폼', path: null },
-        { label: '✈️ 항공권 예약', path: null },
+        { label: `🏠 ${t('nav_home')}`, path: '/' },
+        { label: `🏨 ${t('nav_stays')}`, path: '/stays' },
+        { label: `📸 ${t('nav_geoquiz')}`, path: '/geo-quiz' },
+        { label: `🎮 ${t('nav_game')}`, path: '/game' },
+        { label: `📅 ${t('nav_ai_plan')}`, path: null }, // Placeholder
+        { label: `🥘 ${t('nav_column')}`, path: null },
+        { label: `🔥 ${t('nav_shorts')}`, path: '/shorts' },
+        { label: `✈️ ${t('nav_ticket')}`, path: null },
     ];
 
     const bottomItems = [
-        { label: '❤️ 찜한 장소', path: null },
-        { label: '⚙️ 설정', path: null },
-        { label: '📞 고객센터', path: null },
-        { label: '버전 정보 v1.0', path: null },
+        { label: `❤️ ${t('nav_likes')}`, path: null },
+        { label: `⚙️ ${t('nav_settings')}`, path: null },
+        { label: `📞 ${t('nav_support')}`, path: null },
+        { label: `${t('nav_version')} v1.0`, path: null },
     ];
 
     const handleNavigation = (path) => {
