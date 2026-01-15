@@ -9,7 +9,7 @@ import asyncio
 
 from service import search_kakao_places, search_google_places, remove_duplicate_places, KAKAO_REST_API_KEY
 
-router = APIRouter(prefix="/api/v1/accommodations", tags=["Accommodations"])
+router = APIRouter(prefix="/accommodations", tags=["Accommodations"])
 
 
 # ==================== 숙소 전용 서비스 함수 ====================
