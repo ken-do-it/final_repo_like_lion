@@ -67,6 +67,7 @@ const PlaceSearch = () => {
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
+        setShowSuggestions(false);
         fetchPlaces(searchInput);
     };
 
