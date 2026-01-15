@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
+import { placesAxios } from '../../api/axios';
 
 const AddPlace = () => {
   const { planId } = useParams();
@@ -10,6 +11,11 @@ const AddPlace = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // 자동완성 관련 상태
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState(null);
 
   const [formData, setFormData] = useState({
     place_name: '',
@@ -21,6 +27,47 @@ const AddPlace = () => {
   useEffect(() => {
     fetchPlanDetail();
   }, [planId]);
+
+  // 자동완성 debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.place_name.length >= 2) {
+        fetchSuggestions(formData.place_name);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formData.place_name]);
+
+  const fetchSuggestions = async (query) => {
+    try {
+      const response = await placesAxios.get('/places/autocomplete', {
+        params: { q: query, limit: 5 }
+      });
+      if (response.data.suggestions && response.data.suggestions.length > 0) {
+        setSuggestions(response.data.suggestions);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (err) {
+      console.error("Autocomplete failed:", err);
+      setSuggestions([]);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setFormData(prev => ({
+      ...prev,
+      place_name: suggestion.name
+    }));
+    setSelectedPlace(suggestion);
+    setShowSuggestions(false);
+  };
 
   const fetchPlanDetail = async () => {
     try {
@@ -47,6 +94,10 @@ const AddPlace = () => {
       ...prev,
       [name]: name === 'order_index' ? parseInt(value) || 0 : value,
     }));
+    // 장소 이름이 변경되면 선택된 장소 정보 초기화
+    if (name === 'place_name') {
+      setSelectedPlace(null);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -140,8 +191,8 @@ const AddPlace = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
           <div className="space-y-6">
-            {/* Place Name */}
-            <div>
+            {/* Place Name with Autocomplete */}
+            <div className="relative">
               <label htmlFor="place_name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 장소 이름 *
               </label>
@@ -151,13 +202,74 @@ const AddPlace = () => {
                 name="place_name"
                 value={formData.place_name}
                 onChange={handleChange}
+                onFocus={() => {
+                  if (formData.place_name.length >= 2 && suggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
                 placeholder="예: 경복궁, 남산타워"
-                className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f1921] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent"
+                className={`w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f1921] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent ${showSuggestions && suggestions.length > 0 ? 'rounded-b-none' : ''}`}
+                autoComplete="off"
                 required
               />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                장소 이름으로 자동 검색되어 추가됩니다
-              </p>
+
+              {/* Autocomplete Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-50 w-full bg-white dark:bg-[#1e2b36] border border-t-0 border-gray-300 dark:border-gray-600 rounded-b-lg shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                  {suggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center group transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSuggestionClick(suggestion);
+                      }}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-[#1392ec] transition-colors">
+                          {suggestion.name.split(new RegExp(`(${formData.place_name})`, 'gi')).map((part, i) =>
+                            part.toLowerCase() === formData.place_name.toLowerCase()
+                              ? <span key={i} className="text-[#1392ec]">{part}</span>
+                              : part
+                          )}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {suggestion.address}
+                        </span>
+                      </div>
+                      {suggestion.city && (
+                        <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-1 rounded-full">
+                          {suggestion.city}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Selected Place Info */}
+              {selectedPlace && (
+                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#1392ec]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-sm font-medium text-[#1392ec]">선택됨</span>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    {selectedPlace.address}
+                  </p>
+                </div>
+              )}
+
+              {!selectedPlace && (
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  장소 이름을 입력하면 자동완성 목록이 나타납니다
+                </p>
+              )}
             </div>
 
             {/* Date */}

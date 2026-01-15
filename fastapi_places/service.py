@@ -9,6 +9,7 @@ from typing import List, Dict, Optional, Tuple
 from datetime import datetime, timedelta, date
 from decimal import Decimal
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy import or_, and_, desc
 from fastapi import HTTPException
 
@@ -813,4 +814,25 @@ def update_place_thumbnails(db: Session, place_id: int, new_image_url: str):
     if len(thumbnails) < 3 and new_image_url not in thumbnails:
         thumbnails.append(new_image_url)
         place.thumbnail_urls = thumbnails
+        db.commit()
+
+
+def remove_place_thumbnail(db: Session, place_id: int, image_url: str):
+    """
+    장소 썸네일에서 특정 이미지 URL 제거
+    """
+    if not image_url:
+        return
+
+    place = db.query(Place).filter(Place.id == place_id).first()
+    if not place:
+        return
+
+    # 리스트 복사 (SQLAlchemy JSON 필드 변경 감지를 위해)
+    thumbnails = list(place.thumbnail_urls or [])
+
+    if image_url in thumbnails:
+        thumbnails.remove(image_url)
+        place.thumbnail_urls = thumbnails
+        flag_modified(place, "thumbnail_urls")  # JSON 필드 변경 명시
         db.commit()

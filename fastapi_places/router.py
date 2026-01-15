@@ -24,7 +24,8 @@ from schemas import (
 )
 from service import (
     search_places_hybrid, authenticate_local_badge, check_local_badge_active,
-    update_place_review_stats, update_place_thumbnails, get_or_create_place_by_api_id,
+    update_place_review_stats, update_place_thumbnails, remove_place_thumbnail,
+    get_or_create_place_by_api_id,
     search_kakao_places, search_google_places, get_google_place_details, reverse_geocode,
     geocode_address
 )
@@ -688,16 +689,19 @@ async def update_review(
         raise HTTPException(status_code=403, detail="본인의 리뷰만 수정할 수 있습니다")
 
     # 이미지 처리
+    old_image_url = review.image_url  # 기존 이미지 URL 저장
     image_url = review.image_url  # 기존 이미지 유지
     if image:
-        # 새 이미지 업로드 시 기존 이미지 파일 삭제
+        # 새 이미지 업로드 시 기존 이미지 파일 삭제 및 썸네일에서 제거
         if review.image_url:
             delete_image_file(review.image_url)
+            remove_place_thumbnail(db, place_id, review.image_url)
         image_url = await save_image_file(image, "place_images")
     elif remove_image:
         # 이미지 삭제만 요청한 경우
         if review.image_url:
             delete_image_file(review.image_url)
+            remove_place_thumbnail(db, place_id, review.image_url)
         image_url = None
 
     # 리뷰 수정
@@ -754,9 +758,10 @@ def delete_review(
     if review.user_id != user_id:
         raise HTTPException(status_code=403, detail="본인의 리뷰만 삭제할 수 있습니다")
 
-    # 이미지 파일 삭제
+    # 이미지 파일 삭제 및 썸네일에서 제거
     if review.image_url:
         delete_image_file(review.image_url)
+        remove_place_thumbnail(db, place_id, review.image_url)
 
     # 리뷰 삭제
     db.delete(review)
