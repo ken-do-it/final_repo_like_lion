@@ -1,5 +1,5 @@
 // src/pages/plans/PlanDetail.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import plansService from '../../api/plansApi';
 
@@ -10,6 +10,10 @@ const PlanDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+
+  // Kakao Map refs - 각 장소별 지도 컨테이너
+  const mapRefs = useRef({});
+  const mapsInitialized = useRef({});
 
   useEffect(() => {
     fetchPlanDetail();
@@ -24,6 +28,8 @@ const PlanDetail = () => {
       if (response.data.details && response.data.details.length > 0) {
         setSelectedDate(response.data.details[0].date);
       }
+      // Reset map initialization status when plan changes
+      mapsInitialized.current = {};
     } catch (err) {
       setError('여행 계획을 불러오는데 실패했습니다.');
       console.error('Error fetching plan:', err);
@@ -31,6 +37,85 @@ const PlanDetail = () => {
       setLoading(false);
     }
   };
+
+  // 단일 지도 초기화 함수
+  const initializeMap = useCallback((detailId, latitude, longitude, placeName) => {
+    if (!mapRefs.current[detailId]) return;
+    if (mapsInitialized.current[detailId]) return;
+    if (!window.kakao || !window.kakao.maps) return;
+
+    window.kakao.maps.load(() => {
+      const container = mapRefs.current[detailId];
+      if (!container) return;
+
+      const options = {
+        center: new window.kakao.maps.LatLng(latitude, longitude),
+        level: 3
+      };
+
+      const map = new window.kakao.maps.Map(container, options);
+
+      const marker = new window.kakao.maps.Marker({
+        position: new window.kakao.maps.LatLng(latitude, longitude)
+      });
+      marker.setMap(map);
+
+      mapsInitialized.current[detailId] = true;
+    });
+  }, []);
+
+  // Kakao Map SDK 로드 및 지도 초기화
+  useEffect(() => {
+    if (!plan || !plan.details || plan.details.length === 0) return;
+
+    const kakaoKey = import.meta.env.VITE_KAKAO_JS_KEY;
+    if (!kakaoKey) {
+      console.warn("Kakao JS Key is missing in .env");
+      return;
+    }
+
+    // 현재 선택된 날짜의 장소들만 초기화
+    const currentDetails = plan.details.filter(d => d.date === selectedDate);
+    const placesWithCoords = currentDetails.filter(d => d.place_latitude && d.place_longitude);
+
+    if (placesWithCoords.length === 0) return;
+
+    const initAllMaps = () => {
+      // DOM이 렌더링된 후 지도 초기화를 위해 약간의 지연 추가
+      setTimeout(() => {
+        placesWithCoords.forEach(detail => {
+          initializeMap(detail.id, detail.place_latitude, detail.place_longitude, detail.place_name);
+        });
+      }, 100);
+    };
+
+    if (window.kakao && window.kakao.maps) {
+      // SDK가 이미 로드된 경우
+      initAllMaps();
+    } else {
+      // SDK 동적 로드
+      const scriptId = 'kakao-map-sdk';
+      let script = document.getElementById(scriptId);
+
+      if (!script) {
+        script = document.createElement("script");
+        script.id = scriptId;
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoKey}&autoload=false`;
+        script.async = true;
+        document.head.appendChild(script);
+      }
+
+      const handleLoad = () => {
+        initAllMaps();
+      };
+
+      script.addEventListener('load', handleLoad);
+
+      return () => {
+        script.removeEventListener('load', handleLoad);
+      };
+    }
+  }, [plan, selectedDate, initializeMap]);
 
   const handleDeletePlace = async (detailId) => {
     if (!window.confirm('이 장소를 삭제하시겠습니까?')) {
@@ -198,93 +283,110 @@ const PlanDetail = () => {
                 className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="p-6">
-                  <div className="flex items-start justify-between">
-                    {/* 클릭 가능한 장소 정보 영역 */}
-                    <div
-                      className="flex items-start gap-4 flex-1 cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => {
-                        if (kakaoMapUrl) {
-                          window.open(kakaoMapUrl, '_blank');
-                        }
-                      }}
-                    >
-                      {/* Order Number */}
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#1392ec] text-white flex items-center justify-center font-bold">
-                        {index + 1}
-                      </div>
-
-                      {/* Place Info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                            {detail.place_name || '장소 이름 없음'}
-                          </h3>
-                          {kakaoMapUrl && (
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          )}
+                  <div className="flex items-stretch gap-6">
+                    {/* 왼쪽: 장소 정보 영역 */}
+                    <div className="flex-1 flex flex-col">
+                      <div
+                        className="flex items-start gap-4 flex-1 cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => {
+                          if (kakaoMapUrl) {
+                            window.open(kakaoMapUrl, '_blank');
+                          }
+                        }}
+                      >
+                        {/* Order Number */}
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#1392ec] text-white flex items-center justify-center font-bold">
+                          {index + 1}
                         </div>
 
-                        {detail.place_address && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-start">
-                            <svg className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            {detail.place_address}
-                          </p>
-                        )}
-
-                        {detail.description && (
-                          <p className="text-gray-700 dark:text-gray-300 mb-3">
-                            {detail.description}
-                          </p>
-                        )}
-
-                        {/* Images */}
-                        {detail.images && detail.images.length > 0 && (
-                          <div className="mt-4 flex gap-2 overflow-x-auto">
-                            {detail.images.map((image) => (
-                              <img
-                                key={image.id}
-                                src={image.image}
-                                alt={`장소 이미지 ${image.order_index}`}
-                                className="w-32 h-32 object-cover rounded-lg"
-                              />
-                            ))}
+                        {/* Place Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                              {detail.place_name || '장소 이름 없음'}
+                            </h3>
+                            {kakaoMapUrl && (
+                              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            )}
                           </div>
-                        )}
+
+                          {detail.place_address && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-start">
+                              <svg className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              {detail.place_address}
+                            </p>
+                          )}
+
+                          {detail.description && (
+                            <p className="text-gray-700 dark:text-gray-300 mb-3">
+                              {detail.description}
+                            </p>
+                          )}
+
+                          {/* Images */}
+                          {detail.images && detail.images.length > 0 && (
+                            <div className="mt-4 flex gap-2 overflow-x-auto">
+                              {detail.images.map((image) => (
+                                <img
+                                  key={image.id}
+                                  src={image.image}
+                                  alt={`장소 이미지 ${image.order_index}`}
+                                  className="w-32 h-32 object-cover rounded-lg"
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions - 왼쪽 하단 */}
+                      <div className="flex gap-2 mt-4 ml-14">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/plans/details/${detail.id}/edit`);
+                          }}
+                          className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          title="수정"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePlace(detail.id);
+                          }}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="삭제"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/plans/details/${detail.id}/edit`);
-                        }}
-                        className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        title="수정"
+                    {/* 오른쪽: 지도 */}
+                    {detail.place_latitude && detail.place_longitude && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-80 h-52 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePlace(detail.id);
-                        }}
-                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="삭제"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
+                        <div
+                          ref={(el) => {
+                            mapRefs.current[detail.id] = el;
+                          }}
+                          className="w-full h-full"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
