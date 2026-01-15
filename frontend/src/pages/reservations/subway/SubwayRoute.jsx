@@ -124,7 +124,7 @@ const SubwayRoute = () => {
    */
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-bg-dark">
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
         <div className="max-w-screen-xl mx-auto px-4 py-8">
           <TransportTabs />
           <div className="mt-6 text-center py-20">
@@ -137,7 +137,7 @@ const SubwayRoute = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-bg-dark">
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
       <div className="max-w-screen-xl mx-auto px-4 py-8">
         {/* 교통수단 탭 */}
         <TransportTabs />
@@ -153,7 +153,7 @@ const SubwayRoute = () => {
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
                     {searchParams.fromStation}
                   </div>
-                  <span className="material-symbols-rounded text-gray-400">
+                  <span className="material-symbols-outlined text-gray-400">
                     arrow_forward
                   </span>
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -176,7 +176,7 @@ const SubwayRoute = () => {
             {error && (
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 mb-6">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-rounded text-yellow-600 dark:text-yellow-400">
+                  <span className="material-symbols-outlined text-yellow-600 dark:text-yellow-400">
                     info
                   </span>
                   <p className="text-yellow-700 dark:text-yellow-300">{error}</p>
@@ -254,7 +254,7 @@ const SubwayRoute = () => {
                             <span className="font-semibold text-gray-900 dark:text-white">
                               {step.from}
                             </span>
-                            <span className="material-symbols-rounded text-gray-400 text-sm">
+                            <span className="material-symbols-outlined text-gray-400 text-sm">
                               arrow_forward
                             </span>
                             <span className="font-semibold text-gray-900 dark:text-white">
@@ -275,7 +275,7 @@ const SubwayRoute = () => {
             {/* 결과가 없을 때 */}
             {routes.length === 0 && !error && (
               <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-12 text-center">
-                <span className="material-symbols-rounded text-gray-400 text-6xl mb-4 block">
+                <span className="material-symbols-outlined text-gray-400 text-6xl mb-4 block">
                   search_off
                 </span>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -295,7 +295,7 @@ const SubwayRoute = () => {
               <div className="mt-6 space-y-4">
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <span className="material-symbols-rounded text-blue-600 dark:text-blue-400">
+                    <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">
                       info
                     </span>
                     이용 안내
