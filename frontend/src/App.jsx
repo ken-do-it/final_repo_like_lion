@@ -11,6 +11,7 @@ import ShortsPage from './pages/shorts/ShortsPage';
 import ShortsDetailPage from './pages/shorts/ShortsDetailPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
+import { PlanList, PlanDetail, PlanCreate, PlanEdit, AIRecommend, AddPlace, EditPlace } from './pages/plans';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import FindAccountPage from './pages/auth/FindAccountPage';
@@ -128,6 +129,19 @@ function App() {
           <Route path="/places/detail" element={<PlaceDetailPage />} />
           <Route path="/places/:id" element={<PlaceDetailPage />} />
 
+        {/* Travel Plans */}
+        <Route path="/plans" element={<PlanList />} />
+        <Route path="/plans/create" element={<PlanCreate />} />
+        <Route path="/plans/ai-recommend" element={<AIRecommend />} />
+        <Route path="/plans/:planId" element={<PlanDetail />} />
+        <Route path="/plans/:planId/edit" element={<PlanEdit />} />
+        <Route path="/plans/:planId/add-place" element={<AddPlace />} />
+        <Route path="/plans/details/:detailId/edit" element={<EditPlace />} />
+
+        {/* Development / Test Pages */}
+        <Route path="/test-front" element={<TestFrontAI />} />
+        <Route path="/anti-test" element={<TripleIntroPage />} />
+        <Route path="/anti-test-page" element={<AntiTestPage />} />
           <Route path="/geo-quiz" element={<GeoImageUploader />} />
           <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
           <Route path="/game" element={<RoadviewGame />} />

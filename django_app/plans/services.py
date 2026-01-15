@@ -6,7 +6,7 @@ def search_place_from_fastapi(place_name: str):
     """
     FastAPI 장소 검색 API 호출 및 첫 번째 결과 반환
     """
-    url = "http://localhost:8002/api/v1/places/search"
+    url = "http://fastapi_places:8002/api/v1/places/search"
     params = {'query': place_name, 'limit': 1}
     
     try:

@@ -35,11 +35,15 @@ class PlanDetailSerializer(serializers.ModelSerializer):
     images = PlanDetailImageSerializer(many=True, read_only=True)
     place_name = serializers.CharField(source='place.name', read_only=True)
     place_address = serializers.CharField(source='place.address', read_only=True)
-    
+    place_api_id = serializers.CharField(source='place.place_api_id', read_only=True)
+    place_latitude = serializers.DecimalField(source='place.latitude', max_digits=10, decimal_places=7, read_only=True)
+    place_longitude = serializers.DecimalField(source='place.longitude', max_digits=10, decimal_places=7, read_only=True)
+
     class Meta:
         model = PlanDetail
         fields = [
-            'id', 'plan', 'place', 'place_name', 'place_address',
+            'id', 'plan', 'place', 'place_name', 'place_address', 'place_api_id',
+            'place_latitude', 'place_longitude',
             'date', 'description', 'order_index', 'images', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
@@ -149,15 +153,19 @@ class PlanDetailCreateSerializer(serializers.ModelSerializer):
 
 class PlanDetailUpdateSerializer(serializers.ModelSerializer):
     """날짜별 장소 조회용 (이미지 포함)"""
-    
+
     images = PlanDetailImageSerializer(many=True, read_only=True)
     place_name = serializers.CharField(source='place.name', read_only=True)
     place_address = serializers.CharField(source='place.address', read_only=True)
-    
+    place_api_id = serializers.CharField(source='place.place_api_id', read_only=True)
+    place_latitude = serializers.DecimalField(source='place.latitude', max_digits=10, decimal_places=7, read_only=True)
+    place_longitude = serializers.DecimalField(source='place.longitude', max_digits=10, decimal_places=7, read_only=True)
+
     class Meta:
         model = PlanDetail
         fields = [
-            'id', 'place', 'place_name', 'place_address',
+            'id', 'plan', 'place', 'place_name', 'place_address', 'place_api_id',
+            'place_latitude', 'place_longitude',
             'date', 'description', 'order_index', 'images', 'created_at'
         ]
 

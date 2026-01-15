@@ -648,3 +648,38 @@ def ai_requests_list(request):
 
     serializer = AITravelRequestDetailSerializer(ai_requests, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def kakao_static_map(request):
+    """
+    다음 지도 정적 이미지 프록시
+    다음 지도 이미지 서비스를 사용하여 지도 미리보기 이미지 반환
+    """
+    from django.http import HttpResponse
+
+    latitude = request.GET.get('lat')
+    longitude = request.GET.get('lng')
+
+    if not latitude or not longitude:
+        return Response({'error': 'lat and lng parameters are required'}, status=400)
+
+    try:
+        # 다음 지도 정적 이미지 서비스 사용 (실제 지도 이미지 반환)
+        # 좌표를 WGS84에서 Daum Map 좌표계로 변환 (근사값 사용)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+
+        # Daum 지도 이미지 서비스 - 마커 포함
+        static_image_url = f'https://map2.daum.net/map/imageservice?MX={longitude}&MY={latitude}&SCALE=2.5&IW=400&IH=250'
+
+        img_response = requests.get(static_image_url, headers=headers, timeout=10)
+        img_response.raise_for_status()
+
+        return HttpResponse(img_response.content, content_type='image/jpeg')
+
+    except Exception as e:
+        logger.error(f"카카오맵 이미지 로드 실패: {str(e)}")
+        return Response({'error': str(e)}, status=500)
