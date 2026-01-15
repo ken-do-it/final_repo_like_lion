@@ -140,12 +140,14 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     // Fetch Comments
     const fetchComments = React.useCallback(async () => {
         try {
-            const response = await axiosInstance.get(`/shortforms/${id}/comments/`);
+            const response = await axiosInstance.get(`/shortforms/${id}/comments/`, {
+                params: { lang: langCode }
+            });
             setComments(response.data);
         } catch (error) {
             console.error("Failed to fetch comments:", error);
         }
-    }, [id]);
+    }, [id, langCode]);
 
     useEffect(() => {
         if (id) {
