@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { placesAxios as api } from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const PlaceDetailPage = () => {
     const { id } = useParams();
@@ -138,6 +139,21 @@ const PlaceDetailPage = () => {
         </div>
     );
 
+    const { isAuthenticated } = useAuth();
+
+    const handleActionClick = (action) => {
+        if (!isAuthenticated) {
+            if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+                navigate('/login-page');
+            }
+            return;
+        }
+
+        // TODO: Implement actual action logic
+        console.log(`${action} executed by authenticated user`);
+        alert(`${action} 기능은 준비 중입니다.`);
+    };
+
     if (!place) return null;
 
     return (
@@ -261,10 +277,16 @@ const PlaceDetailPage = () => {
                                 </button>
                             </div>
 
-                            <button className="w-full py-3 bg-[#1392ec] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors mb-3">
+                            <button
+                                onClick={() => handleActionClick("여행 계획에 추가")}
+                                className="w-full py-3 bg-[#1392ec] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors mb-3"
+                            >
                                 여행 계획에 추가
                             </button>
-                            <button className="w-full py-3 bg-white dark:bg-transparent border border-[#1392ec] text-[#1392ec] font-bold rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
+                            <button
+                                onClick={() => handleActionClick("리뷰 작성")}
+                                className="w-full py-3 bg-white dark:bg-transparent border border-[#1392ec] text-[#1392ec] font-bold rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                            >
                                 리뷰 작성하기
                             </button>
                         </div>
