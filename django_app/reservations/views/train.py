@@ -33,6 +33,7 @@ class MSTrainSearchView(APIView):
 
     인증: 선택 (비회원도 검색 가능)
     """
+    authentication_classes = []  # 인증 불필요
     permission_classes = [AllowAny]  # 비회원도 접근 가능
 
     @extend_schema(
@@ -330,6 +331,7 @@ class MSKorailLinkView(APIView):
     현재 상태: 코레일 메인 페이지만 반환
     향후 개선: 지하철 개발 완료 후, 검색 조건이 포함된 URL 생성
     """
+    authentication_classes = []  # 인증 불필요
     permission_classes = [AllowAny]
 
     @extend_schema(

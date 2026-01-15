@@ -30,6 +30,7 @@ class MSFlightSearchView(APIView):
 
     인증: 선택 (비회원도 검색 가능)
     """
+    authentication_classes = []  # 인증 불필요
     permission_classes = [AllowAny]  # 비회원도 접근 가능
 
     @extend_schema(
@@ -130,6 +131,7 @@ class MSFlightDetailView(APIView):
 
     인증: 선택 (비회원도 조회 가능)
     """
+    authentication_classes = []  # 인증 불필요
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -215,6 +217,7 @@ class MSAirportListView(APIView):
 
     React에서 공항 선택 시 사용
     """
+    authentication_classes = []  # 인증 불필요
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -293,6 +296,7 @@ class MSAirlineListView(APIView):
 
     React에서 항공사 선택 시 사용
     """
+    authentication_classes = []  # 인증 불필요
     permission_classes = [AllowAny]
 
     @extend_schema(
