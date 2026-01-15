@@ -8,6 +8,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     const menuItems = [
         { label: `🏠 ${t('nav_home')}`, path: '/' },
+        { label: `📍 ${t('nav_places') || '장소'}`, path: '/places/search' },
         { label: `🏨 ${t('nav_stays')}`, path: '/stays' },
         { label: `📸 ${t('nav_geoquiz')}`, path: '/geo-quiz' },
         { label: `🎮 ${t('nav_game')}`, path: '/game' },

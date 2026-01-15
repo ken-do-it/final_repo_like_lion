@@ -12,7 +12,7 @@ export const translations = {
         nav_shorts: "Shorts",
         nav_game: "Roadview Game",
         nav_stays: "Stays",
-        nav_stays: "Stays",
+        nav_places: "Places",
         nav_mytrips: "My Trips",
         // Sidebar Specific
         nav_geoquiz: "Geo Quiz Uploader",
@@ -32,6 +32,7 @@ export const translations = {
 
         // Filter Chips
         filter_all: "All",
+        filter_places: "Places",
         filter_geoquiz: "GeoQuiz",
         filter_stays: "Stays",
         filter_flights: "Flights",
@@ -69,6 +70,7 @@ export const translations = {
         nav_shorts: "쇼츠",
         nav_game: "로드뷰 게임",
         nav_stays: "숙소",
+        nav_places: "장소",
         nav_mytrips: "나의 여행",
         // Sidebar Specific
         nav_geoquiz: "지오 퀴즈 업로더",
@@ -88,6 +90,7 @@ export const translations = {
 
         // Filter Chips
         filter_all: "전체",
+        filter_places: "장소",
         filter_geoquiz: "지리퀴즈",
         filter_stays: "숙소",
         filter_flights: "항공권",
@@ -125,6 +128,7 @@ export const translations = {
         nav_shorts: "ショート",
         nav_game: "ロードビュー",
         nav_stays: "宿泊",
+        nav_places: "場所",
         nav_mytrips: "旅程",
         // Sidebar Specific
         nav_geoquiz: "ジオクイズ・アップローダー",
@@ -144,6 +148,7 @@ export const translations = {
 
         // Filter Chips
         filter_all: "すべて",
+        filter_places: "場所",
         filter_geoquiz: "ジオクイズ",
         filter_stays: "宿泊",
         filter_flights: "航空券",
@@ -181,6 +186,7 @@ export const translations = {
         nav_shorts: "短视频",
         nav_game: "街景游戏",
         nav_stays: "住宿",
+        nav_places: "地点",
         nav_mytrips: "我的行程",
         // Sidebar Specific
         nav_geoquiz: "地理测验上传",
@@ -200,6 +206,7 @@ export const translations = {
 
         // Filter Chips
         filter_all: "全部",
+        filter_places: "地点",
         filter_geoquiz: "地理测验",
         filter_stays: "住宿",
         filter_flights: "机票",
