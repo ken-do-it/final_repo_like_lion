@@ -9,6 +9,7 @@ import RoadviewGame from './pages/RoadviewGame';
 import AccommodationMap from './pages/AccommodationMap';
 import ShortsPage from './pages/shorts/ShortsPage';
 import ShortsDetailPage from './pages/shorts/ShortsDetailPage';
+import ShortsUploadPage from './pages/shorts/ShortsUploadPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
 import { PlanList, PlanDetail, PlanCreate, PlanEdit, AIRecommend, AddPlace, EditPlace } from './pages/plans';
@@ -76,12 +77,17 @@ function App() {
   console.log("Current Path:", location.pathname);
   console.log("Show Navbar:", showNavbar);
 
+  // 3. Optimize Sidebar Toggle to prevent Navbar re-renders
+  const handleToggleSidebar = React.useCallback(() => {
+    setIsSidebarOpen(true);
+  }, []);
+
   return (
     <AuthProvider>
       <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] font-sans">
         {showNavbar && (
           <Navbar
-            toggleSidebar={() => setIsSidebarOpen(true)}
+            toggleSidebar={handleToggleSidebar}
             toggleTheme={toggleTheme}
             isDarkMode={isDarkMode}
           />
@@ -102,6 +108,8 @@ function App() {
           <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
           <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
           <Route path="/shorts" element={<ShortsPage />} />
+          <Route path="/shorts/upload" element={<ShortsUploadPage />} />
+          <Route path="/shorts/:id/edit" element={<ShortsUploadPage />} />
           <Route path="/shorts/:id" element={<ShortsDetailPage />} />
 
           {/* Reservation Pages - Flight */}
