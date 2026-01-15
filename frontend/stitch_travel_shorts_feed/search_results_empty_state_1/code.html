@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Search Results - Empty State</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13b6ec",
+                        "background-light": "#f6f8f8",
+                        "background-dark": "#101d22",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background-color: #334155;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased min-h-screen flex flex-col">
+<!-- Sticky Header & Search Wrapper -->
+<div class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+<div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+<!-- Top Nav -->
+<header class="flex items-center justify-between py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">flight_takeoff</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Triple</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex gap-2">
+<button class="flex items-center justify-center rounded-full size-10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-full size-10 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border-2 border-white dark:border-slate-700 shadow-sm" data-alt="User profile avatar image" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBiIkAO342nBPJXxXO5VEbDC5qL7Gi0oB6cgZojGVtPjr9vL7DlmgKD1C9AVZ2KSfEJwVg4Z2-onkl7pvq6Qtb1Q45g7G5lAVS7tMf-Yi9IWZMdQG5EE0S-_M38z0aPR0At8e0Asjv6V4KOHMnr2WKLCoUMjrjeN2wNftBUrrI7Z3kjlZfy7PZFYKRBNBSQm3SIJtmZc9vnGZtmGFqOUiMELGToP11Dk74ZHvrrRW7q_z7U7zubcIWvsymDTpxyTWZ_RHuh5j48glfo");'></div>
+</div>
+</header>
+<!-- Search Bar -->
+<div class="pb-4">
+<div class="max-w-2xl mx-auto">
+<label class="relative flex items-center w-full group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-primary">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="block w-full rounded-xl border-none bg-slate-100 dark:bg-slate-800 py-3.5 pl-12 pr-12 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 focus:bg-white dark:focus:bg-slate-900 transition-all shadow-sm font-medium" placeholder="Where to?" type="text" value="Mars Expedition"/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+<span class="material-symbols-outlined">cancel</span>
+</button>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content: Empty State -->
+<main class="flex-grow flex flex-col items-center justify-center px-4 py-12 md:py-20 w-full max-w-7xl mx-auto">
+<div class="w-full max-w-lg flex flex-col items-center text-center space-y-8 animate-fade-in-up">
+<!-- Illustration Area -->
+<div class="relative w-64 h-64 md:w-80 md:h-80 mb-4">
+<!-- Abstract blobs/decoration behind -->
+<div class="absolute inset-0 bg-primary/10 rounded-full blur-3xl transform scale-75 translate-y-4"></div>
+<div class="w-full h-full bg-center bg-contain bg-no-repeat relative z-10" data-alt="Minimalist flat vector illustration of a confused traveler looking at a large map with a question mark" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAT65y3aCzKRbSKplTvGgv2UVRedU7yJdvpsODeRUWj0CkFqaiCzOTnD6qcJiczC3C6sltcJO0GdxLUP-BPQexoU11KpSRj83XXQZh6OxitK0Wb6GAtJELLpuGjd6kEBFXpq-YexA3kO8SzQcKfoiV-vPtELbW9KisXC9AfhfgaOxaSamL_jhtMX3OtN8E1rdbMvaRM88eGqQ8T5egXRtrRy5-2JnslISzMQe-8gftCU3JC964H90Gy8mHjhGxMEwfzvnaq_BKi6PQV");'>
+</div>
+</div>
+<!-- Text Content -->
+<div class="space-y-3">
+<h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    No results found
+                </h1>
+<p class="text-slate-500 dark:text-slate-400 text-base md:text-lg leading-relaxed max-w-md mx-auto">
+                    We couldn't find any trips matching <span class="text-slate-900 dark:text-white font-semibold">'Mars Expedition'</span>. Try checking your spelling or using a more general term.
+                </p>
+</div>
+<!-- Action Button -->
+<button class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 transform active:scale-95">
+<span class="material-symbols-outlined text-xl">restart_alt</span>
+                Clear Search
+            </button>
+</div>
+<!-- Suggestions / Chips -->
+<div class="mt-16 w-full max-w-3xl flex flex-col items-center border-t border-slate-200 dark:border-slate-800 pt-10">
+<h3 class="text-slate-400 dark:text-slate-500 uppercase text-xs font-bold tracking-widest mb-6">Or explore these categories</h3>
+<div class="flex flex-wrap justify-center gap-3">
+<a class="group flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined text-primary text-sm group-hover:scale-110 transition-transform">local_fire_department</span>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Popular Destinations</span>
+</a>
+<a class="group flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined text-primary text-sm group-hover:scale-110 transition-transform">weekend</span>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Weekend Getaways</span>
+</a>
+<a class="group flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined text-primary text-sm group-hover:scale-110 transition-transform">public</span>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Europe</span>
+</a>
+<a class="group flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined text-primary text-sm group-hover:scale-110 transition-transform">temple_buddhist</span>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Asia</span>
+</a>
+<a class="group flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined text-primary text-sm group-hover:scale-110 transition-transform">beach_access</span>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Tropical</span>
+</a>
+</div>
+</div>
+</main>
+<!-- Footer Simple -->
+<footer class="py-6 text-center text-slate-400 dark:text-slate-600 text-sm">
+<p>© 2024 Triple Travel App. All rights reserved.</p>
+</footer>
+</body></html>
