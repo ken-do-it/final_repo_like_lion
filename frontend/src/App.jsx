@@ -104,44 +104,44 @@ function App() {
           <Route path="/shorts" element={<ShortsPage />} />
           <Route path="/shorts/:id" element={<ShortsDetailPage />} />
 
-        {/* Reservation Pages - Flight */}
-        <Route path="/reservations/flights" element={<FlightSearch />} />
-        <Route path="/reservations/flights/results" element={<FlightResults />} />
-        <Route path="/reservations/flights/seat" element={<FlightSeat />} />
-        <Route path="/reservations/flights/payment" element={<FlightPayment />} />
-        <Route path="/reservations/flights/payment/success" element={<FlightPaymentSuccess />} />
-        <Route path="/reservations/flights/payment/fail" element={<FlightPaymentFail />} />
-        <Route path="/reservations/flights/complete" element={<FlightComplete />} />
+          {/* Reservation Pages - Flight */}
+          <Route path="/reservations/flights" element={<FlightSearch />} />
+          <Route path="/reservations/flights/results" element={<FlightResults />} />
+          <Route path="/reservations/flights/seat" element={<FlightSeat />} />
+          <Route path="/reservations/flights/payment" element={<FlightPayment />} />
+          <Route path="/reservations/flights/payment/success" element={<FlightPaymentSuccess />} />
+          <Route path="/reservations/flights/payment/fail" element={<FlightPaymentFail />} />
+          <Route path="/reservations/flights/complete" element={<FlightComplete />} />
 
-        {/* Reservation Pages - Train */}
-        <Route path="/reservations/trains" element={<TrainSearch />} />
-        <Route path="/reservations/trains/results" element={<TrainResults />} />
+          {/* Reservation Pages - Train */}
+          <Route path="/reservations/trains" element={<TrainSearch />} />
+          <Route path="/reservations/trains/results" element={<TrainResults />} />
 
-        {/* Reservation Pages - Subway */}
-        <Route path="/reservations/subway" element={<SubwaySearch />} />
-        <Route path="/reservations/subway/route" element={<SubwayRoute />} />
+          {/* Reservation Pages - Subway */}
+          <Route path="/reservations/subway" element={<SubwaySearch />} />
+          <Route path="/reservations/subway/route" element={<SubwayRoute />} />
 
-        <Route path="/geo-quiz" element={<GeoImageUploader />} />
-        <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
-        <Route path="/game" element={<RoadviewGame />} />
+          <Route path="/geo-quiz" element={<GeoImageUploader />} />
+          <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
+          <Route path="/game" element={<RoadviewGame />} />
           {/* Place Pages */}
           <Route path="/places/search" element={<PlaceSearch />} />
           <Route path="/places/detail" element={<PlaceDetailPage />} />
           <Route path="/places/:id" element={<PlaceDetailPage />} />
 
-        {/* Travel Plans */}
-        <Route path="/plans" element={<PlanList />} />
-        <Route path="/plans/create" element={<PlanCreate />} />
-        <Route path="/plans/ai-recommend" element={<AIRecommend />} />
-        <Route path="/plans/:planId" element={<PlanDetail />} />
-        <Route path="/plans/:planId/edit" element={<PlanEdit />} />
-        <Route path="/plans/:planId/add-place" element={<AddPlace />} />
-        <Route path="/plans/details/:detailId/edit" element={<EditPlace />} />
+          {/* Travel Plans */}
+          <Route path="/plans" element={<PlanList />} />
+          <Route path="/plans/create" element={<PlanCreate />} />
+          <Route path="/plans/ai-recommend" element={<AIRecommend />} />
+          <Route path="/plans/:planId" element={<PlanDetail />} />
+          <Route path="/plans/:planId/edit" element={<PlanEdit />} />
+          <Route path="/plans/:planId/add-place" element={<AddPlace />} />
+          <Route path="/plans/details/:detailId/edit" element={<EditPlace />} />
 
-        {/* Development / Test Pages */}
-        <Route path="/test-front" element={<TestFrontAI />} />
-        <Route path="/anti-test" element={<TripleIntroPage />} />
-        <Route path="/anti-test-page" element={<AntiTestPage />} />
+          {/* Development / Test Pages */}
+          {/* <Route path="/test-front" element={<TestFrontAI />} /> */}
+          <Route path="/anti-test" element={<TripleIntroPage />} />
+          <Route path="/anti-test-page" element={<AntiTestPage />} />
           <Route path="/geo-quiz" element={<GeoImageUploader />} />
           <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
           <Route path="/game" element={<RoadviewGame />} />
