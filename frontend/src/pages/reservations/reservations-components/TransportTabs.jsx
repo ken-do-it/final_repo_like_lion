@@ -43,12 +43,12 @@ const TransportTabs = () => {
     {
       label: '기차',
       icon: 'train',
-      path: '/reservations/trains/search'
+      path: '/reservations/trains'
     },
     {
       label: '지하철',
       icon: 'subway',
-      path: '/reservations/subway/search'
+      path: '/reservations/subway'
     },
   ];
 
@@ -80,7 +80,7 @@ const TransportTabs = () => {
           `}
         >
           {/* Material Symbols 아이콘 */}
-          <span className="material-symbols-rounded text-xl">
+          <span className="material-symbols-outlined text-xl">
             {tab.icon}
           </span>
 

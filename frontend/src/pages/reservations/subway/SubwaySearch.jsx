@@ -37,7 +37,7 @@ const SubwaySearch = () => {
    */
   const searchOptions = [
     { value: 'FAST', label: '최단시간', icon: 'schedule' },
-    { value: 'FEW_TRANSFER', label: '최소환승', icon: 'swap_horiz' },
+    { value: 'FEW_TRANSFER', label: '최소환승', icon: 'sync_alt' },
     { value: 'CHEAP', label: '최소비용', icon: 'savings' },
   ];
 
@@ -121,8 +121,13 @@ const SubwaySearch = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-bg-dark">
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
       <div className="max-w-screen-xl mx-auto px-4 py-8">
+        {/* 페이지 제목 */}
+        <h1 className="text-3xl font-bold mb-6 dark:text-white">
+          교통
+        </h1>
+
         {/* 교통수단 탭 */}
         <TransportTabs />
 
@@ -161,12 +166,10 @@ const SubwaySearch = () => {
                     <button
                       type="button"
                       onClick={handleSwap}
-                      className="p-3 bg-slate-100 dark:bg-gray-800 rounded-lg hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors"
+                      className="p-3 bg-slate-100 dark:bg-gray-800 rounded-lg hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
                       title="출발역과 도착역 교환"
                     >
-                      <span className="material-symbols-rounded text-gray-600 dark:text-gray-400">
-                        swap_horiz
-                      </span>
+                      <span className="material-symbols-outlined">swap_horiz</span>
                     </button>
                   </div>
 
@@ -210,7 +213,7 @@ const SubwaySearch = () => {
                             : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                       >
-                        <span className={`material-symbols-rounded block text-3xl mb-2 ${
+                        <span className={`material-symbols-outlined block text-3xl mb-2 ${
                           formData.option === option.value
                             ? 'text-primary'
                             : 'text-gray-400 dark:text-gray-500'
@@ -234,7 +237,6 @@ const SubwaySearch = () => {
                   type="submit"
                   className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                 >
-                  <span className="material-symbols-rounded">search</span>
                   경로 검색
                 </button>
               </form>
@@ -243,9 +245,7 @@ const SubwaySearch = () => {
             {/* 안내 사항 */}
             <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <span className="material-symbols-rounded text-blue-600 dark:text-blue-400">
-                  info
-                </span>
+                <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">info</span>
                 지하철 경로 검색 안내
               </h3>
               <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2 ml-8">

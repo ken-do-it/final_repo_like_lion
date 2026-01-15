@@ -66,24 +66,57 @@ const FlightResults = () => {
   }, [flights, sortBy, selectedAirline, priceRange]);
 
   /**
-   * 항공편 검색 API 호출
+   * 항공편 검색 API 호출 (POST 방식)
    */
   const fetchFlights = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = {
-        depAirportId: searchConditions.depAirportId,
-        arrAirportId: searchConditions.arrAirportId,
-        depDate: searchConditions.depDate,
-        ...(searchConditions.airlineId && { airlineId: searchConditions.airlineId }),
+      // 백엔드 API가 기대하는 요청 형식으로 변환
+      const requestBody = {
+        tripType: searchConditions.tripType?.toUpperCase() || 'ONEWAY',
+        from_airport: searchConditions.depAirportId,
+        to: searchConditions.arrAirportId,
+        departDate: searchConditions.depDate,
+        ...(searchConditions.tripType === 'roundtrip' && searchConditions.retDate && {
+          returnDate: searchConditions.retDate
+        }),
+        passengers: {
+          adults: searchConditions.passengers || 1,
+          children: 0,
+          infants: 0
+        },
+        cabinClass: searchConditions.seatClass?.toUpperCase() || 'ECONOMY',
+        ...(searchConditions.airlineId && {
+          filters: { airline: searchConditions.airlineId }
+        }),
       };
 
-      const response = await axios.get('/v1/transport/flights/search/', { params });
+      const response = await axios.post('/v1/transport/flights/search/', requestBody);
 
-      // API 응답 구조: { flights: [], pagination: {} }
-      setFlights(response.data.flights || []);
+      // API 응답 구조: { searchId, currency, results: [] }
+      // results를 flights로 매핑
+      const results = response.data.results || [];
+
+      // 백엔드 응답 형식을 프론트엔드가 기대하는 형식으로 변환
+      // FlightPayment.jsx에서 사용하는 필드명에 맞춤
+      const mappedFlights = results.map(offer => ({
+        offerId: offer.offerId,
+        airlineName: offer.airline,
+        airlineNm: offer.airline,  // FlightPayment.jsx용
+        flightNumber: offer.flightNo,
+        vihRouteName: `${searchConditions.depAirportId} → ${searchConditions.arrAirportId}`,  // FlightPayment.jsx용
+        depPlandTime: offer.depAt?.replace(/[-:T]/g, '').substring(0, 12),
+        arrPlandTime: offer.arrAt?.replace(/[-:T]/g, '').substring(0, 12),
+        departureAirport: searchConditions.depAirportId,
+        arrivalAirport: searchConditions.arrAirportId,
+        economyCharge: offer.totalPrice,
+        prestigeCharge: offer.totalPrice * 2, // 비즈니스는 대략 2배로 추정
+        durationMin: offer.durationMin,
+      }));
+
+      setFlights(mappedFlights);
     } catch (err) {
       console.error('항공편 검색 실패:', err);
       setError('항공편을 불러오는데 실패했습니다. 다시 시도해주세요.');
@@ -204,9 +237,9 @@ const FlightResults = () => {
    */
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-100 dark:bg-background-dark flex items-center justify-center">
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center">
         <div className="text-center">
-          <span className="material-symbols-rounded text-6xl text-primary animate-spin">
+          <span className="material-symbols-outlined text-6xl text-primary animate-spin">
             progress_activity
           </span>
           <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
@@ -222,10 +255,10 @@ const FlightResults = () => {
    */
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-100 dark:bg-background-dark">
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-            <span className="material-symbols-rounded text-6xl text-red-500 mb-4">
+            <span className="material-symbols-outlined text-6xl text-red-500 mb-4">
               error
             </span>
             <p className="text-red-800 dark:text-red-300 mb-4">{error}</p>
@@ -242,7 +275,7 @@ const FlightResults = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-background-dark">
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 페이지 제목 */}
         <h1 className="text-3xl font-bold mb-6 dark:text-white">
@@ -256,7 +289,7 @@ const FlightResults = () => {
         <div className="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-md mt-6 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-6 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-rounded text-primary">
+              <span className="material-symbols-outlined text-primary">
                 flight_takeoff
               </span>
               <span className="font-medium dark:text-white">
@@ -264,12 +297,12 @@ const FlightResults = () => {
               </span>
             </div>
 
-            <span className="material-symbols-rounded text-slate-400">
+            <span className="material-symbols-outlined text-slate-400">
               arrow_forward
             </span>
 
             <div className="flex items-center gap-2">
-              <span className="material-symbols-rounded text-primary">
+              <span className="material-symbols-outlined text-primary">
                 flight_land
               </span>
               <span className="font-medium dark:text-white">
@@ -278,7 +311,7 @@ const FlightResults = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="material-symbols-rounded text-slate-400">
+              <span className="material-symbols-outlined text-slate-400">
                 calendar_today
               </span>
               <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -288,9 +321,9 @@ const FlightResults = () => {
 
             {searchConditions.tripType === 'roundtrip' && searchConditions.retDate && (
               <>
-                <span className="material-symbols-rounded text-slate-400">arrow_forward</span>
+                <span className="material-symbols-outlined text-slate-400">arrow_forward</span>
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-rounded text-slate-400">calendar_today</span>
+                  <span className="material-symbols-outlined text-slate-400">calendar_today</span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
                     {searchConditions.retDate}
                   </span>
@@ -299,7 +332,7 @@ const FlightResults = () => {
             )}
 
             <div className="flex items-center gap-2">
-              <span className="material-symbols-rounded text-slate-400">
+              <span className="material-symbols-outlined text-slate-400">
                 person
               </span>
               <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -389,7 +422,7 @@ const FlightResults = () => {
                 {/* 항공편 카드 목록 */}
                 {filteredFlights.length === 0 ? (
                   <div className="bg-white dark:bg-surface-dark rounded-xl p-8 text-center">
-                    <span className="material-symbols-rounded text-6xl text-gray-300 dark:text-gray-600 mb-4">
+                    <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">
                       flight
                     </span>
                     <p className="text-gray-600 dark:text-gray-400">
@@ -408,7 +441,7 @@ const FlightResults = () => {
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                            <span className="material-symbols-rounded text-primary">
+                            <span className="material-symbols-outlined text-primary">
                               airlines
                             </span>
                           </div>
@@ -448,7 +481,7 @@ const FlightResults = () => {
                             {calculateDuration(flight.depPlandTime, flight.arrPlandTime)}
                           </p>
                           <div className="w-full h-px bg-slate-300 dark:bg-slate-600 relative">
-                            <span className="material-symbols-rounded absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-sm">
+                            <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-sm">
                               flight
                             </span>
                           </div>
