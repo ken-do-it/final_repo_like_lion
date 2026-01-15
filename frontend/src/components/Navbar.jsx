@@ -64,7 +64,7 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
 
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-[#101a22]/95 backdrop-blur-md transition-colors">
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
+            <div className="mx-auto flex h-16 max-w-7xl w-full items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
 
                 {/* 1. Left Section: Hamburger & Logo */}
                 <div className="flex items-center gap-2 sm:gap-4 shrink-0">

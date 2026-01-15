@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+
+<html class="light dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Travel Shorts Feed</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1392ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101a22",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hide for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#0d161b] dark:text-white transition-colors duration-200">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Header -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#101a22]/80 backdrop-blur-md px-6 py-4 z-50 fixed top-0 w-full">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary">
+<svg class="w-full h-full" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-xl font-bold leading-tight tracking-[-0.015em] dark:text-white">Triple</h2>
+</div>
+<div class="hidden md:flex flex-1 justify-center gap-8">
+<!-- Desktop Nav -->
+<a class="text-slate-900 dark:text-slate-100 text-sm font-semibold leading-normal hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-primary text-sm font-bold leading-normal" href="#">Explore</a>
+<a class="text-slate-900 dark:text-slate-100 text-sm font-semibold leading-normal hover:text-primary transition-colors" href="#">My Trips</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="md:hidden text-slate-900 dark:text-white material-symbols-outlined">menu</button>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border-2 border-slate-100 dark:border-slate-700 cursor-pointer" data-alt="User profile picture placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAFiR0eWEKR05yL0UHBFUzD5Lcb6hCbI6mURjO2UipgPu_EclnGySmbB5xVRVcSIlTeqND1H-TNeMxEVp9rg2BEH-VfJ28xMf5vyoNaJczNh3utFWg-bnNs88qps3ZKbkEGBw3IN7ndgOLen2_xFMsAEDBVSwzniV_L-SHIBvxZmWeJ2KnWKvnnK1m6IYaPh7k_9SxpYlf-EQEs7dNgk-Tx4j2uebIys9z6oOvHe3maqgwRLuQraq6BkViaHlnepqQQuvaJ315x7ejU");'></div>
+</div>
+</header>
+<!-- Main Feed Container -->
+<main class="flex-1 flex justify-center items-center pt-[72px] pb-6 h-full w-full">
+<!-- Video Wrapper (Mobile aspect ratio on desktop) -->
+<div class="relative w-full max-w-[420px] h-[calc(100vh-100px)] bg-black rounded-xl overflow-hidden shadow-2xl group">
+<!-- Background Image (Simulating Video) -->
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Vertical video still of Kyoto bamboo forest" data-location="Kyoto, Japan" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBFzWupGQt64zfKQqTp7h-Hw-mn5BOjb93B_I7TXdc0ZzFabcm_Z5URZJKn-SpNveq-A7aBAbFMYeOoYboQmkdZuIRgIx96iUp-s5MmsLldsOxb8CvhwZusGwCUMtgp67aQwlq7KOt-cJJrWVGwkP-gZKKD6R06MlrqmVfWYurZqjn7vI2fTm2cQDgrGqQpnzU2evqP4y4Dyc_wthhr7W7o3PYyRPfDkS3dh5oibVy9fGV5_A5GT3qUd0EJv4Ed16utg9jdRMmWxsEd");'>
+</div>
+<!-- Dark Gradient Overlay for text readability -->
+<div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80"></div>
+<!-- Top Controls (Mute/More) -->
+<div class="absolute top-4 right-4 flex flex-col gap-4 z-20">
+<button class="size-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm text-white hover:bg-black/40 transition-colors">
+<span class="material-symbols-outlined text-[20px]">volume_off</span>
+</button>
+<button class="size-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm text-white hover:bg-black/40 transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<!-- Right Side Actions Bar -->
+<div class="absolute bottom-24 right-4 flex flex-col items-center gap-6 z-20">
+<div class="flex flex-col items-center gap-1 group/btn cursor-pointer">
+<div class="p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-all active:scale-95 group-hover/btn:bg-white/20">
+<span class="material-symbols-outlined text-white text-[28px]" data-weight="fill">favorite</span>
+</div>
+<span class="text-white text-xs font-medium drop-shadow-md">24.5k</span>
+</div>
+<div class="flex flex-col items-center gap-1 group/btn cursor-pointer">
+<div class="p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-all active:scale-95 group-hover/btn:bg-white/20">
+<span class="material-symbols-outlined text-white text-[28px]">chat_bubble</span>
+</div>
+<span class="text-white text-xs font-medium drop-shadow-md">142</span>
+</div>
+<div class="flex flex-col items-center gap-1 group/btn cursor-pointer">
+<div class="p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-all active:scale-95 group-hover/btn:bg-white/20">
+<span class="material-symbols-outlined text-white text-[28px]">bookmark</span>
+</div>
+<span class="text-white text-xs font-medium drop-shadow-md">Save</span>
+</div>
+<div class="flex flex-col items-center gap-1 group/btn cursor-pointer">
+<div class="p-3 bg-white/10 backdrop-blur-md rounded-full hover:bg-white/20 transition-all active:scale-95 group-hover/btn:bg-white/20">
+<span class="material-symbols-outlined text-white text-[28px]">share</span>
+</div>
+<span class="text-white text-xs font-medium drop-shadow-md">Share</span>
+</div>
+</div>
+<!-- Bottom Content Overlay -->
+<div class="absolute bottom-0 left-0 right-0 p-5 pr-20 flex flex-col justify-end z-10 pb-8">
+<!-- Location Badge -->
+<div class="flex items-center gap-1.5 mb-3 w-fit bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+<span class="material-symbols-outlined text-white text-[16px]">location_on</span>
+<span class="text-white text-xs font-bold tracking-wide uppercase">Kyoto, Japan</span>
+</div>
+<!-- Creator Profile -->
+<div class="flex items-center gap-3 mb-3">
+<div class="size-10 rounded-full border-2 border-white bg-cover bg-center" data-alt="Creator profile picture showing a traveler" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4vtyflMhj1lWvh3nxd1ylVoaIuNEJfz-oaNy9mK5GIMajawaDyaRNgbuqDYSZZHaT8A_0URAKO11NyYrFAMidOZcDzgMijIWcr-KP5io_IaboSKnXP6a0eNFC1QZzLPuffxIBmq8MFgbKerhbfP0oRIqzBkx6SDokj2__jdVERIG6za5EUBPYPQ4gkC88-gBsYicIv3KttR5QBdD2Tv_EregooutLTKyU98aS8ka2Y3Xr8FkbvhrlakQF84Lzfagb7X6Es3WUv3HZ");'>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="text-white font-bold text-sm shadow-black drop-shadow-sm">@travelwithsarah</h3>
+<button class="text-primary text-xs font-bold bg-white px-2 py-0.5 rounded shadow-sm hover:bg-slate-100 transition-colors">Follow</button>
+</div>
+<p class="text-slate-200 text-xs shadow-black drop-shadow-sm">Travel Creator</p>
+</div>
+</div>
+<!-- Description -->
+<div class="mb-5">
+<p class="text-white text-sm font-medium leading-relaxed drop-shadow-md line-clamp-2">
+                            Found the most peaceful spot in Arashiyama Bamboo Grove. You have to arrive before 7am to catch this light! ✨🎍 <span class="text-slate-300 font-normal cursor-pointer hover:underline">...more</span>
+</p>
+</div>
+<!-- Main CTA -->
+<button class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] shadow-lg shadow-blue-500/20">
+<span class="material-symbols-outlined text-[20px]">map</span>
+<span>View Guide</span>
+</button>
+</div>
+<!-- Progress Bar -->
+<div class="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+<div class="h-full w-[45%] bg-white rounded-r-full relative">
+<div class="absolute right-0 top-1/2 -translate-y-1/2 size-2 bg-primary rounded-full shadow-md scale-0 group-hover:scale-100 transition-transform"></div>
+</div>
+</div>
+<!-- Play/Pause Indicator (Hidden by default, shown on center for demo) -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0">
+<div class="bg-black/40 rounded-full p-4 backdrop-blur-sm">
+<span class="material-symbols-outlined text-white text-[48px] fill">play_arrow</span>
+</div>
+</div>
+</div>
+<!-- Desktop Navigation Hints (Left/Right) -->
+<button class="hidden lg:flex absolute left-10 xl:left-32 top-1/2 -translate-y-1/2 size-12 bg-white dark:bg-slate-800 rounded-full shadow-xl items-center justify-center text-slate-600 dark:text-slate-300 hover:text-primary hover:scale-110 transition-all z-10">
+<span class="material-symbols-outlined">arrow_upward</span>
+</button>
+<button class="hidden lg:flex absolute left-10 xl:left-32 top-1/2 translate-y-[60px] size-12 bg-white dark:bg-slate-800 rounded-full shadow-xl items-center justify-center text-slate-600 dark:text-slate-300 hover:text-primary hover:scale-110 transition-all z-10">
+<span class="material-symbols-outlined">arrow_downward</span>
+</button>
+<!-- Side Info Panel (Optional context for desktop) -->
+<div class="hidden xl:flex flex-col max-w-xs ml-12 gap-6">
+<div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+<h3 class="text-lg font-bold mb-4 dark:text-white">Trending in Kyoto</h3>
+<div class="flex flex-col gap-4">
+<div class="flex gap-3 items-center group cursor-pointer">
+<div class="size-16 rounded-lg bg-cover bg-center shrink-0" data-alt="Fushimi Inari Shrine torii gates" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuABfwtXrjpq0SHJi0GeQHNXn2mG_dDnIeC07t7fvFz5B9T7DpTE9cawi7YBCY2pHS40ksm-YYmb4N8bRkiDOjfEueCdP2eo4jzKU7VoXQHQJY0nckofY4i7kqGjoDmo_SUX_lv42Od8rtnA3PICQoNJ7EpRqTvXedtN0_h5hlCMbHU-Z9Z_yAorkk-2RH_Zu_LhhxMFEYdyzZfFhg4GQOYc6xGE_kqx_nJrWLvdzRW2snLwJKpnCEsCZgFJKh94ZdiwSWU4zMdrmQ7z");'></div>
+<div>
+<h4 class="font-bold text-sm dark:text-white group-hover:text-primary transition-colors">Fushimi Inari Shrine</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">2.4k videos</p>
+</div>
+</div>
+<div class="flex gap-3 items-center group cursor-pointer">
+<div class="size-16 rounded-lg bg-cover bg-center shrink-0" data-alt="Golden Pavilion Kinkaku-ji" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDWgY11Vx5k7qfPl5BTcQ0POuuWV4XyAJJr6VuFC1SbJIlJC5xgo7JMegnloCEjy3IR0dBKNIgWOImz7dV1uBAccdZGeHJRN8mz5hed1P0HksIhAVTEr9kthhlF4o-7fwqDAS4rF0tvSP4yARVDDvlA1G82efuGzKZQ46bU1o1ZwzVZpa0RoB207NG32wGqkw3QUeS_smedBK_gSPa6hh9VoCke3Lxc65m8wozH--V5Ql0w1P3bnDtyX9hRec7baqbS6OOTbsFzyLb9");'></div>
+<div>
+<h4 class="font-bold text-sm dark:text-white group-hover:text-primary transition-colors">Kinkaku-ji</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">1.8k videos</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 py-2 text-sm text-primary font-bold hover:bg-primary/10 rounded-lg transition-colors">
+                        View All
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>
