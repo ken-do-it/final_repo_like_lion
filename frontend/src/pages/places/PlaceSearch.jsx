@@ -13,6 +13,8 @@ const PlaceSearch = () => {
     const [searchMeta, setSearchMeta] = useState({ total: 0, query: '' });
 
     const [searchInput, setSearchInput] = useState(queryFromUrl || '');
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
     // Initial search when URL query changes
     useEffect(() => {
@@ -21,6 +23,45 @@ const PlaceSearch = () => {
             fetchPlaces(queryFromUrl);
         }
     }, [queryFromUrl]);
+
+    // Debounced Autocomplete
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchInput.length >= 2) {
+                fetchSuggestions(searchInput);
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        }, 300); // 300ms debounce
+
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    const fetchSuggestions = async (query) => {
+        try {
+            const response = await api.get('/places/autocomplete', {
+                params: { q: query, limit: 5 }
+            });
+            if (response.data.suggestions && response.data.suggestions.length > 0) {
+                setSuggestions(response.data.suggestions);
+                setShowSuggestions(true);
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        } catch (err) {
+            console.error("Autocomplete failed:", err);
+            // Don't show error to user for autocomplete failures, just hide suggestions
+            setSuggestions([]);
+        }
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        setSearchInput(suggestion.name);
+        setShowSuggestions(false);
+        fetchPlaces(suggestion.name);
+    };
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
@@ -80,17 +121,27 @@ const PlaceSearch = () => {
                     </h1>
 
                     {/* Dedicated Search Input */}
-                    <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl mx-auto mb-4">
+                    <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl mx-auto mb-4 relative z-50">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <span className="text-xl">🔍</span>
                             </div>
                             <input
                                 type="text"
-                                className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e2b36] focus:ring-2 focus:ring-[#1392ec] focus:border-transparent outline-none transition-all text-lg shadow-sm"
+                                className={`w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e2b36] focus:ring-2 focus:ring-[#1392ec] focus:border-transparent outline-none transition-all text-lg shadow-sm ${showSuggestions && suggestions.length > 0 ? 'rounded-b-none' : ''}`}
                                 placeholder="어디로 떠나고 싶으신가요?"
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
+                                onFocus={() => {
+                                    if (searchInput.length >= 2 && suggestions.length > 0) {
+                                        setShowSuggestions(true);
+                                    }
+                                }}
+                                onBlur={() => {
+                                    // Delay hiding to allow click event on suggestion to process
+                                    setTimeout(() => setShowSuggestions(false), 200);
+                                }}
+                                autoComplete="off"
                             />
                             <button
                                 type="submit"
@@ -99,6 +150,40 @@ const PlaceSearch = () => {
                                 검색
                             </button>
                         </div>
+
+                        {/* Autocomplete Suggestions Dropdown */}
+                        {showSuggestions && suggestions.length > 0 && (
+                            <div className="absolute w-full bg-white dark:bg-[#1e2b36] border border-t-0 border-gray-200 dark:border-gray-700 rounded-b-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto z-50">
+                                {suggestions.map((suggestion, index) => (
+                                    <div
+                                        key={index}
+                                        className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer flex justify-between items-center group transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0"
+                                        onMouseDown={(e) => {
+                                            e.preventDefault(); // Prevent blur before click
+                                            handleSuggestionClick(suggestion);
+                                        }}
+                                    >
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-[#1392ec] transition-colors">
+                                                {suggestion.name.split(new RegExp(`(${searchInput})`, 'gi')).map((part, i) =>
+                                                    part.toLowerCase() === searchInput.toLowerCase()
+                                                        ? <span key={i} className="text-[#1392ec]">{part}</span>
+                                                        : part
+                                                )}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                {suggestion.address}
+                                            </span>
+                                        </div>
+                                        {suggestion.city && (
+                                            <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-1 rounded-full">
+                                                {suggestion.city}
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </form>
 
                     <p className="text-gray-600 dark:text-gray-400 text-center">
