@@ -150,19 +150,33 @@ const RoadviewGame = () => {
   const handleSubmit = () => {
     if (!guess || !lat || !lng) return;
 
+    // [수정] 정답 좌표 설정: panoLocation(로드뷰 스냅 위치)이 있으면 그걸 사용, 없으면 원본 lat/lng
+    // 이렇게 해야 사용자가 로드뷰에서 본 정확한 위치를 찍었을 때 정답으로 인정됨
+    const correctLat = panoLocation?.lat ? ((typeof panoLocation.lat === 'function') ? panoLocation.lat() : panoLocation.lat) : lat;
+    const correctLng = panoLocation?.lng ? ((typeof panoLocation.lng === 'function') ? panoLocation.lng() : panoLocation.lng) : lng;
+
     const R = 6371;
-    const dLat = (guess.lat - lat) * (Math.PI / 180);
-    const dLng = (guess.lng - lng) * (Math.PI / 180);
+    const dLat = (guess.lat - correctLat) * (Math.PI / 180);
+    const dLng = (guess.lng - correctLng) * (Math.PI / 180);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat * (Math.PI / 180)) * Math.cos(guess.lat * (Math.PI / 180)) *
+      Math.cos(correctLat * (Math.PI / 180)) * Math.cos(guess.lat * (Math.PI / 180)) *
       Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distanceKm = R * c;
 
     let score = 0;
+    // [수정] 점수 로직 강화: 2000 -> 50 으로 감쇠 계수 대폭 축소 (거리가 멀어질수록 점수가 급격히 떨어짐)
+    // 50m 이내: 5000점 만점
+    // 예: 1km 차이 -> 5000 * exp(-1/50) ≈ 4900점 (여전히 후함) -> 더 줄여야 함?
+    // User request: "거리에 따른 점수 차이를 더 키워야 할 것 같다"
+    // Let's try constant 10.
+    // 1km error -> 5000 * exp(-1/10) = 4524 pts
+    // 10km error -> 5000 * exp(-10/10) = 1839 pts
+    // 20km error -> 5000 * exp(-20/10) = 676 pts
+    // This seems reasonable for a city/province scale game.
     if (distanceKm < 0.05) score = 5000;
-    else score = Math.floor(5000 * Math.exp(-distanceKm / 2000));
+    else score = Math.floor(5000 * Math.exp(-distanceKm / 10));
 
     setResult({
       distance: distanceKm,
@@ -276,8 +290,14 @@ const RoadviewGame = () => {
                 {guess && <Marker position={guess} icon="http://maps.google.com/mapfiles/ms/icons/red-dot.png" />}
                 {showResult && (
                   <>
-                    <Marker position={answerLocation} icon="http://maps.google.com/mapfiles/ms/icons/green-dot.png" />
-                    <Polyline path={[guess, answerLocation]} options={{ strokeColor: "#FF0000", strokeOpacity: 0.8, strokeWeight: 4, geodesic: true }} />
+                    <Marker
+                      position={panoLocation ? panoLocation : answerLocation}
+                      icon="http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                    />
+                    <Polyline
+                      path={[guess, panoLocation ? panoLocation : answerLocation]}
+                      options={{ strokeColor: "#FF0000", strokeOpacity: 0.8, strokeWeight: 4, geodesic: true }}
+                    />
                   </>
                 )}
               </GoogleMap>
