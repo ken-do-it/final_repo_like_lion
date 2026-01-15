@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar'
 import './shortspage.css'
 import { useLanguage } from '../../context/LanguageContext'
 import { useAuth } from '../../context/AuthContext'
+import axiosInstance from '../../api/axios'
 
 // Language & Glossary Data
 const langToCode = {
@@ -13,29 +14,11 @@ const langToCode = {
     中文: 'zho_Hans',
 }
 
-const uiGlossary = {
-    play: { kor_Hang: '재생', jpn_Jpan: '再生', zho_Hans: '播放' },
-    upload: { kor_Hang: '업로드', jpn_Jpan: 'アップロード', zho_Hans: '上传' },
-    shortsTitle: { kor_Hang: '쇼츠', jpn_Jpan: 'ショート', zho_Hans: '短视频' },
-    shortsSub: {
-        kor_Hang: '최신 업로드를 AI 캡션/번역으로 보세요.',
-        jpn_Jpan: '最新アップロードをAI字幕/翻訳で見ましょう。',
-        zho_Hans: '查看带AI字幕/翻译的最新上传。',
-    },
-    nowPlaying: { kor_Hang: '재생 중', jpn_Jpan: '再生中', zho_Hans: '正在播放' },
-    langLabel: { kor_Hang: '언어', jpn_Jpan: '言語', zho_Hans: '语言' },
-    loading: { kor_Hang: '로딩 중...', jpn_Jpan: '読み込み中...', zho_Hans: '加载中...' },
-    noShorts: {
-        kor_Hang: '불러올 쇼츠가 없습니다. 로그인해서 업로드 해보세요.',
-        jpn_Jpan: '動画がありません。ログインしてアップロードしてください。',
-        zho_Hans: '没有视频。请登录并上传。',
-    },
-    batchLabel: { kor_Hang: '배치 최적화', jpn_Jpan: 'バッチ最適化', zho_Hans: '批量优化' },
-}
+
 
 function ShortsPage({ onShortClick, embed = false }) {
     const navigate = useNavigate()
-    const { language } = useLanguage()
+    const { language, t } = useLanguage()
     const { isAuthenticated } = useAuth()
 
     const [shortforms, setShortforms] = useState([])
@@ -50,42 +33,27 @@ function ShortsPage({ onShortClick, embed = false }) {
     const [isUploading, setIsUploading] = useState(false)
     const [useBatch, setUseBatch] = useState(true)
 
-    // Translations
-    const baseTexts = useMemo(() => ({
-        shortsTitle: 'Shorts',
-        shortsSub: 'Watch the latest uploads with AI captions/translation.',
-        play: 'Play',
-        upload: 'Upload',
-        durationMissing: '00:00',
-        langLabel: 'Lang',
-        nowPlaying: 'Now Playing',
-        loading: 'Loading...',
-        noShorts: 'No shorts available. Log in to upload.',
-        batchLabel: 'Batch Optimization'
-    }), [])
-
     const langCode = langToCode[language] || 'eng_Latn'
 
-    const t = useMemo(() => {
-        const map = { ...baseTexts }
-        if (langCode !== 'eng_Latn') {
-            Object.keys(baseTexts).forEach((key) => {
-                const translated = uiGlossary[key]?.[langCode]
-                if (translated) map[key] = translated
-            })
-        }
-        return map
-    }, [baseTexts, langCode])
+
+
+
 
     // Data Fetching
     const fetchShortforms = useCallback(async () => {
         try {
             setLoading(true)
             setError('')
-            const res = await fetch(`/api/shortforms/?lang=${langCode}&batch=${useBatch}`)
-            if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
-            const data = await res.json()
+            // Use axiosInstance for GET request (Automatic token attachment + 401 handling)
+            const res = await axiosInstance.get(`/shortforms/`, {
+                params: {
+                    lang: langCode,
+                    batch: useBatch
+                }
+            })
+
+            const data = res.data
             const listData = Array.isArray(data) ? data : data.results || []
 
             const mapped = listData.map((item) => ({
@@ -100,7 +68,8 @@ function ShortsPage({ onShortClick, embed = false }) {
                 lang: item.source_lang || 'N/A',
             }))
             setShortforms(mapped)
-        } catch {
+        } catch (err) {
+            console.error(err)
             setError('Failed to load shorts. Please check the server/connection.')
             setShortforms([])
         } finally {
@@ -122,12 +91,6 @@ function ShortsPage({ onShortClick, embed = false }) {
             return
         }
 
-        const accessToken = localStorage.getItem('access_token');
-        if (!accessToken) {
-            alert("Auth error. Please login again.")
-            return
-        }
-
         setIsUploading(true)
         const formData = new FormData()
         formData.append('video_file', uploadFile)
@@ -135,20 +98,27 @@ function ShortsPage({ onShortClick, embed = false }) {
         formData.append('content', uploadDesc)
 
         try {
-            const res = await fetch('/api/shortforms/', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: formData,
+            // Use axiosInstance for POST request (Automatic token attachment + 401 handling)
+            // Content-Type header for FormData is usually handled automatically by axios, 
+            // but we need to strictly ensure it's multipart.
+            await axiosInstance.post('/shortforms/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             })
-            if (!res.ok) throw new Error('Upload failed')
 
             setShowUpload(false)
             setUploadFile(null)
             setUploadTitle('')
             setUploadDesc('')
             fetchShortforms()
+            alert("Upload successful!") // Feedback for user
         } catch (err) {
-            alert(`Upload failed: ${err.message}`)
+            console.error("Upload error:", err)
+            // 401 is handled by interceptor (reload). For other errors:
+            if (err.response?.status !== 401) {
+                alert(`Upload failed: ${err.response?.data?.detail || err.message}`)
+            }
         } finally {
             setIsUploading(false)
         }
@@ -166,14 +136,14 @@ function ShortsPage({ onShortClick, embed = false }) {
                 <div className="shorts-header">
                     <div className="shorts-header-row">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2">{t.shortsTitle}</h1>
-                            <p className="text-muted">{t.shortsSub}</p>
+                            <h1 className="text-3xl font-bold mb-2">{t('shorts_title')}</h1>
+                            <p className="text-muted">{t('shorts_sub')}</p>
                         </div>
 
                         {isAuthenticated && (
                             <button className="btn-primary" onClick={() => setShowUpload(true)}>
                                 <span className="material-symbols-outlined mr-2">upload</span>
-                                {t.upload}
+                                {t('btn_upload')}
                             </button>
                         )}
                     </div>
@@ -189,7 +159,7 @@ function ShortsPage({ onShortClick, embed = false }) {
                                 onChange={(e) => setUseBatch(e.target.checked)}
                                 className="accent-blue-500"
                             />
-                            {t.batchLabel}
+                            {t('btn_batch')}
                         </label>
                     </div>
                 </div>
@@ -199,14 +169,14 @@ function ShortsPage({ onShortClick, embed = false }) {
                     {loading && (
                         <div className="state-message">
                             <span className="state-icon material-symbols-outlined spin">sync</span>
-                            <p>{t.loading}</p>
+                            <p>{t('loading')}</p>
                         </div>
                     )}
 
                     {!loading && !error && shortforms.length === 0 && (
                         <div className="state-message">
                             <span className="state-icon material-symbols-outlined">videocam_off</span>
-                            <p>{t.noShorts}</p>
+                            <p>{t('no_shorts')}</p>
                         </div>
                     )}
 
@@ -224,7 +194,7 @@ function ShortsPage({ onShortClick, embed = false }) {
                             }}
                         >
                             <div className="shorts-thumb" style={{ backgroundImage: `url(${s.thumb})` }}>
-                                <span className="duration-badge">{s.duration || t.durationMissing}</span>
+                                <span className="duration-badge">{s.duration || t('duration_missing')}</span>
                             </div>
                             <div className="shorts-body">
                                 <span className="shorts-lang-tag">{s.lang}</span>
@@ -235,7 +205,7 @@ function ShortsPage({ onShortClick, embed = false }) {
                             <div className="shorts-actions">
                                 <button className="btn-ghost">
                                     <span className="material-symbols-outlined text-lg">play_arrow</span>
-                                    {t.play}
+                                    {t('play')}
                                 </button>
                             </div>
                         </div>

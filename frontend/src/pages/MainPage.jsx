@@ -193,7 +193,9 @@ const MainPage = () => {
               ))
             ) : shortforms.length > 0 ? (
               shortforms.map((item) => (
-                <div key={item.id} className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
+                <div key={item.id}
+                  onClick={() => navigate(`/shorts/${item.id}`)}
+                  className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
                   {/* Image */}
                   <img
                     src={item.thumbnail_url ? (item.thumbnail_url.startsWith('http') ? item.thumbnail_url : `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}${item.thumbnail_url}`) : 'https://via.placeholder.com/300x500?text=No+Image'}
@@ -237,24 +239,11 @@ const MainPage = () => {
               ))
             ) : (
               // Fallback if no shorts - Static Mock Data matching reference to look good
-              <>
-                <div className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all">
-                  <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Mock 1" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                  <div className="absolute bottom-6 left-6 text-white">
-                    <h3 className="text-2xl font-bold">Busan</h3>
-                    <p className="opacity-80">Sea & City</p>
-                  </div>
-                </div>
-                <div className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all">
-                  <img src="https://images.unsplash.com/photo-1492571350019-22de08371fd3?q=80&w=600&auto=format&fit=crop" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Mock 2" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                  <div className="absolute bottom-6 left-6 text-white">
-                    <h3 className="text-2xl font-bold">Jeju Island</h3>
-                    <p className="opacity-80">Nature Paradise</p>
-                  </div>
-                </div>
-              </>
+              // Empty State
+              <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+                <span className="material-symbols-outlined text-6xl mb-4 text-slate-300 dark:text-slate-600">videocam_off</span>
+                <p className="text-lg font-medium">{t('no_shorts')}</p>
+              </div>
             )}
           </div>
         </section>

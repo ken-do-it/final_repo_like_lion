@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import axiosInstance from '../../api/axios';
 import './shortsDetailpage.css';
 
 // Language & Glossary Data
@@ -99,7 +101,7 @@ const mockDataMap = {
     }
 }
 
-function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
+function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     const { id: paramId } = useParams()
     const navigate = useNavigate()
     const id = propVideoId || paramId
@@ -129,16 +131,16 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
     const [editContent, setEditContent] = useState('')
     const [editFile, setEditFile] = useState(null)
 
+    const { user } = useAuth()
+
     const fetchDetail = async () => {
         try {
             setLoading(true)
             setError('')
-            const res = await fetch(`/api/shortforms/${id}/?lang=${langCode}`)
-            if (!res.ok) {
-                if (res.status === 404) throw new Error('Shortform not found')
-                throw new Error('Failed to load shortform')
-            }
-            const item = await res.json()
+            const res = await axiosInstance.get(`/shortforms/${id}/`, {
+                params: { lang: langCode }
+            })
+            const item = res.data
             setShortform({
                 id: item.id,
                 title: item.title_translated || item.title || 'Untitled',
@@ -153,7 +155,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
             setEditContent(item.content)
             setEditFile(null)
         } catch (err) {
-            setError(err.message)
+            setError(err.response?.data?.detail || err.message)
         } finally {
             setLoading(false)
         }
@@ -173,17 +175,11 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
         }
     }
 
-    // [TEST] Decode JWT to get user_id (Simple implementation)
+    // Get current user ID from AuthContext (handling differences in user object structure)
     const currentUserId = useMemo(() => {
-        if (!accessToken) return null
-        try {
-            const payload = JSON.parse(atob(accessToken.split('.')[1]))
-            return payload.user_id
-        } catch (e) {
-            console.error("Invalid Token", e)
-            return null
-        }
-    }, [accessToken])
+        if (!user) return null
+        return user.user_id || user.id || user.pk
+    }, [user])
 
     const handleSave = async () => {
         try {
@@ -194,13 +190,9 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
                 formData.append('video_file', editFile)
             }
 
-            const res = await fetch(`/api/shortforms/${id}/`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: formData
+            await axiosInstance.patch(`/shortforms/${id}/`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             })
-
-            if (!res.ok) throw new Error("Update failed")
 
             await fetchDetail()
             setIsEditing(false)
@@ -210,7 +202,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
             const videoEl = document.querySelector('video')
             if (videoEl) videoEl.load()
         } catch (e) {
-            alert("Error updating: " + e.message)
+            alert("Error updating: " + (e.response?.data?.detail || e.message))
         }
     }
 
@@ -218,18 +210,11 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
         if (!confirm("Are you sure you want to delete this short?")) return
 
         try {
-            const res = await fetch(`/api/shortforms/${id}/`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            })
-            if (res.ok) {
-                alert("Deleted successfully")
-                handleBack()
-            } else {
-                alert("Failed to delete (Permission Denied?)")
-            }
+            await axiosInstance.delete(`/shortforms/${id}/`)
+            alert("Deleted successfully")
+            handleBack()
         } catch (e) {
-            alert("Error deleting: " + e.message)
+            alert("Error deleting: " + (e.response?.data?.detail || e.message))
         }
     }
 
@@ -272,21 +257,35 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
                     {/* Top Navigation / Title Row */}
                     <div className="flex items-center justify-between mb-4">
                         {isEditing ? (
-                            <div className="flex flex-col gap-2 w-full">
+                            <div className="flex flex-col gap-3 w-full">
                                 <input
                                     value={editTitle}
                                     onChange={(e) => setEditTitle(e.target.value)}
-                                    className="bg-slate-700 text-white p-2 rounded border border-slate-600 outline-none font-bold"
+                                    className="edit-input"
+                                    placeholder="Enter title..."
                                 />
-                                <input
-                                    type="file"
-                                    accept="video/*"
-                                    onChange={(e) => setEditFile(e.target.files[0])}
-                                    className="text-xs text-slate-400"
-                                />
+
+                                <div className="file-upload-wrapper">
+                                    <input
+                                        id="video-upload"
+                                        type="file"
+                                        accept="video/*"
+                                        onChange={(e) => setEditFile(e.target.files[0])}
+                                        className="hidden"
+                                    />
+                                    <label htmlFor="video-upload" className="file-upload-btn">
+                                        <span className="material-symbols-outlined text-sm">movie_edit</span>
+                                        Change Video
+                                    </label>
+                                    {editFile && (
+                                        <span className="file-name">
+                                            {editFile.name}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         ) : (
-                            <h1 className="text-xl font-bold text-white leading-tight">{shortform.title}</h1>
+                            <h1 className="text-xl font-bold leading-tight">{shortform.title}</h1>
                         )}
 
                         <button onClick={handleBack} className="btn-close">
@@ -331,6 +330,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
                                 className="edit-textarea"
+                                placeholder="Enter description..."
                             />
                         ) : (
                             <>
