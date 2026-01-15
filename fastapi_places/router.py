@@ -173,7 +173,8 @@ async def get_place_detail_by_api_id(
     place_api_id: str = Query(..., description="외부 API의 장소 ID"),
     provider: str = Query("KAKAO", description="제공자 (KAKAO, GOOGLE)"),
     name: str = Query(..., description="장소명 (검색용)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user)
 ):
     """
     장소 상세 정보 조회 (외부 API ID 기반)
@@ -182,6 +183,7 @@ async def get_place_detail_by_api_id(
     반환:
     - DB 저장 정보: name, address, latitude, longitude, category 등
     - 동적 정보 (실시간 API 호출): phone, place_url, opening_hours
+    - is_bookmarked: 로그인 사용자의 찜 여부
     """
     # 1. DB 조회 또는 생성 (기본 정보)
     place = await get_or_create_place_by_api_id(
@@ -240,7 +242,16 @@ async def get_place_detail_by_api_id(
             opening_hours = google_details.get("opening_hours", [])
             place_url = google_details.get("website", "")
 
-    # 3. DB 데이터 + 동적 정보 합치기
+    # 3. 북마크 여부 확인
+    is_bookmarked = False
+    if user_id:
+        bookmark = db.query(PlaceBookmark).filter(
+            PlaceBookmark.user_id == user_id,
+            PlaceBookmark.place_id == place.id
+        ).first()
+        is_bookmarked = bookmark is not None
+
+    # 4. DB 데이터 + 동적 정보 합치기
     return {
         # DB 정보
         "id": place.id,
@@ -261,14 +272,17 @@ async def get_place_detail_by_api_id(
         # 동적 정보 (DB 저장 안함)
         "phone": phone,
         "place_url": place_url,
-        "opening_hours": opening_hours
+        "opening_hours": opening_hours,
+        # 사용자별 정보
+        "is_bookmarked": is_bookmarked
     }
 
 
 @router.get("/{place_id}")
 async def get_place_detail_by_db_id(
     place_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user)
 ):
     """
     장소 상세 정보 조회 (DB ID 기반)
@@ -276,6 +290,7 @@ async def get_place_detail_by_db_id(
     반환:
     - DB 저장 정보: name, address, latitude, longitude, category 등
     - 동적 정보 (실시간 API 호출): phone, place_url, opening_hours
+    - is_bookmarked: 로그인 사용자의 찜 여부
     """
     # 1. DB에서 장소 조회
     place = db.query(Place).filter(Place.id == place_id).first()
@@ -330,7 +345,16 @@ async def get_place_detail_by_db_id(
                 opening_hours = google_details.get("opening_hours", [])
                 place_url = google_details.get("website", "")
 
-    # 3. DB 데이터 + 동적 정보 합치기
+    # 3. 북마크 여부 확인
+    is_bookmarked = False
+    if user_id:
+        bookmark = db.query(PlaceBookmark).filter(
+            PlaceBookmark.user_id == user_id,
+            PlaceBookmark.place_id == place.id
+        ).first()
+        is_bookmarked = bookmark is not None
+
+    # 4. DB 데이터 + 동적 정보 합치기
     return {
         # DB 정보
         "id": place.id,
@@ -351,7 +375,9 @@ async def get_place_detail_by_db_id(
         # 동적 정보 (DB 저장 안함)
         "phone": phone,
         "place_url": place_url,
-        "opening_hours": opening_hours
+        "opening_hours": opening_hours,
+        # 사용자별 정보
+        "is_bookmarked": is_bookmarked
     }
 
 
