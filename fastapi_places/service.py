@@ -352,24 +352,31 @@ async def search_places_hybrid(query: str, category: Optional[str] = None,
     if city:
         unique_results = [r for r in unique_results if r.get("city") == city]
 
-    # ★ DB 존재 여부 확인 및 ID 주입
+    # ★ DB 존재 여부 확인 및 추가 정보 주입
     if db:
         # 검색 결과의 API ID 목록 추출
         api_ids = [r["place_api_id"] for r in unique_results if r.get("place_api_id")]
-        
+
         if api_ids:
             # DB에서 해당 API ID를 가진 장소 조회
             existing_places = db.query(Place).filter(Place.place_api_id.in_(api_ids)).all()
-            
-            # {place_api_id: id} 매핑 생성
-            id_map = {p.place_api_id: p.id for p in existing_places}
-            
-            # 결과에 id 추가
+
+            # {place_api_id: Place} 매핑 생성
+            place_map = {p.place_api_id: p for p in existing_places}
+
+            # 결과에 DB 정보 추가
             for result in unique_results:
                 api_id = result.get("place_api_id")
-                if api_id and api_id in id_map:
-                    result["id"] = id_map[api_id]
-    
+                if api_id and api_id in place_map:
+                    db_place = place_map[api_id]
+                    result["id"] = db_place.id
+                    # DB에 저장된 썸네일이 있으면 사용
+                    if db_place.thumbnail_urls:
+                        result["thumbnail_urls"] = db_place.thumbnail_urls
+                    # 평점 및 리뷰 수 추가
+                    result["average_rating"] = float(db_place.average_rating) if db_place.average_rating else 0.0
+                    result["review_count"] = db_place.review_count or 0
+
     return unique_results
 
 
