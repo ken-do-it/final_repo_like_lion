@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Travel Dashboard</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#1392ec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101a22",
+            },
+            fontFamily: {
+              "display": ["Plus Jakarta Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+            boxShadow: {
+                'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)',
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        /* Custom scrollbar for horizontal scrolling */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<nav class="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#101a22]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between items-center h-20">
+<!-- Logo -->
+<div class="flex items-center gap-3">
+<div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl">flight_takeoff</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Trippr</span>
+</div>
+<!-- Desktop Menu -->
+<div class="hidden md:flex items-center gap-8">
+<a class="text-primary font-bold text-sm" href="#">Home</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium text-sm hover:text-primary transition-colors" href="#">Trips</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium text-sm hover:text-primary transition-colors" href="#">Saved</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium text-sm hover:text-primary transition-colors" href="#">Profile</a>
+</div>
+<!-- Right Actions -->
+<div class="flex items-center gap-4">
+<button class="size-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border-2 border-white dark:border-[#101a22]"></span>
+</button>
+<div class="size-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Portrait of a user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPSL7LFRval8GoBY_-4bTW3Mq8Jb3oz-JQOK6qu4amTSc89jICK1O0vVS9_op0rg2-Txk6q7l-h-Rhe8UG5QNbqnLdTY3pZlNUg4jJiwfxR-mouy5uLoeBoMTybqjIWPvze3s8DA25pcVLR3iOJFymyxk2YRhDthoSLXCRTykvobYEFj4NjwrJRuj-YUPTCKNy33yhlmglT-96kCz9L47WAaO_30y7cADNKe7QNag9VV3UqUQA2S3dnihyXPtoOSRr4EjV75ek-mcf"/>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+<!-- Hero Section: Heading + Search + Quick Filters -->
+<section class="flex flex-col items-center justify-center pt-8 pb-4 space-y-6">
+<h1 class="text-4xl md:text-5xl font-extrabold text-center text-slate-900 dark:text-white tracking-tight">
+                Where to next?
+            </h1>
+<!-- Search Bar -->
+<div class="w-full max-w-2xl relative group">
+<div class="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="relative flex items-center w-full h-16 rounded-2xl bg-white dark:bg-[#1e2936] shadow-soft ring-1 ring-slate-200 dark:ring-slate-700 focus-within:ring-2 focus-within:ring-primary transition-all overflow-hidden">
+<div class="pl-6 pr-4 text-slate-400">
+<span class="material-symbols-outlined text-2xl">search</span>
+</div>
+<input class="w-full h-full bg-transparent border-none text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-0 text-lg" placeholder="Search destinations, flights, hotels..." type="text"/>
+<button class="mr-2 px-6 py-2.5 bg-primary hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors">
+                        Search
+                    </button>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-3 overflow-x-auto w-full justify-center py-2 hide-scrollbar">
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white shadow-md shadow-primary/20 transition-transform hover:-translate-y-0.5">
+<span class="material-symbols-outlined text-[20px]">grid_view</span>
+<span class="text-sm font-bold">All</span>
+</button>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2936] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:text-primary transition-all hover:-translate-y-0.5">
+<span class="material-symbols-outlined text-[20px]">public</span>
+<span class="text-sm font-medium">Destinations</span>
+</button>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2936] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:text-primary transition-all hover:-translate-y-0.5">
+<span class="material-symbols-outlined text-[20px]">flight</span>
+<span class="text-sm font-medium">Flights</span>
+</button>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2936] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:text-primary transition-all hover:-translate-y-0.5">
+<span class="material-symbols-outlined text-[20px]">hotel</span>
+<span class="text-sm font-medium">Hotels</span>
+</button>
+</div>
+</section>
+<!-- Quick Actions Grid -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+<div class="bg-white dark:bg-[#1e2936] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+<div class="size-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">airplane_ticket</span>
+</div>
+<span class="font-semibold text-sm text-slate-700 dark:text-slate-300">Book Flight</span>
+</div>
+<div class="bg-white dark:bg-[#1e2936] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+<div class="size-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">bed</span>
+</div>
+<span class="font-semibold text-sm text-slate-700 dark:text-slate-300">Find Stays</span>
+</div>
+<div class="bg-white dark:bg-[#1e2936] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+<div class="size-12 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<span class="font-semibold text-sm text-slate-700 dark:text-slate-300">Rentals</span>
+</div>
+<div class="bg-white dark:bg-[#1e2936] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+<div class="size-12 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">local_activity</span>
+</div>
+<span class="font-semibold text-sm text-slate-700 dark:text-slate-300">Activities</span>
+</div>
+</section>
+<!-- Upcoming Adventure Section -->
+<section class="max-w-5xl mx-auto w-full">
+<div class="flex items-center justify-between mb-4 px-2">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white">Upcoming Adventure</h2>
+<a class="text-primary text-sm font-bold hover:underline" href="#">View all trips</a>
+</div>
+<!-- Ticket/Card -->
+<div class="bg-white dark:bg-[#1e2936] rounded-3xl shadow-card overflow-hidden flex flex-col md:flex-row group cursor-pointer hover:shadow-lg transition-shadow">
+<!-- Image side -->
+<div class="relative w-full md:w-2/5 h-48 md:h-auto overflow-hidden">
+<img alt="Tokyo Street" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Tokyo street at night with neon lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWV9qWhrceucSE1rPw3_gwkMEK6XiN1Vd90LaB56CzYyx26_fYoymkSsFNJvAvFg3cmcrbd8yhtH_8HRN2m1ub9OHwFAcAmUbJESqkIClpVYC1oYc2ayP1rWoEEsp7rWIMnsKzokVNV-G6FW7LPtvsNkLfp7uERPbCMde9tACPoZMrqCjP2EumJcbs-f1-YAERK6YoJFl6Ja7IPV1iFqw02Aq6BjUQ3DdRYK7qWbci2x2o90_Jlx2Zmu3Wi6KwGcdg-U2rZqkt8t9r"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden"></div>
+<div class="absolute bottom-4 left-4 text-white md:hidden">
+<p class="font-bold text-xl">Tokyo, Japan</p>
+</div>
+<div class="absolute top-4 left-4">
+<span class="bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold px-3 py-1 rounded-full">
+                            In 12 days
+                        </span>
+</div>
+</div>
+<!-- Content side -->
+<div class="flex-1 p-6 md:p-8 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-2xl font-bold text-slate-900 dark:text-white hidden md:block">Tokyo, Japan</h3>
+<p class="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">calendar_month</span>
+                                Nov 12 - Nov 20, 2024
+                            </p>
+</div>
+<div class="text-right hidden md:block">
+<div class="flex items-center gap-2 text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-amber-500">sunny</span>
+<span class="font-bold text-lg">14°C</span>
+</div>
+<p class="text-slate-400 text-sm">Partly Cloudy</p>
+</div>
+</div>
+<!-- Timeline/Steps -->
+<div class="my-6 space-y-4">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">flight_takeoff</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Flight to HND</p>
+<p class="text-xs text-slate-500">JL 005 • 10:45 AM</p>
+</div>
+<div class="text-right">
+<span class="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">Confirmed</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-500 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">hotel</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Shibuya Stream Excel</p>
+<p class="text-xs text-slate-500">Check-in • 03:00 PM</p>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 mt-2">
+<button class="flex-1 bg-primary hover:bg-blue-600 text-white h-12 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-primary/20">
+                            View Itinerary
+                        </button>
+<button class="size-12 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Recommended Cities -->
+<section class="max-w-7xl mx-auto w-full pb-12">
+<div class="flex items-center justify-between mb-6 px-2">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white">Recommended Cities</h2>
+<div class="flex gap-2">
+<button class="size-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+</button>
+<button class="size-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Horizontal Scroll Container -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer">
+<img alt="Kyoto" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Traditional Kyoto street" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_xDvb16tS-m1RMB-hnEOMuaT1KSMsYSx_5r6BNBkkI8Aguvnq57P5pvvqASVnjVIQxj0pDjt39c_Gr8rp389F2Pacy7sCVfSC64vRLzXl79Wk1P-wxupVcbaBZUeYF26gkGQjAPmEYbjVh_PqtuMpVFgl4vA_jSYWt9Etq-UtU0w_I8-jKpmBEv9pltgtLzaZ6bDvNtNgB8VPBYAP3ofOWdLL_iFYKxn0XvGFySrsr5OYbdZ9GSjGsvtl8CpOZr2DgsAE28dXAzJ9"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90"></div>
+<div class="absolute top-4 right-4">
+<div class="size-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">favorite</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<h3 class="text-2xl font-bold text-white mb-1">Kyoto</h3>
+<div class="flex items-center gap-1 text-white/80 text-sm mb-3">
+<span class="material-symbols-outlined text-base">location_on</span>
+                            Japan
+                        </div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="text-yellow-400 material-symbols-outlined text-sm">star</span>
+<span class="text-white font-bold text-sm">4.9</span>
+</div>
+<span class="text-white font-bold text-lg">$1,200<span class="text-xs font-normal opacity-70">/trip</span></span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer">
+<img alt="Paris" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Eiffel Tower view from street" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIN4ZF6J_6iZVnUio8VAqYrVgmI7ItszVc7Fs1buajfSYnBnEqqLMZCFgc6OGpIQ5U83aBsyJND013WkMqfbLWKm9EHtMBVWdCzs8h4Q3mJD-5B0vgI9YTQkBpcni5H0aAo2LS_nHJHokJ-yk3UNkKGamGFT2Hz1gIl2Erkm8h-qJjQGbwa4JGtz114o_NFUl6IOey6cn5lqTUS0Q9FV5XJ7v8LzP4Jfpv13UvarkNfjlc_DE3WBWrgaWOUr1XuLKfZdvJoVhBs68o"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90"></div>
+<div class="absolute top-4 right-4">
+<div class="size-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">favorite</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<h3 class="text-2xl font-bold text-white mb-1">Paris</h3>
+<div class="flex items-center gap-1 text-white/80 text-sm mb-3">
+<span class="material-symbols-outlined text-base">location_on</span>
+                            France
+                        </div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="text-yellow-400 material-symbols-outlined text-sm">star</span>
+<span class="text-white font-bold text-sm">4.7</span>
+</div>
+<span class="text-white font-bold text-lg">$1,850<span class="text-xs font-normal opacity-70">/trip</span></span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer">
+<img alt="New York" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="New York skyline" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBizDn9ZRX3HyQwzrLJT_HN7WgmoM5i9KHx_sWTTyrkbWACVG8r7-gLUpmNT5hw5LiSId8jUFR2am_B_HLcw5qznu9orndsQlnSh2p36v1uIrTZ7GklBCm-qEmPnzAI5gNR-nRyhkkIaBZuOMVRx0vph5RkKz6v-Jo_9RZw-lBKQd3oyV-fA8EDZJM64rRvMMqUHgoBHMxzdTpLwwq4C0VQy1pQsObQt3In97JzYupWS2l_d8pQUN28DXg4B0OwiyU7_Hs_xjXbe0SB"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90"></div>
+<div class="absolute top-4 right-4">
+<div class="size-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">favorite</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<h3 class="text-2xl font-bold text-white mb-1">New York</h3>
+<div class="flex items-center gap-1 text-white/80 text-sm mb-3">
+<span class="material-symbols-outlined text-base">location_on</span>
+                            USA
+                        </div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="text-yellow-400 material-symbols-outlined text-sm">star</span>
+<span class="text-white font-bold text-sm">4.8</span>
+</div>
+<span class="text-white font-bold text-lg">$2,100<span class="text-xs font-normal opacity-70">/trip</span></span>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer hidden lg:block">
+<img alt="Dubai" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Dubai Burj Khalifa view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTQzQeRrWL2Jayo7IfAgy7gnZuTubK9C_3ntE_6qjY8z69dR0dVgsKuBBHQJnHlWPG3PQq2ODQKjoDgRdGOO8HoLIMMJjfG2toi6CfSQLfAk4V5shFPui2V43fwgn9y6Yu_zoPYgtmYKlvNYTDsbpwinaAGY-PkB5KAt0qLVc5LjCmfjhQUYARfcG_IGm9G1Gm28j57ZOdocG-AayN6R-7McaiMBUSVentzVSatVFuVSW7obCNaOa3I7YdHqpThPtaGi4lsuS_ytD0"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90"></div>
+<div class="absolute top-4 right-4">
+<div class="size-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-sm">favorite</span>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<h3 class="text-2xl font-bold text-white mb-1">Dubai</h3>
+<div class="flex items-center gap-1 text-white/80 text-sm mb-3">
+<span class="material-symbols-outlined text-base">location_on</span>
+                            UAE
+                        </div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="text-yellow-400 material-symbols-outlined text-sm">star</span>
+<span class="text-white font-bold text-sm">4.9</span>
+</div>
+<span class="text-white font-bold text-lg">$1,950<span class="text-xs font-normal opacity-70">/trip</span></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Simple Minimal Footer -->
+<footer class="border-t border-slate-200 dark:border-slate-800 py-8 bg-white dark:bg-[#101a22]">
+<div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-slate-500 text-sm">© 2024 Trippr Travel Inc.</p>
+<div class="flex gap-6">
+<a class="text-slate-500 hover:text-primary text-sm font-medium" href="#">Privacy</a>
+<a class="text-slate-500 hover:text-primary text-sm font-medium" href="#">Terms</a>
+<a class="text-slate-500 hover:text-primary text-sm font-medium" href="#">Support</a>
+</div>
+</div>
+</footer>
+</body></html>
