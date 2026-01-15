@@ -93,7 +93,7 @@ const MainPage = () => {
               <span className="text-[20px]">📍</span>
               <span className="text-sm font-medium">{t('filter_places')}</span>
             </button>
-            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-light dark:bg-surface-dark text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-[#1392ec]/50 hover:text-[#1392ec] transition-all hover:-translate-y-0.5" onClick={() => navigate('/game')}>
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2b36] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-[#1392ec]/50 hover:text-[#1392ec] transition-all hover:-translate-y-0.5" onClick={() => navigate('/game')}>
               <span className="text-[20px]">📸</span>
               <span className="text-sm font-medium">{t('filter_geoquiz')}</span>
             </button>
@@ -116,7 +116,7 @@ const MainPage = () => {
             </div>
             <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('action_flight')}</span>
           </div>
-          <div onClick={() => navigate('/accommodations')} className="bg-white dark:bg-[#1e2b36] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+          <div onClick={() => navigate('/accommodations')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
             <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
               🏨
             </div>
