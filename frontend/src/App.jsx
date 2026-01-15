@@ -8,6 +8,7 @@ import AccommodationMap from './pages/AccommodationMap';
 import TestFrontAI from './pages/test_front_ai/TestFrontAI';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
+import { PlanList, PlanDetail, PlanCreate, PlanEdit, AIRecommend, AddPlace, EditPlace } from './pages/plans';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import './App.css'; // Global styles if any, strictly Tailwind preferred
@@ -65,6 +66,15 @@ function App() {
         <Route path="/geo-quiz" element={<GeoImageUploader />} />
         <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
         <Route path="/game" element={<RoadviewGame />} />
+
+        {/* Travel Plans */}
+        <Route path="/plans" element={<PlanList />} />
+        <Route path="/plans/create" element={<PlanCreate />} />
+        <Route path="/plans/ai-recommend" element={<AIRecommend />} />
+        <Route path="/plans/:planId" element={<PlanDetail />} />
+        <Route path="/plans/:planId/edit" element={<PlanEdit />} />
+        <Route path="/plans/:planId/add-place" element={<AddPlace />} />
+        <Route path="/plans/details/:detailId/edit" element={<EditPlace />} />
 
         {/* Development / Test Pages */}
         <Route path="/test-front" element={<TestFrontAI />} />
