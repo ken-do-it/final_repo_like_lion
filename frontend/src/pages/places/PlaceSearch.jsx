@@ -18,6 +18,9 @@ const PlaceSearch = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
 
+    // Ref to control if we should fetch/show suggestions
+    const shouldFetchSuggestions = React.useRef(true);
+
     // Initial search when URL query changes
     useEffect(() => {
         if (queryFromUrl) {
@@ -29,7 +32,7 @@ const PlaceSearch = () => {
     // Debounced Autocomplete
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (searchInput.length >= 2) {
+            if (shouldFetchSuggestions.current && searchInput.length >= 2) {
                 fetchSuggestions(searchInput);
             } else {
                 setSuggestions([]);
@@ -45,7 +48,8 @@ const PlaceSearch = () => {
             const response = await api.get('/places/autocomplete', {
                 params: { q: query, limit: 5 }
             });
-            if (response.data.suggestions && response.data.suggestions.length > 0) {
+            // Double check ref before showing
+            if (shouldFetchSuggestions.current && response.data.suggestions && response.data.suggestions.length > 0) {
                 setSuggestions(response.data.suggestions);
                 setShowSuggestions(true);
             } else {
@@ -54,35 +58,45 @@ const PlaceSearch = () => {
             }
         } catch (err) {
             console.error("Autocomplete failed:", err);
-            // Don't show error to user for autocomplete failures, just hide suggestions
             setSuggestions([]);
         }
     };
 
+    const handleInputChange = (e) => {
+        shouldFetchSuggestions.current = true;
+        setSearchInput(e.target.value);
+    };
+
     const handleSuggestionClick = (suggestion) => {
+        shouldFetchSuggestions.current = false; // Prevent re-fetch
         setSearchInput(suggestion.name);
         setShowSuggestions(false);
+        setSuggestions([]);
         fetchPlaces(suggestion.name);
     };
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
+        shouldFetchSuggestions.current = false; // Prevent late arrivals
         setShowSuggestions(false);
+        setSuggestions([]);
         fetchPlaces(searchInput);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            setShowSuggestions(false);
+        }
     };
 
     const fetchPlaces = async (query) => {
         setLoading(true);
         setError(null);
         try {
-            // placesAxios baseURL: http://localhost:8002/api/v1
-            // request path: /places/search
-            // final URL: http://localhost:8002/api/v1/places/search
             const response = await api.get('/places/search', {
                 params: { query: query }
             });
 
-            // Expected response: { query, total, results: [] }
             setResults(response.data.results || []);
             setSearchMeta({
                 total: response.data.total || 0,
@@ -98,10 +112,8 @@ const PlaceSearch = () => {
 
     const handlePlaceClick = (place) => {
         if (place.id) {
-            // DB에 이미 있는 장소 -> DB ID 기반 상세 페이지 이동
             navigate(`/places/${place.id}`);
         } else {
-            // 새로운 장소 -> API 정보 기반 상세 페이지 이동 (들어가면서 자동 저장됨)
             const params = new URLSearchParams({
                 api_id: place.place_api_id,
                 provider: place.provider,
@@ -134,7 +146,8 @@ const PlaceSearch = () => {
                                 className={`w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e2b36] focus:ring-2 focus:ring-[#1392ec] focus:border-transparent outline-none transition-all text-lg shadow-sm ${showSuggestions && suggestions.length > 0 ? 'rounded-b-none' : ''}`}
                                 placeholder="어디로 떠나고 싶으신가요?"
                                 value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
+                                onChange={handleInputChange}
+                                onKeyDown={handleKeyDown}
                                 onFocus={() => {
                                     if (searchInput.length >= 2 && suggestions.length > 0) {
                                         setShowSuggestions(true);
@@ -142,7 +155,7 @@ const PlaceSearch = () => {
                                 }}
                                 onBlur={() => {
                                     // Delay hiding to allow click event on suggestion to process
-                                    setTimeout(() => setShowSuggestions(false), 200);
+                                    setTimeout(() => setShowSuggestions(false), 150);
                                 }}
                                 autoComplete="off"
                             />
