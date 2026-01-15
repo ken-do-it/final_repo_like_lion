@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import func
 from typing import List
 from pydantic import BaseModel
 from datetime import datetime
@@ -11,7 +12,7 @@ from models import Place, PlaceReview, RoadviewGameImage  # models.py에 Roadvie
 
 # 별도의 라우터 정의
 router = APIRouter(
-    prefix="/api/v1/roadview",  # URL 주소: /api/v1/roadview/...
+    prefix="/roadview",  # URL 주소: /api/v1/roadview/...
     tags=["Roadview Game"]
 )
 
@@ -105,4 +106,29 @@ def create_roadview_from_review(
         "game_image_id": game_image.id,
         "lat": float(place.latitude),
         "lng": float(place.longitude)
+    }
+
+# ---------------------------------------------------------
+# 3. 랜덤 게임 이미지 가져오기
+# ---------------------------------------------------------
+@router.get("/random", response_model=ReviewPhotoResponse)
+def get_random_game_image(db: Session = Depends(get_db)):
+    """
+    등록된 로드뷰 게임용 이미지 중 랜덤으로 하나를 가져옴
+    """
+    # RoadviewGameImage 테이블에서 랜덤하게 1개 추출
+    random_image = db.query(RoadviewGameImage).order_by(func.random()).first()
+    
+    if not random_image:
+        raise HTTPException(status_code=404, detail="등록된 게임 이미지가 없습니다.")
+        
+    return {
+        "review_id": random_image.id,  # 필드명은 스키마에 맞춰 조정
+        "place_name": "랜덤 장소",
+        "content": "이곳은 어디일까요?",
+        "image_url": random_image.image_url,
+        "latitude": float(random_image.latitude),
+        "longitude": float(random_image.longitude),
+        "city": random_image.city,
+        "created_at": random_image.created_at
     }

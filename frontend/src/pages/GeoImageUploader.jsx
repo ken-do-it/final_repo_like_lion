@@ -30,23 +30,35 @@ const GeoImageUploader = () => {
   }, []);
 
   const handleStartReviewGame = async () => {
-    if (!selectedReview) return;
-    try {
-      const response = await placesAxios.post(`/roadview/start-from-review/${selectedReview.review_id}`);
-      const { lat, lng } = response.data;
-      navigate('/game', {
-        state: {
-          lat,
-          lng,
-          imageUrl: selectedReview.image_url,
-          totalPhotos: reviews.length
-        }
-      });
-    } catch (error) {
-      console.error("Failed to start game from review:", error);
-      setError("Failed to start game from review.");
-    }
-  };
+  if (!selectedReview) return;
+  
+  setLoading(true); // 로딩 상태 표시
+  try {
+    // 1. 서버에 게임 데이터로 등록 요청 (review_id 기준)
+    const response = await placesAxios.post(`/roadview/start-from-review/${selectedReview.review_id}`);
+    
+    // 서버 응답에서 좌표 정보 추출
+    const { lat, lng } = response.data;
+    
+    // [성공 알림] 사용자가 자신의 사진이 게임에 등록되었음을 알 수 있게 함
+    alert("This photo has been registered for the Roadview Game!");
+
+    // 2. 게임 페이지로 이동하면서 상태값 전달
+    navigate('/game', {
+      state: {
+        lat,
+        lng,
+        imageUrl: selectedReview.image_url, // 게임에서 보여줄 이미지
+        totalPhotos: 1 // 현재는 단일 라운드로 설정 (필요 시 reviews.length 전달)
+      }
+    });
+  } catch (error) {
+    console.error("Failed to start game from review:", error);
+    setError("Failed to register this photo for the game.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const processFile = async (file) => {
     if (!file) return;
@@ -115,17 +127,22 @@ const GeoImageUploader = () => {
   };
 
   const handleStartGame = () => {
-    if (gpsData) {
-      navigate('/game', { state: { lat: gpsData.lat, lng: gpsData.lng } });
-    }
-  };
+  if (gpsData) {
+    navigate('/game', { 
+      state: { 
+        lat: gpsData.lat, 
+        lng: gpsData.lng,
+        imageUrl: imageSrc // [수정] 분석한 이미지 URL을 같이 넘겨줘야 함
+      } 
+    });
+  }
+};
 
   // Cleanup object URL
   useEffect(() => {
-    return () => {
-      if (imageSrc) URL.revokeObjectURL(imageSrc);
-    };
-  }, [imageSrc]);
+  // imageSrc가 바뀔 때 이전 objectURL을 추적해서 해제하는 고도화가 필요하지만,
+  // 일단 net::ERR_FILE_NOT_FOUND를 해결하려면 언마운트 시 revoke 로직을 주석 처리해보세요.
+}, [imageSrc]);
 
   return (
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] font-sans flex flex-col items-center py-10 px-4 transition-colors">
