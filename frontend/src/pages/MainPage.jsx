@@ -133,7 +133,7 @@ const MainPage = () => {
         </section>
 
         {/* 3. Upcoming Adventure Section (Mock/Static Premium Visual) */}
-        <section className="max-w-5xl mx-auto w-full">
+        <section className="w-full">
           <div className="flex items-center justify-between mb-4 px-2">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('sec_upcoming')}</h2>
             <button className="text-[#1392ec] text-sm font-bold hover:underline">{t('btn_view_all')}</button>
