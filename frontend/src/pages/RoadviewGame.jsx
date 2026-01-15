@@ -34,25 +34,23 @@ const RoadviewGame = () => {
   const locationState = useLocation().state;
   const navigate = useNavigate();
 
-  // [수정] 위도, 경도, 이미지를 통합 상태로 관리
+  // 1. 상태 및 변수 선언 (가장 상단)
   const [targetData, setTargetData] = useState({
     lat: locationState?.lat,
     lng: locationState?.lng,
     imageUrl: locationState?.imageUrl,
     totalPhotos: locationState?.totalPhotos || 1
   });
-
-  // [추가] 데이터 로딩 상태
   const [isDataLoading, setIsDataLoading] = useState(!locationState?.lat);
 
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  // [추가] 실제 로드뷰가 존재하는 지점을 저장할 상태
+  const [panoLocation, setPanoLocation] = useState(null);
+  const [noPano, setNoPano] = useState(false); // 로드뷰 없음 상태
 
-  // Game State
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const [guess, setGuess] = useState(null);
   const [result, setResult] = useState(null);
   const [showResult, setShowResult] = useState(false);
-
-  // UI State
   const [round, setRound] = useState(1);
   const [timeLeft, setTimeLeft] = useState(180);
 
@@ -62,7 +60,7 @@ const RoadviewGame = () => {
     libraries: libraries
   });
 
-  // [추가] 데이터가 없을 경우 서버에서 랜덤 장소 가져오는 로직
+  // [추가/수정] 데이터 가져오기 로직
   useEffect(() => {
     const fetchRandomGame = async () => {
       // 이미 데이터가 있다면(state로 넘어왔다면) 바로 종료
@@ -70,16 +68,14 @@ const RoadviewGame = () => {
         setIsDataLoading(false);
         return;
       }
-
       try {
         setIsDataLoading(true);
-        // 백엔드 랜덤 엔드포인트 호출
         const response = await api.get('/roadview/random');
         const data = response.data;
-        
+        // 백엔드 필드명(latitude/longitude)에 맞춰 업데이트
         setTargetData({
-          lat: data.latitude,
-          lng: data.longitude,
+          lat: data.latitude || data.lat,
+          lng: data.longitude || data.lng,
           imageUrl: data.image_url,
           totalPhotos: 1
         });
@@ -89,13 +85,44 @@ const RoadviewGame = () => {
         setIsDataLoading(false);
       }
     };
-
     fetchRandomGame();
   }, [locationState]);
 
-  // [수정] targetData에서 값 참조
-  const { lat, lng, imageUrl, totalPhotos } = targetData;
+  // 2. 좌표 변수 추출 (Hook보다 위에 있어야 에러가 안 납니다)
+  const lat = useMemo(() => parseFloat(targetData.lat), [targetData.lat]);
+  const lng = useMemo(() => parseFloat(targetData.lng), [targetData.lng]);
   const answerLocation = useMemo(() => ({ lat, lng }), [lat, lng]);
+
+  // [수정] totalPhotos, imageUrl 등도 targetData에서 추출
+  const { imageUrl, totalPhotos } = targetData;
+
+  // 3. [핵심 추가] 카카오 좌표 -> 구글 로드뷰 도로 좌표 보정 로직
+  // 3. [핵심 추가] 카카오 좌표 -> 구글 로드뷰 도로 좌표 보정 로직
+  useEffect(() => {
+    if (isLoaded && lat && lng) {
+      const service = new window.google.maps.StreetViewService();
+
+      // 입력된 좌표 주변 200m (범위 확대) 이내의 가장 가까운 '도로' 지점을 검색
+      service.getPanorama({
+        location: { lat, lng },
+        radius: 200,
+        // source: window.google.maps.StreetViewSource.OUTDOOR // 제한 해제
+      }, (data, status) => {
+        if (status === "OK") {
+          // 구글이 찾은 실제 도로 위 좌표로 업데이트 (객체 변환)
+          setPanoLocation({
+            lat: data.location.latLng.lat(),
+            lng: data.location.latLng.lng()
+          });
+          setNoPano(false);
+        } else {
+          console.warn("주변 200m 이내에 로드뷰가 없습니다.");
+          setPanoLocation(null);
+          setNoPano(true);
+        }
+      });
+    }
+  }, [isLoaded, lat, lng]);
 
   // Timer Effect
   useEffect(() => {
@@ -179,17 +206,29 @@ const RoadviewGame = () => {
             <span className="text-[18px]">📷</span>
             <span className="text-xs font-bold">Street View</span>
           </div>
+
+          {noPano && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900 text-white p-4 text-center">
+              <span className="text-4xl mb-2">🚫</span>
+              <p className="font-bold text-lg">로드뷰를 찾을 수 없습니다</p>
+              <p className="text-sm text-slate-400">주변 도로 데이터가 없거나 실내 장소일 수 있습니다.</p>
+            </div>
+          )}
+
           <GoogleMap
             mapContainerClassName="w-full h-full"
             center={answerLocation}
             zoom={14}
             options={{ disableDefaultUI: true, gestureHandling: 'none' }}
           >
-            <StreetViewPanorama
-              position={answerLocation}
-              visible={true}
-              options={streetViewOptions}
-            />
+            {/* 보정된 좌표(panoLocation)가 있을 때만 로드뷰를 띄웁니다 */}
+            {!noPano && panoLocation && (
+              <StreetViewPanorama
+                position={panoLocation}
+                visible={true}
+                options={streetViewOptions}
+              />
+            )}
           </GoogleMap>
         </div>
 
