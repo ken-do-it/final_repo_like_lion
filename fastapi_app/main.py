@@ -178,9 +178,74 @@ def index_data(request: IndexRequest):
 class SearchRequest(BaseModel):
     query: str
 
+# @app.post("/search")
+# def search_grouped(request: SearchRequest):
+#     logger.info(f"🔍 분류 검색 요청: {request.query}")
+
+#     if model is None:
+#         raise HTTPException(status_code=500, detail="Model is loading...")
+
+#     try:
+#         conn = get_db_connection()
+#         cur = conn.cursor()
+        
+#         # 1. 쿼리 벡터 변환
+#         query_vector = model.encode(request.query).tolist()
+#         text_pattern = f"%{request.query}%"
+
+#         # 2. 하이브리드 검색 (키워드 포함 시 우선순위)
+#         # category 컬럼도 같이 조회합니다.
+#         cur.execute("""
+#             SELECT target_id, category, content, (embedding <=> %s::vector) as distance,
+#                    CASE WHEN content ILIKE %s THEN 0 ELSE 1 END as match_priority
+#             FROM search_vectors
+#             ORDER BY match_priority ASC, distance ASC
+#             LIMIT 30;  -- 여러 카테고리가 섞여 나오므로 넉넉하게 조회
+#         """, (query_vector, text_pattern))
+        
+#         rows = cur.fetchall()
+#         conn.close()
+        
+#         # 3. ★ 파이썬에서 카테고리별로 박스 담기 (Grouping)
+#         grouped_results = {
+#             "places": [],
+#             "reviews": [],
+#             "plans": [],
+#             "others": []
+#         }
+        
+#         for r in rows:
+#             item = {
+#                 "id": r[0],
+#                 "content": r[2],
+#                 "distance": float(r[3]),
+#                 "is_keyword_match": True if r[4] == 0 else False
+#             }
+            
+#             # 꼬리표(category) 확인 후 분류
+#             cat = r[1] 
+#             if cat == "place":
+#                 grouped_results["places"].append(item)
+#             elif cat == "review":
+#                 grouped_results["reviews"].append(item)
+#             elif cat == "plan":
+#                 grouped_results["plans"].append(item)
+#             else:
+#                 grouped_results["others"].append(item)
+        
+#         return grouped_results
+        
+#     except Exception as e:
+#         logger.error(f"검색 실패: {e}")
+#         # 테이블 없음 에러 처리
+#         if "relation \"search_vectors\" does not exist" in str(e):
+#              raise HTTPException(status_code=404, detail="데이터가 없습니다. /index-data 로 데이터를 먼저 넣어주세요.")
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/search")
 def search_grouped(request: SearchRequest):
-    logger.info(f"🔍 분류 검색 요청: {request.query}")
+    logger.info(f"🔍 고도화된 하이브리드 검색 요청: {request.query}")
 
     if model is None:
         raise HTTPException(status_code=500, detail="Model is loading...")
@@ -189,24 +254,62 @@ def search_grouped(request: SearchRequest):
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # 1. 쿼리 벡터 변환
+        # 1. 쿼리 벡터 변환 및 패턴 생성
         query_vector = model.encode(request.query).tolist()
         text_pattern = f"%{request.query}%"
-
-        # 2. 하이브리드 검색 (키워드 포함 시 우선순위)
-        # category 컬럼도 같이 조회합니다.
-        cur.execute("""
-            SELECT target_id, category, content, (embedding <=> %s::vector) as distance,
+        
+        # 2. 통합 하이브리드 쿼리 실행
+        # - search_vectors: AI 벡터 검색 + 키워드 검색
+        # - places: 인덱싱되지 않은 최신 장소 데이터 키워드 검색 (Fallback)
+        # - ROW_NUMBER: 카테고리별 결과 보장
+        
+        query_sql = """
+        WITH ai_results AS (
+            -- [1] 검색 엔진 인덱스 테이블 조회
+            SELECT target_id, category, content, 
+                   (embedding <=> %s::vector) as distance,
                    CASE WHEN content ILIKE %s THEN 0 ELSE 1 END as match_priority
             FROM search_vectors
-            ORDER BY match_priority ASC, distance ASC
-            LIMIT 30;  -- 여러 카테고리가 섞여 나오므로 넉넉하게 조회
-        """, (query_vector, text_pattern))
+        ),
+        direct_db_results AS (
+            -- [2] 원본 places 테이블 실시간 조회 (인덱싱 누락 방지)
+            -- SQLAlchemy로 직접 추가된 항목 등을 검색 대상에 즉시 포함
+            SELECT id as target_id, 'place' as category, name || ' ' || address as content,
+                   0.45 as distance, -- 키워드 매칭은 중간 정도의 거리값 부여
+                   0 as match_priority
+            FROM places
+            WHERE (name ILIKE %s OR address ILIKE %s)
+            -- 인덱스에 이미 있는 장소는 중복 제외
+            AND id NOT IN (SELECT target_id FROM search_vectors WHERE category = 'place')
+        ),
+        combined AS (
+            SELECT * FROM ai_results
+            UNION ALL
+            SELECT * FROM direct_db_results
+        ),
+        ranked AS (
+            SELECT *,
+                   ROW_NUMBER() OVER(
+                       PARTITION BY category 
+                       ORDER BY match_priority ASC, distance ASC
+                   ) as group_rank
+            FROM combined
+            -- ★ 조건: 거리 0.5 미만(유사함) 이거나 키워드가 포함된 경우만 노출
+            WHERE distance < 0.5 OR match_priority = 0
+        )
+        SELECT target_id, category, content, distance, match_priority
+        FROM ranked
+        WHERE group_rank <= 15  -- ★ 각 카테고리별 최대 15개씩 결과 보장
+        ORDER BY match_priority ASC, distance ASC;
+        """
+        
+        # 파라미터: query_vector, text_pattern, text_pattern, text_pattern
+        cur.execute(query_sql, (query_vector, text_pattern, text_pattern, text_pattern))
         
         rows = cur.fetchall()
         conn.close()
         
-        # 3. ★ 파이썬에서 카테고리별로 박스 담기 (Grouping)
+        # 3. 결과 그룹화 (프론트엔드 반환 포맷)
         grouped_results = {
             "places": [],
             "reviews": [],
@@ -222,8 +325,7 @@ def search_grouped(request: SearchRequest):
                 "is_keyword_match": True if r[4] == 0 else False
             }
             
-            # 꼬리표(category) 확인 후 분류
-            cat = r[1] 
+            cat = r[1]
             if cat == "place":
                 grouped_results["places"].append(item)
             elif cat == "review":
@@ -237,11 +339,9 @@ def search_grouped(request: SearchRequest):
         
     except Exception as e:
         logger.error(f"검색 실패: {e}")
-        # 테이블 없음 에러 처리
-        if "relation \"search_vectors\" does not exist" in str(e):
-             raise HTTPException(status_code=404, detail="데이터가 없습니다. /index-data 로 데이터를 먼저 넣어주세요.")
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 @app.post("/delete-data")
 def delete_data(request: DeleteRequest):
     conn = None
