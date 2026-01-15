@@ -139,7 +139,7 @@ function App() {
         <Route path="/plans/details/:detailId/edit" element={<EditPlace />} />
 
         {/* Development / Test Pages */}
-        <Route path="/test-front" element={<TestFrontAI />} />
+        {/* <Route path="/test-front" element={<TestFrontAI />} /> */}
         <Route path="/anti-test" element={<TripleIntroPage />} />
         <Route path="/anti-test-page" element={<AntiTestPage />} />
           <Route path="/geo-quiz" element={<GeoImageUploader />} />
