@@ -76,7 +76,7 @@ const SubwayRoute = () => {
       /**
        * API 호출
        */
-      const response = await axios.get('/api/v1/transport/subway/route', { params });
+      const response = await axios.get('/v1/transport/subway/route/', { params });
 
       /**
        * 검색 결과 저장

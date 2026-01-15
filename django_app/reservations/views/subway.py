@@ -5,6 +5,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from ..services.subway import MSSubwayAPIService
@@ -23,6 +24,7 @@ class MSSubwayRouteView(APIView):
 
     출발역과 도착역을 입력하면 최적의 경로를 제공합니다.
     """
+    permission_classes = [AllowAny]  # 비회원도 접근 가능
 
     @extend_schema(
         summary="지하철 경로 검색",
@@ -170,6 +172,7 @@ class MSSubwayMapMetaView(APIView):
 
     도시별 노선도 이미지 URL과 버전 정보를 제공합니다.
     """
+    permission_classes = [AllowAny]  # 비회원도 접근 가능
 
     # 도시별 노선도 정보 (정적 데이터)
     SUBWAY_MAP_DATA = {

@@ -76,13 +76,13 @@ const FlightPaymentSuccess = () => {
 
       try {
         /**
-         * 백엔드 API 호출: POST /api/v1/payments/confirm/
+         * 백엔드 API 호출: POST /v1/payments/confirm/
          * 요청 데이터:
          * - paymentKey: 토스페이먼츠 결제 키
          * - orderId: 주문 번호
          * - amount: 결제 금액 (백엔드가 저장된 금액과 비교)
          */
-        const response = await axios.post('/api/v1/payments/confirm/', {
+        const response = await axios.post('/v1/payments/confirm/', {
           paymentKey,
           orderId,
           amount: parseInt(amount),

@@ -67,41 +67,40 @@ const TrainResults = () => {
     try {
       /**
        * 쿼리 파라미터 구성
+       * 백엔드는 역 이름을 기대합니다
        */
       const params = {
-        depPlaceId: searchParams.depPlaceId,
-        arrPlaceId: searchParams.arrPlaceId,
-        depDate: searchParams.depDate,
-        page: 1,
-        pageSize: 50,
+        fromStation: depStationName,
+        toStation: arrStationName,
+        departDate: searchParams.depDate,
+        passengers: 1,
       };
-
-      /**
-       * 열차종류가 선택된 경우에만 추가
-       */
-      if (searchParams.trainGradeCode) {
-        params.trainGradeCode = searchParams.trainGradeCode;
-      }
 
       /**
        * API 호출
        */
-      const response = await axios.get('/api/v1/transport/trains/search', { params });
+      const response = await axios.get('/v1/transport/trains/search/', { params });
 
       /**
        * 검색 결과 저장
+       * 백엔드 응답: { results: [...], totalCount: n }
        */
-      setTrains(response.data.trains || []);
+      setTrains(response.data.results || []);
 
       /**
        * 결과가 없으면 안내 메시지 표시
        */
-      if (!response.data.trains || response.data.trains.length === 0) {
+      if (!response.data.results || response.data.results.length === 0) {
         setError('검색된 기차편이 없습니다. 다른 조건으로 검색해주세요.');
       }
     } catch (err) {
       console.error('기차편 검색 오류:', err);
-      setError('기차편 검색 중 오류가 발생했습니다. 다시 시도해주세요.');
+
+      /**
+       * 백엔드 에러 메시지 처리
+       */
+      const errorMsg = err.response?.data?.error || '기차편 검색 중 오류가 발생했습니다.';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -116,7 +115,7 @@ const TrainResults = () => {
      * 열차종류에 따라 예매 사이트 결정
      * SRT는 SRT 홈페이지, 나머지는 코레일 홈페이지
      */
-    const isSRT = train.trainGradeName && train.trainGradeName.includes('SRT');
+    const isSRT = train.trainType && train.trainType.includes('SRT');
     const bookingUrl = isSRT
       ? 'https://etk.srail.kr'
       : 'https://www.letskorail.com';
@@ -125,23 +124,6 @@ const TrainResults = () => {
      * 새 창으로 예매 사이트 열기
      */
     window.open(bookingUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  /**
-   * 시간 포맷팅 함수 (YYYY-MM-DD HH:MM → HH:MM)
-   */
-  const formatTime = (dateTimeString) => {
-    if (!dateTimeString) return '';
-
-    /**
-     * YYYY-MM-DD HH:MM 형식에서 시간만 추출
-     */
-    const parts = dateTimeString.split(' ');
-    if (parts.length === 2) {
-      return parts[1];
-    }
-
-    return dateTimeString;
   };
 
   /**
@@ -242,13 +224,13 @@ const TrainResults = () => {
                       <div className="flex items-center gap-3 mb-4">
                         {/* 열차 종류 배지 */}
                         <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                          train.trainGradeName && train.trainGradeName.includes('KTX')
+                          train.trainType && train.trainType.includes('KTX')
                             ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                            : train.trainGradeName && train.trainGradeName.includes('SRT')
+                            : train.trainType && train.trainType.includes('SRT')
                             ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                         }`}>
-                          {train.trainGradeName}
+                          {train.trainType}
                         </span>
 
                         {/* 열차 번호 */}
@@ -262,27 +244,30 @@ const TrainResults = () => {
                         {/* 출발 */}
                         <div>
                           <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {formatTime(train.depPlandTime)}
+                            {train.departureTime}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {train.depPlaceName}
+                            {train.departureStation}
                           </p>
                         </div>
 
-                        {/* 화살표 */}
+                        {/* 화살표 및 소요시간 */}
                         <div className="text-center">
                           <span className="material-symbols-rounded text-gray-400">
                             arrow_forward
                           </span>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                            {train.duration}
+                          </p>
                         </div>
 
                         {/* 도착 */}
                         <div>
                           <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {formatTime(train.arrPlandTime)}
+                            {train.arrivalTime}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {train.arrPlaceName}
+                            {train.arrivalStation}
                           </p>
                         </div>
                       </div>
@@ -294,7 +279,7 @@ const TrainResults = () => {
                         어른 요금
                       </p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        {train.adultCharge?.toLocaleString()}원
+                        {train.adultFare?.toLocaleString()}원
                       </p>
                       <button
                         onClick={() => handleBooking(train)}

@@ -1,14 +1,31 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { language, setLanguage, t } = useLanguage();
+    const { user, isAuthenticated, logout } = useAuth();
+
+    // Menu dropdown state
+    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const menuRef = React.useRef(null);
 
     // Search State
     const [searchQuery, setSearchQuery] = React.useState('');
+
+    // Close menu when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Sync search input with URL query parameter
     React.useEffect(() => {
@@ -25,10 +42,25 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
         if (e.key === 'Enter' || e.type === 'click') {
             if (searchQuery.trim()) {
                 navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
-                setSearchQuery(''); // Optional: clear after search
+                setSearchQuery('');
             }
         }
     };
+
+    const handleLogout = () => {
+        logout();
+        setIsMenuOpen(false);
+        navigate('/');
+        // window.location.reload(); // Context updates automatically, reload not needed usually
+    };
+
+    // User display info
+    const initials = user?.nickname
+        ? user.nickname.substring(0, 2).toUpperCase()
+        : (user?.username ? user.username.substring(0, 2).toUpperCase() : 'ME');
+
+    const displayName = user?.nickname || user?.username || 'User';
+    const displayEmail = user?.email || 'user@example.com';
 
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-[#101a22]/95 backdrop-blur-md transition-colors">
@@ -36,7 +68,6 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
 
                 {/* 1. Left Section: Hamburger & Logo */}
                 <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                    {/* Hamburger Button - Always Visible */}
                     <button
                         type="button"
                         className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
@@ -48,7 +79,6 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                         </svg>
                     </button>
 
-                    {/* Logo / Home Button */}
                     <div
                         className="flex items-center gap-2 cursor-pointer group"
                         onClick={() => navigate('/')}
@@ -84,11 +114,10 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                 {/* 3. Right Section: Actions */}
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
-                    {/* Search Icon for Mobile (visible only when search bar is hidden) */}
                     {location.pathname !== '/search' && (
                         <button
                             className="sm:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                            onClick={() => navigate('/search')} // Mobile just goes to search page directly
+                            onClick={() => navigate('/search')}
                         >
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -96,7 +125,6 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                         </button>
                     )}
 
-                    {/* Dark Mode Toggle */}
                     <button
                         onClick={toggleTheme}
                         className="p-2 rounded-full text-gray-500 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -113,7 +141,6 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                         )}
                     </button>
 
-                    {/* Language Selector */}
                     <div className="relative">
                         <select
                             value={language}
@@ -130,18 +157,63 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                         </div>
                     </div>
 
-                    {/* Separator */}
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
 
-                    {/* Login / Profile */}
-                    <button className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer">
-                        <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                        <div className="size-7 rounded-full bg-gradient-to-tr from-blue-400 to-[#1392ec] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-[#1e2b36]">
-                            JS
+                    {/* Auth Section */}
+                    {isAuthenticated ? (
+                        <div className="relative" ref={menuRef}>
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer"
+                            >
+                                <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                                <div className="size-7 rounded-full bg-gradient-to-tr from-blue-400 to-[#1392ec] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-[#1e2b36] overflow-hidden">
+                                    {initials}
+                                </div>
+                            </button>
+
+                            {isMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-[#1e2b36] shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50 transform origin-top-right transition-all">
+                                    <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayName}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{displayEmail}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            navigate('/mypage');
+                                        }}
+                                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                    >
+                                        {t('nav_mypage')}
+                                    </button>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    >
+                                        {t('nav_logout')}
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    </button>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => navigate('/login-page')}
+                                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-[#1392ec] dark:hover:text-[#1392ec] px-3 py-2 transition-colors"
+                            >
+                                {t('nav_login')}
+                            </button>
+                            <button
+                                onClick={() => navigate('/register-page')}
+                                className="hidden sm:block text-sm font-medium text-white bg-[#1392ec] hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors shadow-sm hover:shadow-md"
+                            >
+                                {t('nav_signup')}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </nav>

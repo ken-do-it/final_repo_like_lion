@@ -125,7 +125,7 @@ const FlightPayment = () => {
 
     try {
       /**
-       * 백엔드 API 호출: POST /api/v1/payments/
+       * 백엔드 API 호출: POST /v1/payments/
        * 요청 데이터:
        * - amount: 결제 금액
        * - orderName: 주문명
@@ -133,7 +133,7 @@ const FlightPayment = () => {
        * - passengers: 승객 정보
        * - selectedClass: 좌석 등급
        */
-      const response = await axios.post('/api/v1/payments/', {
+      const response = await axios.post('/v1/payments/', {
         amount: totalPrice,
         orderName: `${flight.vihRouteName} 항공권`,
         flight: {

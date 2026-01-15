@@ -283,3 +283,74 @@ class MSAirportListView(APIView):
             {"airports": airports},
             status=status.HTTP_200_OK
         )
+
+
+class MSAirlineListView(APIView):
+    """
+    항공사 목록 조회 API
+
+    GET /api/v1/transport/airlines
+
+    React에서 항공사 선택 시 사용
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=['항공'],
+        summary="항공사 목록 조회",
+        description="국내 주요 항공사 목록을 조회합니다. 프론트엔드에서 항공사 선택 시 사용합니다."
+    )
+    def get(self, request):
+        """
+        항공사 목록 조회
+
+        응답 예시:
+        {
+            "airlines": [
+                {
+                    "code": "KE",
+                    "nameKo": "대한항공",
+                    "nameEn": "Korean Air"
+                },
+                ...
+            ]
+        }
+        """
+        # 주요 국내 항공사 목록
+        airlines = [
+            {
+                "code": "KE",
+                "nameKo": "대한항공",
+                "nameEn": "Korean Air"
+            },
+            {
+                "code": "OZ",
+                "nameKo": "아시아나항공",
+                "nameEn": "Asiana Airlines"
+            },
+            {
+                "code": "7C",
+                "nameKo": "제주항공",
+                "nameEn": "Jeju Air"
+            },
+            {
+                "code": "TW",
+                "nameKo": "티웨이항공",
+                "nameEn": "T'way Air"
+            },
+            {
+                "code": "LJ",
+                "nameKo": "진에어",
+                "nameEn": "Jin Air"
+            },
+            {
+                "code": "BX",
+                "nameKo": "에어부산",
+                "nameEn": "Air Busan"
+            },
+        ]
+
+        return Response(
+            {"airlines": airlines},
+            status=status.HTTP_200_OK
+        )

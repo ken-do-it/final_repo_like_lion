@@ -89,7 +89,7 @@ const FlightSearch = () => {
   const fetchAirports = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/v1/transport/flights/airports/');
+      const response = await axios.get('/v1/transport/airports/');
       setAirports(response.data.airports || []);
     } catch (error) {
       console.error('공항 목록 로딩 실패:', error);
@@ -105,7 +105,7 @@ const FlightSearch = () => {
    */
   const fetchAirlines = async () => {
     try {
-      const response = await axios.get('/v1/transport/flights/airlines/');
+      const response = await axios.get('/v1/transport/airlines/');
       setAirlines(response.data.airlines || []);
     } catch (error) {
       console.error('항공사 목록 로딩 실패:', error);
@@ -135,12 +135,12 @@ const FlightSearch = () => {
    */
   const handleAirportSelect = (airport, type) => {
     if (type === 'departure') {
-      setFormData(prev => ({ ...prev, depAirportId: airport.airportId }));
-      setDepSearchTerm(airport.airportName);
+      setFormData(prev => ({ ...prev, depAirportId: airport.iataCode }));
+      setDepSearchTerm(airport.nameKo);
       setShowDepDropdown(false);
     } else {
-      setFormData(prev => ({ ...prev, arrAirportId: airport.airportId }));
-      setArrSearchTerm(airport.airportName);
+      setFormData(prev => ({ ...prev, arrAirportId: airport.iataCode }));
+      setArrSearchTerm(airport.nameKo);
       setShowArrDropdown(false);
     }
   };
@@ -155,7 +155,9 @@ const FlightSearch = () => {
   const filterAirports = (searchTerm) => {
     if (!searchTerm) return airports;
     return airports.filter(airport =>
-      airport.airportName.toLowerCase().includes(searchTerm.toLowerCase())
+      airport.nameKo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      airport.nameEn?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      airport.iataCode?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
@@ -281,13 +283,13 @@ const FlightSearch = () => {
                       <div className="flex gap-2 overflow-x-auto whitespace-nowrap py-1">
                         {getDomesticAirportsQuick().map((airport) => (
                           <button
-                            key={`dep-${airport.airportId}`}
+                            key={`dep-${airport.iataCode}`}
                             type="button"
                             onClick={() => handleAirportSelect(airport, 'departure')}
-                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${formData.depAirportId === airport.airportId ? 'bg-mint text-white border-mint' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
-                            title={airport.airportId}
+                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${formData.depAirportId === airport.iataCode ? 'bg-mint text-white border-mint' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
+                            title={airport.iataCode}
                           >
-                            {airport.airportName}
+                            {airport.nameKo}
                           </button>
                         ))}
                       </div>
@@ -323,16 +325,16 @@ const FlightSearch = () => {
                         )}
                         {filterAirports(depSearchTerm).map((airport) => (
                           <button
-                            key={airport.airportId}
+                            key={airport.iataCode}
                             type="button"
                             onClick={() => handleAirportSelect(airport, 'departure')}
                             className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                           >
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {airport.airportName}
+                              {airport.nameKo}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {airport.airportId}
+                              {airport.iataCode}
                             </div>
                           </button>
                         ))}
@@ -366,13 +368,13 @@ const FlightSearch = () => {
                       <div className="flex gap-2 overflow-x-auto whitespace-nowrap py-1">
                         {getDomesticAirportsQuick().map((airport) => (
                           <button
-                            key={`arr-${airport.airportId}`}
+                            key={`arr-${airport.iataCode}`}
                             type="button"
                             onClick={() => handleAirportSelect(airport, 'arrival')}
-                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${formData.arrAirportId === airport.airportId ? 'bg-mint text-white border-mint' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
-                            title={airport.airportId}
+                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${formData.arrAirportId === airport.iataCode ? 'bg-mint text-white border-mint' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
+                            title={airport.iataCode}
                           >
-                            {airport.airportName}
+                            {airport.nameKo}
                           </button>
                         ))}
                       </div>
@@ -408,16 +410,16 @@ const FlightSearch = () => {
                         )}
                         {filterAirports(arrSearchTerm).map((airport) => (
                           <button
-                            key={airport.airportId}
+                            key={airport.iataCode}
                             type="button"
                             onClick={() => handleAirportSelect(airport, 'arrival')}
                             className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                           >
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {airport.airportName}
+                              {airport.nameKo}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {airport.airportId}
+                              {airport.iataCode}
                             </div>
                           </button>
                         ))}
@@ -491,8 +493,8 @@ const FlightSearch = () => {
                       >
                         <option value="">전체 항공사</option>
                         {airlines.map((airline) => (
-                          <option key={airline.airlineId} value={airline.airlineId}>
-                            {airline.airlineName}
+                          <option key={airline.code} value={airline.code}>
+                            {airline.nameKo}
                           </option>
                         ))}
                       </select>
