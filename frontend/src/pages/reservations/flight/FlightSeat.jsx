@@ -622,7 +622,7 @@ const FlightSeat = () => {
 
               <button
                 onClick={handleProceedToPayment}
-                className="w-full h-14 bg-mint hover:bg-mint-dark text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+                className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined">
                   {showPassengerForm ? 'payment' : 'arrow_forward'}
