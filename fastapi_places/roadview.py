@@ -111,24 +111,17 @@ def create_roadview_from_review(
 # ---------------------------------------------------------
 # 3. 랜덤 게임 이미지 가져오기
 # ---------------------------------------------------------
-@router.get("/random", response_model=ReviewPhotoResponse)
+@router.get("/random")
 def get_random_game_image(db: Session = Depends(get_db)):
-    """
-    등록된 로드뷰 게임용 이미지 중 랜덤으로 하나를 가져옴
-    """
-    # RoadviewGameImage 테이블에서 랜덤하게 1개 추출
     random_image = db.query(RoadviewGameImage).order_by(func.random()).first()
-    
     if not random_image:
         raise HTTPException(status_code=404, detail="등록된 게임 이미지가 없습니다.")
         
     return {
-        "review_id": random_image.id,  # 필드명은 스키마에 맞춰 조정
+        "review_id": random_image.id,
         "place_name": "랜덤 장소",
-        "content": "이곳은 어디일까요?",
         "image_url": random_image.image_url,
-        "latitude": float(random_image.latitude),
-        "longitude": float(random_image.longitude),
-        "city": random_image.city,
-        "created_at": random_image.created_at
+        "lat": float(random_image.latitude),  # latitude -> lat으로 통일
+        "lng": float(random_image.longitude), # longitude -> lng으로 통일
+        "city": random_image.city
     }
