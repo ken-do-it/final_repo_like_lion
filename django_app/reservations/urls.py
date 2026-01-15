@@ -9,7 +9,8 @@ from django.urls import path
 from .views.flight import (
     MSFlightSearchView,
     MSFlightDetailView,
-    MSAirportListView
+    MSAirportListView,
+    MSAirlineListView
 )
 
 # 기차 관련 뷰 (화면)
@@ -41,11 +42,18 @@ urlpatterns = [
         name='flight-detail'
     ),
 
-    # 공항 목록 (보너스)
+    # 공항 목록
     path(
         'airports/',
         MSAirportListView.as_view(),
         name='airport-list'
+    ),
+
+    # 항공사 목록
+    path(
+        'airlines/',
+        MSAirlineListView.as_view(),
+        name='airline-list'
     ),
 
     # ============================================

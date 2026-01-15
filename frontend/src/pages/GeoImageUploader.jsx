@@ -1,10 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import exifr from 'exifr';
 import { useNavigate } from 'react-router-dom';
-import { useDropzone } from 'react-dropzone'; // Assuming react-dropzone is available or we implement simple logic. 
-// Note: If react-dropzone is not installed, I will implement a custom hook or simple listeners.
-// Since I can't check installed packages easily without package.json check (which I did earlier and it's not likely there), 
-// I will implement a robust native drag-and-drop to avoid dependency issues.
+import { placesAxios } from '../api/axios'; // Import placesAxios
 
 const GeoImageUploader = () => {
   const [imageSrc, setImageSrc] = useState(null);
@@ -13,7 +10,43 @@ const GeoImageUploader = () => {
   const [gpsData, setGpsData] = useState(null);
   const [dragActive, setDragActive] = useState(false);
 
+  // Review Game State
+  const [reviews, setReviews] = useState([]);
+  const [selectedReview, setSelectedReview] = useState(null);
+
   const navigate = useNavigate();
+
+  // Fetch Reviews Effect
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await placesAxios.get('/roadview/my-photo-reviews');
+        setReviews(response.data);
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  const handleStartReviewGame = async () => {
+    if (!selectedReview) return;
+    try {
+      const response = await placesAxios.post(`/roadview/start-from-review/${selectedReview.review_id}`);
+      const { lat, lng } = response.data;
+      navigate('/game', {
+        state: {
+          lat,
+          lng,
+          imageUrl: selectedReview.image_url,
+          totalPhotos: reviews.length
+        }
+      });
+    } catch (error) {
+      console.error("Failed to start game from review:", error);
+      setError("Failed to start game from review.");
+    }
+  };
 
   const processFile = async (file) => {
     if (!file) return;
@@ -194,6 +227,62 @@ const GeoImageUploader = () => {
                 >
                   <span>�</span>
                   Start Roadview Game
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Separator */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-[#1e2b36] text-gray-500">Or choose from your memories</span>
+            </div>
+          </div>
+
+          {/* Review List Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold">Your Photo Reviews</h3>
+            {reviews.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 bg-gray-50 dark:bg-[#101a22] rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                <p>No photo reviews found.</p>
+                <p className="text-xs mt-1">Write a review with a photo to see it here!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {reviews.map((review) => (
+                  <div
+                    key={review.review_id}
+                    onClick={() => setSelectedReview(review)}
+                    className={`relative aspect-square cursor-pointer rounded-xl overflow-hidden border-2 transition-all ${selectedReview?.review_id === review.review_id
+                      ? 'border-[#1392ec] ring-2 ring-[#1392ec]/20'
+                      : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                      }`}
+                  >
+                    <img src={review.image_url} alt={review.place_name} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                      <p className="text-white text-xs font-bold truncate">{review.place_name}</p>
+                    </div>
+                    {selectedReview?.review_id === review.review_id && (
+                      <div className="absolute top-2 right-2 bg-[#1392ec] text-white size-6 rounded-full flex items-center justify-center text-xs shadow-sm">
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {selectedReview && (
+              <div className="animate-fade-in-up pt-2">
+                <button
+                  onClick={handleStartReviewGame}
+                  className="w-full py-3 bg-[#1392ec] hover:bg-blue-600 active:scale-[0.98] transition-all text-white rounded-xl font-bold text-base shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                >
+                  <span>🚀</span>
+                  Start with "{selectedReview.place_name}"
                 </button>
               </div>
             )}
