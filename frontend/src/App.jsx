@@ -20,6 +20,22 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import './App.css'; // Global styles if any, strictly Tailwind preferred
 
+// 예약 페이지 - 항공
+import FlightSearch from './pages/reservations/flight/FlightSearch';
+import FlightResults from './pages/reservations/flight/FlightResults';
+import FlightSeat from './pages/reservations/flight/FlightSeat';
+import FlightPayment from './pages/reservations/flight/FlightPayment';
+import FlightPaymentSuccess from './pages/reservations/flight/FlightPaymentSuccess';
+import FlightPaymentFail from './pages/reservations/flight/FlightPaymentFail';
+import FlightComplete from './pages/reservations/flight/FlightComplete';
+
+// 예약 페이지 - 기차
+import TrainSearch from './pages/reservations/train/TrainSearch';
+import TrainResults from './pages/reservations/train/TrainResults';
+
+// 예약 페이지 - 지하철
+import SubwaySearch from './pages/reservations/subway/SubwaySearch';
+import SubwayRoute from './pages/reservations/subway/SubwayRoute';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -87,6 +103,26 @@ function App() {
           <Route path="/shorts" element={<ShortsPage />} />
           <Route path="/shorts/:id" element={<ShortsDetailPage />} />
 
+        {/* Reservation Pages - Flight */}
+        <Route path="/reservations/flights" element={<FlightSearch />} />
+        <Route path="/reservations/flights/results" element={<FlightResults />} />
+        <Route path="/reservations/flights/seat" element={<FlightSeat />} />
+        <Route path="/reservations/flights/payment" element={<FlightPayment />} />
+        <Route path="/reservations/flights/payment/success" element={<FlightPaymentSuccess />} />
+        <Route path="/reservations/flights/payment/fail" element={<FlightPaymentFail />} />
+        <Route path="/reservations/flights/complete" element={<FlightComplete />} />
+
+        {/* Reservation Pages - Train */}
+        <Route path="/reservations/trains" element={<TrainSearch />} />
+        <Route path="/reservations/trains/results" element={<TrainResults />} />
+
+        {/* Reservation Pages - Subway */}
+        <Route path="/reservations/subway" element={<SubwaySearch />} />
+        <Route path="/reservations/subway/route" element={<SubwayRoute />} />
+
+        <Route path="/geo-quiz" element={<GeoImageUploader />} />
+        <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
+        <Route path="/game" element={<RoadviewGame />} />
           {/* Place Pages */}
           <Route path="/places/search" element={<PlaceSearch />} />
           <Route path="/places/detail" element={<PlaceDetailPage />} />
