@@ -2,11 +2,13 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { placesAxios as api } from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import PlaceReviewSection from './PlaceReviewSection';
 
 const PlaceDetailPage = () => {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
 
     const [place, setPlace] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -143,8 +145,6 @@ const PlaceDetailPage = () => {
             </button>
         </div>
     );
-
-    const { isAuthenticated } = useAuth();
 
     const handleActionClick = (action) => {
         if (!isAuthenticated) {
@@ -287,6 +287,12 @@ const PlaceDetailPage = () => {
                             <div ref={mapRef} className="w-full h-64 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
                         </div>
 
+                        {/* Review Section */}
+                        <div className="mt-8">
+                            <PlaceReviewSection placeId={place.id} />
+                        </div>
+
+
 
                     </div>
 
@@ -310,8 +316,8 @@ const PlaceDetailPage = () => {
                                 <button
                                     onClick={handleBookmark}
                                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors group ${isBookmarked
-                                            ? "bg-red-50 dark:bg-red-900/30 text-red-500"
-                                            : "bg-gray-100 dark:bg-gray-700 text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+                                        ? "bg-red-50 dark:bg-red-900/30 text-red-500"
+                                        : "bg-gray-100 dark:bg-gray-700 text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                                         }`}
                                 >
                                     <span className={`text-2xl transition-colors ${isBookmarked ? "text-red-500" : "group-hover:text-red-500"

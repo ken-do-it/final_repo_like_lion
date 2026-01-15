@@ -138,17 +138,7 @@ function App() {
           <Route path="/plans/:planId/add-place" element={<AddPlace />} />
           <Route path="/plans/details/:detailId/edit" element={<EditPlace />} />
 
-          {/* Development / Test Pages */}
-          {/* <Route path="/test-front" element={<TestFrontAI />} /> */}
-          <Route path="/anti-test" element={<TripleIntroPage />} />
-          <Route path="/anti-test-page" element={<AntiTestPage />} />
-          <Route path="/geo-quiz" element={<GeoImageUploader />} />
-          <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
-          <Route path="/game" element={<RoadviewGame />} />
 
-          {/* Development / Test Pages */}
-          <Route path="/anti-test" element={<TripleIntroPage />} />
-          <Route path="/anti-test-page" element={<AntiTestPage />} />
 
           {/* Fallback */}
           <Route path="*" element={
