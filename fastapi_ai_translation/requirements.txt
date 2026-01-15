@@ -5,8 +5,8 @@ python-dotenv
 prometheus-fastapi-instrumentator
 
 # AI Translation specific
-transformers
+transformers==4.44.2
 torch
-sentencepiece
+sentencepiece==0.2.0
 huggingface-hub
 openai>=1.0.0

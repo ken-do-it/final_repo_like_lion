@@ -54,11 +54,15 @@ export const translations = {
         sec_trending: "Trending Shorts & Cities",
 
         // Shorts Page & Detail
+        shorts_title: "Shorts", // [NEW]
         shorts_sub: "Watch the latest uploads with AI captions/translation.",
         btn_upload: "Upload",
         btn_batch: "Batch Optimization",
         loading: "Loading...",
-        no_shorts: "No shorts available.",
+        no_shorts: "No shorts available. Log in to upload.",
+        duration_missing: "00:00", // [NEW]
+        now_playing: "Now Playing", // [NEW]
+        lang_label: "Lang", // [NEW]
 
         // Common
         play: "Play",
@@ -156,11 +160,15 @@ export const translations = {
         sec_trending: "인기 쇼츠 & 여행지",
 
         // Shorts Page & Detail
+        shorts_title: "쇼츠",
         shorts_sub: "최신 업로드를 AI 캡션/번역으로 감상하세요.",
         btn_upload: "업로드",
         btn_batch: "배치 최적화",
         loading: "로딩 중...",
-        no_shorts: "준비된 영상을 찾을 수 없습니다.",
+        no_shorts: "불러올 쇼츠가 없습니다. 로그인해서 업로드 해보세요.", // Updated to match ShortsPage message
+        duration_missing: "00:00",
+        now_playing: "재생 중",
+        lang_label: "언어",
 
         // Common
         play: "재생",
@@ -258,11 +266,15 @@ export const translations = {
         sec_trending: "トレンド動画 & 都市",
 
         // Shorts Page & Detail
+        shorts_title: "ショート",
         shorts_sub: "AI字幕・翻訳で最新動画を楽しみましょう。",
         btn_upload: "アップロード",
         btn_batch: "一括最適化",
         loading: "読み込み中...",
-        no_shorts: "動画が見つかりません。",
+        no_shorts: "動画がありません。ログインしてアップロードしてください。",
+        duration_missing: "00:00",
+        now_playing: "再生中",
+        lang_label: "言語",
 
         // Common
         play: "再生",
@@ -360,11 +372,15 @@ export const translations = {
         sec_trending: "热门短视频 & 城市",
 
         // Shorts Page & Detail
+        shorts_title: "短视频",
         shorts_sub: "通过AI字幕/翻译观看最新上传。",
         btn_upload: "上传",
         btn_batch: "批量优化",
         loading: "加载中...",
-        no_shorts: "暂无视频。",
+        no_shorts: "没有视频。请登录并上传。",
+        duration_missing: "00:00",
+        now_playing: "正在播放",
+        lang_label: "语言",
 
         // Common
         play: "播放",

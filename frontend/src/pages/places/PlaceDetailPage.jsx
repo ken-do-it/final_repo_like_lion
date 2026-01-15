@@ -1,15 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { placesAxios as api } from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
+import PlaceReviewSection from './PlaceReviewSection';
 
 const PlaceDetailPage = () => {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
 
     const [place, setPlace] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const [isBookmarked, setIsBookmarked] = useState(false);
 
     // Params for API mode
     const apiId = searchParams.get('api_id');
@@ -42,6 +47,9 @@ const PlaceDetailPage = () => {
                 }
 
                 setPlace(response.data);
+                if (response.data.is_bookmarked !== undefined) {
+                    setIsBookmarked(response.data.is_bookmarked);
+                }
             } catch (err) {
                 console.error("Failed to fetch place detail:", err);
                 setError(err.response?.data?.detail || "장소 정보를 불러오는데 실패했습니다.");
@@ -137,6 +145,49 @@ const PlaceDetailPage = () => {
             </button>
         </div>
     );
+
+    const handleActionClick = (action) => {
+        if (!isAuthenticated) {
+            if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+                navigate('/login-page');
+            }
+            return;
+        }
+
+        // TODO: Implement actual action logic
+        console.log(`${action} executed by authenticated user`);
+        alert(`${action} 기능은 준비 중입니다.`);
+    };
+
+    const handleBookmark = async () => {
+        if (!isAuthenticated) {
+            if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+                navigate('/login-page');
+            }
+            return;
+        }
+
+        // Optimistic Update
+        const previousState = isBookmarked;
+        setIsBookmarked(!previousState);
+
+        try {
+            if (previousState) {
+                // DELETE
+                await api.delete(`/places/${place.id}/bookmark`);
+                console.log("Bookmark removed");
+            } else {
+                // POST
+                await api.post(`/places/${place.id}/bookmark`);
+                console.log("Bookmark added");
+            }
+        } catch (err) {
+            console.error("Bookmark toggle failed:", err);
+            // Revert on failure
+            setIsBookmarked(previousState);
+            alert("찜하기 처리에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        }
+    };
 
     if (!place) return null;
 
@@ -236,6 +287,12 @@ const PlaceDetailPage = () => {
                             <div ref={mapRef} className="w-full h-64 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
                         </div>
 
+                        {/* Review Section */}
+                        <div className="mt-8">
+                            <PlaceReviewSection placeId={place.id} />
+                        </div>
+
+
 
                     </div>
 
@@ -256,15 +313,30 @@ const PlaceDetailPage = () => {
                                         리뷰 {place.review_count || 0}개
                                     </div>
                                 </div>
-                                <button className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/30 group transition-colors">
-                                    <span className="text-2xl text-gray-400 group-hover:text-red-500 transition-colors">♥</span>
+                                <button
+                                    onClick={handleBookmark}
+                                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors group ${isBookmarked
+                                        ? "bg-red-50 dark:bg-red-900/30 text-red-500"
+                                        : "bg-gray-100 dark:bg-gray-700 text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+                                        }`}
+                                >
+                                    <span className={`text-2xl transition-colors ${isBookmarked ? "text-red-500" : "group-hover:text-red-500"
+                                        }`}>
+                                        {isBookmarked ? "♥" : "♡"}
+                                    </span>
                                 </button>
                             </div>
 
-                            <button className="w-full py-3 bg-[#1392ec] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors mb-3">
+                            <button
+                                onClick={() => handleActionClick("여행 계획에 추가")}
+                                className="w-full py-3 bg-[#1392ec] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors mb-3"
+                            >
                                 여행 계획에 추가
                             </button>
-                            <button className="w-full py-3 bg-white dark:bg-transparent border border-[#1392ec] text-[#1392ec] font-bold rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
+                            <button
+                                onClick={() => handleActionClick("리뷰 작성")}
+                                className="w-full py-3 bg-white dark:bg-transparent border border-[#1392ec] text-[#1392ec] font-bold rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                            >
                                 리뷰 작성하기
                             </button>
                         </div>
