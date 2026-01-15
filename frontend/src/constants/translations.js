@@ -40,7 +40,7 @@ export const translations = {
         filter_places: "Places",
         filter_geoquiz: "GeoQuiz",
         filter_stays: "Stays",
-        filter_flights: "Flights",
+        filter_flights: "Transport",
 
         // Quick Actions
         action_flight: "Book Flight",
@@ -146,7 +146,7 @@ export const translations = {
         filter_places: "장소",
         filter_geoquiz: "지리퀴즈",
         filter_stays: "숙소",
-        filter_flights: "항공권",
+        filter_flights: "교통",
 
         // Quick Actions
         action_flight: "항공권 예약",
@@ -252,7 +252,7 @@ export const translations = {
         filter_places: "場所",
         filter_geoquiz: "ジオクイズ",
         filter_stays: "宿泊",
-        filter_flights: "航空券",
+        filter_flights: "交通",
 
         // Quick Actions
         action_flight: "航空券予約",
@@ -358,7 +358,7 @@ export const translations = {
         filter_places: "地点",
         filter_geoquiz: "地理测验",
         filter_stays: "住宿",
-        filter_flights: "机票",
+        filter_flights: "交通",
 
         // Quick Actions
         action_flight: "预订机票",
