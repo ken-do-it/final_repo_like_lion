@@ -1,0 +1,29 @@
+# [옵션] 고성능 GPU 베이스 이미지
+# 주의: 이미지가 매우 크므로(수 GB), GPU가 있는 환경에서만 사용 권장
+# start.ps1 스크립트가 GPU를 감지하면 자동으로 이 파일을 선택함
+
+# FROM python:3.11-slim
+# [Optimization] Use pre-built PyTorch image with CUDA support
+# This skips downloading GBs of PyTorch libraries during build
+FROM pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.gpu.txt .
+RUN pip install --no-cache-dir -r requirements.gpu.txt
+
+# Copy application code
+COPY . .
+
+# Expose port (8003 as requested)
+EXPOSE 8003
+
+# Run the application
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]

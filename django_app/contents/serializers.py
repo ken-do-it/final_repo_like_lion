@@ -8,6 +8,10 @@ class ShortformSerializer(serializers.ModelSerializer):
     # 번역 결과를 담을 읽기 전용 필드
     title_translated = serializers.CharField(read_only=True)
     content_translated = serializers.CharField(read_only=True)
+    
+    # 작성자 정보
+    nickname = serializers.CharField(source='user.nickname', read_only=True)
+    profile_image_url = serializers.CharField(source='user.profile_image_url', read_only=True)
 
     class Meta:
         model = Shortform
@@ -32,6 +36,8 @@ class ShortformSerializer(serializers.ModelSerializer):
             'video_file',  # write-only
             'title_translated',
             'content_translated',
+            'nickname', 
+            'profile_image_url',
         ]
         read_only_fields = [
             'id',
@@ -49,6 +55,8 @@ class ShortformSerializer(serializers.ModelSerializer):
             'updated_at',
             'title_translated',
             'content_translated',
+            'nickname', 
+            'profile_image_url',
         ]
 
     def validate(self, attrs):
@@ -65,6 +73,7 @@ class ShortformSerializer(serializers.ModelSerializer):
 
 class ShortformCommentSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField(source='user.nickname', read_only=True)
+    profile_image_url = serializers.CharField(source='user.profile_image_url', read_only=True)
     
     class Meta:
         model = ShortformComment
@@ -73,6 +82,7 @@ class ShortformCommentSerializer(serializers.ModelSerializer):
             'shortform',
             'user',
             'nickname',  # Added nickname
+            'profile_image_url', # Added profile_image_url
             'content',
             'source_lang',
             'total_likes',
@@ -84,6 +94,7 @@ class ShortformCommentSerializer(serializers.ModelSerializer):
             'shortform',
             'user',
             'nickname',
+            'profile_image_url',
             'total_likes',
             'created_at',
             'updated_at',

@@ -228,7 +228,11 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                 thumb: item.thumbnail_url,
                 video: item.video_url,
                 lang: item.source_lang || 'N/A',
+                lang: item.source_lang || 'N/A',
                 ownerId: item.user,
+                // Add Creator Info
+                creatorName: item.nickname || `User ${item.user}`,
+                creatorAvatar: item.profile_image_url,
             })
 
 
@@ -320,9 +324,17 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
 
                     {/* Creator Card */}
                     <div className="creator-card">
-                        <img src={mockData.creator.avatar} alt="Creator" className="creator-avatar" />
+                        <img
+                            src={shortform.creatorAvatar || `https://ui-avatars.com/api/?name=${shortform.creatorName}&background=random&size=128`}
+                            alt="Creator"
+                            className="creator-avatar"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `https://ui-avatars.com/api/?name=${shortform.creatorName}&background=random&size=128`;
+                            }}
+                        />
                         <div className="creator-info">
-                            <h3>{mockData.creator.name}</h3>
+                            <h3>{shortform.creatorName}</h3>
                             <p>
                                 <span className="material-symbols-outlined text-xs">location_on</span>
                                 {mockData.creator.location} · {mockData.creator.time}
@@ -399,9 +411,13 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                                 comments.map((comment) => (
                                     <div className="comment-item" key={comment.id}>
                                         <img
-                                            src={`https://ui-avatars.com/api/?name=${comment.nickname || comment.user_id || 'User'}&background=random&size=32`}
+                                            src={comment.profile_image_url || `https://ui-avatars.com/api/?name=${comment.nickname || comment.user_id || 'User'}&background=random&size=32`}
                                             alt="User"
                                             className="comment-avatar"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = `https://ui-avatars.com/api/?name=${comment.nickname || comment.user_id || 'User'}&background=random&size=32`;
+                                            }}
                                         />
                                         <div className="comment-content w-full">
                                             <div className="flex justify-between items-start">

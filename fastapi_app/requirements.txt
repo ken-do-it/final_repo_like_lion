@@ -20,7 +20,18 @@ uvicorn==0.40.0
 wheel==0.45.1
 psycopg2-binary  # DB 접속용
 sqlalchemy       # ORM
-sentence-transformers  # ★ 핵심: 텍스트를 벡터로 바꿔주는 AI 모델  ❌ (번역용 아님 RAG / 유사도 검색용)
+
+# [최적화] CPU 버전의 PyTorch 다운로드 경로 지정
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# CPU 전용 버전 명시 (버전 뒤에 +cpu 필수)
+torch==2.2.2+cpu
+
+
+ # ★ 핵심: 텍스트를 벡터로 바꿔주는 AI 모델 이제 위에서 설치된 가벼운 torch를 사용함  ❌ (번역용 아님 RAG / 유사도 검색용)
+sentence-transformers 
+
+
 pgvector         # DB 벡터 연산 지원
 httpx            # 비동기 HTTP 클라이언트 (외부 API 호출용)
 python-dotenv    # 환경 변수 관리
