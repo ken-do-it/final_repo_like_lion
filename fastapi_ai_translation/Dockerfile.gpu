@@ -9,6 +9,9 @@ FROM pytorch/pytorch:2.2.0-cuda12.1-cudnn8-runtime
 
 WORKDIR /app
 
+# 빌드 로그에 메시지 출력
+RUN echo "🚀 [알림] 현재 GPU 모드(High-Performance)로 빌드 중입니다... 🚀"
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
