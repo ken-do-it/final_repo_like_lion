@@ -24,6 +24,16 @@ LANG_CODE_MAP = {
 
 class TranslationService:
     @staticmethod
+    def _get_current_model_name():
+        engine = os.getenv("AI_ENGINE", "nllb")
+        if engine == "openai":
+            return os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        elif engine == "ollama":
+            return os.getenv("OLLAMA_MODEL", "llama3")
+        else:
+            return os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
+
+    @staticmethod
     def detect_language(text):
         """
         텍스트의 언어를 감지하여 NLLB 코드로 반환.
@@ -151,7 +161,8 @@ class TranslationService:
                 source_lang=src_lang, target_lang=target_lang,
                 source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
                 translated_text=translated_text, provider=provider,
-                model=os.getenv("OPENAI_MODEL", "gpt-4o-mini") if os.getenv("AI_ENGINE") == "openai" else (os.getenv("OLLAMA_MODEL", "llama3") if os.getenv("AI_ENGINE") == "ollama" else os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")),
+
+                model=TranslationService._get_current_model_name(),
                 last_used_at=timezone.now(),
             )
             return translated_text
@@ -254,7 +265,8 @@ class TranslationService:
                     source_lang=src_lang, target_lang=tlang,
                     source_hash=hashlib.sha256(original_text.encode("utf-8")).hexdigest(),
                     translated_text=t_text, provider=provider,
-                    model=os.getenv("OPENAI_MODEL", "gpt-4o-mini") if os.getenv("AI_ENGINE") == "openai" else (os.getenv("OLLAMA_MODEL", "llama3") if os.getenv("AI_ENGINE") == "ollama" else os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")),
+
+                    model=TranslationService._get_current_model_name(),
                     last_used_at=timezone.now(),
                 ))
         

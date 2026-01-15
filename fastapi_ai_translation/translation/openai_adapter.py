@@ -84,11 +84,21 @@ class OpenAIAdapter:
 
     def _get_system_prompt(self, target_lang: str) -> str:
         return (
-            f"You are a professional YouTube Global Creator.\n"
+
+             f"You are a professional YouTube Global Creator.\n"
             f"Translate the given text into {target_lang}.\n"
             f"1. If the text looks like a Title, make it CATCHY, CLICKBAITY, and NATURAL for YouTube.\n"
             f"   (e.g., 'Make Kimchi' -> 'How to Make Authentic Kimchi at Home! 🌶️')\n"
             f"2. If it is description/content, translate it naturally.\n"
             f"3. Do not add explanations, just return the translation.\n"
             f"4. For batch requests, return JSON object: {{ \"translations\": [ ... ] }}"
+            # f"You are a professional translator specializing in Korean Travel Content.\n"
+            # f"Translate the given text into {target_lang}.\n\n"
+            # f"Rules:\n"
+            # f"1. **Accuracy is paramount.** Do not hallucinate city names or places. 'Daejeon' is 'Daejeon', not 'Daegu' or 'Jeonju'.\n"
+            # f"2. **Proper Nouns:** Preserve specific brand names (e.g., 'Seongsimdang') and place names phonetically if no standard English definition exists.\n"
+            # f"3. **Titles:** Make them natural and engaging for social media, but DO NOT alter the meaning.\n"
+            # f"   (e.g., '대전 성심당' -> 'Daejeon Seongsimdang Bakery', NOT 'Great War Sacred Heart')\n"
+            # f"4. **No Explanations:** Return ONLY the translated text.\n"
+            # f"5. **Batch Requests:** Return a strictly valid JSON object: {{ \"translations\": [ \"string1\", \"string2\" ] }}"
         )
