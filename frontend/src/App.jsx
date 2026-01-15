@@ -11,9 +11,16 @@ import ShortsPage from './pages/shorts/ShortsPage';
 import ShortsDetailPage from './pages/shorts/ShortsDetailPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
+import FindAccountPage from './pages/auth/FindAccountPage';
+import MyPage from './pages/mypage/MyPage';
+import Footer from './components/Footer';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import './App.css'; // Global styles if any, strictly Tailwind preferred
+
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   const location = useLocation();
@@ -53,49 +60,57 @@ function App() {
   console.log("Show Navbar:", showNavbar);
 
   return (
-    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] font-sans">
-      {showNavbar && (
-        <Navbar
-          toggleSidebar={() => setIsSidebarOpen(true)}
-          toggleTheme={toggleTheme}
-          isDarkMode={isDarkMode}
-        />
-      )}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      <Routes>
-        {/* Core Pages */}
-        <Route path="/" element={<MainPage />} />
-        <Route path="/search" element={<SearchPage />} />
+    <AuthProvider>
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] font-sans">
+        {showNavbar && (
+          <Navbar
+            toggleSidebar={() => setIsSidebarOpen(true)}
+            toggleTheme={toggleTheme}
+            isDarkMode={isDarkMode}
+          />
+        )}
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <Routes>
+          {/* Core Pages */}
+          <Route path="/" element={<MainPage />} />
+          <Route path="/search" element={<SearchPage />} />
 
-        {/* Features */}
-        <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
-        <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
-        <Route path="/shorts" element={<ShortsPage />} />
-        <Route path="/shorts/:id" element={<ShortsDetailPage />} />
+          {/* Auth Pages */}
+          <Route path="/login-page" element={<LoginPage />} />
+          <Route path="/register-page" element={<SignupPage />} />
+          <Route path="/find-account" element={<FindAccountPage />} />
+          <Route path="/mypage" element={<MyPage />} />
 
-        {/* Place Pages */}
-        <Route path="/places/search" element={<PlaceSearch />} />
-        <Route path="/places/detail" element={<PlaceDetailPage />} />
-        <Route path="/places/:id" element={<PlaceDetailPage />} />
+          {/* Features */}
+          <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
+          <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
+          <Route path="/shorts" element={<ShortsPage />} />
+          <Route path="/shorts/:id" element={<ShortsDetailPage />} />
 
-        <Route path="/geo-quiz" element={<GeoImageUploader />} />
-        <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
-        <Route path="/game" element={<RoadviewGame />} />
+          {/* Place Pages */}
+          <Route path="/places/search" element={<PlaceSearch />} />
+          <Route path="/places/detail" element={<PlaceDetailPage />} />
+          <Route path="/places/:id" element={<PlaceDetailPage />} />
 
-        {/* Development / Test Pages */}
-        <Route path="/anti-test" element={<TripleIntroPage />} />
-        <Route path="/anti-test-page" element={<AntiTestPage />} />
+          <Route path="/geo-quiz" element={<GeoImageUploader />} />
+          <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
+          <Route path="/game" element={<RoadviewGame />} />
 
-        {/* Fallback */}
-        <Route path="*" element={
-          <div className="flex h-screen items-center justify-center flex-col">
-            <h1 className="text-4xl font-bold mb-4">404</h1>
-            <p>Page not found</p>
-            <a href="/" className="mt-4 text-blue-500 hover:underline">Go Home</a>
-          </div>
-        } />
-      </Routes>
-    </div>
+          {/* Development / Test Pages */}
+          <Route path="/anti-test" element={<TripleIntroPage />} />
+          <Route path="/anti-test-page" element={<AntiTestPage />} />
+
+          {/* Fallback */}
+          <Route path="*" element={
+            <div className="flex h-screen items-center justify-center flex-col">
+              <h1 className="text-4xl font-bold mb-4">404</h1>
+              <p>Page not found</p>
+              <a href="/" className="mt-4 text-blue-500 hover:underline">Go Home</a>
+            </div>
+          } />
+        </Routes>
+      </div>
+    </AuthProvider>
   );
 }
 

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Integrated Search Results - TripSuperApp</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1392ec", // Sky blue
+                        "background-light": "#f6f7f8", // Light grey-white
+                        "background-dark": "#101a22", // Dark blue-black
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem", 
+                        "xl": "1.5rem", 
+                        "2xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for horizontal scrolling areas */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 lg:px-10 py-4">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M47.2426 24L24 47.2426L0.757355 24L24 0.757355L47.2426 24ZM12.2426 21H35.7574L24 9.24264L12.2426 21Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-tight">TripSuperApp</h2>
+</div>
+<div class="hidden md:flex flex-1 justify-center px-8">
+<!-- Centered Search Pill for Desktop -->
+<div class="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-1.5 shadow-sm hover:shadow-md transition-shadow cursor-pointer w-full max-w-md">
+<div class="flex items-center justify-center pl-3">
+<span class="material-symbols-outlined text-slate-400">search</span>
+</div>
+<input class="bg-transparent border-none focus:ring-0 text-sm font-medium w-full text-slate-900 dark:text-white placeholder-slate-500" placeholder="Where to?" type="text" value="Tokyo, Japan"/>
+<div class="h-6 w-[1px] bg-slate-300 dark:bg-slate-600 mx-1"></div>
+<div class="whitespace-nowrap px-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+                       Oct 24 - 30
+                   </div>
+<button class="bg-primary text-white rounded-full p-2 flex items-center justify-center hover:bg-blue-600 transition-colors">
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary text-sm font-medium transition-colors" href="#">Trips</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary text-sm font-medium transition-colors" href="#">Saved</a>
+</div>
+<div class="h-10 w-10 bg-center bg-no-repeat bg-cover rounded-full border-2 border-slate-200 dark:border-slate-700 cursor-pointer" data-alt="User profile avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCIEvudc-vAChwe8ABOZQBLHbLdpPMXUs82hyZuvVM_ou2ECls7Oaf1AelqEvA2ht7ddJSJ5bww9koGvlf8TewGkQXvCPA8Bs05_KrYDKwSMxVlhjxdMiV2OOQRJPuLuB0p9xCAG-BEIM7qIzCgyY22VSOVUB4rSazbc6ROcelqtqhS99HEGpDWGZxKutX0IsyE9eY-_wfrNoYae6pHl_0e1I4fcATBtd2YnJfMqaN6tYy7bWa3Ed2uObLypdRkTw7dTKLHDSfvy0o2");'></div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="layout-container flex grow flex-col w-full max-w-[1280px] mx-auto px-4 lg:px-10 py-6 lg:py-10">
+<!-- Filter Chips -->
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-2 mb-6">
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary px-5 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-white text-[20px]">grid_view</span>
+<p class="text-white text-sm font-bold leading-normal">All Results</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-[20px]">flight</span>
+<p class="text-slate-700 dark:text-slate-200 text-sm font-medium leading-normal">Flights</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-[20px]">hotel</span>
+<p class="text-slate-700 dark:text-slate-200 text-sm font-medium leading-normal">Hotels</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-[20px]">local_activity</span>
+<p class="text-slate-700 dark:text-slate-200 text-sm font-medium leading-normal">Things to Do</p>
+</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Main Feed (Left Column) -->
+<div class="lg:col-span-8 flex flex-col gap-10">
+<!-- Section: Flights -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h2 class="text-slate-900 dark:text-white text-2xl font-bold tracking-tight">Flights to Tokyo</h2>
+<a class="text-primary text-sm font-semibold hover:underline" href="#">View all</a>
+</div>
+<!-- Flight Card -->
+<div class="group relative flex flex-col sm:flex-row items-stretch justify-between gap-6 rounded-2xl bg-white dark:bg-slate-800 p-5 shadow-sm hover:shadow-lg transition-all border border-slate-100 dark:border-slate-700/50">
+<div class="flex flex-1 flex-col justify-center gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-white p-1 rounded-md border border-slate-100 dark:border-slate-600 h-10 w-10 flex items-center justify-center overflow-hidden">
+<img alt="JAL Logo" class="h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiZ2OSl4hImZfTM8X7ehy3uwCkbDwLSzW2Og2kA23oTOlQgyoe5CSY5PpPa0DJ2LCevry4fUbqn7byHooD5FNqOJNJsYxYnYStb0tngstG6eApOyYV2mqfnbbJAy_Q_ipHzXjAagEqsIL6J8Q67S2BQa-U3UK_A2PaZqQ2UW9eHHNrLBldJmDdxkcZw3wkAtea1fqFm7UA1davhWmmBeLKc_8sN6yfmtgRm26w9FB4-X7MSmQ8PsCBCkI8lba8sk69v-uvboCZw-Xu"/>
+</div>
+<div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">Japan Airlines</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Operated by JAL</p>
+</div>
+<span class="ml-auto rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 text-[10px] font-bold uppercase tracking-wider">Best Value</span>
+</div>
+<div class="flex items-center gap-6">
+<div>
+<p class="text-lg font-bold text-slate-900 dark:text-white">10:00 AM</p>
+<p class="text-xs text-slate-500 font-medium">LAX</p>
+</div>
+<div class="flex flex-col items-center flex-1 px-2">
+<p class="text-xs text-slate-400 mb-1">12h 15m</p>
+<div class="h-[2px] w-full bg-slate-200 dark:bg-slate-600 relative">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 px-1">
+<span class="material-symbols-outlined text-slate-400 text-[16px]">flight_takeoff</span>
+</div>
+</div>
+<p class="text-xs text-green-600 dark:text-green-400 font-medium mt-1">Non-stop</p>
+</div>
+<div class="text-right">
+<p class="text-lg font-bold text-slate-900 dark:text-white">2:15 PM</p>
+<p class="text-xs text-slate-500 font-medium">HND</p>
+</div>
+</div>
+</div>
+<div class="w-full sm:w-[1px] h-[1px] sm:h-auto bg-slate-100 dark:bg-slate-700 mx-0"></div>
+<div class="flex flex-col items-end justify-center gap-3 min-w-[140px]">
+<div class="text-right">
+<p class="text-slate-400 text-xs line-through">$1,200</p>
+<p class="text-primary text-2xl font-extrabold">$850</p>
+<p class="text-slate-500 text-xs">roundtrip</p>
+</div>
+<button class="w-full rounded-xl bg-primary hover:bg-blue-600 text-white text-sm font-bold py-3 px-4 transition-colors">
+                                    Select
+                                </button>
+</div>
+</div>
+<!-- Secondary Flight Option (Simplified) -->
+<div class="group flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl bg-white dark:bg-slate-800 p-4 border border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+<div class="flex items-center gap-4 flex-1">
+<div class="bg-white p-1 rounded-md border border-slate-100 dark:border-slate-600 h-8 w-8 flex items-center justify-center overflow-hidden">
+<img alt="ANA Logo" class="h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEJ-U3OH5WTzXHUXgiEfkvvur8y2yaBFjoyWnuV9aHGX-YvgOMdIE_E4nO8k4LFLxttNS79bE-2nRsguNpxhpVRLl8T6iEuASWYObqO3pnyh8S6nbDAjA2xadYt0kjvONAU4euy3LafimYMuVQXPvEBQV62j1R3ipDeIgjRfoPSmPLZxrAA8do6ahHs1dbhNtUC-2nPAgGt0uGnq2m7OCZ0dIpJu1UzgU2zVw9iYp6sGcLxUY6QdiLO2D0X28ZGOYPdylBpNaGr0eQ"/>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+<span class="text-slate-900 dark:text-white font-bold text-sm">ANA</span>
+<span class="hidden sm:block text-slate-300 dark:text-slate-600">•</span>
+<span class="text-slate-600 dark:text-slate-300 text-sm">11:30 AM - 3:45 PM</span>
+<span class="hidden sm:block text-slate-300 dark:text-slate-600">•</span>
+<span class="text-slate-500 text-xs">1 stop</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-slate-900 dark:text-white font-bold text-lg">$920</span>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Section: Hotels -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h2 class="text-slate-900 dark:text-white text-2xl font-bold tracking-tight">Popular Stays</h2>
+<a class="text-primary text-sm font-semibold hover:underline" href="#">View map</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Hotel Card 1 -->
+<div class="flex flex-col rounded-2xl bg-white dark:bg-slate-800 shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700/50 group hover:shadow-md transition-all">
+<div class="relative h-48 w-full bg-slate-200 overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="Modern hotel room with city view of Tokyo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBg5s_woHzvhIQ4wUquP4b2Yn7Hj-3wJq97xBkg2Tk9XKwAJW-sVaDq3eCAtrfdMW2CuJKgbp3Nzh12DypBUG02XdfGYI4ZKjPT24ey4qxdUiofP-UqE_mwlmVyiKVQJVI5T3_gwckm9inCKAw3yPvXp9FYUCHwC10y4aTGQFEAm1djOu0AfE3da8pAP31SDXR9pcTyhvsQxojX3LGAiGzwmhr2MrIeUiP8sybw5F-zppS_cOs5qwISG0xINlR9GHwWVvOGFtgSnooT");'></div>
+<button class="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center hover:bg-black/40 text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+<div class="absolute bottom-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] fill-current">star</span>
+<span class="text-xs font-bold text-slate-900 dark:text-white">4.8</span>
+<span class="text-[10px] text-slate-500">(1.2k)</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-2 flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-slate-900 dark:text-white text-lg font-bold leading-tight">Shibuya Excel Hotel</h3>
+<div class="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+<span class="text-xs">0.2 miles from Shibuya Crossing</span>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-4 flex items-end justify-between border-t border-slate-100 dark:border-slate-700">
+<div class="flex flex-wrap gap-2">
+<span class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md">Free WiFi</span>
+<span class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md">Gym</span>
+</div>
+<div class="text-right">
+<p class="text-slate-400 text-[10px]">avg/night</p>
+<p class="text-slate-900 dark:text-white text-xl font-bold">$245</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Hotel Card 2 -->
+<div class="flex flex-col rounded-2xl bg-white dark:bg-slate-800 shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700/50 group hover:shadow-md transition-all">
+<div class="relative h-48 w-full bg-slate-200 overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="Traditional Ryokan interior with tatami mats" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBJr61tYwbtXoVi9y2H9fBOcs2CnvgrZH0yriLWLJGGu8l5LPS-Q6vDbVlJXRshtfHdcSkmy4QInszLSFxPzWAbNL0ML3h7POuKetmntXrw1Hi1P4qaWqI3esAouJRKldPETsfM4B_lvKlaAD88zzXr3LmJ_RMb8jHnUbPgwdQul21yAPvUDome3tfvVzHDu2UMbhN1JEn3SJzrr-kYLieKB3Iy4s5Y-dXBxKP8GsgQslarQXM3pHl-7_O_avINalhcEpwBBh8cHkiv");'></div>
+<button class="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center hover:bg-black/40 text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+<div class="absolute bottom-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] fill-current">star</span>
+<span class="text-xs font-bold text-slate-900 dark:text-white">4.9</span>
+<span class="text-[10px] text-slate-500">(850)</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-2 flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-slate-900 dark:text-white text-lg font-bold leading-tight">Hoshinoya Tokyo</h3>
+<div class="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+<span class="text-xs">Chiyoda City, Tokyo</span>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-4 flex items-end justify-between border-t border-slate-100 dark:border-slate-700">
+<div class="flex flex-wrap gap-2">
+<span class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md">Spa</span>
+<span class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md">Breakfast</span>
+</div>
+<div class="text-right">
+<p class="text-slate-400 text-[10px]">avg/night</p>
+<p class="text-slate-900 dark:text-white text-xl font-bold">$850</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Show more hotels</button>
+</section>
+<!-- Section: Places / Things to Do -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h2 class="text-slate-900 dark:text-white text-2xl font-bold tracking-tight">Top Attractions</h2>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+<!-- Place 1 -->
+<div class="group relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-200 cursor-pointer">
+<div class="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700" data-alt="Red lantern of Senso-ji temple in Asakusa" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDFI_9JY7UoRb0gANq_TMJijFXsTmDXWa1B-EQkrftl6FQwhKH7Ce7KwKJAxZ_uDAkgGWM7JMcngjiBJ8Jkxe-7iJzBuB4Nbrnsl_-tE5ZeSWV3Z4ZCmcuJ2AuOMtQUe7-bkl2RRM2KNrtAmxaqRFHfXT84B0GfhL2jwsJpH6DkqjPsps2PL8obANmPeMJPhZzzHPoy2qyGZpTowoP8yXBNbsC4uKDhQhVaDtYCXXyuuVsJHPqWbUz26FFtp7HFGa7W3jITz3XDrZmE");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-4">
+<span class="inline-block rounded-md bg-white/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white mb-2 border border-white/20">Historic Site</span>
+<h3 class="text-white text-lg font-bold leading-tight">Senso-ji Temple</h3>
+<div class="flex items-center gap-1 mt-1 text-white/80">
+<span class="material-symbols-outlined text-[14px]">star</span>
+<span class="text-xs">4.7</span>
+</div>
+</div>
+</div>
+<!-- Place 2 -->
+<div class="group relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-200 cursor-pointer">
+<div class="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700" data-alt="Tokyo Skytree towering over the city skyline" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA3I09j8_BT08kNSqO-qzgbwieQcpScwvsTJQRxYPbURBz3z-CPE-exqcUkiyKakpYGuGs08ZzkRZUGx6XbiZ7SQnhcltGAQLjzHI0OpMIsriDrbMYDNhPbK9G84aQ4cCoAxZyXtl0a1XzhNp7sCqTL7dlnJygNOMUymVfqSmR0obA51KEMo4fRLGPBt3hSCrbRF9J0VCj97_fysQlNSinvGIoe-2YBgcKj9bq7seRuxZelObdnB4iZ0Yb_l8ioWbeLEEo9E_5psZ7v");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-4">
+<span class="inline-block rounded-md bg-white/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white mb-2 border border-white/20">Landmark</span>
+<h3 class="text-white text-lg font-bold leading-tight">Tokyo Skytree</h3>
+<div class="flex items-center gap-1 mt-1 text-white/80">
+<span class="material-symbols-outlined text-[14px]">star</span>
+<span class="text-xs">4.6</span>
+</div>
+</div>
+</div>
+<!-- Place 3 -->
+<div class="group relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-200 cursor-pointer col-span-2 md:col-span-1">
+<div class="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700" data-alt="Digital art museum exhibit with colorful lights" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBOJy0vdxxtr4f8mg4cbBxJvp7pznEAN0oksfxjT9RouxkwU3Z9N8-NqUmV1Ql5WfjCA-Y8KGxNRWPNEAPtY5sml-qCa8eEpChCp3jiVv0-XXEzp1m0aTgKcfyrGjp81aM3vgc0MG_9dO1k43glSVDMXHJ_zfIL7o0tjOUOUtkAGOzIRf73X_K1LiWivD-Z6cACTol1T3GVTyJRHXCYRP_WDud9hjyUz-XbYUkPcJgKs3da2sblxfMxjIYn-S0n071-81L45QcDkbM5");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-4">
+<span class="inline-block rounded-md bg-white/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white mb-2 border border-white/20">Museum</span>
+<h3 class="text-white text-lg font-bold leading-tight">TeamLab Planets</h3>
+<div class="flex items-center gap-1 mt-1 text-white/80">
+<span class="material-symbols-outlined text-[14px]">star</span>
+<span class="text-xs">4.9</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Sidebar (Desktop only map preview / widgets) -->
+<div class="hidden lg:flex lg:col-span-4 flex-col gap-6">
+<!-- Map Widget -->
+<div class="sticky top-28 flex flex-col gap-6">
+<div class="relative w-full aspect-square rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 group cursor-pointer">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Map view of Tokyo centered on city center" data-location="Tokyo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAuij9bC3KSm1VfS0Au5S-DE_TFqTWSRodbMaMyN4lhSLe9slRoowc3Z9-IjNBdhDX9LrkknPgk6i85pKOpnut6IyywslnN7UaLbB0DYaZWvQfNNDakjighmUtIiYJpRxl-gGCyCwV2mdus4FHRhmx55qEg7m3YXCsxfyL5-cxyqyvhpM7EYC6yub7EsxRehO99CCUfHOKdH9q1rLqfOKEGAgA6d_zna3ojrzZi4hdzjkS6oHoSCXNYDcUv25KmYYklWZ-WVvPUc7vr");'></div>
+<div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors"></div>
+<!-- Pins on Map -->
+<div class="absolute top-1/4 left-1/3 p-1 bg-white rounded-full shadow-lg transform -translate-x-1/2 -translate-y-1/2">
+<div class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">$245</div>
+<div class="w-2 h-2 bg-white rotate-45 absolute bottom-[-3px] left-1/2 -translate-x-1/2"></div>
+</div>
+<div class="absolute top-1/2 left-1/2 p-1 bg-white rounded-full shadow-lg transform translate-x-4 translate-y-4">
+<div class="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">$850</div>
+<div class="w-2 h-2 bg-white rotate-45 absolute bottom-[-3px] left-1/2 -translate-x-1/2"></div>
+</div>
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg flex items-center gap-2 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-primary text-[18px]">map</span>
+                                 Show on map
+                             </div>
+</div>
+<!-- Trip Planner Widget -->
+<div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Your Trip to Tokyo</h3>
+<div class="flex flex-col gap-4 relative">
+<div class="absolute left-[11px] top-2 bottom-2 w-[2px] bg-slate-100 dark:bg-slate-700"></div>
+<div class="flex gap-3 relative z-10">
+<div class="h-6 w-6 rounded-full bg-primary border-4 border-white dark:border-slate-800 shadow-sm shrink-0"></div>
+<div class="flex-1">
+<p class="text-xs text-slate-500 font-medium">Oct 24</p>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Arrive at HND</p>
+</div>
+</div>
+<div class="flex gap-3 relative z-10">
+<div class="h-6 w-6 rounded-full bg-white dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 shrink-0"></div>
+<div class="flex-1 bg-slate-50 dark:bg-slate-700/30 rounded-lg p-2 border border-dashed border-slate-200 dark:border-slate-600">
+<p class="text-xs text-slate-400 font-medium text-center">Add hotel check-in</p>
+</div>
+</div>
+<div class="flex gap-3 relative z-10">
+<div class="h-6 w-6 rounded-full bg-white dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 shrink-0"></div>
+<div class="flex-1">
+<p class="text-xs text-slate-500 font-medium">Oct 30</p>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Depart from HND</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Price Alert -->
+<div class="bg-gradient-to-br from-primary/10 to-blue-500/5 rounded-2xl p-5 border border-primary/20">
+<div class="flex items-start gap-3">
+<div class="bg-primary/20 p-2 rounded-full text-primary">
+<span class="material-symbols-outlined">notifications_active</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white">Track prices</h4>
+<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Get notified when prices drop for Tokyo flights.</p>
+<label class="flex items-center gap-2 mt-3 cursor-pointer">
+<div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer left-1 top-1 checked:right-1 checked:left-auto transition-all duration-300" name="toggle" type="checkbox"/>
+<div class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></div>
+</div>
+<span class="text-xs font-bold text-primary uppercase">Active</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
