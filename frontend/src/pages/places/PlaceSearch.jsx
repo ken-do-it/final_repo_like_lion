@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { placesAxios as api } from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const PlaceSearch = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const queryFromUrl = searchParams.get('query') || '';
 
     const [results, setResults] = useState([]);
