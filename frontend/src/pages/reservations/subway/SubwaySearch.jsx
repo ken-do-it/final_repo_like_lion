@@ -30,6 +30,11 @@ const SubwaySearch = () => {
   });
 
   /**
+   * 검색 로딩 상태
+   */
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  /**
    * 검색 옵션 목록
    * FAST - 최단시간
    * FEW_TRANSFER - 최소환승
@@ -162,11 +167,11 @@ const SubwaySearch = () => {
                   </div>
 
                   {/* 교환 버튼 */}
-                  <div className="col-span-2 flex justify-center">
+                  <div className="col-span-2 flex justify-center items-center">
                     <button
                       type="button"
                       onClick={handleSwap}
-                      className="p-3 bg-slate-100 dark:bg-gray-800 rounded-lg hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
+                      className="w-10 h-10 bg-primary text-white rounded-full shadow-lg hover:bg-primary-dark hover:rotate-180 transition-all duration-300 flex items-center justify-center"
                       title="출발역과 도착역 교환"
                     >
                       <span className="material-symbols-outlined">swap_horiz</span>
@@ -235,9 +240,10 @@ const SubwaySearch = () => {
                 {/* 검색 버튼 */}
                 <button
                   type="submit"
-                  className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                  disabled={searchLoading}
+                  className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  경로 검색
+                  {searchLoading ? '검색 중...' : '경로 검색하기'}
                 </button>
               </form>
             </SearchCard>
