@@ -72,11 +72,11 @@ const FlightPaymentFail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-bg-dark flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center px-4">
       <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-12 max-w-md w-full">
         {/* 에러 아이콘 */}
         <div className="bg-red-100 dark:bg-red-900/30 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-          <span className="material-symbols-rounded text-red-600 dark:text-red-400 text-5xl">
+          <span className="material-symbols-outlined text-red-600 dark:text-red-400 text-5xl">
             cancel
           </span>
         </div>
@@ -119,7 +119,7 @@ const FlightPaymentFail = () => {
         {/* 안내 사항 */}
         <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-            <span className="material-symbols-rounded text-blue-600 dark:text-blue-400 text-xl">
+            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">
               info
             </span>
             결제 실패 안내

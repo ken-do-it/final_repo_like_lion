@@ -76,7 +76,7 @@ const ReservationSidebar = () => {
           {benefits.map((benefit, index) => (
             <li key={index} className="flex items-center gap-3">
               {/* 혜택 아이콘 */}
-              <span className="material-symbols-rounded text-primary text-xl">
+              <span className="material-symbols-outlined text-primary text-xl">
                 {benefit.icon}
               </span>
 
@@ -131,7 +131,7 @@ const ReservationSidebar = () => {
       <div className="bg-primary text-white rounded-xl p-6">
         <div className="flex items-start gap-3">
           {/* 지원 아이콘 */}
-          <span className="material-symbols-rounded text-3xl">
+          <span className="material-symbols-outlined text-3xl">
             headset_mic
           </span>
 
