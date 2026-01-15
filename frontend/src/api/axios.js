@@ -61,13 +61,13 @@ axiosInstance.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
-            // Try refresh token logic here if needed in future
-            // For now, if 401, we just let the error propagate 
-            // and let the page handle redirect (like MyPage.jsx does)
+            // 401 발생 시 자동으로 토큰 삭제 및 로그아웃 처리
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
 
-            // Optional: Clear tokens if we know they are definitively invalid
-            // localStorage.removeItem('access_token');
-            // localStorage.removeItem('refresh_token');
+            // 페이지를 새로고침하여 앱을 비로그인 상태로 초기화
+            window.location.reload();
         }
         return Promise.reject(error);
     }
