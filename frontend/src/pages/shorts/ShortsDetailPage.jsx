@@ -133,6 +133,10 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
 
+    // Comment Edit State
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editContent, setEditContent] = useState("");
+
     // Fetch Comments
     const fetchComments = React.useCallback(async () => {
         try {
@@ -166,6 +170,44 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
         } catch (error) {
             console.error("Failed to post comment:", error);
             alert("Failed to post comment.");
+        }
+    };
+
+    // Handle Comment Delete
+    const handleDeleteComment = async (commentId) => {
+        if (!confirm("Delete this comment?")) return;
+        try {
+            await axiosInstance.delete(`/comments/${commentId}/`);
+            fetchComments();
+        } catch (error) {
+            console.error("Failed to delete comment:", error);
+            alert("Failed to delete comment.");
+        }
+    };
+
+    // Handle Comment Update
+    const startEdit = (comment) => {
+        setEditingCommentId(comment.id);
+        setEditContent(comment.content);
+    };
+
+    const cancelEdit = () => {
+        setEditingCommentId(null);
+        setEditContent("");
+    };
+
+    const handleUpdateComment = async (commentId) => {
+        if (!editContent.trim()) return;
+        try {
+            await axiosInstance.patch(`/comments/${commentId}/`, {
+                content: editContent
+            });
+            setEditingCommentId(null);
+            setEditContent("");
+            fetchComments();
+        } catch (error) {
+            console.error("Failed to update comment:", error);
+            alert("Failed to update comment.");
         }
     };
 
@@ -359,14 +401,43 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                                             alt="User"
                                             className="comment-avatar"
                                         />
-                                        <div className="comment-content">
-                                            <div className="comment-meta">
-                                                <span className="comment-user">{comment.nickname || "User " + comment.user}</span>
-                                                <span className="comment-time">
-                                                    {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                        <div className="comment-content w-full">
+                                            <div className="flex justify-between items-start">
+                                                <div className="comment-meta">
+                                                    <span className="comment-user">{comment.nickname || "User " + comment.user}</span>
+                                                    <span className="comment-time">
+                                                        {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+
+                                                {/* Owner Actions */}
+                                                {currentUserId && comment.user === currentUserId && !editingCommentId && (
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => startEdit(comment)} className="text-xs text-gray-400 hover:text-blue-500">Edit</button>
+                                                        <button onClick={() => handleDeleteComment(comment.id)} className="text-xs text-gray-400 hover:text-red-500">Delete</button>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="comment-text">{comment.content}</div>
+
+                                            {/* Edit Mode vs View Mode */}
+                                            {editingCommentId === comment.id ? (
+                                                <div className="mt-1 flex flex-col gap-2">
+                                                    <input
+                                                        type="text"
+                                                        className="border border-gray-300 rounded px-2 py-1 text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white w-full"
+                                                        value={editContent}
+                                                        onChange={(e) => setEditContent(e.target.value)}
+                                                        autoFocus
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleUpdateComment(comment.id)}
+                                                    />
+                                                    <div className="flex gap-2 justify-end">
+                                                        <button onClick={cancelEdit} className="text-xs text-gray-500">Cancel</button>
+                                                        <button onClick={() => handleUpdateComment(comment.id)} className="text-xs text-blue-500 font-bold">Save</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="comment-text">{comment.content}</div>
+                                            )}
                                         </div>
                                     </div>
                                 ))

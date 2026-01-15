@@ -297,6 +297,23 @@ class ShortformViewSet(viewsets.ModelViewSet):
         return Response({"viewed": True, "total_views": shortform.total_views})
 
 
+
+class ShortformCommentViewSet(viewsets.ModelViewSet):
+    """
+    댓글 개별 수정/삭제 (Update/Delete Comment)
+    """
+    queryset = ShortformComment.objects.order_by('-created_at')
+    serializer_class = ShortformCommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def perform_destroy(self, instance):
+        # 댓글 삭제 시 카운터 감소
+        shortform = instance.shortform
+        super().perform_destroy(instance)
+        # update total_comments using F expression to avoid race conditions
+        Shortform.objects.filter(pk=shortform.pk, total_comments__gt=0).update(total_comments=F('total_comments') - 1)
+
+
 class TranslationProxyView(APIView):
     """
     Django -> FastAPI 번역 프록시.

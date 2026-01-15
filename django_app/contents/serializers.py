@@ -64,12 +64,15 @@ class ShortformSerializer(serializers.ModelSerializer):
 
 
 class ShortformCommentSerializer(serializers.ModelSerializer):
+    nickname = serializers.CharField(source='user.nickname', read_only=True)
+    
     class Meta:
         model = ShortformComment
         fields = [
             'id',
             'shortform',
             'user',
+            'nickname',  # Added nickname
             'content',
             'source_lang',
             'total_likes',
@@ -80,6 +83,7 @@ class ShortformCommentSerializer(serializers.ModelSerializer):
             'id',
             'shortform',
             'user',
+            'nickname',
             'total_likes',
             'created_at',
             'updated_at',
