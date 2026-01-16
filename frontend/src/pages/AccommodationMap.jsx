@@ -141,8 +141,8 @@ const AccommodationMap = () => {
 
       {/* Header Container */}
       <div className="container mx-auto px-4 max-w-screen-xl py-4 flex-none z-10">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="text-center">
             <h1 className="text-2xl font-bold text-[#111111] dark:text-[#f1f5f9]">Find Stays</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{searchStatus}</p>
           </div>
