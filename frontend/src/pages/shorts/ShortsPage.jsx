@@ -100,20 +100,7 @@ function ShortsPage({ onShortClick, embed = false }) {
                         )}
                     </div>
 
-                    {/* Filters & Controls */}
-                    <div className="filter-bar">
-                        {/* Language Selector Removed - Moved to Navbar */}
 
-                        <label className="toggle-label ml-auto">
-                            <input
-                                type="checkbox"
-                                checked={useBatch}
-                                onChange={(e) => setUseBatch(e.target.checked)}
-                                className="accent-blue-500"
-                            />
-                            {t('btn_batch')}
-                        </label>
-                    </div>
                 </div>
 
                 {/* Grid Content */}
@@ -162,7 +149,7 @@ function ShortsPage({ onShortClick, embed = false }) {
                                 <h3 className="shorts-title">{s.title}</h3>
                                 <p className="shorts-desc">{s.desc}</p>
                                 <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
-                                    <span className="material-symbols-outlined text-[16px] mr-1 align-middle">push_pin</span>
+                                    <span className="mr-1 align-middle">📍</span>
                                     {s.location_translated || s.location || 'Korea'}
                                 </div>
                             </div>

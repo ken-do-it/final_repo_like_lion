@@ -37,15 +37,26 @@ class TranslationService:
     def detect_language(text):
         """
         텍스트의 언어를 감지하여 NLLB 코드로 반환.
-        감지 실패 시 기본값 'kor_Hang' 반환.
+        1. 한글/가나 포함 여부 확인 (Regex)
+        2. langdetect 라이브러리 사용
+        3. 실패 시 기본값 'eng_Latn' (영어) 반환 (기존 'kor_Hang'에서 변경)
         """
         if not text or not text.strip():
+            return 'eng_Latn'
+        
+        import re
+        # 1. Regex Heuristics
+        if re.search(r'[가-힣]', text):
             return 'kor_Hang'
+        if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', text): # Hiragana/Katakana
+            return 'jpn_Jpan'
+            
+        # 2. Library Detect
         try:
             detected = detect(text)
-            return LANG_CODE_MAP.get(detected, 'kor_Hang')
+            return LANG_CODE_MAP.get(detected, 'eng_Latn') # Default to English if unknown code
         except LangDetectException:
-            return 'kor_Hang'
+            return 'eng_Latn'
 
     @staticmethod
     def call_fastapi_translate(text: str, source_lang: str, target_lang: str, timeout: int = 20):
