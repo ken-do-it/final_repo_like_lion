@@ -20,8 +20,4 @@ urlpatterns = [
     path('ai/request/', views.ai_request_create, name='ai-request-create'),
     path('ai/request/<int:request_id>/', views.ai_request_retrieve, name='ai-request-detail'),
     path('ai/requests/', views.ai_requests_list, name='ai-requests-list'),
-
-    # 카카오맵 이미지 프록시
-    path('kakao-map/', views.kakao_static_map, name='kakao-static-map'),
-
 ]
