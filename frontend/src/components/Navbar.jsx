@@ -220,4 +220,4 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
     );
 };
 
-export default Navbar;
+export default React.memo(Navbar);
