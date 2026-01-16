@@ -17,6 +17,7 @@ import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import FindAccountPage from './pages/auth/FindAccountPage';
 import MyPage from './pages/mypage/MyPage';
+import SocialCallback from './pages/auth/SocialCallback';
 import Footer from './components/Footer';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -103,6 +104,7 @@ function App() {
           <Route path="/register-page" element={<SignupPage />} />
           <Route path="/find-account" element={<FindAccountPage />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/social/callback" element={<SocialCallback />} />
 
           {/* Features */}
           <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
