@@ -364,7 +364,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
 
                     {/* Video Container (Clipped) */}
                     <div className="w-full h-full rounded-2xl overflow-hidden relative shadow-2xl bg-black z-10">
-                        <video controls autoPlay poster={shortform.thumb} className="w-full h-full object-cover">
+                        <video controls poster={shortform.thumb} className="w-full h-full object-cover">
                             <source src={shortform.video} type="video/mp4" />
                             Your browser does not support the video tag.
                         </video>
