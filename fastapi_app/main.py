@@ -314,8 +314,12 @@ def search_grouped(request: SearchRequest):
             "places": [],
             "reviews": [],
             "plans": [],
+            "shorts": [],
             "others": []
         }
+        
+        place_ids = []
+        short_ids = []
         
         for r in rows:
             item = {
@@ -328,13 +332,63 @@ def search_grouped(request: SearchRequest):
             cat = r[1]
             if cat == "place":
                 grouped_results["places"].append(item)
+                place_ids.append(item["id"])
             elif cat == "review":
                 grouped_results["reviews"].append(item)
             elif cat == "plan":
                 grouped_results["plans"].append(item)
+            elif cat == "shortform":
+                grouped_results["shorts"].append(item)
+                short_ids.append(item["id"])
             else:
                 grouped_results["others"].append(item)
         
+        # 4. 추가 정보(썸네일 등) 조회 - Place
+        if place_ids:
+            try:
+                conn_places = get_db_connection()
+                cur_places = conn_places.cursor()
+                # places 테이블에서 thumbnail_urls (JSON) 가져오기
+                place_query_sql = "SELECT id, thumbnail_urls FROM places WHERE id IN %s"
+                cur_places.execute(place_query_sql, (tuple(place_ids),))
+                place_rows = cur_places.fetchall()
+                
+                place_map = {}
+                for pid, urls in place_rows:
+                    thumb = None
+                    # JSON 리스트인 경우 첫 번째 이미지 사용
+                    if urls and isinstance(urls, list) and len(urls) > 0:
+                        thumb = urls[0]
+                    place_map[pid] = thumb
+                
+                for item in grouped_results["places"]:
+                    item["thumbnail_url"] = place_map.get(item["id"])
+                
+                cur_places.close()
+                conn_places.close()
+            except Exception as e:
+                logger.error(f"Place 썸네일 조회 실패: {e}")
+
+        # 5. 추가 정보(썸네일 등) 조회 - Shortform
+        if short_ids:
+            try:
+                conn_shorts = get_db_connection()
+                cur_shorts = conn_shorts.cursor()
+                # shortforms 테이블에서 thumbnail_url 가져오기
+                short_query_sql = "SELECT id, thumbnail_url FROM shortforms WHERE id IN %s"
+                cur_shorts.execute(short_query_sql, (tuple(short_ids),))
+                short_rows = cur_shorts.fetchall()
+                
+                short_map = {row[0]: row[1] for row in short_rows}
+                
+                for item in grouped_results["shorts"]:
+                    item["thumbnail_url"] = short_map.get(item["id"])
+                    
+                cur_shorts.close()
+                conn_shorts.close()
+            except Exception as e:
+                logger.error(f"Shortform 썸네일 조회 실패: {e}")
+
         return grouped_results
         
     except Exception as e:
