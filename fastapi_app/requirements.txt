@@ -21,6 +21,9 @@ wheel==0.45.1
 psycopg2-binary  # DB 접속용
 sqlalchemy       # ORM
 
+# [추가] NumPy 버전 고정 (Torch 및 Transformers 호환성 보장)
+numpy<2.0
+
 # [최적화] CPU 버전의 PyTorch 다운로드 경로 지정
 --extra-index-url https://download.pytorch.org/whl/cpu
 
