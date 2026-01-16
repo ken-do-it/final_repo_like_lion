@@ -1,11 +1,21 @@
 // src/pages/plans/PlanCreate.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
+import { useAuth } from '../../context/AuthContext';
 
 const PlanCreate = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // 로그인 체크
+  useEffect(() => {
+    if (!isAuthenticated) {
+      alert('로그인이 필요한 서비스입니다.');
+      navigate(-1); // 이전 페이지로 돌아가기
+    }
+  }, [isAuthenticated, navigate]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',

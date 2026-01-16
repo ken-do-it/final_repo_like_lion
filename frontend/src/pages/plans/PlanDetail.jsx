@@ -2,14 +2,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import plansService from '../../api/plansApi';
+import { useAuth } from '../../context/AuthContext';
 
 const PlanDetail = () => {
   const { planId } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+
+  // 본인 일정인지 확인
+  const isOwner = isAuthenticated && plan && user && plan.user === user.id;
 
   // Kakao Map refs - 각 장소별 지도 컨테이너
   const mapRefs = useRef({});
@@ -31,7 +36,14 @@ const PlanDetail = () => {
       // Reset map initialization status when plan changes
       mapsInitialized.current = {};
     } catch (err) {
-      setError('여행 계획을 불러오는데 실패했습니다.');
+      // 403 에러 (비공개 일정) 처리
+      if (err.response?.status === 403) {
+        setError(err.response?.data?.error || '공개되지 않은 일정입니다.');
+      } else if (err.response?.status === 404) {
+        setError('일정을 찾을 수 없습니다.');
+      } else {
+        setError('여행 계획을 불러오는데 실패했습니다.');
+      }
       console.error('Error fetching plan:', err);
     } finally {
       setLoading(false);
@@ -213,20 +225,22 @@ const PlanDetail = () => {
           </p>
         )}
 
-        <div className="flex gap-4">
-          <button
-            onClick={() => navigate(`/plans/${planId}/edit`)}
-            className="h-12 px-6 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
-          >
-            계획 수정
-          </button>
-          <button
-            onClick={() => navigate(`/plans/${planId}/add-place`)}
-            className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all"
-          >
-            장소 추가
-          </button>
-        </div>
+        {isOwner && (
+          <div className="flex gap-4">
+            <button
+              onClick={() => navigate(`/plans/${planId}/edit`)}
+              className="h-12 px-6 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
+            >
+              계획 수정
+            </button>
+            <button
+              onClick={() => navigate(`/plans/${planId}/add-place`)}
+              className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all"
+            >
+              장소 추가
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Date Tabs */}
@@ -262,12 +276,14 @@ const PlanDetail = () => {
               {dates.length === 0 ? '아직 추가된 장소가 없습니다' : '이 날짜에 추가된 장소가 없습니다'}
             </p>
           </div>
-          <button
-            onClick={() => navigate(`/plans/${planId}/add-place`)}
-            className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all"
-          >
-            장소 추가하기
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => navigate(`/plans/${planId}/add-place`)}
+              className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all"
+            >
+              장소 추가하기
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -344,33 +360,35 @@ const PlanDetail = () => {
                         </div>
                       </div>
 
-                      {/* Actions - 왼쪽 하단 */}
-                      <div className="flex gap-2 mt-4 ml-14">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/plans/details/${detail.id}/edit`);
-                          }}
-                          className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                          title="수정"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePlace(detail.id);
-                          }}
-                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="삭제"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+                      {/* Actions - 왼쪽 하단 (본인 일정일 때만 표시) */}
+                      {isOwner && (
+                        <div className="flex gap-2 mt-4 ml-14">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/plans/details/${detail.id}/edit`);
+                            }}
+                            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            title="수정"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePlace(detail.id);
+                            }}
+                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="삭제"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* 오른쪽: 지도 */}
