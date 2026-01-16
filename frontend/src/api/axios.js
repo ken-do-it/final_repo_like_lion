@@ -8,7 +8,9 @@ const axiosInstance = axios.create({
 });
 
 export const searchAxios = axios.create({
-    baseURL: import.meta.env.VITE_SEARCH_API_URL || '/search',
+    // [변경 전] baseURL: import.meta.env.VITE_SEARCH_API_URL || '/search',
+    // [변경 후] API 전용 경로인 /search-api를 앞에 붙여줍니다.
+    baseURL: import.meta.env.VITE_SEARCH_API_URL || '/search-api/search',
     headers: {
         'Content-Type': 'application/json',
     },
