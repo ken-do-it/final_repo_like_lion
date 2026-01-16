@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             setIsAuthenticated(true);
             localStorage.setItem('user', JSON.stringify(userData));
-            console.log("✅ [AuthContext] Profile fetched & user set:", userData);
         } catch (error) {
             console.error("❌ [AuthContext] Failed to fetch profile:", error);
             logout();
@@ -60,7 +59,6 @@ export const AuthProvider = ({ children }) => {
                         const parsedUser = JSON.parse(storedUser);
                         setUser(parsedUser);
                         setIsAuthenticated(true);
-                        console.log("✅ [AuthContext] Restored user from storage:", parsedUser);
                     } catch (error) {
                         console.error("Failed to parse stored user data:", error);
                         // Try fetching from API
