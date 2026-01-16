@@ -139,29 +139,89 @@ const MyPage = () => {
                     </div>
                 </form>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors group">
-                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('id_label')}</div>
-                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                            {displayUser?.username}
-                            <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400">ID</span>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors group">
+                            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('id_label')}</div>
+                            <div className="text-lg font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                {displayUser?.username}
+                                <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400">ID</span>
+                            </div>
+                        </div>
+                        <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
+                            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('email_label')}</div>
+                            <div className="text-lg font-medium text-slate-900 dark:text-slate-100 break-all">{displayUser?.email}</div>
+                        </div>
+                        <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
+                            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('nickname_label')}</div>
+                            <div className="text-lg font-medium text-slate-900 dark:text-slate-100">{displayUser?.nickname}</div>
+                        </div>
+                        <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
+                            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('location_label')}</div>
+                            <div className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                                {displayUser?.city && displayUser?.country ? `${displayUser.city}, ${displayUser.country}` : <span className="text-slate-400 italic">N/A</span>}
+                            </div>
                         </div>
                     </div>
-                    <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
-                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('email_label')}</div>
-                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100 break-all">{displayUser?.email}</div>
+
+                    {/* Local Badge Section */}
+                    <div className="mt-10 pt-8 border-t border-slate-100 dark:border-slate-700">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                            🏅 {t('local_badge_title') || '현지인 인증 뱃지'}
+                        </h3>
+                        {displayUser?.local_badges && displayUser.local_badges.filter(b => b.is_active).length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {displayUser.local_badges.filter(b => b.is_active).map((badge) => (
+                                    <div
+                                        key={badge.id}
+                                        className="relative p-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl border border-amber-200 dark:border-amber-700/50 shadow-sm hover:shadow-md transition-all"
+                                    >
+                                        <div className="absolute top-3 right-3">
+                                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold
+                                            ${badge.level >= 5 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white shadow-lg' :
+                                                    badge.level >= 3 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white' :
+                                                        'bg-gradient-to-br from-orange-300 to-orange-400 text-white'}`}
+                                            >
+                                                {badge.level}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="text-3xl">
+                                                {badge.level >= 5 ? '🥇' : badge.level >= 3 ? '🥈' : '🥉'}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-slate-900 dark:text-white text-lg">{badge.city}</div>
+                                                <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                                    Level {badge.level} {badge.level >= 3 ? '✍️ Writer' : '🔍 Explorer'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                                            <div className="flex justify-between">
+                                                <span>{t('badge_since') || '인증 시작'}:</span>
+                                                <span className="font-medium">{badge.first_authenticated_at}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>{t('badge_months') || '유지 개월'}:</span>
+                                                <span className="font-medium text-amber-600 dark:text-amber-400">{badge.maintenance_months}개월</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-6 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
+                                <div className="text-4xl mb-3">🗺️</div>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                                    {t('no_local_badge') || '아직 현지인 인증 뱃지가 없습니다.'}
+                                </p>
+                                <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
+                                    {t('no_local_badge_desc') || '현지에서 일정 기간 거주하면 뱃지를 획득할 수 있어요!'}
+                                </p>
+                            </div>
+                        )}
                     </div>
-                    <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
-                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('nickname_label')}</div>
-                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100">{displayUser?.nickname}</div>
-                    </div>
-                    <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
-                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('location_label')}</div>
-                        <div className="text-lg font-medium text-slate-900 dark:text-slate-100">
-                            {displayUser?.city && displayUser?.country ? `${displayUser.city}, ${displayUser.country}` : <span className="text-slate-400 italic">N/A</span>}
-                        </div>
-                    </div>
-                </div>
+                </>
             )}
         </div>
     );
