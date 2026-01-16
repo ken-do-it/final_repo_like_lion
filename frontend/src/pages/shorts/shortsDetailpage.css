@@ -26,7 +26,7 @@
     background-color: var(--detail-bg);
     min-height: 100vh;
     color: var(--detail-text);
-    padding-top: 80px;
+    padding-top: 40px;
     transition: background-color 0.2s, color 0.2s;
 }
 
@@ -62,7 +62,7 @@
 .player-wrapper {
     background: black;
     border-radius: 16px;
-    overflow: hidden;
+
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     position: relative;
     display: flex;

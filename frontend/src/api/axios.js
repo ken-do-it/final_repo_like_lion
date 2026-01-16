@@ -61,15 +61,22 @@ axiosInstance.interceptors.response.use(
 
         // Prevent infinite loop
         if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
+            // Only handle automatic logout if we actually had a valid session
+            const token = localStorage.getItem('access_token');
 
-            // 401 발생 시 자동으로 토큰 삭제 및 로그아웃 처리
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('user');
+            if (token) {
+                originalRequest._retry = true;
 
-            // 페이지를 새로고침하여 앱을 비로그인 상태로 초기화
-            window.location.reload();
+                // 401 발생 시 자동으로 토큰 삭제 및 로그아웃 처리
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user');
+
+                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                // 페이지를 새로고침 대신 로그인 페이지로 이동
+                window.location.href = '/login-page';
+            }
+            // If no token (anonymous), just let the error propagate so the page handles it
         }
         return Promise.reject(error);
     }

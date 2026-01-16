@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 // import Navbar from '../../components/Navbar'
 import './shortspage.css'
@@ -86,14 +86,14 @@ function ShortsPage({ onShortClick, embed = false }) {
 
                 {/* Header Section */}
                 <div className="shorts-header">
-                    <div className="shorts-header-row">
-                        <div>
+                    <div className="shorts-header-row items-center">
+                        <div className="text-center flex-1">
                             <h1 className="text-3xl font-bold mb-2">{t('shorts_title')}</h1>
                             <p className="text-muted">{t('shorts_sub')}</p>
                         </div>
 
                         {isAuthenticated && (
-                            <button className="btn-primary" onClick={() => navigate('/shorts/upload')}>
+                            <button className="btn-primary ml-4" onClick={() => navigate('/shorts/upload')}>
                                 <span className="material-symbols-outlined mr-2">upload</span>
                                 {t('btn_upload')}
                             </button>
@@ -145,7 +145,16 @@ function ShortsPage({ onShortClick, embed = false }) {
                                 }
                             }}
                         >
-                            <div className="shorts-thumb" style={{ backgroundImage: `url(${s.thumb})` }}>
+                            <div className="shorts-thumb">
+                                <img
+                                    src={s.thumb}
+                                    alt={s.title}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
+                                    }}
+                                />
                                 <span className="duration-badge">{s.duration || t('duration_missing')}</span>
                             </div>
                             <div className="shorts-body">

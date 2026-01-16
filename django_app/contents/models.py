@@ -13,6 +13,9 @@ class Shortform(models.Model):
 
     video_url = models.CharField(max_length=255, help_text="영상 파일 URL")
     thumbnail_url = models.CharField(max_length=255, blank=True, null=True, help_text="썸네일 이미지 URL")
+    
+    # [NEW] 위치 정보 (단순 텍스트 필드)
+    location = models.CharField(max_length=100, blank=True, null=True, help_text="촬영 위치 (예: Seoul, Korea)")
 
     title = models.TextField(help_text="영상 제목")
     content = models.TextField(blank=True, null=True, help_text="영상 설명/내용")

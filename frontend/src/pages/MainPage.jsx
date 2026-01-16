@@ -198,9 +198,29 @@ const MainPage = () => {
                   className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
                   {/* Image */}
                   <img
-                    src={item.thumbnail_url ? (item.thumbnail_url.startsWith('http') ? item.thumbnail_url : `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}${item.thumbnail_url}`) : 'https://via.placeholder.com/300x500?text=No+Image'}
+                    src={(() => {
+                      const thumb = item.thumbnail_url;
+                      if (!thumb) return 'https://via.placeholder.com/300x500?text=No+Image';
+                      if (thumb.startsWith('http')) return thumb;
+
+                      // Handle relative path (ensure it starts with /)
+                      const path = thumb.startsWith('/') ? thumb : `/${thumb}`;
+                      // Handle base URL (ensure it doesn't end with / and remove /api if present for media)
+                      let base = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+                      if (base.endsWith('/api')) {
+                        base = base.replace(/\/api$/, '');
+                      }
+
+                      const finalUrl = `${base}${path}`;
+                      // console.log({ finalUrl });
+                      return finalUrl;
+                    })()}
                     alt={item.title}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
+                    }}
                   />
 
                   {/* Overlay Gradient */}
@@ -218,12 +238,19 @@ const MainPage = () => {
                     <h3 className="text-xl font-bold text-white mb-2 leading-tight line-clamp-2">{item.title}</h3>
                     <div className="flex items-center gap-1 text-white/80 text-sm mb-3">
                       <span>📍</span>
-                      Korea
+                      {item.location || 'Korea'}
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-white font-bold text-sm">{(4 + Math.random()).toFixed(1)}</span>
+                      {/* Stats: Views & Likes */}
+                      <div className="flex items-center gap-3 ml-1">
+                        <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
+                          <span className="material-symbols-outlined text-[16px]">visibility</span>
+                          {item.total_views || 0}
+                        </div>
+                        <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
+                          <span className="material-symbols-outlined text-[16px] text-red-500">favorite</span>
+                          {item.total_likes || 0}
+                        </div>
                       </div>
                       <span className="text-white font-bold text-sm bg-white/20 px-2 py-1 rounded backdrop-blur-sm">View</span>
                     </div>
