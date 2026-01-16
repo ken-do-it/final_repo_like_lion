@@ -239,3 +239,6 @@ package.json
 
 #김미숙 클로드 캐시파일 업로드방지용
 tmpclaude-*
+
+# Docker Compose 개인 설정
+docker-compose.override.yaml
