@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import MainPage from './pages/MainPage';
 import SearchPage from './pages/SearchPage';
+import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
 import PlaceSearch from './pages/places/PlaceSearch';
 import PlaceDetailPage from './pages/places/PlaceDetailPage';
 import GeoImageUploader from './pages/GeoImageUploader';
@@ -97,7 +98,11 @@ function App() {
         <Routes>
           {/* Core Pages */}
           <Route path="/" element={<MainPage />} />
-          <Route path="/search" element={<SearchPage />} />
+          <Route path="/search" element={
+            <ProtectedRoute>
+              <SearchPage />
+            </ProtectedRoute>
+          } />
 
           {/* Auth Pages */}
           <Route path="/login-page" element={<LoginPage />} />
@@ -107,8 +112,16 @@ function App() {
           <Route path="/social/callback" element={<SocialCallback />} />
 
           {/* Features */}
-          <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
-          <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
+          <Route path="/stays" element={
+            <ProtectedRoute>
+              <AccommodationMap />
+            </ProtectedRoute>
+          } />        {/* Updated path for consistency */}
+          <Route path="/accommodations" element={
+            <ProtectedRoute>
+              <AccommodationMap />
+            </ProtectedRoute>
+          } /> {/* Legacy support */}
           <Route path="/shorts" element={<ShortsPage />} />
           <Route path="/shorts/upload" element={<ShortsUploadPage />} />
           <Route path="/shorts/:id/edit" element={<ShortsUploadPage />} />
@@ -131,9 +144,21 @@ function App() {
           <Route path="/reservations/subway" element={<SubwaySearch />} />
           <Route path="/reservations/subway/route" element={<SubwayRoute />} />
 
-          <Route path="/geo-quiz" element={<GeoImageUploader />} />
-          <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
-          <Route path="/game" element={<RoadviewGame />} />
+          <Route path="/geo-quiz" element={
+            <ProtectedRoute>
+              <GeoImageUploader />
+            </ProtectedRoute>
+          } />
+          <Route path="/upload" element={
+            <ProtectedRoute>
+              <GeoImageUploader />
+            </ProtectedRoute>
+          } />     {/* Alias */}
+          <Route path="/game" element={
+            <ProtectedRoute>
+              <RoadviewGame />
+            </ProtectedRoute>
+          } />
           {/* Place Pages */}
           <Route path="/places/search" element={<PlaceSearch />} />
           <Route path="/places/detail" element={<PlaceDetailPage />} />
