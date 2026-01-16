@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
     };
 
-    const fetchProfile = async (token) => {
+    const fetchProfile = useCallback(async (token) => {
         try {
             const response = await api.get('/users/profile/', {
                 headers: { Authorization: `Bearer ${token}` }
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
             console.error("❌ [AuthContext] Failed to fetch profile:", error);
             logout();
         }
-    };
+    }, []);
 
     const login = (token, refreshToken, userData) => {
         localStorage.setItem('access_token', token);
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
         };
 
         initAuth();
-    }, []);
+    }, [fetchProfile]);
 
     const value = {
         user,

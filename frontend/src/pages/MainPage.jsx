@@ -238,10 +238,10 @@ const MainPage = () => {
                     <h3 className="text-xl font-bold text-white mb-2 leading-tight line-clamp-2">{item.title}</h3>
                     <div className="flex items-center gap-1 text-white/80 text-sm mb-3">
                       <span>📍</span>
-                      {item.location || 'Korea'}
+                      {item.location_translated || item.location || 'Korea'}
                     </div>
+
                     <div className="flex items-center justify-between">
-                      {/* Stats: Views & Likes */}
                       <div className="flex items-center gap-3 ml-1">
                         <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
                           <span className="material-symbols-outlined text-[16px]">visibility</span>
@@ -254,25 +254,22 @@ const MainPage = () => {
                       </div>
                       <span className="text-white font-bold text-sm bg-white/20 px-2 py-1 rounded backdrop-blur-sm">View</span>
                     </div>
-                  </div>
 
-                  {/* Play Icon (Optional Hover) */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    <div className="w-14 h-14 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
-                      <span className="text-white text-2xl ml-1">▶</span>
+                    {/* Play Icon (Optional Hover) */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <div className="w-14 h-14 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
+                        <span className="text-white text-2xl ml-1">▶</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              // Fallback if no shorts - Static Mock Data matching reference to look good
-              // Empty State
-              <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
-                <span className="material-symbols-outlined text-6xl mb-4 text-slate-300 dark:text-slate-600">videocam_off</span>
-                <p className="text-lg font-medium">{t('no_shorts')}</p>
-              </div>
+                  ))
+                  ) : (
+                  <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+                    <span className="material-symbols-outlined text-6xl mb-4 text-slate-300 dark:text-slate-600">videocam_off</span>
+                    <p className="text-lg font-medium">{t('no_shorts')}</p>
+                  </div>
             )}
-          </div>
+                </div>
         </section>
       </main>
     </div>

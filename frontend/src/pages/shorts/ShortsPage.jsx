@@ -161,6 +161,10 @@ function ShortsPage({ onShortClick, embed = false }) {
                                 <span className="shorts-lang-tag">{s.lang}</span>
                                 <h3 className="shorts-title">{s.title}</h3>
                                 <p className="shorts-desc">{s.desc}</p>
+                                <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
+                                    <span className="material-symbols-outlined text-[16px] mr-1 align-middle">push_pin</span>
+                                    {s.location_translated || s.location || 'Korea'}
+                                </div>
                             </div>
 
                             <div className="shorts-actions">
