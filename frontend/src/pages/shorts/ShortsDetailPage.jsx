@@ -349,14 +349,14 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
             <div className="detail-content-wrapper">
                 {/* Left Column: Video Player */}
                 <div className="player-wrapper relative group">
-                    {/* Previous Button (Responsive: Outside on both) */}
-                    {shortform.prevId && (
+                    {/* Left Button -> Next Video (Newer) */}
+                    {shortform.nextId && (
                         <button
-                            onClick={() => navigate(`/shorts/${shortform.prevId}`)}
+                            onClick={() => navigate(`/shorts/${shortform.nextId}`)}
                             className="absolute -left-18 md:-left-24 top-1/2 -translate-y-1/2 p-2 
                                        text-gray-400 hover:text-gray-700 
                                        transition-colors z-30 md:drop-shadow-none"
-                            title="Previous Video"
+                            title="Next Video"
                         >
                             <span className="material-symbols-outlined !text-6xl md:!text-6xl font-light">chevron_left</span>
                         </button>
@@ -370,14 +370,14 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                         </video>
                     </div>
 
-                    {/* Next Button (Responsive: Outside on both) */}
-                    {shortform.nextId && (
+                    {/* Right Button -> Previous Video (Older) */}
+                    {shortform.prevId && (
                         <button
-                            onClick={() => navigate(`/shorts/${shortform.nextId}`)}
+                            onClick={() => navigate(`/shorts/${shortform.prevId}`)}
                             className="absolute -right-18 md:-right-24 top-1/2 -translate-y-1/2 p-2 
                                        text-gray-400 hover:text-gray-700 
                                        transition-colors z-30 md:drop-shadow-none"
-                            title="Next Video"
+                            title="Previous Video"
                         >
                             <span className="material-symbols-outlined !text-6xl md:!text-6xl font-light">chevron_right</span>
                         </button>
@@ -410,7 +410,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                         <div className="creator-info">
                             <h3>{shortform.creatorName}</h3>
                             <p>
-                                <span className="material-symbols-outlined text-xs">location_on</span>
+                                <span>📍</span>
                                 {shortform.location_translated || shortform.location || mockData.creator.location} · {mockData.creator.time}
                             </p>
                         </div>
