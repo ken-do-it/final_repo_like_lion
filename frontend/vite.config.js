@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   envDir: '../', // .env file is in the root directory , places에서 .env를 못찾아서 추가한 코드
   server: {
+    host: true, // Allow access from 127.0.0.1 and other IPs
     proxy: {
       // Django transport API 프록시 (8000)
       // /api/v1/transport는 Django로 라우팅
