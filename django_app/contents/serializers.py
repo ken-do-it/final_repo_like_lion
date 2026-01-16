@@ -8,6 +8,7 @@ class ShortformSerializer(serializers.ModelSerializer):
     # 번역 결과를 담을 읽기 전용 필드
     title_translated = serializers.CharField(read_only=True)
     content_translated = serializers.CharField(read_only=True)
+    location_translated = serializers.CharField(read_only=True)
     
     # 작성자 정보
     nickname = serializers.CharField(source='user.nickname', read_only=True)
