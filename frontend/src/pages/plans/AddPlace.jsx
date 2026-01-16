@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
 import { placesAxios } from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const AddPlace = () => {
   const { planId } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -24,9 +26,19 @@ const AddPlace = () => {
     order_index: 0,
   });
 
+  // 로그인 체크
   useEffect(() => {
-    fetchPlanDetail();
-  }, [planId]);
+    if (!isAuthenticated) {
+      alert('로그인이 필요한 서비스입니다.');
+      navigate(-1); // 이전 페이지로 돌아가기
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPlanDetail();
+    }
+  }, [planId, isAuthenticated]);
 
   // 자동완성 debounce
   useEffect(() => {
