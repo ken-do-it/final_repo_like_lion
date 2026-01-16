@@ -232,13 +232,14 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                 thumb: item.thumbnail_url,
                 video: item.video_url,
                 lang: item.source_lang || 'N/A',
-                lang: item.source_lang || 'N/A',
                 location: item.location || '', // Add location field
                 ownerId: item.user,
                 // Add Creator Info
                 creatorName: item.nickname || `User ${item.user}`,
                 creatorAvatar: item.profile_image_url,
                 totalComments: item.total_comments,
+                prevId: item.prev_id,
+                nextId: item.next_id,
             })
             // Initialize Like State
             setLiked(item.is_liked)
@@ -287,6 +288,9 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     useEffect(() => {
         if (id) {
             fetchDetail()
+            // Increment view count
+            axiosInstance.post(`/shortforms/${id}/view/`)
+                .catch(err => console.error("Failed to increment view count:", err));
         }
     }, [id, langCode])
 
@@ -344,11 +348,40 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
 
             <div className="detail-content-wrapper">
                 {/* Left Column: Video Player */}
-                <div className="player-wrapper">
-                    <video controls autoPlay poster={shortform.thumb}>
-                        <source src={shortform.video} type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
+                <div className="player-wrapper relative group">
+                    {/* Previous Button (Responsive: Outside on both) */}
+                    {shortform.prevId && (
+                        <button
+                            onClick={() => navigate(`/shorts/${shortform.prevId}`)}
+                            className="absolute -left-18 md:-left-24 top-1/2 -translate-y-1/2 p-2 
+                                       text-gray-400 hover:text-gray-700 
+                                       transition-colors z-30 md:drop-shadow-none"
+                            title="Previous Video"
+                        >
+                            <span className="material-symbols-outlined !text-6xl md:!text-6xl font-light">chevron_left</span>
+                        </button>
+                    )}
+
+                    {/* Video Container (Clipped) */}
+                    <div className="w-full h-full rounded-2xl overflow-hidden relative shadow-2xl bg-black z-10">
+                        <video controls autoPlay poster={shortform.thumb} className="w-full h-full object-cover">
+                            <source src={shortform.video} type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+
+                    {/* Next Button (Responsive: Outside on both) */}
+                    {shortform.nextId && (
+                        <button
+                            onClick={() => navigate(`/shorts/${shortform.nextId}`)}
+                            className="absolute -right-18 md:-right-24 top-1/2 -translate-y-1/2 p-2 
+                                       text-gray-400 hover:text-gray-700 
+                                       transition-colors z-30 md:drop-shadow-none"
+                            title="Next Video"
+                        >
+                            <span className="material-symbols-outlined !text-6xl md:!text-6xl font-light">chevron_right</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Right Column: Sidebar */}
@@ -407,7 +440,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                     {/* Description & Hashtags */}
                     <div className="video-desc">
                         {shortform.desc}
-                        <div className="video-hashtags">{mockData.hashtags}</div>
+                        {/* <div className="video-hashtags">{mockData.hashtags}</div> */}
                     </div>
 
                     {/* Stats Row */}
