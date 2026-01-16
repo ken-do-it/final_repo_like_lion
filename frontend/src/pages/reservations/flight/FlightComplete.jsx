@@ -60,13 +60,13 @@ const FlightComplete = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-bg-dark flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center px-4 py-12">
       <div className="max-w-2xl w-full">
         {/* 성공 메시지 카드 */}
         <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-12 text-center mb-6">
           {/* 성공 아이콘 */}
           <div className="bg-green-100 dark:bg-green-900/30 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-            <span className="material-symbols-rounded text-green-600 dark:text-green-400 text-6xl">
+            <span className="material-symbols-outlined text-green-600 dark:text-green-400 text-6xl">
               check_circle
             </span>
           </div>
@@ -132,7 +132,7 @@ const FlightComplete = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors text-sm font-medium"
                 >
-                  <span className="material-symbols-rounded text-lg">
+                  <span className="material-symbols-outlined text-lg">
                     receipt_long
                   </span>
                   영수증 확인하기
@@ -144,7 +144,7 @@ const FlightComplete = () => {
           {/* 안내 메시지 */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-left">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-              <span className="material-symbols-rounded text-blue-600 dark:text-blue-400 text-xl">
+              <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">
                 info
               </span>
               예약 안내
@@ -161,7 +161,7 @@ const FlightComplete = () => {
         {/* 버튼 영역 */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() => navigate('/my/reservations')}
+            onClick={() => navigate('/mypage')}
             className="bg-primary text-white py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
           >
             내 예약 보기

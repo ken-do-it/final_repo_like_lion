@@ -137,7 +137,7 @@ const FlightPaymentSuccess = () => {
    */
   if (status === 'confirming') {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-bg-dark flex items-center justify-center">
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center">
         <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-12 max-w-md w-full text-center">
           {/* 로딩 스피너 */}
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-6"></div>
@@ -161,11 +161,11 @@ const FlightPaymentSuccess = () => {
    */
   if (status === 'success') {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-bg-dark flex items-center justify-center">
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center">
         <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-12 max-w-md w-full text-center">
           {/* 성공 아이콘 */}
           <div className="bg-green-100 dark:bg-green-900/30 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-            <span className="material-symbols-rounded text-green-600 dark:text-green-400 text-5xl">
+            <span className="material-symbols-outlined text-green-600 dark:text-green-400 text-5xl">
               check_circle
             </span>
           </div>
@@ -208,11 +208,11 @@ const FlightPaymentSuccess = () => {
    */
   if (status === 'error') {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-bg-dark flex items-center justify-center">
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center">
         <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-12 max-w-md w-full text-center">
           {/* 에러 아이콘 */}
           <div className="bg-red-100 dark:bg-red-900/30 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-            <span className="material-symbols-rounded text-red-600 dark:text-red-400 text-5xl">
+            <span className="material-symbols-outlined text-red-600 dark:text-red-400 text-5xl">
               error
             </span>
           </div>

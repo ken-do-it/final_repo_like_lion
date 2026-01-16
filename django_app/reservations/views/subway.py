@@ -24,6 +24,7 @@ class MSSubwayRouteView(APIView):
 
     출발역과 도착역을 입력하면 최적의 경로를 제공합니다.
     """
+    authentication_classes = []  # 인증 불필요
     permission_classes = [AllowAny]  # 비회원도 접근 가능
 
     @extend_schema(
@@ -172,6 +173,7 @@ class MSSubwayMapMetaView(APIView):
 
     도시별 노선도 이미지 URL과 버전 정보를 제공합니다.
     """
+    authentication_classes = []  # 인증 불필요
     permission_classes = [AllowAny]  # 비회원도 접근 가능
 
     # 도시별 노선도 정보 (정적 데이터)

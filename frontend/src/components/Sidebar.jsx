@@ -15,7 +15,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: `📅 ${t('nav_ai_plan')}`, path: null }, // Placeholder
         { label: `🥘 ${t('nav_column')}`, path: null },
         { label: `🔥 ${t('nav_shorts')}`, path: '/shorts' },
-        { label: `✈️ ${t('nav_ticket')}`, path: null },
+        { label: `✈️ ${t('nav_ticket')}`, path: '/reservations/flights' },
     ];
 
     const bottomItems = [

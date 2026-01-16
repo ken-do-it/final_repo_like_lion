@@ -21,14 +21,34 @@ const FlightPayment = () => {
   const navigate = useNavigate();
 
   /**
-   * 이전 페이지(FlightSeat)에서 전달받은 데이터
+   * 이전 페이지(FlightSeat)에서 전달받은 데이터 또는 localStorage에서 복원
    * flight - 선택한 항공편 정보
    * searchConditions - 검색 조건 (출발지, 도착지, 날짜, 승객수)
    * selectedClass - 선택한 좌석 등급 (economy 또는 business)
    * passengers - 승객 정보 배열
    * totalPrice - 총 결제 금액
    */
-  const { flight, searchConditions, selectedClass, passengers, totalPrice } = location.state || {};
+  const [reservationData, setReservationData] = useState(() => {
+    // 초기값 설정: location.state가 있으면 사용
+    if (location.state?.flight) {
+      return location.state;
+    }
+    // 없으면 localStorage에서 복원
+    try {
+      const savedData = localStorage.getItem('flightPaymentData');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        // 복원 성공 시 localStorage 클리어
+        localStorage.removeItem('flightPaymentData');
+        return parsed;
+      }
+    } catch (e) {
+      console.error('결제 정보 복원 실패:', e);
+    }
+    return {};
+  });
+
+  const { flight, searchConditions, selectedClass, passengers, totalPrice } = reservationData;
 
   /**
    * 결제 진행 상태
@@ -78,7 +98,8 @@ const FlightPayment = () => {
        * 이미 로드되어 있는지 확인
        */
       if (window.TossPayments) {
-        const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
+        // 일반 결제용 테스트 키 (ck) - payment.requestPayment() 사용 시
+        const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
         setTossPayments(window.TossPayments(clientKey));
         return;
       }
@@ -95,7 +116,8 @@ const FlightPayment = () => {
        */
       script.onload = () => {
         if (window.TossPayments) {
-          const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
+          // 일반 결제용 테스트 키 (ck) - payment.requestPayment() 사용 시
+          const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
           setTossPayments(window.TossPayments(clientKey));
         }
       };
@@ -115,51 +137,82 @@ const FlightPayment = () => {
   }, []);
 
   /**
-   * 백엔드에 결제 생성 요청
-   * 백엔드는 orderId를 생성하고 DB에 결제 정보를 저장합니다
-   * 이렇게 하면 프론트엔드에서 금액을 조작할 수 없습니다
+   * 예약 생성 및 결제 준비
+   * 1단계: 예약 생성 API 호출
+   * 2단계: 결제 생성 API 호출 (토스페이먼츠 정보 받기)
    */
   const createPayment = async () => {
     setPaymentStatus('creating');
     setError(null);
 
     try {
-      /**
-       * 백엔드 API 호출: POST /v1/payments/
-       * 요청 데이터:
-       * - amount: 결제 금액
-       * - orderName: 주문명
-       * - flight: 항공편 정보 (예약 생성에 필요)
-       * - passengers: 승객 정보
-       * - selectedClass: 좌석 등급
-       */
-      const response = await axios.post('/v1/payments/', {
+      // 승객 정보를 백엔드 형식으로 변환
+      const formattedPassengers = passengers.map(p => ({
+        passengerType: 'ADT',  // 성인 기본값
+        fullName: `${p.lastName} ${p.firstName}`,
+        birthDate: p.dateOfBirth,
+        passportNo: p.passportNumber,
+      }));
+
+      // 1단계: 예약 생성
+      const reservationResponse = await axios.post('/v1/reservations/flight/', {
+        offerId: flight.offerId || 'MOCK_OFFER_ID',
+        tripType: searchConditions.tripType?.toUpperCase() || 'ONEWAY',
+        cabinClass: selectedClass?.toUpperCase() || 'ECONOMY',
+        passengers: formattedPassengers,
+        contacts: {
+          contactEmail: '',
+          contactPhone: '',
+        },
+      });
+
+      const { reservationId } = reservationResponse.data;
+      console.log('예약 생성 완료:', reservationId);
+
+      // 2단계: 결제 생성 (토스페이먼츠용 정보 받기)
+      const paymentResponse = await axios.post('/v1/payments/', {
+        reservationId: reservationId,
         amount: totalPrice,
         orderName: `${flight.vihRouteName} 항공권`,
-        flight: {
-          airlineNm: flight.airlineNm,
-          depPlandTime: flight.depPlandTime,
-          arrPlandTime: flight.arrPlandTime,
-          vihRouteName: flight.vihRouteName,
-        },
-        passengers,
-        selectedClass,
       });
 
       /**
        * 백엔드 응답:
-       * - orderId: 주문 번호 (백엔드에서 생성)
-       * - amount: 결제 금액 (백엔드에서 저장한 값)
+       * - orderId: 주문 번호
+       * - amount: 결제 금액
        * - orderName: 주문명
        * - clientKey: 토스페이먼츠 클라이언트 키
        * - successUrl: 결제 성공시 리다이렉트 URL
        * - failUrl: 결제 실패시 리다이렉트 URL
        */
-      setPaymentData(response.data);
+      setPaymentData(paymentResponse.data);
       setPaymentStatus('ready');
     } catch (err) {
       console.error('결제 생성 실패:', err);
-      setError('결제 생성에 실패했습니다. 다시 시도해주세요.');
+      if (err.response?.status === 401) {
+        // 결제 정보를 localStorage에 저장
+        try {
+          const dataToSave = {
+            flight,
+            searchConditions,
+            selectedClass,
+            passengers,
+            totalPrice
+          };
+          localStorage.setItem('flightPaymentData', JSON.stringify(dataToSave));
+          console.log('결제 정보 저장 완료');
+        } catch (e) {
+          console.error('결제 정보 저장 실패:', e);
+        }
+
+        // 로그인 페이지로 리다이렉트 (현재 경로를 redirect 파라미터로 전달)
+        setPaymentStatus('idle');
+        alert('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
+        window.location.href = `/login-page?redirect=${encodeURIComponent('/reservations/flights/payment')}`;
+        return;
+      } else {
+        setError('결제 생성에 실패했습니다. 다시 시도해주세요.');
+      }
       setPaymentStatus('idle');
     }
   };
@@ -215,7 +268,10 @@ const FlightPayment = () => {
        */
     } catch (err) {
       console.error('결제 요청 실패:', err);
-      setError('결제 요청에 실패했습니다.');
+      console.error('에러 코드:', err.code);
+      console.error('에러 메시지:', err.message);
+      console.error('전체 에러 객체:', JSON.stringify(err, null, 2));
+      setError(`결제 요청에 실패했습니다. (${err.code || err.message || '알 수 없는 오류'})`);
       setPaymentStatus('ready');
     }
   };
@@ -256,7 +312,7 @@ const FlightPayment = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-bg-dark">
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
       <div className="max-w-screen-xl mx-auto px-4 py-8">
         {/* 교통수단 탭 */}
         <TransportTabs />
@@ -383,7 +439,7 @@ const FlightPayment = () => {
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-rounded text-red-600 dark:text-red-400">
+                  <span className="material-symbols-outlined text-red-600 dark:text-red-400">
                     error
                   </span>
                   <p className="text-red-700 dark:text-red-300">{error}</p>
@@ -413,7 +469,7 @@ const FlightPayment = () => {
                   onClick={handlePayment}
                   className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                 >
-                  <span className="material-symbols-rounded">payment</span>
+                  <span className="material-symbols-outlined">payment</span>
                   {totalPrice.toLocaleString()}원 결제하기
                 </button>
               )}
@@ -437,7 +493,7 @@ const FlightPayment = () => {
             {/* 결제 안내 사항 */}
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                <span className="material-symbols-rounded text-blue-600 dark:text-blue-400">
+                <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">
                   info
                 </span>
                 결제 안내

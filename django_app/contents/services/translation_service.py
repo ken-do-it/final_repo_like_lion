@@ -180,6 +180,7 @@ class TranslationService:
         for item in items:
             if not isinstance(item, dict): continue
             src_lang = item.get("source_lang") or "kor_Hang"
+            
             if src_lang == target_lang:
                 item["title_translated"] = item.get("title", "")
                 item["content_translated"] = item.get("content", "")
@@ -196,14 +197,24 @@ class TranslationService:
             else:
                 item["title_translated"] = ""
 
-            # Content
-            c_text = item.get("content") or ""
-            if c_text:
-                key = ("shortform", entity_id, "content", target_lang)
-                if key not in requests_map: requests_map[key] = {'text': c_text, 'consumers': [], 'src': src_lang}
-                requests_map[key]['consumers'].append((item, "content_translated"))
+            # Content (Shortform)
+            if 'shortform' in item: # Check if it's a ShortformComment (which has 'shortform' field)
+                 # Comment Content
+                c_text = item.get("content") or ""
+                if c_text:
+                    # Use 'shortform_comment' as entity type
+                    key = ("shortform_comment", entity_id, "content", target_lang)
+                    if key not in requests_map: requests_map[key] = {'text': c_text, 'consumers': [], 'src': src_lang}
+                    requests_map[key]['consumers'].append((item, "content")) # Overwrite 'content' or use new field? User said "shown in Korean.. automatic translate". Usually better to keep original and translate, or overwrite if display-only. User implied replacement. Let's overwrite 'content' for now as existing UI uses it.
             else:
-                item["content_translated"] = ""
+                # Content (Shortform Video)
+                c_text = item.get("content") or ""
+                if c_text:
+                    key = ("shortform", entity_id, "content", target_lang)
+                    if key not in requests_map: requests_map[key] = {'text': c_text, 'consumers': [], 'src': src_lang}
+                    requests_map[key]['consumers'].append((item, "content_translated"))
+                else:
+                    item["content_translated"] = ""
 
         if not requests_map: return data
 

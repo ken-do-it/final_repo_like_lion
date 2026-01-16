@@ -8,3 +8,4 @@
 export { default as TransportTabs } from './TransportTabs';
 export { default as SearchCard } from './SearchCard';
 export { default as ReservationSidebar } from './ReservationSidebar';
+export { default as CTAButton } from './CTAButton';

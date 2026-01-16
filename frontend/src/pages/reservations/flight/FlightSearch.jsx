@@ -226,11 +226,11 @@ const FlightSearch = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-background-dark">
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 페이지 제목 */}
         <h1 className="text-3xl font-bold mb-6 dark:text-white">
-          교통 예약
+          교통 
         </h1>
 
         {/* 탭 네비게이션 */}
@@ -240,17 +240,8 @@ const FlightSearch = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
           {/* 메인 콘텐츠 영역 */}
           <main className="lg:col-span-8 space-y-6">
-            {/* 실시간 상태 표시 */}
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-mint opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-mint"></span>
-              </span>
-              실시간 항공편 정보
-            </div>
-
             {/* 검색 폼 카드 */}
-            <SearchCard>
+            <SearchCard title="항공권 검색">
               <form onSubmit={handleSearch} className="space-y-4">
                 {/* 편도/왕복 선택 */}
                 <div className="flex items-center gap-2">
@@ -295,9 +286,6 @@ const FlightSearch = () => {
                       </div>
                     </div>
                     <div className="relative">
-                      <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        flight_takeoff
-                      </span>
                       <input
                         type="text"
                         value={depSearchTerm}
@@ -307,7 +295,7 @@ const FlightSearch = () => {
                         }}
                         onFocus={() => setShowDepDropdown(true)}
                         placeholder="출발 공항을 선택하세요"
-                        className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200
+                        className="w-full h-14 px-4 rounded-xl border border-slate-200
                                  dark:border-slate-600 dark:bg-slate-800 dark:text-white
                                  focus:ring-2 focus:ring-primary focus:border-transparent
                                  transition-all"
@@ -355,7 +343,7 @@ const FlightSearch = () => {
                     "
                     title="출발지와 도착지 바꾸기"
                   >
-                    <span className="material-symbols-rounded">swap_horiz</span>
+                    <span className="material-symbols-outlined">swap_horiz</span>
                   </button>
 
                   {/* 도착지 입력 */}
@@ -380,9 +368,6 @@ const FlightSearch = () => {
                       </div>
                     </div>
                     <div className="relative">
-                      <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        flight_land
-                      </span>
                       <input
                         type="text"
                         value={arrSearchTerm}
@@ -392,7 +377,7 @@ const FlightSearch = () => {
                         }}
                         onFocus={() => setShowArrDropdown(true)}
                         placeholder="도착 공항을 선택하세요"
-                        className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200
+                        className="w-full h-14 px-4 rounded-xl border border-slate-200
                                  dark:border-slate-600 dark:bg-slate-800 dark:text-white
                                  focus:ring-2 focus:ring-primary focus:border-transparent
                                  transition-all"
@@ -436,15 +421,12 @@ const FlightSearch = () => {
                       출발일
                     </label>
                     <div className="relative">
-                      <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        calendar_today
-                      </span>
                       <input
                         type="date"
                         value={formData.depDate}
                         onChange={(e) => setFormData({ ...formData, depDate: e.target.value })}
                         min={today}
-                        className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200
+                        className="w-full h-14 px-4 rounded-xl border border-slate-200
                                  dark:border-slate-600 dark:bg-slate-800 dark:text-white
                                  focus:ring-2 focus:ring-primary transition-all"
                         required
@@ -459,15 +441,12 @@ const FlightSearch = () => {
                         귀국일
                       </label>
                       <div className="relative">
-                        <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                          calendar_today
-                        </span>
                         <input
                           type="date"
                           value={formData.retDate}
                           onChange={(e) => setFormData({ ...formData, retDate: e.target.value })}
                           min={formData.depDate || today}
-                          className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200
+                          className="w-full h-14 px-4 rounded-xl border border-slate-200
                                    dark:border-slate-600 dark:bg-slate-800 dark:text-white
                                    focus:ring-2 focus:ring-primary transition-all"
                         />
@@ -481,13 +460,10 @@ const FlightSearch = () => {
                       항공사 (선택사항)
                     </label>
                     <div className="relative">
-                      <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        airlines
-                      </span>
                       <select
                         value={formData.airlineId}
                         onChange={(e) => setFormData({ ...formData, airlineId: e.target.value })}
-                        className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200
+                        className="w-full h-14 px-4 rounded-xl border border-slate-200
                                  dark:border-slate-600 dark:bg-slate-800 dark:text-white appearance-none
                                  focus:ring-2 focus:ring-primary transition-all"
                       >
@@ -507,14 +483,13 @@ const FlightSearch = () => {
                       승객 수
                     </label>
                     <div className="flex items-center h-14 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3">
-                      <span className="material-symbols-rounded text-slate-400 mr-2">person</span>
                       <button
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, passengers: Math.max(1, (prev.passengers || 1) - 1) }))}
                         className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
                         aria-label="성인 인원 감소"
                       >
-                        <span className="material-symbols-rounded">remove</span>
+                        −
                       </button>
                       <div className="flex-1 text-center font-medium">
                         성인 {formData.passengers}명
@@ -525,7 +500,7 @@ const FlightSearch = () => {
                         className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
                         aria-label="성인 인원 증가"
                       >
-                        <span className="material-symbols-rounded">add</span>
+                        +
                       </button>
                     </div>
                   </div>
@@ -535,28 +510,9 @@ const FlightSearch = () => {
                 <button
                   type="submit"
                   disabled={searchLoading}
-                  className="
-                    group w-full h-14 bg-mint hover:bg-mint-dark text-white font-semibold
-                    rounded-xl transition-all duration-300
-                    flex items-center justify-center gap-2
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                  "
+                  className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {searchLoading ? (
-                    <>
-                      <span className="material-symbols-rounded animate-spin">
-                        progress_activity
-                      </span>
-                      <span>검색 중...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-rounded group-hover:animate-bounce">
-                        search
-                      </span>
-                      <span>항공편 검색하기</span>
-                    </>
-                  )}
+                  {searchLoading ? '검색 중...' : '항공편 검색하기'}
                 </button>
               </form>
             </SearchCard>
@@ -564,9 +520,7 @@ const FlightSearch = () => {
             {/* 안내 메시지 */}
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
               <div className="flex gap-3">
-                <span className="material-symbols-rounded text-blue-600 dark:text-blue-400">
-                  info
-                </span>
+                <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">info</span>
                 <div className="text-sm text-blue-800 dark:text-blue-300">
                   <p className="font-medium mb-1">검색 팁</p>
                   <ul className="list-disc list-inside space-y-1">

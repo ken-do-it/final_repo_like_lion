@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../api/axios';
@@ -9,6 +9,7 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { login } = useAuth();
     const { t } = useLanguage();
     const [formData, setFormData] = useState({
@@ -46,7 +47,8 @@ const LoginPage = () => {
             );
 
             // Navigate to home or stored redirect
-            navigate('/');
+            const redirectUrl = searchParams.get('redirect') || '/';
+            navigate(redirectUrl);
         } catch (err) {
             console.error(err);
             if (err.response?.data?.error) {

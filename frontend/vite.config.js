@@ -7,6 +7,25 @@ export default defineConfig({
   envDir: '../', // .env file is in the root directory , places에서 .env를 못찾아서 추가한 코드
   server: {
     proxy: {
+      // Django transport API 프록시 (8000)
+      // /api/v1/transport는 Django로 라우팅
+      '/api/v1/transport': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Django reservations API 프록시 (8000)
+      '/api/v1/reservations': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Django payments API 프록시 (8000)
+      '/api/v1/payments': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
       // FastAPI 숙소/장소 API 프록시 (fastapi_places - 8002)
       // 주의: /api/v1 이 /api 보다 먼저 와야 함 (더 구체적인 경로 우선)
       '/api/v1': {
