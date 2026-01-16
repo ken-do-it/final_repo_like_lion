@@ -32,7 +32,7 @@ from service import (
 from database import get_db
 from auth import get_current_user, require_auth
 
-router = APIRouter(prefix="/api/v1/places", tags=["Places"])
+router = APIRouter(prefix="/places", tags=["Places"])
 
 
 # ==================== 이미지 헬퍼 함수 ====================

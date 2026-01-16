@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import axiosInstance from '../../api/axios';
 import './shortsDetailpage.css';
 
 // Language & Glossary Data
@@ -99,7 +101,7 @@ const mockDataMap = {
     }
 }
 
-function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
+function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     const { id: paramId } = useParams()
     const navigate = useNavigate()
     const id = propVideoId || paramId
@@ -123,22 +125,106 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-    // Edit State
-    const [isEditing, setIsEditing] = useState(false)
-    const [editTitle, setEditTitle] = useState('')
-    const [editContent, setEditContent] = useState('')
-    const [editFile, setEditFile] = useState(null)
+    // Like State
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+
+
+
+    const { user, isAuthenticated } = useAuth()
+
+    // Comment State
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState("");
+
+    // Comment Edit State
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editContent, setEditContent] = useState("");
+
+    // Fetch Comments
+    const fetchComments = React.useCallback(async () => {
+        try {
+            const response = await axiosInstance.get(`/shortforms/${id}/comments/`, {
+                params: { lang: langCode }
+            });
+            setComments(response.data);
+        } catch (error) {
+            console.error("Failed to fetch comments:", error);
+        }
+    }, [id, langCode]);
+
+    useEffect(() => {
+        if (id) {
+            fetchComments();
+        }
+    }, [fetchComments, id]);
+
+    // Handle Comment Submit
+    const handleCommentSubmit = async () => {
+        if (!newComment.trim()) return;
+        if (!isAuthenticated) {
+            alert("Please login to comment.");
+            return;
+        }
+
+        try {
+            await axiosInstance.post(`/shortforms/${id}/comments/`, {
+                content: newComment
+            });
+            setNewComment("");
+            fetchComments(); // Refresh list
+        } catch (error) {
+            console.error("Failed to post comment:", error);
+            alert("Failed to post comment.");
+        }
+    };
+
+    // Handle Comment Delete
+    const handleDeleteComment = async (commentId) => {
+        if (!confirm("Delete this comment?")) return;
+        try {
+            await axiosInstance.delete(`/comments/${commentId}/`);
+            fetchComments();
+        } catch (error) {
+            console.error("Failed to delete comment:", error);
+            alert("Failed to delete comment.");
+        }
+    };
+
+    // Handle Comment Update
+    const startEdit = (comment) => {
+        setEditingCommentId(comment.id);
+        setEditContent(comment.content);
+    };
+
+    const cancelEdit = () => {
+        setEditingCommentId(null);
+        setEditContent("");
+    };
+
+    const handleUpdateComment = async (commentId) => {
+        if (!editContent.trim()) return;
+        try {
+            await axiosInstance.patch(`/comments/${commentId}/`, {
+                content: editContent
+            });
+            setEditingCommentId(null);
+            setEditContent("");
+            fetchComments();
+        } catch (error) {
+            console.error("Failed to update comment:", error);
+            alert("Failed to update comment.");
+        }
+    };
 
     const fetchDetail = async () => {
         try {
             setLoading(true)
             setError('')
-            const res = await fetch(`/api/shortforms/${id}/?lang=${langCode}`)
-            if (!res.ok) {
-                if (res.status === 404) throw new Error('Shortform not found')
-                throw new Error('Failed to load shortform')
-            }
-            const item = await res.json()
+            const res = await axiosInstance.get(`/shortforms/${id}/`, {
+                params: { lang: langCode }
+            })
+            const item = res.data
             setShortform({
                 id: item.id,
                 title: item.title_translated || item.title || 'Untitled',
@@ -146,22 +232,65 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
                 thumb: item.thumbnail_url,
                 video: item.video_url,
                 lang: item.source_lang || 'N/A',
+                location: item.location || '', // Add location field
                 ownerId: item.user,
+                // Add Creator Info
+                creatorName: item.nickname || `User ${item.user}`,
+                creatorAvatar: item.profile_image_url,
+                totalComments: item.total_comments,
+                prevId: item.prev_id,
+                nextId: item.next_id,
             })
+            // Initialize Like State
+            setLiked(item.is_liked)
+            setLikeCount(item.total_likes)
 
-            setEditTitle(item.title)
-            setEditContent(item.content)
-            setEditFile(null)
         } catch (err) {
-            setError(err.message)
+            setError(err.response?.data?.detail || err.message)
         } finally {
             setLoading(false)
         }
     }
 
+    // Like Handlers
+
+
+    const handleLikeToggle = async () => {
+        if (!isAuthenticated) {
+            alert("Please login to like.");
+            return;
+        }
+
+        // Optimistic UI Update
+        const prevLiked = liked;
+        const prevCount = likeCount;
+
+        setLiked(!prevLiked);
+        setLikeCount(prevLiked ? prevCount - 1 : prevCount + 1);
+
+        try {
+            if (prevLiked) {
+                await axiosInstance.delete(`/shortforms/${id}/unlike/`);
+            } else {
+                await axiosInstance.post(`/shortforms/${id}/like/`);
+            }
+        } catch (error) {
+            console.error("Like toggle failed:", error);
+            // Revert on error
+            setLiked(prevLiked);
+            setLikeCount(prevCount);
+        }
+    };
+
+
+
+
     useEffect(() => {
         if (id) {
             fetchDetail()
+            // Increment view count
+            axiosInstance.post(`/shortforms/${id}/view/`)
+                .catch(err => console.error("Failed to increment view count:", err));
         }
     }, [id, langCode])
 
@@ -173,63 +302,23 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
         }
     }
 
-    // [TEST] Decode JWT to get user_id (Simple implementation)
+    // Get current user ID from AuthContext (handling differences in user object structure)
     const currentUserId = useMemo(() => {
-        if (!accessToken) return null
-        try {
-            const payload = JSON.parse(atob(accessToken.split('.')[1]))
-            return payload.user_id
-        } catch (e) {
-            console.error("Invalid Token", e)
-            return null
-        }
-    }, [accessToken])
+        if (!user) return null
+        return user.user_id || user.id || user.pk
+    }, [user])
 
-    const handleSave = async () => {
-        try {
-            const formData = new FormData()
-            formData.append('title', editTitle)
-            formData.append('content', editContent)
-            if (editFile) {
-                formData.append('video_file', editFile)
-            }
 
-            const res = await fetch(`/api/shortforms/${id}/`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${accessToken}` },
-                body: formData
-            })
-
-            if (!res.ok) throw new Error("Update failed")
-
-            await fetchDetail()
-            setIsEditing(false)
-            setEditFile(null)
-            alert("Updated successfully!")
-
-            const videoEl = document.querySelector('video')
-            if (videoEl) videoEl.load()
-        } catch (e) {
-            alert("Error updating: " + e.message)
-        }
-    }
 
     const handleDelete = async () => {
         if (!confirm("Are you sure you want to delete this short?")) return
 
         try {
-            const res = await fetch(`/api/shortforms/${id}/`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            })
-            if (res.ok) {
-                alert("Deleted successfully")
-                handleBack()
-            } else {
-                alert("Failed to delete (Permission Denied?)")
-            }
+            await axiosInstance.delete(`/shortforms/${id}/`)
+            alert("Deleted successfully")
+            handleBack()
         } catch (e) {
-            alert("Error deleting: " + e.message)
+            alert("Error deleting: " + (e.response?.data?.detail || e.message))
         }
     }
 
@@ -259,11 +348,40 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
 
             <div className="detail-content-wrapper">
                 {/* Left Column: Video Player */}
-                <div className="player-wrapper">
-                    <video controls autoPlay poster={shortform.thumb}>
-                        <source src={shortform.video} type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
+                <div className="player-wrapper relative group">
+                    {/* Previous Button (Responsive: Outside on both) */}
+                    {shortform.prevId && (
+                        <button
+                            onClick={() => navigate(`/shorts/${shortform.prevId}`)}
+                            className="absolute -left-18 md:-left-24 top-1/2 -translate-y-1/2 p-2 
+                                       text-gray-400 hover:text-gray-700 
+                                       transition-colors z-30 md:drop-shadow-none"
+                            title="Previous Video"
+                        >
+                            <span className="material-symbols-outlined !text-6xl md:!text-6xl font-light">chevron_left</span>
+                        </button>
+                    )}
+
+                    {/* Video Container (Clipped) */}
+                    <div className="w-full h-full rounded-2xl overflow-hidden relative shadow-2xl bg-black z-10">
+                        <video controls autoPlay poster={shortform.thumb} className="w-full h-full object-cover">
+                            <source src={shortform.video} type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+
+                    {/* Next Button (Responsive: Outside on both) */}
+                    {shortform.nextId && (
+                        <button
+                            onClick={() => navigate(`/shorts/${shortform.nextId}`)}
+                            className="absolute -right-18 md:-right-24 top-1/2 -translate-y-1/2 p-2 
+                                       text-gray-400 hover:text-gray-700 
+                                       transition-colors z-30 md:drop-shadow-none"
+                            title="Next Video"
+                        >
+                            <span className="material-symbols-outlined !text-6xl md:!text-6xl font-light">chevron_right</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Right Column: Sidebar */}
@@ -271,82 +389,77 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
 
                     {/* Top Navigation / Title Row */}
                     <div className="flex items-center justify-between mb-4">
-                        {isEditing ? (
-                            <div className="flex flex-col gap-2 w-full">
-                                <input
-                                    value={editTitle}
-                                    onChange={(e) => setEditTitle(e.target.value)}
-                                    className="bg-slate-700 text-white p-2 rounded border border-slate-600 outline-none font-bold"
-                                />
-                                <input
-                                    type="file"
-                                    accept="video/*"
-                                    onChange={(e) => setEditFile(e.target.files[0])}
-                                    className="text-xs text-slate-400"
-                                />
-                            </div>
-                        ) : (
-                            <h1 className="text-xl font-bold text-white leading-tight">{shortform.title}</h1>
-                        )}
+                        <h1 className="text-xl font-bold leading-tight">{shortform.title}</h1>
 
                         <button onClick={handleBack} className="btn-close">
-                            {t.close}
+                            <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>
 
                     {/* Creator Card */}
                     <div className="creator-card">
-                        <img src={mockData.creator.avatar} alt="Creator" className="creator-avatar" />
+                        <img
+                            src={shortform.creatorAvatar || `https://ui-avatars.com/api/?name=${shortform.creatorName}&background=random&size=128`}
+                            alt="Creator"
+                            className="creator-avatar"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `https://ui-avatars.com/api/?name=${shortform.creatorName}&background=random&size=128`;
+                            }}
+                        />
                         <div className="creator-info">
-                            <h3>{mockData.creator.name}</h3>
+                            <h3>{shortform.creatorName}</h3>
                             <p>
                                 <span className="material-symbols-outlined text-xs">location_on</span>
-                                {mockData.creator.location} · {mockData.creator.time}
+                                {shortform.location || mockData.creator.location} · {mockData.creator.time}
                             </p>
                         </div>
                         <button className="btn-follow">{t.follow}</button>
                     </div>
 
-                    {/* Editing Controls (Owner Only) */}
+                    {/* Editing Controls (Owner Only) - Refactored */}
                     {currentUserId && shortform.ownerId === currentUserId && (
-                        <div className="flex gap-2 justify-end">
-                            {isEditing ? (
-                                <>
-                                    <button onClick={handleSave} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold">Save</button>
-                                    <button onClick={() => setIsEditing(false)} className="bg-slate-500 text-white px-3 py-1 rounded text-xs font-bold">Cancel</button>
-                                </>
-                            ) : (
-                                <>
-                                    <button onClick={() => setIsEditing(true)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold">Edit</button>
-                                    <button onClick={handleDelete} className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold">Delete</button>
-                                </>
-                            )}
+                        <div className="flex gap-4 justify-end items-center">
+                            <button
+                                onClick={() => navigate(`/shorts/${id}/edit`)}
+                                className="text-sm font-semibold text-gray-500 hover:text-blue-500 transition-colors flex items-center gap-1"
+                            >
+                                <span className="material-symbols-outlined text-lg">edit</span>
+                                Edit
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="text-sm font-semibold text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1"
+                            >
+                                <span className="material-symbols-outlined text-lg">delete</span>
+                                Delete
+                            </button>
                         </div>
                     )}
 
                     {/* Description & Hashtags */}
                     <div className="video-desc">
-                        {isEditing ? (
-                            <textarea
-                                value={editContent}
-                                onChange={(e) => setEditContent(e.target.value)}
-                                className="edit-textarea"
-                            />
-                        ) : (
-                            <>
-                                {shortform.desc}
-                                <div className="video-hashtags">{mockData.hashtags}</div>
-                            </>
-                        )}
+                        {shortform.desc}
+                        {/* <div className="video-hashtags">{mockData.hashtags}</div> */}
                     </div>
 
                     {/* Stats Row */}
                     <div className="stats-row">
-                        <div className="stat-item">
-                            <span className="material-symbols-outlined">favorite</span> 1.2k
+                        <div className="stat-item" onClick={handleLikeToggle}>
+                            <button
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors group ${liked ? 'bg-red-50 dark:bg-red-900/30 text-red-500' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                            >
+                                <span
+                                    className={`text-2xl transition-colors ${liked ? 'text-red-500' : 'group-hover:text-red-500'}`}
+                                    style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
+                                >
+                                    ♥
+                                </span>
+                            </button>
+                            <span className={`font-medium ml-2 ${liked ? 'text-red-500' : ''}`}>{likeCount}</span>
                         </div>
                         <div className="stat-item">
-                            <span className="material-symbols-outlined">chat_bubble</span> 45
+                            <span className="material-symbols-outlined">chat_bubble</span> {shortform.totalComments || 0}
                         </div>
                         <div className="stat-item">
                             <span className="material-symbols-outlined">share</span> {t.share}
@@ -372,24 +485,77 @@ function ShortsDetailPage({ videoId: propVideoId, onBack, accessToken }) {
                     {/* Comments Section */}
                     <div>
                         <div className="comments-header">
-                            {t.comments} ({mockData.comments.length})
+                            {t.comments} ({comments.length})
                         </div>
-                        {mockData.comments.map((comment, idx) => (
-                            <div className="comment-item" key={idx}>
-                                <div className="comment-avatar"></div>
-                                <div className="comment-content">
-                                    <div className="comment-meta">
-                                        <span className="comment-user">{comment.user}</span>
-                                        <span className="comment-time">{comment.time}</span>
+
+                        <div className="max-h-60 overflow-y-auto mb-4">
+                            {comments.length === 0 ? (
+                                <p className="text-gray-400 text-sm py-2">No comments yet.</p>
+                            ) : (
+                                comments.map((comment) => (
+                                    <div className="comment-item" key={comment.id}>
+                                        <img
+                                            src={comment.profile_image_url || `https://ui-avatars.com/api/?name=${comment.nickname || comment.user_id || 'User'}&background=random&size=32`}
+                                            alt="User"
+                                            className="comment-avatar"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = `https://ui-avatars.com/api/?name=${comment.nickname || comment.user_id || 'User'}&background=random&size=32`;
+                                            }}
+                                        />
+                                        <div className="comment-content w-full">
+                                            <div className="flex justify-between items-start">
+                                                <div className="comment-meta">
+                                                    <span className="comment-user">{comment.nickname || "User " + comment.user}</span>
+                                                    <span className="comment-time">
+                                                        {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+
+                                                {/* Owner Actions */}
+                                                {currentUserId && comment.user === currentUserId && !editingCommentId && (
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => startEdit(comment)} className="text-xs text-gray-400 hover:text-blue-500">Edit</button>
+                                                        <button onClick={() => handleDeleteComment(comment.id)} className="text-xs text-gray-400 hover:text-red-500">Delete</button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Edit Mode vs View Mode */}
+                                            {editingCommentId === comment.id ? (
+                                                <div className="mt-1 flex flex-col gap-2">
+                                                    <input
+                                                        type="text"
+                                                        className="border border-gray-300 rounded px-2 py-1 text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white w-full"
+                                                        value={editContent}
+                                                        onChange={(e) => setEditContent(e.target.value)}
+                                                        autoFocus
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleUpdateComment(comment.id)}
+                                                    />
+                                                    <div className="flex gap-2 justify-end">
+                                                        <button onClick={cancelEdit} className="text-xs text-gray-500">Cancel</button>
+                                                        <button onClick={() => handleUpdateComment(comment.id)} className="text-xs text-blue-500 font-bold">Save</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="comment-text">{comment.content}</div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="comment-text">{comment.text}</div>
-                                </div>
-                            </div>
-                        ))}
+                                ))
+                            )}
+                        </div>
 
                         <div className="comment-input-area">
-                            <input type="text" className="comment-input" placeholder={t.addComment} />
-                            <button className="btn-send">
+                            <input
+                                type="text"
+                                className="comment-input"
+                                placeholder={t.addComment}
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}
+                            />
+                            <button className="btn-send" onClick={handleCommentSubmit}>
                                 <span className="material-symbols-outlined">send</span>
                             </button>
                         </div>

@@ -179,7 +179,9 @@ const MyPage = () => {
         return (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {myShorts.map(short => (
-                    <div key={short.id} className="relative aspect-[9/16] rounded-xl overflow-hidden shadow-sm group">
+                    <div key={short.id}
+                        onClick={() => navigate(`/shorts/${short.id}`)}
+                        className="relative aspect-[9/16] rounded-xl overflow-hidden shadow-sm group cursor-pointer">
                         <img
                             src={short.thumbnail_url || 'https://via.placeholder.com/300x533?text=No+Thumbnail'}
                             alt={short.title}

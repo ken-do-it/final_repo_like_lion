@@ -207,6 +207,17 @@ class ShortformViewSet(viewsets.ModelViewSet):
                     resp.data = TranslationService.apply_translation_sequential(resp.data, target_lang)
             except Exception as e:
                 logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during retrieve")
+        
+        # Navigation: Prev/Next ID for the same author
+        instance = self.get_object()
+        # Previous: ID smaller than current, same user, order by ID desc (closest smaller)
+        prev_obj = Shortform.objects.filter(user=instance.user, id__lt=instance.id).order_by('-id').first()
+        # Next: ID larger than current, same user, order by ID asc (closest larger)
+        next_obj = Shortform.objects.filter(user=instance.user, id__gt=instance.id).order_by('id').first()
+
+        resp.data['prev_id'] = prev_obj.id if prev_obj else None
+        resp.data['next_id'] = next_obj.id if next_obj else None
+
         return resp
 
     @extend_schema(
@@ -257,7 +268,21 @@ class ShortformViewSet(viewsets.ModelViewSet):
         if request.method.lower() == 'get':
             comments = ShortformComment.objects.filter(shortform=shortform).order_by('-created_at')
             serializer = ShortformCommentSerializer(comments, many=True)
-            return Response(serializer.data)
+            data = serializer.data
+
+            # 번역 적용
+            target_lang = request.query_params.get("lang")
+            use_batch = request.query_params.get("batch", "true") == "true"
+            if target_lang:
+                try:
+                    if use_batch:
+                        data = TranslationService.apply_translation_batch(data, target_lang)
+                    else:
+                        data = TranslationService.apply_translation_sequential(data, target_lang)
+                except Exception as e:
+                    logger.exception(f"Comment translation failed: {e}")
+
+            return Response(data)
 
         if not request.user.is_authenticated:
             raise exceptions.NotAuthenticated("Authentication required to comment.")
@@ -265,7 +290,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
         user = request.user
         serializer = ShortformCommentSerializer(data=request.data)
         if serializer.is_valid():
-            comment = serializer.save(shortform=shortform, user=user)
+            content = serializer.validated_data.get('content', '')
+            detected_lang = TranslationService.detect_language(content)
+            
+            comment = serializer.save(shortform=shortform, user=user, source_lang=detected_lang)
+            
             Shortform.objects.filter(pk=shortform.pk).update(total_comments=F('total_comments') + 1)
             shortform.refresh_from_db(fields=['total_comments'])
             return Response(ShortformCommentSerializer(comment).data, status=201)
@@ -278,7 +307,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         request=None,
         responses={200: {'type': 'object', 'properties': {'viewed': {'type': 'boolean'}, 'total_views': {'type': 'integer'}}}}
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def view(self, request, pk=None):
         shortform = self.get_object()
         ip = request.META.get('REMOTE_ADDR')
@@ -295,6 +324,43 @@ class ShortformViewSet(viewsets.ModelViewSet):
             shortform.refresh_from_db(fields=['total_views'])
 
         return Response({"viewed": True, "total_views": shortform.total_views})
+
+
+
+class ShortformCommentViewSet(viewsets.ModelViewSet):
+    """
+    댓글 개별 수정/삭제 (Update/Delete Comment)
+    """
+    queryset = ShortformComment.objects.order_by('-created_at')
+    serializer_class = ShortformCommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # 필터링 (예: 특정 Shortform의 댓글만) - 이미 router nested나 filter_backends로 처리될 수 있음
+        # 하지만 현재 url 구조상 /shortforms/{pk}/comments/ 로 접근하므로, 
+        # views.py 의 ShortformViewSet.comments 액션과 겹칠 수 있음.
+        # 하지만 User Request는 "이제 댓글 기능 연결하자" 였고, 
+        # ShortformViewSet.comments 액션을 사용하고 있을 가능성이 높음.
+        # 확인 필요: Frontend는 `/shortforms/${id}/comments/` 를 호출함.
+        # 이는 ShortformViewSet 의 comments 액션임. 
+        # 따라서 ShortformViewSet.comments 를 수정해야 함!
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def perform_destroy(self, instance):
+        # 댓글 삭제 시 카운터 감소
+        shortform = instance.shortform
+        super().perform_destroy(instance)
+        # update total_comments using F expression to avoid race conditions
+        Shortform.objects.filter(pk=shortform.pk, total_comments__gt=0).update(total_comments=F('total_comments') - 1)
 
 
 class TranslationProxyView(APIView):

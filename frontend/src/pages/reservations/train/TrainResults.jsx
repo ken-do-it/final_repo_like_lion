@@ -142,7 +142,7 @@ const TrainResults = () => {
    */
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-bg-dark">
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
         <div className="max-w-screen-xl mx-auto px-4 py-8">
           <TransportTabs />
           <div className="mt-6 text-center py-20">
@@ -155,7 +155,7 @@ const TrainResults = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-bg-dark">
+    <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
       <div className="max-w-screen-xl mx-auto px-4 py-8">
         {/* 교통수단 탭 */}
         <TransportTabs />
@@ -171,7 +171,7 @@ const TrainResults = () => {
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
                     {depStationName}
                   </div>
-                  <span className="material-symbols-rounded text-gray-400">
+                  <span className="material-symbols-outlined text-gray-400">
                     arrow_forward
                   </span>
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -194,7 +194,7 @@ const TrainResults = () => {
             {error && (
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 mb-6">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-rounded text-yellow-600 dark:text-yellow-400">
+                  <span className="material-symbols-outlined text-yellow-600 dark:text-yellow-400">
                     info
                   </span>
                   <p className="text-yellow-700 dark:text-yellow-300">{error}</p>
@@ -253,7 +253,7 @@ const TrainResults = () => {
 
                         {/* 화살표 및 소요시간 */}
                         <div className="text-center">
-                          <span className="material-symbols-rounded text-gray-400">
+                          <span className="material-symbols-outlined text-gray-400">
                             arrow_forward
                           </span>
                           <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
@@ -286,7 +286,7 @@ const TrainResults = () => {
                         className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
                       >
                         <span>예매하기</span>
-                        <span className="material-symbols-rounded text-sm">
+                        <span className="material-symbols-outlined text-sm">
                           open_in_new
                         </span>
                       </button>
@@ -299,7 +299,7 @@ const TrainResults = () => {
             {/* 결과가 없을 때 */}
             {trains.length === 0 && !error && (
               <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-12 text-center">
-                <span className="material-symbols-rounded text-gray-400 text-6xl mb-4 block">
+                <span className="material-symbols-outlined text-gray-400 text-6xl mb-4 block">
                   search_off
                 </span>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
@@ -318,7 +318,7 @@ const TrainResults = () => {
             {trains.length > 0 && (
               <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                  <span className="material-symbols-rounded text-blue-600 dark:text-blue-400">
+                  <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">
                     info
                   </span>
                   예매 안내

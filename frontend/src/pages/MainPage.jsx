@@ -101,7 +101,7 @@ const MainPage = () => {
               <span className="text-[20px]">🏨</span>
               <span className="text-sm font-medium">{t('filter_stays')}</span>
             </button>
-            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2b36] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-[#1392ec]/50 hover:text-[#1392ec] transition-all hover:-translate-y-0.5">
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-[#1e2b36] text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700 hover:border-[#1392ec]/50 hover:text-[#1392ec] transition-all hover:-translate-y-0.5" onClick={() => navigate('/reservations/flights')}>
               <span className="text-[20px]">✈️</span>
               <span className="text-sm font-medium">{t('filter_flights')}</span>
             </button>
@@ -110,7 +110,7 @@ const MainPage = () => {
 
         {/* 2. Quick Actions Grid (Static for visuals, wired slightly) */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-          <div className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+          <div onClick={() => navigate('/reservations/flights')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
             <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
               ✈️
             </div>
@@ -193,12 +193,34 @@ const MainPage = () => {
               ))
             ) : shortforms.length > 0 ? (
               shortforms.map((item) => (
-                <div key={item.id} className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
+                <div key={item.id}
+                  onClick={() => navigate(`/shorts/${item.id}`)}
+                  className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
                   {/* Image */}
                   <img
-                    src={item.thumbnail_url ? (item.thumbnail_url.startsWith('http') ? item.thumbnail_url : `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}${item.thumbnail_url}`) : 'https://via.placeholder.com/300x500?text=No+Image'}
+                    src={(() => {
+                      const thumb = item.thumbnail_url;
+                      if (!thumb) return 'https://via.placeholder.com/300x500?text=No+Image';
+                      if (thumb.startsWith('http')) return thumb;
+
+                      // Handle relative path (ensure it starts with /)
+                      const path = thumb.startsWith('/') ? thumb : `/${thumb}`;
+                      // Handle base URL (ensure it doesn't end with / and remove /api if present for media)
+                      let base = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+                      if (base.endsWith('/api')) {
+                        base = base.replace(/\/api$/, '');
+                      }
+
+                      const finalUrl = `${base}${path}`;
+                      // console.log({ finalUrl });
+                      return finalUrl;
+                    })()}
                     alt={item.title}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
+                    }}
                   />
 
                   {/* Overlay Gradient */}
@@ -216,12 +238,19 @@ const MainPage = () => {
                     <h3 className="text-xl font-bold text-white mb-2 leading-tight line-clamp-2">{item.title}</h3>
                     <div className="flex items-center gap-1 text-white/80 text-sm mb-3">
                       <span>📍</span>
-                      Korea
+                      {item.location || 'Korea'}
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-white font-bold text-sm">{(4 + Math.random()).toFixed(1)}</span>
+                      {/* Stats: Views & Likes */}
+                      <div className="flex items-center gap-3 ml-1">
+                        <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
+                          <span className="material-symbols-outlined text-[16px]">visibility</span>
+                          {item.total_views || 0}
+                        </div>
+                        <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
+                          <span className="material-symbols-outlined text-[16px] text-red-500">favorite</span>
+                          {item.total_likes || 0}
+                        </div>
                       </div>
                       <span className="text-white font-bold text-sm bg-white/20 px-2 py-1 rounded backdrop-blur-sm">View</span>
                     </div>
@@ -237,24 +266,11 @@ const MainPage = () => {
               ))
             ) : (
               // Fallback if no shorts - Static Mock Data matching reference to look good
-              <>
-                <div className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all">
-                  <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=600&auto=format&fit=crop" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Mock 1" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                  <div className="absolute bottom-6 left-6 text-white">
-                    <h3 className="text-2xl font-bold">Busan</h3>
-                    <p className="opacity-80">Sea & City</p>
-                  </div>
-                </div>
-                <div className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all">
-                  <img src="https://images.unsplash.com/photo-1492571350019-22de08371fd3?q=80&w=600&auto=format&fit=crop" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Mock 2" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                  <div className="absolute bottom-6 left-6 text-white">
-                    <h3 className="text-2xl font-bold">Jeju Island</h3>
-                    <p className="opacity-80">Nature Paradise</p>
-                  </div>
-                </div>
-              </>
+              // Empty State
+              <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+                <span className="material-symbols-outlined text-6xl mb-4 text-slate-300 dark:text-slate-600">videocam_off</span>
+                <p className="text-lg font-medium">{t('no_shorts')}</p>
+              </div>
             )}
           </div>
         </section>

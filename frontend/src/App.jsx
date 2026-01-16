@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import MainPage from './pages/MainPage';
 import SearchPage from './pages/SearchPage';
+import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
 import PlaceSearch from './pages/places/PlaceSearch';
 import PlaceDetailPage from './pages/places/PlaceDetailPage';
 import GeoImageUploader from './pages/GeoImageUploader';
@@ -9,6 +10,7 @@ import RoadviewGame from './pages/RoadviewGame';
 import AccommodationMap from './pages/AccommodationMap';
 import ShortsPage from './pages/shorts/ShortsPage';
 import ShortsDetailPage from './pages/shorts/ShortsDetailPage';
+import ShortsUploadPage from './pages/shorts/ShortsUploadPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
 import { PlanList, PlanDetail, PlanCreate, PlanEdit, AIRecommend, AddPlace, EditPlace } from './pages/plans';
@@ -16,6 +18,7 @@ import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import FindAccountPage from './pages/auth/FindAccountPage';
 import MyPage from './pages/mypage/MyPage';
+import SocialCallback from './pages/auth/SocialCallback';
 import Footer from './components/Footer';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -76,12 +79,17 @@ function App() {
   console.log("Current Path:", location.pathname);
   console.log("Show Navbar:", showNavbar);
 
+  // 3. Optimize Sidebar Toggle to prevent Navbar re-renders
+  const handleToggleSidebar = React.useCallback(() => {
+    setIsSidebarOpen(true);
+  }, []);
+
   return (
     <AuthProvider>
       <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] font-sans">
         {showNavbar && (
           <Navbar
-            toggleSidebar={() => setIsSidebarOpen(true)}
+            toggleSidebar={handleToggleSidebar}
             toggleTheme={toggleTheme}
             isDarkMode={isDarkMode}
           />
@@ -90,18 +98,33 @@ function App() {
         <Routes>
           {/* Core Pages */}
           <Route path="/" element={<MainPage />} />
-          <Route path="/search" element={<SearchPage />} />
+          <Route path="/search" element={
+            <ProtectedRoute>
+              <SearchPage />
+            </ProtectedRoute>
+          } />
 
           {/* Auth Pages */}
           <Route path="/login-page" element={<LoginPage />} />
           <Route path="/register-page" element={<SignupPage />} />
           <Route path="/find-account" element={<FindAccountPage />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/social/callback" element={<SocialCallback />} />
 
           {/* Features */}
-          <Route path="/stays" element={<AccommodationMap />} />        {/* Updated path for consistency */}
-          <Route path="/accommodations" element={<AccommodationMap />} /> {/* Legacy support */}
+          <Route path="/stays" element={
+            <ProtectedRoute>
+              <AccommodationMap />
+            </ProtectedRoute>
+          } />        {/* Updated path for consistency */}
+          <Route path="/accommodations" element={
+            <ProtectedRoute>
+              <AccommodationMap />
+            </ProtectedRoute>
+          } /> {/* Legacy support */}
           <Route path="/shorts" element={<ShortsPage />} />
+          <Route path="/shorts/upload" element={<ShortsUploadPage />} />
+          <Route path="/shorts/:id/edit" element={<ShortsUploadPage />} />
           <Route path="/shorts/:id" element={<ShortsDetailPage />} />
 
           {/* Reservation Pages - Flight */}
@@ -121,9 +144,21 @@ function App() {
           <Route path="/reservations/subway" element={<SubwaySearch />} />
           <Route path="/reservations/subway/route" element={<SubwayRoute />} />
 
-          <Route path="/geo-quiz" element={<GeoImageUploader />} />
-          <Route path="/upload" element={<GeoImageUploader />} />     {/* Alias */}
-          <Route path="/game" element={<RoadviewGame />} />
+          <Route path="/geo-quiz" element={
+            <ProtectedRoute>
+              <GeoImageUploader />
+            </ProtectedRoute>
+          } />
+          <Route path="/upload" element={
+            <ProtectedRoute>
+              <GeoImageUploader />
+            </ProtectedRoute>
+          } />     {/* Alias */}
+          <Route path="/game" element={
+            <ProtectedRoute>
+              <RoadviewGame />
+            </ProtectedRoute>
+          } />
           {/* Place Pages */}
           <Route path="/places/search" element={<PlaceSearch />} />
           <Route path="/places/detail" element={<PlaceDetailPage />} />

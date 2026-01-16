@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import LocalAuthModal from '../pages/places/LocalAuthModal';
 
 const Sidebar = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const { isAuthenticated } = useAuth();
+    const [isLocalAuthModalOpen, setIsLocalAuthModalOpen] = useState(false);
 
     const menuItems = [
         { label: `🏠 ${t('nav_home')}`, path: '/' },
@@ -16,19 +20,30 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: `🗓️ 여행 계획`, path: '/plans' },
         { label: `🥘 ${t('nav_column')}`, path: null },
         { label: `🔥 ${t('nav_shorts')}`, path: '/shorts' },
-        { label: `✈️ ${t('nav_ticket')}`, path: null },
+        { label: `✈️ ${t('nav_ticket')}`, path: '/reservations/flights' },
     ];
 
     const bottomItems = [
         { label: `❤️ ${t('nav_likes')}`, path: null },
+        { label: `📍 ${t('nav_local_auth') || '현지인 인증'}`, action: 'local_auth' },
         { label: `⚙️ ${t('nav_settings')}`, path: null },
         { label: `📞 ${t('nav_support')}`, path: null },
         { label: `${t('nav_version')} v1.0`, path: null },
     ];
 
-    const handleNavigation = (path) => {
-        if (path) {
-            navigate(path);
+    const handleNavigation = (item) => {
+        if (item.action === 'local_auth') {
+            onClose(); // Close sidebar first
+            if (!isAuthenticated) {
+                navigate('/login-page');
+                return;
+            }
+            setIsLocalAuthModalOpen(true);
+            return;
+        }
+
+        if (item.path) {
+            navigate(item.path);
         }
         onClose();
     };
@@ -62,7 +77,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         {menuItems.map((item, index) => (
                             <li key={index}>
                                 <button
-                                    onClick={() => handleNavigation(item.path)}
+                                    onClick={() => handleNavigation(item)}
                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-[#1392ec] transition-all font-medium"
                                 >
                                     <span>{item.label}</span>
@@ -77,7 +92,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         {bottomItems.map((item, index) => (
                             <li key={index}>
                                 <button
-                                    onClick={() => handleNavigation(item.path)}
+                                    onClick={() => handleNavigation(item)}
                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all font-medium text-sm"
                                 >
                                     <span>{item.label}</span>
@@ -92,6 +107,12 @@ const Sidebar = ({ isOpen, onClose }) => {
                     © 2026 Tripko Platform
                 </div>
             </aside>
+
+            {/* Local Auth Modal */}
+            <LocalAuthModal
+                isOpen={isLocalAuthModalOpen}
+                onClose={() => setIsLocalAuthModalOpen(false)}
+            />
         </>
     );
 };

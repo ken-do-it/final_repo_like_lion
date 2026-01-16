@@ -4,9 +4,13 @@ requests==2.32.5
 python-dotenv
 prometheus-fastapi-instrumentator
 
-# AI Translation specific
-transformers
-torch
-sentencepiece
+# AI Translation specific (CPU Optimized)
+# [최적화] CPU 버전의 PyTorch 다운로드 경로 지정
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# CPU 전용 버전 명시 (버전 뒤에 +cpu 필수)
+torch==2.2.2+cpu
+transformers==4.44.2
+sentencepiece==0.2.0
 huggingface-hub
 openai>=1.0.0

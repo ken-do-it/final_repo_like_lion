@@ -47,7 +47,7 @@ services:
   fastapi-ai-translation:
     build:
       context: ./fastapi_ai_translation
-      dockerfile: Dockerfile
+      dockerfile: ${AI_DOCKERFILE:-Dockerfile}
     command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
     volumes:
       - ./fastapi_ai_translation:/app
@@ -68,8 +68,10 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_SEARCH_API_URL: ${VITE_SEARCH_API_URL}
         VITE_PLACES_API_URL: ${VITE_PLACES_API_URL}
+        # [3] 카카오 JS 키
+        VITE_KAKAO_JS_KEY: ${VITE_KAKAO_JS_KEY}
     ports:
-      - "80:80"
+      - "5173:80"
     depends_on:
       - django
       - fastapi
@@ -82,7 +84,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
     volumes:
       - ./fastapi_places:/app
-      - ./django_app/media:/app/django_app/media  # Django media 폴더 공유
+      - ./django_app/media:/app/django_app/media # Django media 폴더 공유
     ports:
       - "8002:8002"
     depends_on:

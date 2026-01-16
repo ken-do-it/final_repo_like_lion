@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { searchAxios } from '../api/axios';
 
 
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const query = searchParams.get('query');
 
   const [results, setResults] = useState(null);
@@ -39,8 +40,11 @@ const SearchPage = () => {
     if (type === 'All') {
       return (
         results.places?.length > 0 ||
-        results.reviews?.length > 0 ||
+        results.shorts?.length > 0 ||
         results.plans?.length > 0 ||
+        results.reviews?.length > 0 ||
+        results.flights?.length > 0 ||
+        results.transports?.length > 0 ||
         results.others?.length > 0
       );
     }
@@ -61,7 +65,7 @@ const SearchPage = () => {
       <div className="sticky top-16 z-40 w-full border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#101a22]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar">
-            {['All', 'Places', 'Plans', 'Reviews', 'Others'].map((tab) => (
+            {['All', 'Places', 'Plans', 'Shorts', 'Reviews', 'Others'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -100,7 +104,7 @@ const SearchPage = () => {
                 </div>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {results.places.map((place) => (
-                    <div key={place.id} className="group relative flex flex-col gap-3 rounded-2xl bg-white dark:bg-[#1e2b36] p-3 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md border border-gray-100 dark:border-gray-700">
+                    <div key={place.id} onClick={() => navigate(`/places/${place.id}`)} className="group relative flex flex-col gap-3 rounded-2xl bg-white dark:bg-[#1e2b36] p-3 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md border border-gray-100 dark:border-gray-700 cursor-pointer">
                       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-200 dark:bg-gray-700">
                         <div className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer text-black">
                           🔖
@@ -127,6 +131,42 @@ const SearchPage = () => {
               </section>
             )}
 
+            {/* Shorts Section */}
+            {(activeTab === 'All' || activeTab === 'Shorts') && results.shorts?.length > 0 && (
+              <section className="flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold tracking-tight">Shorts</h2>
+                  {activeTab === 'All' && <button onClick={() => setActiveTab('Shorts')} className="text-sm font-bold text-[#1392ec]">See all</button>}
+                </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {results.shorts.map((short) => (
+                    <div
+                      key={short.id}
+                      onClick={() => navigate(`/shorts/${short.id}`)}
+                      className="group relative flex flex-col gap-3 rounded-2xl bg-white dark:bg-[#1e2b36] p-3 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md border border-gray-100 dark:border-gray-700 cursor-pointer"
+                    >
+                      <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-gray-200 dark:bg-gray-700">
+                        {short.thumbnail_url ? (
+                          <img src={short.thumbnail_url} alt={short.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full bg-gray-300 flex items-center justify-center text-gray-500">
+                            Preview
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+                          <span className="material-symbols-outlined text-white text-4xl shadow-lg">play_circle</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1 px-1 pb-1">
+                        <h3 className="line-clamp-1 text-lg font-bold group-hover:text-[#1392ec]">{short.title || 'Untitled'}</h3>
+                        <p className="text-sm text-gray-500 line-clamp-2">{short.content || short.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Itineraries Section */}
             {(activeTab === 'All' || activeTab === 'Plans') && results.plans?.length > 0 && (
               <section className="flex flex-col gap-5">
@@ -135,7 +175,7 @@ const SearchPage = () => {
                 </div>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {results.plans.map((plan) => (
-                    <div key={plan.id} className="group flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1e2b36] shadow-sm transition-all hover:shadow-md border border-gray-100 dark:border-gray-700 sm:flex-row">
+                    <div key={plan.id} onClick={() => navigate(`/plans/${plan.id}`)} className="group flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1e2b36] shadow-sm transition-all hover:shadow-md border border-gray-100 dark:border-gray-700 sm:flex-row cursor-pointer">
                       <div className="h-48 w-full shrink-0 overflow-hidden bg-gray-200 dark:bg-gray-700 sm:h-auto sm:w-2/5 relative">
                         <div className="absolute inset-0 flex items-center justify-center text-gray-400">Map/Image</div>
                       </div>
@@ -169,6 +209,54 @@ const SearchPage = () => {
                           </button>
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Flights Section */}
+            {(activeTab === 'All' || activeTab === 'Others') && results.flights?.length > 0 && (
+              <section className="flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold tracking-tight">Flights</h2>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {results.flights.map((flight) => (
+                    <div
+                      key={flight.id}
+                      onClick={() => navigate('/reservations/flights')}
+                      className="cursor-pointer rounded-xl bg-white dark:bg-[#1e2b36] p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">✈️</span>
+                        <h3 className="font-bold">Flight Information</h3>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{flight.content || 'Flight details'}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Transport Section */}
+            {(activeTab === 'All' || activeTab === 'Others') && results.transports?.length > 0 && (
+              <section className="flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold tracking-tight">Transport</h2>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {results.transports.map((transport) => (
+                    <div
+                      key={transport.id}
+                      onClick={() => navigate('/reservations/trains')}
+                      className="cursor-pointer rounded-xl bg-white dark:bg-[#1e2b36] p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">🚆</span>
+                        <h3 className="font-bold">Transport Information</h3>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{transport.content || 'Transport details'}</p>
                     </div>
                   ))}
                 </div>
