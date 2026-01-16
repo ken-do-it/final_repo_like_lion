@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -190,9 +191,20 @@
             transition: all 0.3s ease;
         }
 
-        .strength-weak { background: #EF4444; width: 33%; }
-        .strength-medium { background: #F59E0B; width: 66%; }
-        .strength-strong { background: #10B981; width: 100%; }
+        .strength-weak {
+            background: #EF4444;
+            width: 33%;
+        }
+
+        .strength-medium {
+            background: #F59E0B;
+            width: 66%;
+        }
+
+        .strength-strong {
+            background: #10B981;
+            width: 100%;
+        }
 
         .validation-message {
             margin-top: 4px;
@@ -237,6 +249,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="logo">
@@ -320,7 +333,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:8000/api/users/api';
+        const API_BASE_URL = 'http://localhost:8000/api/users';
 
         // Debounce 함수
         function debounce(func, wait) {
@@ -539,4 +552,5 @@
         }
     </script>
 </body>
+
 </html>

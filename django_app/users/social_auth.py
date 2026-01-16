@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from allauth.socialaccount.models import SocialAccount
 from .utils import generate_jwt_token, get_client_ip, get_device_info, generate_device_fingerprint
 from .models import LoginSession, LoginHistory, SavedId
+import os
 
 User = get_user_model()
 
@@ -83,30 +84,33 @@ class SocialLoginCallbackView(APIView):
             success=True
         )
 
-        # HTML 페이지로 리다이렉트하면서 토큰 전달
-        # JavaScript로 localStorage에 저장하고 메인 페이지로 이동
-        return Response(f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Social Login Success</title>
-        </head>
-        <body>
-            <script>
-                localStorage.setItem('access_token', '{access_token}');
-                localStorage.setItem('refresh_token', '{refresh_token}');
-                localStorage.setItem('user', JSON.stringify({str({
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email,
-                    'nickname': user.nickname,
-                    'social_provider': user.social_provider
-                })}));
-                window.location.href = '/api/users/';
-            </script>
-        </body>
-        </html>
-        """, status=status.HTTP_200_OK)
+        # 프론트엔드 콜백 URL로 리다이렉트 (토큰 전달)
+        import urllib.parse
+        import json
+
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+        target_url = f"{frontend_url}/social/callback"
+
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'nickname': user.nickname,
+            'social_provider': user.social_provider
+        }
+        
+        params = {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'user': json.dumps(user_data)
+        }
+        
+        query_string = urllib.parse.urlencode(params)
+        redirect_url = f"{target_url}?{query_string}"
+
+        response = redirect(redirect_url)
+        response['Cache-Control'] = 'no-store'
+        return response
 
 
 class SocialLoginAPIView(APIView):

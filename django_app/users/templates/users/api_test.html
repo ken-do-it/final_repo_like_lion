@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -93,10 +94,25 @@
             margin-right: 8px;
         }
 
-        .method.post { background: #49cc90; color: white; }
-        .method.get { background: #61affe; color: white; }
-        .method.put { background: #fca130; color: white; }
-        .method.delete { background: #f93e3e; color: white; }
+        .method.post {
+            background: #49cc90;
+            color: white;
+        }
+
+        .method.get {
+            background: #61affe;
+            color: white;
+        }
+
+        .method.put {
+            background: #fca130;
+            color: white;
+        }
+
+        .method.delete {
+            background: #f93e3e;
+            color: white;
+        }
 
         .endpoint-path {
             font-size: 12px;
@@ -200,8 +216,15 @@
             margin-bottom: 12px;
         }
 
-        .status-success { background: #49cc90; color: white; }
-        .status-error { background: #f93e3e; color: white; }
+        .status-success {
+            background: #49cc90;
+            color: white;
+        }
+
+        .status-error {
+            background: #f93e3e;
+            color: white;
+        }
 
         .response-body {
             background: #1e1e1e;
@@ -265,6 +288,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -290,7 +314,8 @@
                         <div><span class="method post">POST</span> <span class="endpoint-path">Logout</span></div>
                     </li>
                     <li class="endpoint-item" onclick="selectEndpoint('refresh')">
-                        <div><span class="method post">POST</span> <span class="endpoint-path">Refresh Token</span></div>
+                        <div><span class="method post">POST</span> <span class="endpoint-path">Refresh Token</span>
+                        </div>
                     </li>
                     <li class="endpoint-item" onclick="selectEndpoint('profile')">
                         <div><span class="method get">GET</span> <span class="endpoint-path">Profile</span></div>
@@ -323,7 +348,8 @@
 
                     <div class="input-group">
                         <label>URL</label>
-                        <input type="text" id="url" placeholder="http://localhost:8000/api/users/api/..." value="http://localhost:8000/api/users/api/main/">
+                        <input type="text" id="url" placeholder="http://localhost:8000/api/users/..."
+                            value="http://localhost:8000/api/users/main/">
                     </div>
 
                     <div class="input-group">
@@ -358,7 +384,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:8000/api/users/api';
+        const API_BASE_URL = 'http://localhost:8000/api/users';
 
         // 인증 상태 업데이트
         function updateAuthStatus() {
@@ -550,4 +576,5 @@
         updateAuthStatus();
     </script>
 </body>
+
 </html>
