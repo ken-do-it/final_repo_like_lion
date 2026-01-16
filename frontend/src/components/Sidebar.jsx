@@ -12,7 +12,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: `🏨 ${t('nav_stays')}`, path: '/stays' },
         { label: `📸 ${t('nav_geoquiz')}`, path: '/geo-quiz' },
         { label: `🎮 ${t('nav_game')}`, path: '/game' },
-        { label: `📅 ${t('nav_ai_plan')}`, path: null }, // Placeholder
+        { label: `📅 ${t('nav_ai_plan')}`, path: null },
+        { label: `🗓️ 여행 계획`, path: '/plans' },
         { label: `🥘 ${t('nav_column')}`, path: null },
         { label: `🔥 ${t('nav_shorts')}`, path: '/shorts' },
         { label: `✈️ ${t('nav_ticket')}`, path: null },

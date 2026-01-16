@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
+import { useAuth } from '../../context/AuthContext';
 
 const PlanList = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     fetchPlans();
@@ -77,13 +79,25 @@ const PlanList = () => {
         </div>
         <div className="flex gap-4">
           <button
-            onClick={() => navigate('/plans/ai-recommend')}
+            onClick={() => {
+              if (!isAuthenticated) {
+                alert('로그인이 필요한 서비스입니다.');
+                return;
+              }
+              navigate('/plans/ai-recommend');
+            }}
             className="h-12 px-6 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 hover:-translate-y-0.5 transition-all"
           >
             AI 추천받기
           </button>
           <button
-            onClick={() => navigate('/plans/create')}
+            onClick={() => {
+              if (!isAuthenticated) {
+                alert('로그인이 필요한 서비스입니다.');
+                return;
+              }
+              navigate('/plans/create');
+            }}
             className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all"
           >
             새 계획 만들기
@@ -92,7 +106,12 @@ const PlanList = () => {
       </div>
 
       {/* Plans Grid */}
-      {plans.length === 0 ? (
+      {/* 비공개 일정은 본인만 볼 수 있도록 필터링 */}
+      {(() => {
+        const filteredPlans = plans.filter(plan =>
+          plan.is_public || (isAuthenticated && user && plan.user === user.id)
+        );
+        return filteredPlans.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-gray-400 dark:text-gray-600 mb-6">
             <svg className="w-24 h-24 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +120,13 @@ const PlanList = () => {
             <p className="text-lg text-gray-600 dark:text-gray-400">아직 여행 계획이 없습니다</p>
           </div>
           <button
-            onClick={() => navigate('/plans/create')}
+            onClick={() => {
+              if (!isAuthenticated) {
+                alert('로그인이 필요한 서비스입니다.');
+                return;
+              }
+              navigate('/plans/create');
+            }}
             className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all"
           >
             첫 번째 여행 계획 만들기
@@ -109,7 +134,7 @@ const PlanList = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plans.map((plan) => (
+          {filteredPlans.map((plan) => (
             <Link
               key={plan.id}
               to={`/plans/${plan.id}`}
@@ -125,9 +150,13 @@ const PlanList = () => {
                   }`}>
                     {plan.plan_type === 'ai_recommended' ? 'AI 추천' : '직접 작성'}
                   </span>
-                  {plan.is_public && (
+                  {plan.is_public ? (
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                       공개
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                      비공개
                     </span>
                   )}
                 </div>
@@ -157,30 +186,33 @@ const PlanList = () => {
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      navigate(`/plans/${plan.id}/edit`);
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  >
-                    수정
-                  </button>
-                  <button
-                    onClick={(e) => handleDeletePlan(plan.id, e)}
-                    className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                  >
-                    삭제
-                  </button>
-                </div>
+                {/* Actions - 본인 일정일 때만 표시 */}
+                {isAuthenticated && user && plan.user === user.id && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(`/plans/${plan.id}/edit`);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={(e) => handleDeletePlan(plan.id, e)}
+                      className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                )}
               </div>
             </Link>
           ))}
         </div>
-      )}
+      );
+      })()}
     </div>
   );
 };
