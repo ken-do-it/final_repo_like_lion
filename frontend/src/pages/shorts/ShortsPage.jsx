@@ -145,7 +145,16 @@ function ShortsPage({ onShortClick, embed = false }) {
                                 }
                             }}
                         >
-                            <div className="shorts-thumb" style={{ backgroundImage: `url(${s.thumb})` }}>
+                            <div className="shorts-thumb">
+                                <img
+                                    src={s.thumb}
+                                    alt={s.title}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
+                                    }}
+                                />
                                 <span className="duration-badge">{s.duration || t('duration_missing')}</span>
                             </div>
                             <div className="shorts-body">

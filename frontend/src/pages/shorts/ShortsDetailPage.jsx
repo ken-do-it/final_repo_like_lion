@@ -125,6 +125,10 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
+    // Like State
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+
 
 
     const { user, isAuthenticated } = useAuth()
@@ -229,12 +233,16 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                 video: item.video_url,
                 lang: item.source_lang || 'N/A',
                 lang: item.source_lang || 'N/A',
+                location: item.location || '', // Add location field
                 ownerId: item.user,
                 // Add Creator Info
                 creatorName: item.nickname || `User ${item.user}`,
                 creatorAvatar: item.profile_image_url,
+                totalComments: item.total_comments,
             })
-
+            // Initialize Like State
+            setLiked(item.is_liked)
+            setLikeCount(item.total_likes)
 
         } catch (err) {
             setError(err.response?.data?.detail || err.message)
@@ -242,6 +250,39 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
             setLoading(false)
         }
     }
+
+    // Like Handlers
+
+
+    const handleLikeToggle = async () => {
+        if (!isAuthenticated) {
+            alert("Please login to like.");
+            return;
+        }
+
+        // Optimistic UI Update
+        const prevLiked = liked;
+        const prevCount = likeCount;
+
+        setLiked(!prevLiked);
+        setLikeCount(prevLiked ? prevCount - 1 : prevCount + 1);
+
+        try {
+            if (prevLiked) {
+                await axiosInstance.delete(`/shortforms/${id}/unlike/`);
+            } else {
+                await axiosInstance.post(`/shortforms/${id}/like/`);
+            }
+        } catch (error) {
+            console.error("Like toggle failed:", error);
+            // Revert on error
+            setLiked(prevLiked);
+            setLikeCount(prevCount);
+        }
+    };
+
+
+
 
     useEffect(() => {
         if (id) {
@@ -318,7 +359,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                         <h1 className="text-xl font-bold leading-tight">{shortform.title}</h1>
 
                         <button onClick={handleBack} className="btn-close">
-                            {t.close}
+                            <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>
 
@@ -337,7 +378,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                             <h3>{shortform.creatorName}</h3>
                             <p>
                                 <span className="material-symbols-outlined text-xs">location_on</span>
-                                {mockData.creator.location} · {mockData.creator.time}
+                                {shortform.location || mockData.creator.location} · {mockData.creator.time}
                             </p>
                         </div>
                         <button className="btn-follow">{t.follow}</button>
@@ -371,11 +412,21 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
 
                     {/* Stats Row */}
                     <div className="stats-row">
-                        <div className="stat-item">
-                            <span className="material-symbols-outlined">favorite</span> 1.2k
+                        <div className="stat-item" onClick={handleLikeToggle}>
+                            <button
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors group ${liked ? 'bg-red-50 dark:bg-red-900/30 text-red-500' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                            >
+                                <span
+                                    className={`text-2xl transition-colors ${liked ? 'text-red-500' : 'group-hover:text-red-500'}`}
+                                    style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
+                                >
+                                    ♥
+                                </span>
+                            </button>
+                            <span className={`font-medium ml-2 ${liked ? 'text-red-500' : ''}`}>{likeCount}</span>
                         </div>
                         <div className="stat-item">
-                            <span className="material-symbols-outlined">chat_bubble</span> 45
+                            <span className="material-symbols-outlined">chat_bubble</span> {shortform.totalComments || 0}
                         </div>
                         <div className="stat-item">
                             <span className="material-symbols-outlined">share</span> {t.share}
