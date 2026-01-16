@@ -42,6 +42,7 @@ class ShortformSerializer(serializers.ModelSerializer):
             'video_file',  # write-only
             'title_translated',
             'content_translated',
+            'location_translated',
             'nickname', 
             'profile_image_url',
         ]

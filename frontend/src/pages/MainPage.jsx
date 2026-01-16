@@ -8,6 +8,25 @@ import { API_LANG_CODES } from '../constants/translations';
 
 const MainPage = () => {
   const navigate = useNavigate();
+
+  // Helper to safely get thumbnail URL
+  const getThumbnailUrl = React.useCallback((thumb) => {
+    if (!thumb) return 'https://via.placeholder.com/300x500?text=No+Image';
+    if (thumb.startsWith('http')) return thumb;
+
+    // Handle relative path (ensure it starts with /)
+    const path = thumb.startsWith('/') ? thumb : `/${thumb}`;
+    // Handle base URL (remove trailing slash and /api if present)
+    let base = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000');
+    if (base.endsWith('/')) {
+      base = base.slice(0, -1);
+    }
+    if (base.endsWith('/api')) {
+      base = base.slice(0, -4);
+    }
+
+    return `${base}${path}`;
+  }, []);
   const { t, language } = useLanguage();
   const [shortforms, setShortforms] = useState([]);
   const [loadingShorts, setLoadingShorts] = useState(true);
@@ -47,6 +66,80 @@ const MainPage = () => {
 
     fetchShortforms();
   }, [language]);
+
+  const renderShortformsGrid = () => {
+    if (loadingShorts) {
+      return [1, 2, 3, 4].map(n => (
+        <div key={n} className="h-[400px] w-full rounded-2xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
+      ));
+    }
+
+    if (shortforms.length === 0) {
+      return (
+        <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+          <span className="material-symbols-outlined text-6xl mb-4 text-slate-300 dark:text-slate-600">videocam_off</span>
+          <p className="text-lg font-medium">{t('no_shorts')}</p>
+        </div>
+      );
+    }
+
+    return shortforms.map((item) => (
+      <div key={item.id}
+        onClick={() => navigate(`/shorts/${item.id}`)}
+        className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
+        {/* Image */}
+        <img
+          src={getThumbnailUrl(item.thumbnail_url)}
+          alt={item.title}
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
+          }}
+        />
+
+        {/* Overlay Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+
+        {/* Top Right Heart */}
+        <div className="absolute top-4 right-4">
+          <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
+            ♥
+          </button>
+        </div>
+
+        {/* Bottom Content */}
+        <div className="absolute bottom-0 left-0 p-6 w-full">
+          <h3 className="text-xl font-bold text-white mb-2 leading-tight line-clamp-2">{item.title}</h3>
+          <div className="flex items-center gap-1 text-white/80 text-sm mb-3">
+            <span>📍</span>
+            {item.location_translated || item.location || 'Korea'}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 ml-1">
+              <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
+                <span className="material-symbols-outlined text-[16px]">visibility</span>
+                {item.total_views || 0}
+              </div>
+              <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
+                <span className="material-symbols-outlined text-[16px] text-red-500">favorite</span>
+                {item.total_likes || 0}
+              </div>
+            </div>
+            <span className="text-white font-bold text-sm bg-white/20 px-2 py-1 rounded backdrop-blur-sm">View</span>
+          </div>
+
+          {/* Play Icon (Optional Hover) */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+            <div className="w-14 h-14 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
+              <span className="text-white text-2xl ml-1">▶</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    ));
+  };
 
   return (
     <div className="bg-[#f6f7f8] dark:bg-[#101a22] min-h-screen text-slate-900 dark:text-white font-sans transition-colors duration-300">
@@ -187,89 +280,8 @@ const MainPage = () => {
 
           {/* Grid of Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {loadingShorts ? (
-              [1, 2, 3, 4].map(n => (
-                <div key={n} className="h-[400px] w-full rounded-2xl bg-gray-200 dark:bg-gray-800 animate-pulse"></div>
-              ))
-            ) : shortforms.length > 0 ? (
-              shortforms.map((item) => (
-                <div key={item.id}
-                  onClick={() => navigate(`/shorts/${item.id}`)}
-                  className="group relative h-[400px] w-full rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
-                  {/* Image */}
-                  <img
-                    src={(() => {
-                      const thumb = item.thumbnail_url;
-                      if (!thumb) return 'https://via.placeholder.com/300x500?text=No+Image';
-                      if (thumb.startsWith('http')) return thumb;
-
-                      // Handle relative path (ensure it starts with /)
-                      const path = thumb.startsWith('/') ? thumb : `/${thumb}`;
-                      // Handle base URL (ensure it doesn't end with / and remove /api if present for media)
-                      let base = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
-                      if (base.endsWith('/api')) {
-                        base = base.replace(/\/api$/, '');
-                      }
-
-                      const finalUrl = `${base}${path}`;
-                      // console.log({ finalUrl });
-                      return finalUrl;
-                    })()}
-                    alt={item.title}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
-                    }}
-                  />
-
-                  {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
-
-                  {/* Top Right Heart */}
-                  <div className="absolute top-4 right-4">
-                    <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-red-500 transition-colors">
-                      ♥
-                    </button>
-                  </div>
-
-                  {/* Bottom Content */}
-                  <div className="absolute bottom-0 left-0 p-6 w-full">
-                    <h3 className="text-xl font-bold text-white mb-2 leading-tight line-clamp-2">{item.title}</h3>
-                    <div className="flex items-center gap-1 text-white/80 text-sm mb-3">
-                      <span>📍</span>
-                      {item.location_translated || item.location || 'Korea'}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 ml-1">
-                        <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
-                          <span className="material-symbols-outlined text-[16px]">visibility</span>
-                          {item.total_views || 0}
-                        </div>
-                        <div className="flex items-center gap-1 text-white/90 text-xs font-medium">
-                          <span className="material-symbols-outlined text-[16px] text-red-500">favorite</span>
-                          {item.total_likes || 0}
-                        </div>
-                      </div>
-                      <span className="text-white font-bold text-sm bg-white/20 px-2 py-1 rounded backdrop-blur-sm">View</span>
-                    </div>
-
-                    {/* Play Icon (Optional Hover) */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                      <div className="w-14 h-14 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
-                        <span className="text-white text-2xl ml-1">▶</span>
-                      </div>
-                    </div>
-                  </div>
-                  ))
-                  ) : (
-                  <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
-                    <span className="material-symbols-outlined text-6xl mb-4 text-slate-300 dark:text-slate-600">videocam_off</span>
-                    <p className="text-lg font-medium">{t('no_shorts')}</p>
-                  </div>
-            )}
-                </div>
+            {renderShortformsGrid()}
+          </div>
         </section>
       </main>
     </div>

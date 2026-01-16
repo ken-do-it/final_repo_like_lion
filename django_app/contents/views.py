@@ -208,12 +208,14 @@ class ShortformViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during retrieve")
         
-        # Navigation: Prev/Next ID for the same author
+        # Navigation: Prev/Next ID (Global scope, ordered by ID/Time)
         instance = self.get_object()
-        # Previous: ID smaller than current, same user, order by ID desc (closest smaller)
-        prev_obj = Shortform.objects.filter(user=instance.user, id__lt=instance.id).order_by('-id').first()
-        # Next: ID larger than current, same user, order by ID asc (closest larger)
-        next_obj = Shortform.objects.filter(user=instance.user, id__gt=instance.id).order_by('id').first()
+        
+        # Previous (Older): ID smaller than current, order by ID desc (closest smaller)
+        prev_obj = Shortform.objects.filter(id__lt=instance.id).order_by('-id').first()
+        
+        # Next (Newer): ID larger than current, order by ID asc (closest larger)
+        next_obj = Shortform.objects.filter(id__gt=instance.id).order_by('id').first()
 
         resp.data['prev_id'] = prev_obj.id if prev_obj else None
         resp.data['next_id'] = next_obj.id if next_obj else None
