@@ -240,16 +240,8 @@ const FlightSearch = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
           {/* 메인 콘텐츠 영역 */}
           <main className="lg:col-span-8 space-y-6">
-            {/* 실시간 상태 표시 */}
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-mint opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-mint"></span>
-              </span>
-            </div>
-
             {/* 검색 폼 카드 */}
-            <SearchCard>
+            <SearchCard title="항공권 검색">
               <form onSubmit={handleSearch} className="space-y-4">
                 {/* 편도/왕복 선택 */}
                 <div className="flex items-center gap-2">

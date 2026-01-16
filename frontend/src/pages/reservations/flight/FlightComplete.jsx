@@ -161,7 +161,7 @@ const FlightComplete = () => {
         {/* 버튼 영역 */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() => navigate('/my/reservations')}
+            onClick={() => navigate('/mypage')}
             className="bg-primary text-white py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
           >
             내 예약 보기

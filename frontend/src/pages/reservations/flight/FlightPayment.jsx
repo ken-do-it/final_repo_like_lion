@@ -21,14 +21,34 @@ const FlightPayment = () => {
   const navigate = useNavigate();
 
   /**
-   * 이전 페이지(FlightSeat)에서 전달받은 데이터
+   * 이전 페이지(FlightSeat)에서 전달받은 데이터 또는 localStorage에서 복원
    * flight - 선택한 항공편 정보
    * searchConditions - 검색 조건 (출발지, 도착지, 날짜, 승객수)
    * selectedClass - 선택한 좌석 등급 (economy 또는 business)
    * passengers - 승객 정보 배열
    * totalPrice - 총 결제 금액
    */
-  const { flight, searchConditions, selectedClass, passengers, totalPrice } = location.state || {};
+  const [reservationData, setReservationData] = useState(() => {
+    // 초기값 설정: location.state가 있으면 사용
+    if (location.state?.flight) {
+      return location.state;
+    }
+    // 없으면 localStorage에서 복원
+    try {
+      const savedData = localStorage.getItem('flightPaymentData');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        // 복원 성공 시 localStorage 클리어
+        localStorage.removeItem('flightPaymentData');
+        return parsed;
+      }
+    } catch (e) {
+      console.error('결제 정보 복원 실패:', e);
+    }
+    return {};
+  });
+
+  const { flight, searchConditions, selectedClass, passengers, totalPrice } = reservationData;
 
   /**
    * 결제 진행 상태
@@ -170,7 +190,26 @@ const FlightPayment = () => {
     } catch (err) {
       console.error('결제 생성 실패:', err);
       if (err.response?.status === 401) {
-        setError('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
+        // 결제 정보를 localStorage에 저장
+        try {
+          const dataToSave = {
+            flight,
+            searchConditions,
+            selectedClass,
+            passengers,
+            totalPrice
+          };
+          localStorage.setItem('flightPaymentData', JSON.stringify(dataToSave));
+          console.log('결제 정보 저장 완료');
+        } catch (e) {
+          console.error('결제 정보 저장 실패:', e);
+        }
+
+        // 로그인 페이지로 리다이렉트 (현재 경로를 redirect 파라미터로 전달)
+        setPaymentStatus('idle');
+        alert('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
+        window.location.href = `/login-page?redirect=${encodeURIComponent('/reservations/flights/payment')}`;
+        return;
       } else {
         setError('결제 생성에 실패했습니다. 다시 시도해주세요.');
       }
