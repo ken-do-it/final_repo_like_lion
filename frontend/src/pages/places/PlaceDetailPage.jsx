@@ -62,6 +62,7 @@ const PlaceDetailPage = () => {
     }, [id, apiId, provider, nameData]);
 
     const mapRef = useRef(null);
+    const reviewSectionRef = useRef(null);
 
     // Kakao Map Logic
     useEffect(() => {
@@ -151,6 +152,11 @@ const PlaceDetailPage = () => {
             if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
                 navigate('/login-page');
             }
+            return;
+        }
+
+        if (action === "리뷰 작성") {
+            reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
             return;
         }
 
@@ -288,7 +294,7 @@ const PlaceDetailPage = () => {
                         </div>
 
                         {/* Review Section */}
-                        <div className="mt-8">
+                        <div className="mt-8" ref={reviewSectionRef}>
                             <PlaceReviewSection placeId={place.id} />
                         </div>
 
