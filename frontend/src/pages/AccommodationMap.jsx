@@ -45,6 +45,7 @@ const AccommodationMap = () => {
   const [error, setError] = useState(null);
   const [selectedType, setSelectedType] = useState('');
   const [searchStatus, setSearchStatus] = useState('Click on the map to search');
+  const [searchKeyword, setSearchKeyword] = useState(''); // [1] Add searchKeyword state
 
   const mapRef = useRef(null);
 
@@ -106,6 +107,34 @@ const AccommodationMap = () => {
     await fetchAccommodations(lat, lng);
   }, [selectedType]);
 
+  // [2] Handle Keyword Search (Geocoding)
+  const handleKeywordSearch = async () => {
+    if (!searchKeyword.trim()) return;
+    if (!window.google || !window.google.maps) {
+      alert("Google Maps not loaded yet.");
+      return;
+    }
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address: searchKeyword }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const location = results[0].geometry.location;
+        const lat = location.lat();
+        const lng = location.lng();
+
+        // Update map center and search
+        setClickedPosition({ lat, lng });
+        if (mapRef.current) {
+          mapRef.current.panTo({ lat, lng });
+          mapRef.current.setZoom(14);
+        }
+        fetchAccommodations(lat, lng);
+      } else {
+        alert("Location not found: " + status);
+      }
+    });
+  };
+
   useEffect(() => {
     if (clickedPosition) {
       fetchAccommodations(clickedPosition.lat, clickedPosition.lng);
@@ -147,21 +176,42 @@ const AccommodationMap = () => {
             <p className="text-sm text-gray-500 dark:text-gray-400">{searchStatus}</p>
           </div>
 
-          {/* Filter Bar */}
-          <div className="flex items-center gap-3 bg-white dark:bg-[#1e2b36] px-4 py-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <label className="text-sm font-bold text-gray-700 dark:text-gray-200">Type:</label>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="bg-transparent border-none text-sm font-medium focus:ring-0 text-[#111111] dark:text-[#f1f5f9] cursor-pointer"
-            >
-              <option value="">All Stays</option>
-              <option value="호텔">Hotel</option>
-              <option value="모텔">Motel</option>
-              <option value="펜션">Pension</option>
-              <option value="게스트하우스">Guesthouse</option>
-              <option value="리조트">Resort</option>
-            </select>
+          <div className="flex flex-wrap items-center justify-center gap-3 w-full max-w-2xl">
+            {/* Search Input */}
+            <div className="flex items-center gap-2 bg-white dark:bg-[#1e2b36] px-4 py-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1 min-w-[200px]">
+              <span className="material-symbols-outlined text-gray-400">search</span>
+              <input
+                type="text"
+                placeholder="Search location (e.g. Gangnam)"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleKeywordSearch()}
+                className="bg-transparent border-none text-sm font-medium focus:ring-0 text-[#111111] dark:text-[#f1f5f9] flex-1 w-full"
+              />
+              <button
+                onClick={handleKeywordSearch}
+                className="text-[#1392ec] font-bold text-sm hover:underline"
+              >
+                Search
+              </button>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="flex items-center gap-3 bg-white dark:bg-[#1e2b36] px-4 py-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">Type:</label>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="bg-transparent border-none text-sm font-medium focus:ring-0 text-[#111111] dark:text-[#f1f5f9] cursor-pointer"
+              >
+                <option value="">All Stays</option>
+                <option value="호텔">Hotel</option>
+                <option value="모텔">Motel</option>
+                <option value="펜션">Pension</option>
+                <option value="게스트하우스">Guesthouse</option>
+                <option value="리조트">Resort</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
