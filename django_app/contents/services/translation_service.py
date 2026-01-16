@@ -140,6 +140,10 @@ class TranslationService:
             # Content
             c_text = item.get("content") or ""
             item["content_translated"] = TranslationService._translate_field_single(entity_id, "content", c_text, src_lang, target_lang)
+
+            # Location
+            l_text = item.get("location") or ""
+            item["location_translated"] = TranslationService._translate_field_single(entity_id, "location", l_text, src_lang, target_lang)
             
         return data
 
@@ -215,6 +219,15 @@ class TranslationService:
                     requests_map[key]['consumers'].append((item, "content_translated"))
                 else:
                     item["content_translated"] = ""
+
+            # Location
+            l_text = item.get("location") or ""
+            if l_text:
+                key = ("shortform", entity_id, "location", target_lang)
+                if key not in requests_map: requests_map[key] = {'text': l_text, 'consumers': [], 'src': src_lang}
+                requests_map[key]['consumers'].append((item, "location_translated"))
+            else:
+                item["location_translated"] = ""
 
         if not requests_map: return data
 

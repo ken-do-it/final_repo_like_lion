@@ -411,7 +411,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                             <h3>{shortform.creatorName}</h3>
                             <p>
                                 <span className="material-symbols-outlined text-xs">location_on</span>
-                                {shortform.location || mockData.creator.location} · {mockData.creator.time}
+                                {shortform.location_translated || shortform.location || mockData.creator.location} · {mockData.creator.time}
                             </p>
                         </div>
                         <button className="btn-follow">{t.follow}</button>
