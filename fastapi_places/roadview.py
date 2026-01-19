@@ -86,6 +86,26 @@ def create_roadview_from_review(
     if not review.image_url:
         raise HTTPException(status_code=400, detail="이 리뷰에는 사진이 없습니다.")
 
+    
+    # [중복 방지 로직]
+    # 1. 좌표(lat, lng)와 이미지(image_url)가 모두 동일한 경우 -> 중복으로 간주하고 추가 안 함
+    # 2. 좌표가 같아도 이미지가 다르면 -> 새로운 데이터로 추가 (사용자 요청사항)
+    existing_game_image = db.query(RoadviewGameImage).filter(
+        RoadviewGameImage.latitude == place.latitude,
+        RoadviewGameImage.longitude == place.longitude,
+        RoadviewGameImage.image_url == review.image_url
+    ).first()
+
+    if existing_game_image:
+        # 이미 존재하면 해당 ID 반환하고 종료 (중복 생성 방지)
+        return {
+            "status": "success", 
+            "message": "Game image already exists (Duplicate skipped).",
+            "game_image_id": existing_game_image.id,
+            "lat": float(place.latitude),
+            "lng": float(place.longitude)
+        }
+
     # RoadviewGameImage 테이블에 저장
     # (주의: models.py에 RoadviewGameImage 클래스가 있어야 함)
     game_image = RoadviewGameImage(
