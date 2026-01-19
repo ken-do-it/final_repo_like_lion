@@ -13,6 +13,9 @@ import ShortsUploadPage from './pages/shorts/ShortsUploadPage';
 import AntiTestPage from './pages/anti_test/AntiTestPage';
 import TripleIntroPage from './pages/anti_test/TripleIntroPage';
 import { PlanList, PlanDetail, PlanCreate, PlanEdit, AIRecommend, AddPlace, EditPlace } from './pages/plans';
+import LocalColumnList from './pages/places/columns/LocalColumnList';
+import LocalColumnDetail from './pages/places/columns/LocalColumnDetail';
+import LocalColumnForm from './pages/places/columns/LocalColumnForm';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import FindAccountPage from './pages/auth/FindAccountPage';
@@ -147,6 +150,12 @@ function App() {
           <Route path="/plans/:planId/edit" element={<PlanEdit />} />
           <Route path="/plans/:planId/add-place" element={<AddPlace />} />
           <Route path="/plans/details/:detailId/edit" element={<EditPlace />} />
+
+          {/* Local Columns */}
+          <Route path="/local-columns" element={<LocalColumnList />} />
+          <Route path="/local-columns/write" element={<LocalColumnForm />} />
+          <Route path="/local-columns/:id" element={<LocalColumnDetail />} />
+          <Route path="/local-columns/:id/edit" element={<LocalColumnForm />} />
 
 
 
