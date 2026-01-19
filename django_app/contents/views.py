@@ -140,7 +140,19 @@ class ShortformViewSet(viewsets.ModelViewSet):
         TranslationService.invalidate_cache("shortform", self.get_object().id)
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
+
+        # [Performance] N+1 Query Fix (is_liked)
+        # exists() 서브쿼리를 사용하여 메인 쿼리 한 번에 좋아요 여부 가져오기
+        if request.user.is_authenticated:
+            from django.db.models import OuterRef, Exists
+            is_liked_subquery = ShortformLike.objects.filter(
+                shortform=OuterRef('pk'), 
+                user=request.user
+            )
+            queryset = queryset.annotate(is_liked_val=Exists(is_liked_subquery))
+
+        queryset = self.filter_queryset(queryset)
 
         # [필터] 작성자 (사용자)
         writer_param = request.query_params.get("writer")
