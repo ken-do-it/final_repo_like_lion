@@ -340,10 +340,24 @@ class MSFlightAPIService:
         if dep_at and arr_at:
             duration_min = int((arr_at - dep_at).total_seconds() / 60)
 
-        # 가격 계산 (Mock - 실제 API에는 가격 정보 없음)
+        # 항공사 코드 추출 (가격 가중치에 사용)
+        airline_code = ""
+        if flight_no:
+            for i, char in enumerate(flight_no):
+                if char.isdigit():
+                    airline_code = flight_no[:i]
+                    break
+            if not airline_code:
+                airline_code = flight_no[:3]
+            airline_code = ''.join(c for c in airline_code if c.isalnum())
+
+        # 가격 계산 (Mock - 실제 API에는 가격 정보 없음, 다양화 적용)
         price_per_person = self._ms_calculate_mock_price(
             flight_data.get("depAirportNm", ""),
-            flight_data.get("arrAirportNm", "")
+            flight_data.get("arrAirportNm", ""),
+            airline_code,
+            dep_at,
+            duration_min
         )
 
         # 총 가격 계산
@@ -431,13 +445,20 @@ class MSFlightAPIService:
         except ValueError:
             return None
 
-    def _ms_calculate_mock_price(self, dep_airport: str, arr_airport: str) -> int:
+    def _ms_calculate_mock_price(
+        self,
+        dep_airport: str,
+        arr_airport: str,
+        airline_code: str | None = None,
+        dep_at: datetime | None = None,
+        duration_min: int | None = None,
+    ) -> int:
         """
-        Mock 가격 산정
+        Mock 가격 산정 (다양화 버전)
 
-        실제 API에는 가격 정보가 없으므로 임시로 계산
+        - 구간 기본가를 바탕으로 항공사/시간대/요일 가중치와
+          결정적 변동을 적용하여 항공편별로 가격을 달리함.
         """
-        # 기본 가격표 (구간별)
         base_prices = {
             ("김포", "제주"): 65000,
             ("제주", "김포"): 65000,
@@ -447,9 +468,48 @@ class MSFlightAPIService:
             ("대구", "김포"): 45000,
         }
 
-        # 매칭되는 가격 찾기
-        price = base_prices.get((dep_airport, arr_airport), 50000)
+        base = base_prices.get((dep_airport, arr_airport))
+        if base is None:
+            dm = duration_min or 60
+            base = max(40000, int(700 * dm))
 
+        price = float(base)
+
+        # 항공사 가중치 (기본 1.0)
+        ac = (airline_code or "").upper()
+        airline_factor_map = {
+            "KE": 1.20,  # 대한항공
+            "OZ": 1.15,  # 아시아나
+            "7C": 0.95,  # 제주항공
+            "TW": 0.95,  # 티웨이
+            "LJ": 0.97,  # 진에어
+            "BX": 0.97,  # 에어부산
+        }
+        price *= airline_factor_map.get(ac, 1.0)
+
+        # 시간대/요일 가중치
+        if dep_at:
+            hour = dep_at.hour
+            dow = dep_at.weekday()  # 0=월
+            if 7 <= hour <= 9 or 17 <= hour <= 20:
+                price *= 1.10
+            if dow in (4, 5):  # 금/토
+                price *= 1.08
+            if dow == 1 and 11 <= hour <= 15:  # 화요일 점심 시간대 예시 할인
+                price *= 0.95
+
+        # 결정적 변동(±12%) - 같은 검색 조건이면 동일하게
+        import hashlib
+        seed_src = f"{dep_airport}|{arr_airport}|{ac}|"
+        if dep_at:
+            seed_src += dep_at.strftime("%Y%m%d%H")
+        h = int(hashlib.md5(seed_src.encode()).hexdigest()[:6], 16)
+        jitter = ((h % 2001) - 1000) / 1000.0  # [-1.0, 1.0]
+        price *= (1.0 + 0.12 * jitter)
+
+        # 라운딩 및 범위 제한
+        price = int(round(price, -2))
+        price = min(max(price, 30000), 200000)
         return price
 
     def _ms_extract_airline_name(self, flight_data: Dict, flight_no: str) -> str:
