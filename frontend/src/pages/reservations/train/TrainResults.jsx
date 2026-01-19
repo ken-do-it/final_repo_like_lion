@@ -118,7 +118,7 @@ const TrainResults = () => {
     const isSRT = train.trainType && train.trainType.includes('SRT');
     const bookingUrl = isSRT
       ? 'https://etk.srail.kr'
-      : 'https://www.letskorail.com';
+      : 'https://www.korail.com/intro';
 
     /**
      * 새 창으로 예매 사이트 열기

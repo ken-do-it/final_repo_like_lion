@@ -140,9 +140,28 @@ class MSSubwayAPIService:
             if not stations:
                 raise SubwayError(SubwayError.STATION_NOT_FOUND)
 
-            # 간단화: 최상위 1개 사용(도시 필터/이름 완전일치/거리 근접 로직은 선택 구현)
-            top = stations[0]
+            # 지하철역만 필터링 (stationType: 1=지하철, 2=버스 등)
+            # ODsay API에서 stationType=1 또는 type이 "subway"인 것만 선택
+            subway_stations = [
+                s for s in stations
+                if s.get("stationType") == 1 or s.get("type") == "subway" or "지하철" in s.get("stationName", "")
+            ]
+
+            # 지하철역이 없으면 원래 목록에서 역 이름이 정확히 일치하는 것 찾기
+            if not subway_stations:
+                # 입력한 역 이름과 정확히 일치하거나 "역"을 붙인 이름과 일치하는 것 우선
+                exact_matches = [
+                    s for s in stations
+                    if s.get("stationName", "").replace("역", "") == query or s.get("stationName", "") == query + "역"
+                ]
+                if exact_matches:
+                    subway_stations = exact_matches
+                else:
+                    subway_stations = stations  # 필터 실패 시 원래 목록 사용
+
+            top = subway_stations[0]
             coords = {"lng": float(top.get("x")), "lat": float(top.get("y"))}
+            logger.info(f"역 좌표 조회: {query} → {top.get('stationName')} (x={top.get('x')}, y={top.get('y')})")
             # 캐시 저장
             self._cache_set(STATION_COORD_CACHE, norm, coords, ttl_seconds=60 * 60 * 24)
             return coords
