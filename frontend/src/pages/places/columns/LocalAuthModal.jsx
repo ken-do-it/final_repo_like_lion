@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { placesAxios as api } from '../../api/axios';
-import Button from '../../components/ui/Button';
+import { useAuth } from '../../../context/AuthContext';
+import { placesAxios as api } from '../../../api/axios';
+import Button from '../../../components/ui/Button';
 
 const LocalAuthModal = ({ isOpen, onClose }) => {
     const { user } = useAuth();

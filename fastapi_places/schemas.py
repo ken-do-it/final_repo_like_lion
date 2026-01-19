@@ -259,7 +259,7 @@ class LocalColumnListResponse(BaseModel):
     user_id: int
     user_nickname: Optional[str] = None
     title: str
-    thumbnail_url: str
+    thumbnail_url: Optional[str] = None
     view_count: int
     created_at: datetime
 

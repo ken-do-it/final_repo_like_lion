@@ -338,6 +338,7 @@ const MainPage = () => {
             </div>
             <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('action_flight')}</span>
           </div>
+
           <div onClick={() => navigate('/accommodations')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
             <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
               🏨
