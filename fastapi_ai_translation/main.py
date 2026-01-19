@@ -25,6 +25,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# [Security] API Key Validation Middleware
+# 내부망 호출이라도 최소한의 보안을 위해 API Key를 검증합니다.
+from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
+
+AI_SERVICE_API_KEY = os.getenv("AI_SERVICE_API_KEY", "secure-api-key-1234")
+
+@app.middleware("http")
+async def verify_api_key(request: Request, call_next):
+    # Health check endpoints usually don't need auth, but let's secure everything except health for safety
+    if request.url.path == "/health" or request.method == "OPTIONS":
+        return await call_next(request)
+
+    api_key = request.headers.get("x-ai-api-key")
+    if api_key != AI_SERVICE_API_KEY:
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Invalid or missing API Key"}
+        )
+    
+    response = await call_next(request)
+    return response
+
 # Register Translation Router
 app.include_router(translation_router, prefix="/api/ai", tags=["translation"])
 
