@@ -15,7 +15,9 @@ import logging
 from ..serializers.flight import (
     MSFlightSearchRequestSerializer,
     MSFlightSearchResponseSerializer,
-    MSFlightDetailResponseSerializer
+    MSFlightDetailResponseSerializer,
+    MSAirportListResponseSerializer,
+    MSAirlineListResponseSerializer
 )
 from ..services.flight.api_service import MSFlightAPIService
 
@@ -223,7 +225,8 @@ class MSAirportListView(APIView):
     @extend_schema(
         tags=['항공'],
         summary="공항 목록 조회",
-        description="국내 주요 공항 목록을 조회합니다. 프론트엔드에서 공항 선택 시 사용합니다."
+        description="국내 주요 공항 목록을 조회합니다. 프론트엔드에서 공항 선택 시 사용합니다.",
+        responses={200: MSAirportListResponseSerializer}
     )
     def get(self, request):
         """
@@ -302,7 +305,8 @@ class MSAirlineListView(APIView):
     @extend_schema(
         tags=['항공'],
         summary="항공사 목록 조회",
-        description="국내 주요 항공사 목록을 조회합니다. 프론트엔드에서 항공사 선택 시 사용합니다."
+        description="국내 주요 항공사 목록을 조회합니다. 프론트엔드에서 항공사 선택 시 사용합니다.",
+        responses={200: MSAirlineListResponseSerializer}
     )
     def get(self, request):
         """

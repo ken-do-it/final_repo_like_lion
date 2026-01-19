@@ -245,3 +245,43 @@ class MSFlightDetailResponseSerializer(serializers.Serializer):
         allow_null=True,
         help_text="가격 상세"
     )
+
+
+# ==================== 공항/항공사 목록 Serializer ====================
+
+class MSAirportSerializer(serializers.Serializer):
+    """
+    공항 정보
+    """
+    iataCode = serializers.CharField(help_text="공항 코드 (예: GMP)")
+    nameEn = serializers.CharField(help_text="공항 영문명")
+    nameKo = serializers.CharField(help_text="공항 한글명")
+    cityEn = serializers.CharField(help_text="도시 영문명")
+    cityKo = serializers.CharField(help_text="도시 한글명")
+
+
+class MSAirportListResponseSerializer(serializers.Serializer):
+    """
+    공항 목록 응답
+
+    GET /api/v1/transport/airports
+    """
+    airports = MSAirportSerializer(many=True, help_text="공항 목록")
+
+
+class MSAirlineSerializer(serializers.Serializer):
+    """
+    항공사 정보
+    """
+    code = serializers.CharField(help_text="항공사 코드 (예: KE)")
+    nameKo = serializers.CharField(help_text="항공사 한글명")
+    nameEn = serializers.CharField(help_text="항공사 영문명")
+
+
+class MSAirlineListResponseSerializer(serializers.Serializer):
+    """
+    항공사 목록 응답
+
+    GET /api/v1/transport/airlines
+    """
+    airlines = MSAirlineSerializer(many=True, help_text="항공사 목록")
