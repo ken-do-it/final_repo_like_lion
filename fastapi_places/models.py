@@ -211,3 +211,21 @@ class RoadviewGameImage(Base):
     city = Column(String(50), nullable=True)
     created_by_id = Column(Integer, ForeignKey('users.id'), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class RoadviewGameHistory(Base):
+    """사용자별 로드뷰 게임 플레이 기록 (중복 방지용)"""
+    __tablename__ = 'roadview_game_history'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    game_image_id = Column(Integer, ForeignKey('roadview_game_images.id'), nullable=False)
+    played_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships (Optional)
+    # user = relationship("User", back_populates="game_history")
+    # game_image = relationship("RoadviewGameImage")
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'game_image_id', name='unique_user_game_play'),
+    )
