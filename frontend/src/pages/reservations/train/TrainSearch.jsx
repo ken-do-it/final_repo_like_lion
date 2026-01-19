@@ -282,11 +282,11 @@ const TrainSearch = () => {
                 기차 예매 안내
               </h3>
               <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2 ml-8">
-                <li>기차 검색 결과는 실시간 정보입니다</li>
+                <li className="text-amber-700 dark:text-amber-400 font-medium">본 서비스는 약 1주일 이내의 열차 정보만 조회 가능합니다</li>
+                <li className="text-amber-700 dark:text-amber-400 font-medium">정확한 열차 시간과 좌석 정보는 코레일/SRT 홈페이지에서 확인해주세요</li>
                 <li>예매는 코레일 또는 SRT 홈페이지에서 진행하실 수 있습니다</li>
                 <li>KTX, ITX, 새마을호는 코레일에서 예매 가능합니다</li>
                 <li>SRT는 SRT 홈페이지에서만 예매 가능합니다</li>
-                <li>열차 출발 20분 전까지 예매 가능합니다</li>
               </ul>
             </div>
           </div>
