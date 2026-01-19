@@ -30,6 +30,8 @@ const defaultCenter = {
   lng: 127.3845475
 };
 
+const STORAGE_KEY = 'roadview_game_session';
+
 const RoadviewGame = () => {
   const locationState = useLocation().state;
   const navigate = useNavigate();
@@ -103,14 +105,61 @@ const RoadviewGame = () => {
     }
   }, []);
 
-  // Initial Fetch
+  // [New] Effect to Save Session
   useEffect(() => {
-    // If data passed via state (e.g. from upload), use it
+    // Only save if we have a valid session running
+    if (gameQueue.length > 0) {
+      const sessionData = {
+        gameQueue,
+        currentQueueIndex,
+        sessionResults,
+        targetData,
+        round,
+        showSessionSummary,
+        // We can optionally save timeLeft if we want perfect resume, 
+        // but might be tricky with timer intervals. Let's restart timer or keep it simple.
+        // For now, let's not save timeLeft to avoid complex sync issues, user gets full time on refresh? 
+        // Or maybe calculate elapsed? Let's give full time on refresh for simplicity or maybe save it.
+        // Let's save it.
+        timeLeft
+      };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+    }
+  }, [gameQueue, currentQueueIndex, sessionResults, targetData, round, showSessionSummary, timeLeft]);
+
+  // Initial Fetch / Load Session
+  useEffect(() => {
+    // 1. If data passed via state (e.g. from upload), use it (Priority 1)
     if (locationState?.lat && locationState?.lng) {
       setIsDataLoading(false);
       return;
     }
-    // Otherwise fetch session
+
+    // 2. Check for saved session (Priority 2)
+    const savedSession = sessionStorage.getItem(STORAGE_KEY);
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession);
+        // Verify if valid
+        if (parsed.gameQueue && parsed.gameQueue.length > 0) {
+          setGameQueue(parsed.gameQueue);
+          setCurrentQueueIndex(parsed.currentQueueIndex);
+          setSessionResults(parsed.sessionResults);
+          setTargetData(parsed.targetData);
+          setRound(parsed.round);
+          setShowSessionSummary(parsed.showSessionSummary);
+          if (parsed.timeLeft) setTimeLeft(parsed.timeLeft);
+
+          setIsDataLoading(false);
+          return; // Skip fetching new session
+        }
+      } catch (e) {
+        console.error("Failed to load saved session", e);
+        sessionStorage.removeItem(STORAGE_KEY);
+      }
+    }
+
+    // 3. Otherwise fetch new session (Priority 3)
     fetchGameSession();
   }, [locationState, fetchGameSession]);
 
@@ -314,10 +363,16 @@ const RoadviewGame = () => {
           </div>
 
           <div className="flex justify-center gap-4 mt-8">
-            <button onClick={() => navigate('/')} className="px-8 py-3 bg-slate-200 dark:bg-slate-700 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+            <button onClick={() => {
+              sessionStorage.removeItem(STORAGE_KEY);
+              navigate('/');
+            }} className="px-8 py-3 bg-slate-200 dark:bg-slate-700 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
               Go Home
             </button>
-            <button onClick={() => window.location.reload()} className="px-8 py-3 bg-[#1392ec] text-white rounded-xl font-bold hover:bg-blue-600 transition-colors">
+            <button onClick={() => {
+              sessionStorage.removeItem(STORAGE_KEY);
+              window.location.reload();
+            }} className="px-8 py-3 bg-[#1392ec] text-white rounded-xl font-bold hover:bg-blue-600 transition-colors">
               Play Again
             </button>
           </div>
@@ -339,7 +394,10 @@ const RoadviewGame = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f6f7f8] dark:bg-[#101a22]">
         <h2 className="text-2xl font-bold dark:text-white">장소 정보를 불러올 수 없습니다.</h2>
-        <button onClick={() => navigate('/')} className="mt-4 px-6 py-2 bg-[#1392ec] text-white rounded-lg">홈으로 가기</button>
+        <button onClick={() => {
+          sessionStorage.removeItem(STORAGE_KEY);
+          navigate('/');
+        }} className="mt-4 px-6 py-2 bg-[#1392ec] text-white rounded-lg">홈으로 가기</button>
       </div>
     );
   }
