@@ -18,9 +18,7 @@ export const searchAxios = axios.create({
 
 export const placesAxios = axios.create({
     baseURL: import.meta.env.VITE_PLACES_API_URL || '/api/v1', // Relative path
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    // Content-Type은 interceptor에서 동적으로 설정 (FormData 지원을 위해)
 });
 
 // Request Interceptor: Attach Token
@@ -43,6 +41,10 @@ placesAxios.interceptors.request.use(
         const token = localStorage.getItem('access_token');
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        // FormData 전송 시 Content-Type 헤더 제거 (axios가 boundary 포함하여 자동 설정)
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
         }
         return config;
     },

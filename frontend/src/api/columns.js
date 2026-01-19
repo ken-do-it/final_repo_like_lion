@@ -27,22 +27,15 @@ export const getBadgeStatus = async () => {
 
 // 현지인 칼럼 작성
 export const createLocalColumn = async (formData) => {
-    // multipart/form-data 헤더는 axios가 자동으로 설정하지만, 명시적으로 설정해도 무방
-    const response = await placesAxios.post('/places/local-columns', formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
+    // FormData 사용 시 Content-Type 헤더를 설정하지 않아야 axios가 boundary를 자동으로 추가함
+    const response = await placesAxios.post('/places/local-columns', formData);
     return response.data;
 };
 
 // 현지인 칼럼 수정
 export const updateLocalColumn = async (columnId, formData) => {
-    const response = await placesAxios.put(`/places/local-columns/${columnId}`, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
+    // FormData 사용 시 Content-Type 헤더를 설정하지 않아야 axios가 boundary를 자동으로 추가함
+    const response = await placesAxios.put(`/places/local-columns/${columnId}`, formData);
     return response.data;
 };
 

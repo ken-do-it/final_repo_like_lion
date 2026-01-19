@@ -137,8 +137,13 @@ const LocalColumnList = () => {
                                                     <div className="w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-[10px] overflow-hidden text-gray-500 dark:text-gray-400">
                                                         {column.user_nickname ? column.user_nickname[0] : '?'}
                                                     </div>
-                                                    <span className="font-medium text-gray-600 dark:text-gray-300 truncate max-w-[80px]">
+                                                    <span className="font-medium text-gray-600 dark:text-gray-300 truncate max-w-[120px] flex items-center gap-1">
                                                         {column.user_nickname || '익명'}
+                                                        {column.user_level && (
+                                                            <span className="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                                                                🏅 Lv.{column.user_level}
+                                                            </span>
+                                                        )}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-gray-400 text-xs">

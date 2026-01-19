@@ -41,6 +41,7 @@ class PlaceAutocompleteRequest(BaseModel):
 
 class PlaceAutocompleteSuggestion(BaseModel):
     """자동완성 제안"""
+    place_api_id: Optional[str] = None
     name: str
     address: str
     city: Optional[str] = None
@@ -228,6 +229,7 @@ class LocalColumnSectionResponse(BaseModel):
     title: str
     content: str
     place_id: Optional[int] = None
+    place_name: Optional[str] = None
     order: int
     images: List[LocalColumnSectionImageResponse] = Field(default_factory=list)
 
@@ -240,9 +242,10 @@ class LocalColumnResponse(BaseModel):
     id: int
     user_id: int
     user_nickname: Optional[str] = None
+    user_level: Optional[int] = None
     title: str
     content: str
-    thumbnail_url: str
+    thumbnail_url: Optional[str] = None
     intro_image_url: Optional[str] = None
     representative_place_id: Optional[int] = None
     view_count: int = 0
@@ -258,6 +261,7 @@ class LocalColumnListResponse(BaseModel):
     id: int
     user_id: int
     user_nickname: Optional[str] = None
+    user_level: Optional[int] = None
     title: str
     thumbnail_url: Optional[str] = None
     view_count: int

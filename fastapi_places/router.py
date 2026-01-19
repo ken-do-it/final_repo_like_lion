@@ -20,7 +20,8 @@ from schemas import (
     PlaceAutocompleteSuggestion, PlaceDetailResponse, PlaceCreateRequest,
     ReviewCreateRequest, ReviewResponse, BookmarkResponse, LocalBadgeAuthRequest,
     LocalBadgeAuthResponse, LocalBadgeStatusResponse, LocalColumnCreateRequest,
-    LocalColumnResponse, LocalColumnListResponse, CityContentResponse, PopularCityResponse
+    LocalColumnResponse, LocalColumnListResponse, CityContentResponse, PopularCityResponse,
+    LocalColumnSectionResponse, LocalColumnSectionImageResponse
 )
 from service import (
     search_places_hybrid, authenticate_local_badge, check_local_badge_active,
@@ -157,6 +158,7 @@ async def autocomplete_places(
 
     suggestions = [
         PlaceAutocompleteSuggestion(
+            place_api_id=result.get("place_api_id"),
             name=result["name"],
             address=result["address"],
             city=result["city"]
@@ -361,14 +363,19 @@ def get_local_columns(
 
     columns = query.order_by(LocalColumn.created_at.desc()).offset(offset).limit(limit).all()
 
-    # 사용자 닉네임 조회
+    # 사용자 닉네임 및 뱃지 레벨 조회
     result = []
     for column in columns:
         user = db.query(User).filter(User.id == column.user_id).first()
+        badge = db.query(LocalBadge).filter(
+            LocalBadge.user_id == column.user_id,
+            LocalBadge.is_active == True
+        ).first()
         result.append(LocalColumnListResponse(
             id=column.id,
             user_id=column.user_id,
             user_nickname=user.nickname if user else None,
+            user_level=badge.level if badge else None,
             title=column.title,
             thumbnail_url=column.thumbnail_url,
             view_count=column.view_count,
@@ -406,12 +413,20 @@ def get_local_column_detail(
             LocalColumnSectionImage.section_id == section.id
         ).order_by(LocalColumnSectionImage.order).all()
 
-        from .schemas import LocalColumnSectionImageResponse, LocalColumnSectionResponse
+        # 장소명 조회
+        place_name = None
+        if section.place_id:
+            place = db.query(Place).filter(Place.id == section.place_id).first()
+            if place:
+                place_name = place.name
+
+        from schemas import LocalColumnSectionImageResponse, LocalColumnSectionResponse
         section_data.append(LocalColumnSectionResponse(
             id=section.id,
             title=section.title,
             content=section.content,
             place_id=section.place_id,
+            place_name=place_name,
             order=section.order,
             images=[
                 LocalColumnSectionImageResponse(
@@ -423,13 +438,18 @@ def get_local_column_detail(
             ]
         ))
 
-    # 사용자 정보
+    # 사용자 정보 및 뱃지 레벨 조회
     user = db.query(User).filter(User.id == column.user_id).first()
+    badge = db.query(LocalBadge).filter(
+        LocalBadge.user_id == column.user_id,
+        LocalBadge.is_active == True
+    ).first()
 
     return LocalColumnResponse(
         id=column.id,
         user_id=column.user_id,
         user_nickname=user.nickname if user else None,
+        user_level=badge.level if badge else None,
         title=column.title,
         content=column.content,
         thumbnail_url=column.thumbnail_url,
@@ -443,7 +463,14 @@ def get_local_column_detail(
 
 @router.post("/local-columns", response_model=LocalColumnResponse)
 async def create_local_column(
-    request: Request,
+    # FastAPI의 Form과 File을 사용하여 각 필드를 명시적으로 선언
+    title: str = Form(...),
+    content: str = Form(...),
+    sections: str = Form(..., alias='sections'),
+    thumbnail: UploadFile = File(...),
+    intro_image: Optional[UploadFile] = File(None),
+    representative_place_id: Optional[int] = Form(None),
+    request: Request = None, # form_data.items()를 위해 유지
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
@@ -457,86 +484,58 @@ async def create_local_column(
     - content: 문자열 (필수)
     - representative_place_id: 숫자 (선택)
     - sections: JSON 문자열 (섹션 메타데이터)
-        [{
-            "title": "섹션1",
-            "content": "내용1",
-            "place_id": 123,
-            "order": 0,
-            "image_count": 2
-        }]
-    - section_0_image_0: 파일 (섹션0의 첫번째 이미지)
-    - section_0_image_1: 파일 (섹션0의 두번째 이미지)
-    - section_1_image_0: 파일 (섹션1의 첫번째 이미지)
-    - ...
+    - section_X_image_Y: 파일들...
     """
     # 현지인 뱃지 확인
     check_local_badge_active(db, user_id)
-
-    # Form 데이터 가져오기
-    form_data = await request.form()
-
-    # 1. 기본 필드 추출
-    title = form_data.get('title')
-    content = form_data.get('content')
-    representative_place_id = form_data.get('representative_place_id')
-    sections_json = form_data.get('sections')
-
-    if not title or not content:
-        raise HTTPException(status_code=400, detail="title과 content는 필수입니다")
-
-    # representative_place_id 변환
-    if representative_place_id:
-        try:
-            representative_place_id = int(representative_place_id)
-        except:
-            representative_place_id = None
-
-    # 2. 섹션 데이터 파싱 (이미지 저장 전에 검증)
-    if not sections_json:
-        raise HTTPException(status_code=400, detail="sections는 필수입니다")
-
+    
+    # 1. 섹션 데이터 파싱 (이미지 저장 전에 검증)
     try:
-        sections = json.loads(sections_json)
-    except:
+        sections_data = json.loads(sections)
+    except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="sections는 유효한 JSON이어야 합니다")
 
-    # 3. 썸네일 검증
-    thumbnail = form_data.get('thumbnail')
-    if not thumbnail or not isinstance(thumbnail, UploadFile):
-        raise HTTPException(status_code=400, detail="thumbnail 이미지는 필수입니다")
-
-    # 4. 섹션 이미지 파일들 수집 (section_X_image_Y 패턴)
+    # 2. 섹션 이미지 파일들 수집 (request.form() 필요)
+    form_data = await request.form()
     section_images = {}
-    for key, value in form_data.items():
-        if key.startswith('section_') and isinstance(value, UploadFile):
-            # section_0_image_1 -> (0, 1)
-            parts = key.replace('section_', '').split('_image_')
-            if len(parts) == 2:
-                try:
-                    section_idx = int(parts[0])
-                    image_idx = int(parts[1])
-                    if section_idx not in section_images:
-                        section_images[section_idx] = {}
-                    section_images[section_idx][image_idx] = value
-                except:
-                    pass
 
-    # 5. 이미지 저장 및 DB 생성 (롤백 가능하도록 저장된 이미지 URL 추적)
-    saved_image_urls = []  # 롤백용 이미지 URL 목록
+    # 디버그: form_data 키 출력
+    print(f"[DEBUG] form_data keys: {list(form_data.keys())}")
+
+    for key, value in form_data.items():
+        print(f"[DEBUG] key: {key}, type: {type(value)}, is UploadFile: {isinstance(value, UploadFile)}")
+        if key.startswith('section_') and '_image_' in key:
+            # UploadFile 체크 대신 file 속성 존재 여부로 확인
+            if hasattr(value, 'file'):
+                parts = key.replace('section_', '').split('_image_')
+                if len(parts) == 2:
+                    try:
+                        section_idx = int(parts[0])
+                        image_idx = int(parts[1])
+                        if section_idx not in section_images:
+                            section_images[section_idx] = {}
+                        section_images[section_idx][image_idx] = value
+                        print(f"[DEBUG] Added section image: section_{section_idx}_image_{image_idx}")
+                    except (ValueError, IndexError):
+                        pass
+
+    print(f"[DEBUG] section_images collected: {section_images}")
+
+    # 3. 이미지 저장 및 DB 생성 (롤백 가능하도록 저장된 이미지 URL 추적)
+    saved_image_urls = []
 
     try:
-        # 5-1. 썸네일 이미지 저장
+        # 3-1. 썸네일 이미지 저장
         thumbnail_url = await save_image_file(thumbnail, "place_images")
         saved_image_urls.append(thumbnail_url)
 
-        # 5-2. 인트로 이미지 저장 (선택)
-        intro_image = form_data.get('intro_image')
+        # 3-2. 인트로 이미지 저장 (선택)
         intro_image_url = None
-        if intro_image and isinstance(intro_image, UploadFile):
+        if intro_image:
             intro_image_url = await save_image_file(intro_image, "place_images")
             saved_image_urls.append(intro_image_url)
 
-        # 6. 칼럼 DB 생성
+        # 4. 칼럼 DB 생성
         column = LocalColumn(
             user_id=user_id,
             title=title,
@@ -545,78 +544,96 @@ async def create_local_column(
             intro_image_url=intro_image_url,
             representative_place_id=representative_place_id
         )
-
         db.add(column)
-        db.commit()
-        db.refresh(column)
 
-        # 7. 섹션 생성
-        section_data = []
-        for idx, section_req in enumerate(sections):
+        # 5. 섹션 및 이미지 객체 생성 (아직 commit 안 함)
+        sections_to_commit = []
+        images_to_commit = []
+        
+        for idx, section_req in enumerate(sections_data):
+            # 장소 정보 처리 (place_id 또는 db_place_id 모두 지원)
+            local_place_id = section_req.get('place_id') or section_req.get('db_place_id')
+            if not local_place_id and section_req.get('place_api_id'):
+                place_api_id = section_req.get('place_api_id')
+                place_name = section_req.get('place_name')
+                local_place = await get_or_create_place_by_api_id(
+                    db, place_api_id=place_api_id, name_hint=place_name
+                )
+                if local_place:
+                    local_place_id = local_place.id
+            
             section = LocalColumnSection(
-                column_id=column.id,
-                place_id=section_req.get('place_id'),
+                column=column, # 관계 설정
+                place_id=local_place_id,
                 order=section_req.get('order', idx),
                 title=section_req.get('title', ''),
                 content=section_req.get('content', '')
             )
+            sections_to_commit.append(section)
 
-            db.add(section)
-            db.commit()
-            db.refresh(section)
-
-            # 8. 섹션 이미지 저장 및 생성
-            images = []
             if idx in section_images:
-                # 이미지 인덱스 순으로 정렬
                 sorted_images = sorted(section_images[idx].items())
                 for img_idx, img_file in sorted_images:
-                    # 이미지 파일 저장
                     img_url = await save_image_file(img_file, "place_images")
                     saved_image_urls.append(img_url)
-
-                    # DB에 이미지 저장
                     image = LocalColumnSectionImage(
-                        section_id=section.id,
+                        section=section, # 관계 설정
                         image_url=img_url,
                         order=img_idx
                     )
-                    db.add(image)
-                    images.append(image)
+                    images_to_commit.append(image)
 
-            db.commit()
+        db.add_all(sections_to_commit)
+        db.add_all(images_to_commit)
+        
+        # 6. 모든 작업이 성공했을 때 단 한번만 commit
+        db.commit()
 
-            from schemas import LocalColumnSectionImageResponse, LocalColumnSectionResponse
-            section_data.append(LocalColumnSectionResponse(
-                id=section.id,
-                title=section.title,
-                content=section.content,
-                place_id=section.place_id,
-                order=section.order,
-                images=[
-                    LocalColumnSectionImageResponse(
-                        id=img.id,
-                        image_url=img.image_url,
-                        order=img.order
-                    )
-                    for img in images
-                ]
-            ))
-
+        # 7. 응답 모델 구성
+        db.refresh(column)
+        response_sections = []
+        for section in sections_to_commit:
+            db.refresh(section)
+            images_for_response = [
+                img for img in images_to_commit if img.section == section
+            ]
+            # 장소명 조회
+            place_name = None
+            if section.place_id:
+                place = db.query(Place).filter(Place.id == section.place_id).first()
+                if place:
+                    place_name = place.name
+            response_sections.append(
+                LocalColumnSectionResponse(
+                    id=section.id,
+                    title=section.title,
+                    content=section.content,
+                    place_id=section.place_id,
+                    place_name=place_name,
+                    order=section.order,
+                    images=[
+                        LocalColumnSectionImageResponse.model_validate(img, from_attributes=True) for img in images_for_response
+                    ]
+                )
+            )
     except Exception as e:
-        # DB 저장 실패 시 저장된 모든 이미지 파일 롤백
         for img_url in saved_image_urls:
             delete_image_file(img_url)
         db.rollback()
         raise HTTPException(status_code=500, detail=f"칼럼 저장 실패: {str(e)}")
 
-    # 사용자 정보
     user = db.query(User).filter(User.id == user_id).first()
+    badge = db.query(LocalBadge).filter(
+        LocalBadge.user_id == user_id,
+        LocalBadge.is_active == True
+    ).first()
 
+    # 최종 응답 모델 구성
     return LocalColumnResponse(
         id=column.id,
-        user_id=column.user_id,
+        user_id=user_id,
         user_nickname=user.nickname if user else None,
+        user_level=badge.level if badge else None,
         title=column.title,
         content=column.content,
         thumbnail_url=column.thumbnail_url,
@@ -624,7 +641,7 @@ async def create_local_column(
         representative_place_id=column.representative_place_id,
         view_count=column.view_count,
         created_at=column.created_at,
-        sections=section_data
+        sections=response_sections
     )
 
 
@@ -687,18 +704,28 @@ async def update_local_column(
 
     # 3. 섹션 이미지 파일들 수집
     section_images = {}
+
+    # 디버그: form_data 키 출력
+    print(f"[DEBUG UPDATE] form_data keys: {list(form_data.keys())}")
+
     for key, value in form_data.items():
-        if key.startswith('section_') and isinstance(value, UploadFile):
-            parts = key.replace('section_', '').split('_image_')
-            if len(parts) == 2:
-                try:
-                    section_idx = int(parts[0])
-                    image_idx = int(parts[1])
-                    if section_idx not in section_images:
-                        section_images[section_idx] = {}
-                    section_images[section_idx][image_idx] = value
-                except:
-                    pass
+        print(f"[DEBUG UPDATE] key: {key}, type: {type(value)}")
+        if key.startswith('section_') and '_image_' in key:
+            # UploadFile 체크 대신 file 속성 존재 여부로 확인
+            if hasattr(value, 'file'):
+                parts = key.replace('section_', '').split('_image_')
+                if len(parts) == 2:
+                    try:
+                        section_idx = int(parts[0])
+                        image_idx = int(parts[1])
+                        if section_idx not in section_images:
+                            section_images[section_idx] = {}
+                        section_images[section_idx][image_idx] = value
+                        print(f"[DEBUG UPDATE] Added section image: section_{section_idx}_image_{image_idx}")
+                    except:
+                        pass
+
+    print(f"[DEBUG UPDATE] section_images collected: {section_images}")
 
     # 4. 섹션 JSON 검증 (이미지 저장 전에)
     new_sections = None
@@ -774,9 +801,20 @@ async def update_local_column(
 
             # 9-3. 새 섹션 생성
             for idx, section_req in enumerate(new_sections):
+                # 장소 정보 처리 (place_id 우선, 없으면 place_api_id로 조회/생성)
+                local_place_id = section_req.get('place_id')
+                if not local_place_id and section_req.get('place_api_id'):
+                    place_api_id = section_req.get('place_api_id')
+                    place_name = section_req.get('place_name')
+                    local_place = await get_or_create_place_by_api_id(
+                        db, place_api_id=place_api_id, name_hint=place_name
+                    )
+                    if local_place:
+                        local_place_id = local_place.id
+
                 section = LocalColumnSection(
                     column_id=column.id,
-                    place_id=section_req.get('place_id'),
+                    place_id=local_place_id,
                     order=section_req.get('order', idx),
                     title=section_req.get('title', ''),
                     content=section_req.get('content', '')
@@ -835,12 +873,20 @@ async def update_local_column(
             LocalColumnSectionImage.section_id == section.id
         ).order_by(LocalColumnSectionImage.order).all()
 
-        from .schemas import LocalColumnSectionImageResponse, LocalColumnSectionResponse
+        # 장소명 조회
+        place_name = None
+        if section.place_id:
+            place = db.query(Place).filter(Place.id == section.place_id).first()
+            if place:
+                place_name = place.name
+
+        from schemas import LocalColumnSectionImageResponse, LocalColumnSectionResponse
         section_data.append(LocalColumnSectionResponse(
             id=section.id,
             title=section.title,
             content=section.content,
             place_id=section.place_id,
+            place_name=place_name,
             order=section.order,
             images=[
                 LocalColumnSectionImageResponse(
@@ -853,11 +899,16 @@ async def update_local_column(
         ))
 
     user = db.query(User).filter(User.id == user_id).first()
+    badge = db.query(LocalBadge).filter(
+        LocalBadge.user_id == user_id,
+        LocalBadge.is_active == True
+    ).first()
 
     return LocalColumnResponse(
         id=column.id,
         user_id=column.user_id,
         user_nickname=user.nickname if user else None,
+        user_level=badge.level if badge else None,
         title=column.title,
         content=column.content,
         thumbnail_url=column.thumbnail_url,

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createLocalColumn, updateLocalColumn, getLocalColumnDetail } from '../../../api/columns';
 import { useAuth } from '../../../context/AuthContext';
 import Button from '../../../components/ui/Button';
+import PlaceAutosuggest from './PlaceAutosuggest';
 
 const LocalColumnForm = () => {
     const navigate = useNavigate();
@@ -20,7 +21,7 @@ const LocalColumnForm = () => {
 
     // Sections State: [{ id, title, content, placeId, images: [{ id, file, preview, url, isExisting }] }]
     const [sections, setSections] = useState([
-        { id: Date.now(), title: '', content: '', placeId: '', images: [] }
+        { id: Date.now(), title: '', content: '', place: null, images: [] } // Changed placeId to place
     ]);
 
     // Validation
@@ -35,6 +36,8 @@ const LocalColumnForm = () => {
     const fetchData = async () => {
         try {
             const data = await getLocalColumnDetail(id);
+            console.log('[LocalColumnForm] Loaded data:', data);
+            console.log('[LocalColumnForm] Sections:', data.sections);
             setTitle(data.title);
             setContent(data.content);
             if (data.thumbnail_url) {
@@ -49,7 +52,7 @@ const LocalColumnForm = () => {
                 id: sec.id,
                 title: sec.title,
                 content: sec.content,
-                placeId: sec.place_id || '',
+                place: sec.place_id ? { id: sec.place_id, name: sec.place_name || '' } : null, // Store place object
                 images: sec.images.map(img => ({
                     id: img.id,
                     preview: img.image_url,
@@ -102,7 +105,7 @@ const LocalColumnForm = () => {
     const addSection = () => {
         setSections([
             ...sections,
-            { id: Date.now(), title: '', content: '', placeId: '', images: [] }
+            { id: Date.now(), title: '', content: '', place: null, images: [] } // Changed placeId to place
         ]);
     };
 
@@ -143,23 +146,11 @@ const LocalColumnForm = () => {
         // 2. Images (Thumbnail & Intro)
         if (thumbnail && !thumbnail.isExisting) {
             formData.append('thumbnail', thumbnail.file);
-        } else if (!thumbnail) {
-            // If creating, thumbnail is required. backend checks this.
-            // If editing, and we removed thumbnail (set to null), we probably need to send a flag if we want to delete it, 
-            // BUT thumbnail is usually required. 
-            // If isExisting is true, we simply don't send 'thumbnail' field, backend keeps old one unless we send new one.
-            // Wait, router says: `if thumbnail and isinstance(thumbnail, UploadFile)...`
-            // If we don't send it during update, it keeps the old one.
-            // If we strictly want to remove it? logic says `remove_thumbnail`... but let's assume thumbnail is mandatory.
         }
 
         if (introImage && !introImage.isExisting) {
             formData.append('intro_image', introImage.file);
         } else if (isEditMode && !introImage) {
-            // Explicitly remove intro image if it existed but now is null
-            // The router checks `remove_intro_image` field? 
-            // Looking at router: `elif remove_intro_image and column.intro_image_url:`
-            // So we should append this flag.
             formData.append('remove_intro_image', 'true');
         }
 
@@ -169,7 +160,9 @@ const LocalColumnForm = () => {
                 title: sec.title,
                 content: sec.content,
                 order: idx,
-                place_id: sec.placeId ? parseInt(sec.placeId) : null,
+                place_id: sec.place?.id || null,             // Restored place_id (DB ID)
+                place_api_id: sec.place?.place_api_id || null,
+                place_name: sec.place?.name || null,
                 keep_images: [] // For edit mode
             };
 
@@ -179,17 +172,18 @@ const LocalColumnForm = () => {
                 if (img.isExisting) {
                     meta.keep_images.push(img.url);
                 } else {
-                    // New Image: Append to FormData
-                    // Key: section_{secIdx}_image_{newImgIdx}
+                    console.log(`[LocalColumnForm] Appending section_${idx}_image_${newImgCount}:`, img.file);
                     formData.append(`section_${idx}_image_${newImgCount}`, img.file);
                     newImgCount++;
                 }
             });
+            console.log(`[LocalColumnForm] Section ${idx} - newImgCount: ${newImgCount}, keepImages: ${meta.keep_images.length}`);
 
             return meta;
         });
 
         formData.append('sections', JSON.stringify(sectionsMetadata));
+        console.log('[LocalColumnForm] sectionsMetadata:', sectionsMetadata);
 
         try {
             if (isEditMode) {
@@ -208,6 +202,7 @@ const LocalColumnForm = () => {
             setLoading(false);
         }
     };
+
 
     if (initialLoading) {
         return <div className="p-8 text-center">Loading...</div>;
@@ -333,16 +328,16 @@ const LocalColumnForm = () => {
                                         placeholder="내용을 작성해주세요"
                                     />
 
-                                    <div className="flex gap-2 items-center">
-                                        <span className="text-sm text-gray-500 shrink-0">📍 관련 장소 ID:</span>
-                                        <input
-                                            type="number"
-                                            value={section.placeId}
-                                            onChange={(e) => updateSection(idx, 'placeId', e.target.value)}
-                                            className="w-24 px-3 py-1 text-sm rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#1e2b36]"
-                                            placeholder="ID"
-                                        />
-                                        <span className="text-xs text-gray-400">(선택)</span>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">📍 관련 장소:</span>
+                                            <PlaceAutosuggest
+                                                value={section.place} // Pass the whole object
+                                                onChange={(newPlace) => updateSection(idx, 'place', newPlace)}
+                                                placeholder="장소 이름을 검색하세요 (예: 남산타워)"
+                                            />
+                                        </div>
+
                                     </div>
 
                                     {/* Section Images */}
@@ -358,7 +353,7 @@ const LocalColumnForm = () => {
                                             ))}
                                             <label className="aspect-video flex items-center justify-center border border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
                                                 <span className="text-2xl text-gray-400">+</span>
-                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'section', idx)} />
+                                                <input type="file" className="hidden" accept="image/*" onClick={(e) => { e.target.value = null; }} onChange={(e) => handleImageUpload(e, 'section', idx)} />
                                             </label>
                                         </div>
                                     </div>
