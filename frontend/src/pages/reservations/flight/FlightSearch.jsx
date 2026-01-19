@@ -26,8 +26,11 @@ const FlightSearch = () => {
     retDate: '',           // 귀국 날짜 (왕복)
     tripType: 'oneway',    // 편도(oneway) / 왕복(roundtrip)
     airlineId: '',         // 항공사 ID (선택사항)
-    passengers: 1,         // 승객 수
-    seatClass: 'economy',  // 좌석 등급 (economy/business)
+    // 승객 수 (성인/소아/유아)
+    adults: 1,             // 성인 (만 12세 이상)
+    children: 0,           // 소아 (만 2세~12세 미만)
+    infants: 0,            // 유아 (만 2세 미만)
+    seatClass: 'ECONOMY',  // 좌석 등급 (ECONOMY/PREMIUM/BUSINESS)
   });
 
   /**
@@ -212,7 +215,10 @@ const FlightSearch = () => {
       ...(formData.tripType && { tripType: formData.tripType }),
       ...(formData.tripType === 'roundtrip' && formData.retDate && { retDate: formData.retDate }),
       ...(formData.airlineId && { airlineId: formData.airlineId }),
-      passengers: formData.passengers,
+      // 승객 정보 (성인/소아/유아)
+      adults: formData.adults,
+      children: formData.children,
+      infants: formData.infants,
       seatClass: formData.seatClass,
     });
 
@@ -477,32 +483,167 @@ const FlightSearch = () => {
                     </div>
                   </div>
 
-                  {/* 승객 수 선택 (버튼 카운터) */}
-                  <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      승객 수
-                    </label>
-                    <div className="flex items-center h-14 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3">
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, passengers: Math.max(1, (prev.passengers || 1) - 1) }))}
-                        className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
-                        aria-label="성인 인원 감소"
-                      >
-                        −
-                      </button>
-                      <div className="flex-1 text-center font-medium">
-                        성인 {formData.passengers}명
+                </div>
+
+                {/* 인원 및 좌석등급 섹션 */}
+                <div className="mt-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    인원 및 좌석등급
+                  </h3>
+
+                  {/* 안내 문구 */}
+                  <div className="text-sm text-gray-500 dark:text-gray-400 mb-4 space-y-1">
+                    <p>· 총 9명까지만 한번에 검색 및 예약이 가능합니다.</p>
+                    <p>· 성인 1인당 유아 1인까지 동반 탑승 가능합니다.</p>
+                    <p>· 만 2세 미만의 유아라도 별도 좌석에 탑승하려면 소아로 선택해 주세요.</p>
+                  </div>
+
+                  <hr className="border-slate-200 dark:border-slate-600 mb-4" />
+
+                  {/* 인원 선택 */}
+                  <div className="space-y-4">
+                    {/* 성인 */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">성인</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">만 12세 이상 (국내선 만 13세 이상)</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, passengers: Math.min(9, (prev.passengers || 1) + 1) }))}
-                        className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
-                        aria-label="성인 인원 증가"
-                      >
-                        +
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            adults: Math.max(1, prev.adults - 1)
+                          }))}
+                          disabled={formData.adults <= 1}
+                          className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          −
+                        </button>
+                        <span className="w-8 text-center font-medium text-primary text-lg">{formData.adults}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            adults: Math.min(9 - prev.children - prev.infants, prev.adults + 1)
+                          }))}
+                          disabled={formData.adults + formData.children + formData.infants >= 9}
+                          className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
+
+                    {/* 소아 */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">소아</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">만 2세~만 12세 미만 (국내선 만 13세 미만)</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            children: Math.max(0, prev.children - 1)
+                          }))}
+                          disabled={formData.children <= 0}
+                          className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          −
+                        </button>
+                        <span className="w-8 text-center font-medium text-primary text-lg">{formData.children}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            children: Math.min(9 - prev.adults - prev.infants, prev.children + 1)
+                          }))}
+                          disabled={formData.adults + formData.children + formData.infants >= 9}
+                          className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 유아 */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">유아</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">만 2세 미만, 보호자와 동반착석</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            infants: Math.max(0, prev.infants - 1)
+                          }))}
+                          disabled={formData.infants <= 0}
+                          className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          −
+                        </button>
+                        <span className="w-8 text-center font-medium text-primary text-lg">{formData.infants}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            infants: Math.min(prev.adults, Math.min(9 - prev.adults - prev.children, prev.infants + 1))
+                          }))}
+                          disabled={formData.infants >= formData.adults || formData.adults + formData.children + formData.infants >= 9}
+                          className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr className="border-slate-200 dark:border-slate-600 my-4" />
+
+                  {/* 좌석 등급 선택 */}
+                  <div className="space-y-3">
+                    {/* 일반석 */}
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="font-medium text-gray-900 dark:text-white">일반석</span>
+                      <input
+                        type="radio"
+                        name="seatClass"
+                        value="ECONOMY"
+                        checked={formData.seatClass === 'ECONOMY'}
+                        onChange={(e) => setFormData(prev => ({ ...prev, seatClass: e.target.value }))}
+                        className="w-5 h-5 text-primary border-slate-300 focus:ring-primary"
+                      />
+                    </label>
+
+                    {/* 프리미엄 일반석 */}
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="font-medium text-gray-900 dark:text-white">프리미엄 일반석</span>
+                      <input
+                        type="radio"
+                        name="seatClass"
+                        value="PREMIUM"
+                        checked={formData.seatClass === 'PREMIUM'}
+                        onChange={(e) => setFormData(prev => ({ ...prev, seatClass: e.target.value }))}
+                        className="w-5 h-5 text-primary border-slate-300 focus:ring-primary"
+                      />
+                    </label>
+
+                    {/* 비즈니스석 */}
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="font-medium text-gray-900 dark:text-white">비즈니스석</span>
+                      <input
+                        type="radio"
+                        name="seatClass"
+                        value="BUSINESS"
+                        checked={formData.seatClass === 'BUSINESS'}
+                        onChange={(e) => setFormData(prev => ({ ...prev, seatClass: e.target.value }))}
+                        className="w-5 h-5 text-primary border-slate-300 focus:ring-primary"
+                      />
+                    </label>
                   </div>
                 </div>
 
