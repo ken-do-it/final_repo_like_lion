@@ -1,0 +1,162 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getLocalColumns, checkColumnPermission } from '../../../api/columns';
+import { useAuth } from '../../../context/AuthContext';
+import Button from '../../../components/ui/Button';
+
+const LocalColumnList = () => {
+    const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
+    const [columns, setColumns] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchColumns();
+    }, []);
+
+    const fetchColumns = async () => {
+        try {
+            setLoading(true);
+            const data = await getLocalColumns({ page: 1, limit: 20 });
+            setColumns(data);
+        } catch (err) {
+            console.error('Failed to fetch columns:', err);
+            setError('칼럼을 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleWriteClick = async () => {
+        if (!isAuthenticated) {
+            if (window.confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                navigate('/login-page');
+            }
+            return;
+        }
+
+        const permission = await checkColumnPermission();
+        if (!permission.allowed) {
+            alert(permission.message);
+            return;
+        }
+
+        navigate('/local-columns/write');
+    };
+
+    return (
+        <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] text-[#111111] dark:text-[#f1f5f9] transition-colors">
+            {/* Main Content */}
+            <main className="container mx-auto px-4 max-w-screen-xl py-8">
+                {/* Header */}
+                <div className="mb-8 text-center">
+                    <h1 className="text-3xl font-bold mb-10">
+                        현지인 칼럼
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
+                        진짜 현지인이 알려주는 숨은 명소와 맛집 이야기를 만나보세요.
+                        <br />
+                        검증된 현지인만이 들려줄 수 있는 특별한 정보가 가득합니다.
+                    </p>
+
+                    {/* Write Button */}
+                    <div className="flex justify-end mt-6">
+                        <Button
+                            onClick={handleWriteClick}
+                            className="bg-[#1392ec] hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-colors shadow-sm"
+                        >
+                            <span>✏️</span>
+                            <span>칼럼 쓰기</span>
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Error State */}
+                {error && (
+                    <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg mb-8 text-center">
+                        <p>{error}</p>
+                        <button
+                            onClick={fetchColumns}
+                            className="mt-2 text-sm underline hover:text-red-700 dark:hover:text-red-300"
+                        >
+                            다시 시도
+                        </button>
+                    </div>
+                )}
+
+                {/* Loading State */}
+                {loading && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {[...Array(8)].map((_, i) => (
+                            <div key={i} className="bg-white dark:bg-[#1e2b36] rounded-xl h-80 animate-pulse shadow-sm"></div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Results Grid */}
+                {!loading && !error && (
+                    <>
+                        {columns.length === 0 ? (
+                            <div className="text-center py-20">
+                                <div className="text-6xl mb-4">📝</div>
+                                <h3 className="text-xl font-bold mb-2">아직 작성된 칼럼이 없습니다.</h3>
+                                <p className="text-gray-500 dark:text-gray-400">
+                                    첫 번째 칼럼의 주인공이 되어보세요!
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {columns.map((column) => (
+                                    <div
+                                        key={column.id}
+                                        onClick={() => navigate(`/local-columns/${column.id}`)}
+                                        className="group bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-transparent hover:border-blue-500/30 overflow-hidden cursor-pointer flex flex-col h-full"
+                                    >
+                                        {/* Thumbnail Area */}
+                                        <div className="relative h-48 overflow-hidden bg-gray-200 dark:bg-gray-700">
+                                            <img
+                                                src={column.thumbnail_url}
+                                                alt={column.title}
+                                                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                            {/* Overlay Gradient (Subtle) */}
+                                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                                        </div>
+
+                                        {/* Content Area */}
+                                        <div className="p-5 flex flex-col flex-1">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-bold text-lg line-clamp-2 group-hover:text-[#1392ec] transition-colors leading-snug">
+                                                    {column.title}
+                                                </h3>
+                                            </div>
+
+                                            <div className="mt-auto pt-4 flex items-center justify-between text-sm border-t border-gray-50 dark:border-gray-700/50">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-[10px] overflow-hidden text-gray-500 dark:text-gray-400">
+                                                        {column.user_nickname ? column.user_nickname[0] : '?'}
+                                                    </div>
+                                                    <span className="font-medium text-gray-600 dark:text-gray-300 truncate max-w-[80px]">
+                                                        {column.user_nickname || '익명'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-gray-400 text-xs">
+                                                    <span>👀 {column.view_count}</span>
+                                                    <span>•</span>
+                                                    <span>{new Date(column.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+            </main>
+        </div>
+    );
+};
+
+export default LocalColumnList;

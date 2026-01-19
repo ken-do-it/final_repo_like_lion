@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import LocalAuthModal from '../pages/places/LocalAuthModal';
+import LocalAuthModal from '../pages/places/columns/LocalAuthModal';
 
 const Sidebar = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
@@ -35,7 +35,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         if (item.action === 'local_auth') {
             onClose(); // Close sidebar first
             if (!isAuthenticated) {
-                navigate('/login-page');
+                if (window.confirm('이 기능은 로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    navigate('/login-page');
+                }
                 return;
             }
             setIsLocalAuthModalOpen(true);
