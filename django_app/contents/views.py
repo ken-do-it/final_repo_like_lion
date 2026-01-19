@@ -312,16 +312,26 @@ class ShortformViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def view(self, request, pk=None):
         shortform = self.get_object()
-        ip = request.META.get('REMOTE_ADDR')
+        
+        # [Privacy] IP Address Hashing (SHA-256 + Base64)
+        raw_ip = request.META.get('REMOTE_ADDR', '')
+        if raw_ip:
+            # 해시 생성 (SHA-256) 후 Base64 인코딩하여 길이 단축 (44자)
+            import base64
+            hashed_bytes = hashlib.sha256(raw_ip.encode('utf-8')).digest()
+            ip_hash = base64.b64encode(hashed_bytes).decode('utf-8')
+        else:
+            ip_hash = None
+
         user = request.user if request.user.is_authenticated else None
         
         if user:
-            exists = ShortformView.objects.filter(shortform=shortform).filter(Q(user=user) | Q(ip_address=ip)).exists()
+            exists = ShortformView.objects.filter(shortform=shortform).filter(Q(user=user) | Q(ip_address=ip_hash)).exists()
         else:
-            exists = ShortformView.objects.filter(shortform=shortform, ip_address=ip).exists()
+            exists = ShortformView.objects.filter(shortform=shortform, ip_address=ip_hash).exists()
 
         if not exists:
-            ShortformView.objects.create(shortform=shortform, user=user, ip_address=ip)
+            ShortformView.objects.create(shortform=shortform, user=user, ip_address=ip_hash)
             Shortform.objects.filter(pk=shortform.pk).update(total_views=F('total_views') + 1)
             shortform.refresh_from_db(fields=['total_views'])
 
