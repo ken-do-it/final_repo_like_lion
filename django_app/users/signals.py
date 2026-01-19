@@ -37,13 +37,13 @@ def set_social_provider(sender, request, sociallogin, **kwargs):
     provider = sociallogin.account.provider
 
     if provider == 'google':
-        user.social_provider = 'GOOGLE'
+        user.provider_type = 'GOOGLE'
     elif provider == 'kakao':
-        user.social_provider = 'KAKAO'
+        user.provider_type = 'KAKAO'
     elif provider == 'naver':
-        user.social_provider = 'NAVER'
+        user.provider_type = 'NAVER'
     else:
-        user.social_provider = provider.upper()
+        user.provider_type = provider.upper()
 
     # 닉네임이 없으면 소셜 계정 이름으로 설정
     if not user.nickname:
@@ -98,6 +98,6 @@ def create_jwt_tokens(sender, request, user, **kwargs):
         username=user.username,
         ip_address=client_ip,
         device_info=device_info or 'Unknown',
-        login_type=user.social_provider or 'LOCAL',
+        login_type=user.provider_type or 'LOCAL',
         status='SUCCESS'
     )

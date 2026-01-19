@@ -207,6 +207,19 @@ class ShortformViewSet(viewsets.ModelViewSet):
                     resp.data = TranslationService.apply_translation_sequential(resp.data, target_lang)
             except Exception as e:
                 logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during retrieve")
+        
+        # Navigation: Prev/Next ID (Global scope, ordered by ID/Time)
+        instance = self.get_object()
+        
+        # Previous (Older): ID smaller than current, order by ID desc (closest smaller)
+        prev_obj = Shortform.objects.filter(id__lt=instance.id).order_by('-id').first()
+        
+        # Next (Newer): ID larger than current, order by ID asc (closest larger)
+        next_obj = Shortform.objects.filter(id__gt=instance.id).order_by('id').first()
+
+        resp.data['prev_id'] = prev_obj.id if prev_obj else None
+        resp.data['next_id'] = next_obj.id if next_obj else None
+
         return resp
 
     @extend_schema(
@@ -296,7 +309,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         request=None,
         responses={200: {'type': 'object', 'properties': {'viewed': {'type': 'boolean'}, 'total_views': {'type': 'integer'}}}}
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def view(self, request, pk=None):
         shortform = self.get_object()
         ip = request.META.get('REMOTE_ADDR')

@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
+import { useAuth } from '../../context/AuthContext';
 
 const PlanEdit = () => {
   const { planId } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -19,9 +21,19 @@ const PlanEdit = () => {
     is_public: true,
   });
 
+  // 로그인 체크
   useEffect(() => {
-    fetchPlan();
-  }, [planId]);
+    if (!isAuthenticated) {
+      alert('로그인이 필요한 서비스입니다.');
+      navigate(-1); // 이전 페이지로 돌아가기
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPlan();
+    }
+  }, [planId, isAuthenticated]);
 
   const fetchPlan = async () => {
     try {

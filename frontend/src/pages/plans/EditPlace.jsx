@@ -3,10 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
 import placesApi from '../../api/placesApi';
+import { useAuth } from '../../context/AuthContext';
 
 const EditPlace = () => {
   const { detailId } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [detail, setDetail] = useState(null);
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,9 +28,19 @@ const EditPlace = () => {
   const searchTimeoutRef = useRef(null);
   const searchInputRef = useRef(null);
 
+  // 로그인 체크
   useEffect(() => {
-    fetchDetailAndPlan();
-  }, [detailId]);
+    if (!isAuthenticated) {
+      alert('로그인이 필요한 서비스입니다.');
+      navigate(-1); // 이전 페이지로 돌아가기
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDetailAndPlan();
+    }
+  }, [detailId, isAuthenticated]);
 
   const fetchDetailAndPlan = async () => {
     try {

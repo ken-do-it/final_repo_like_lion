@@ -76,32 +76,31 @@ def plan_list_create(request):
     
     elif request.method == 'POST':
         # 생성
-        serializer = TravelPlanCreateSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            # 임시: 첫 번째 유저 사용 (나중에 request.user로 변경)
-            user = User.objects.first()
+        if request.user.is_authenticated : 
+            serializer = TravelPlanCreateSerializer(data=request.data)
             
-            if not user:
-                user = User.objects.create_user(
-                    username='testuser',
-                    password='test1234'
+            if serializer.is_valid():
+                
+                serializer.save(user=request.user)
+                
+                plan = serializer.instance
+                detail_serializer = TravelPlanDetailSerializer(plan)
+                
+                return Response(
+                    detail_serializer.data,
+                    status=status.HTTP_201_CREATED
                 )
             
-            serializer.save(user=user)
-            
-            plan = serializer.instance
-            detail_serializer = TravelPlanDetailSerializer(plan)
-            
             return Response(
-                detail_serializer.data,
-                status=status.HTTP_201_CREATED
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
             )
         
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        else:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 @extend_schema(
     tags=['여행 일정'],
@@ -139,46 +138,73 @@ def plan_retrieve_update_delete(request, plan_id):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # 권한 체크 (임시로 주석 처리, 나중에 활성화)
-    # if plan.user != request.user and not plan.is_public:
-    #     return Response(
-    #         {'error': '권한이 없습니다.'},
-    #         status=status.HTTP_403_FORBIDDEN
-    #     )
     
     if request.method == 'GET':
         # 상세 조회
+        if not request.user.is_authenticated:
+            if not plan.is_public:
+                return Response({'error': '공개되지 않은 일정입니다.'}, status=403)
+        
+        else : 
+            if plan.user != request.user and not plan.is_public:
+                return Response({'error': '공개되지 않은 일정입니다.'}, status=403)
+            
         serializer = TravelPlanDetailSerializer(plan)
         return Response(serializer.data)
     
     elif request.method in ['PUT', 'PATCH']:
         # 수정
-        partial = request.method == 'PATCH'  # PATCH는 부분 수정
-        serializer = TravelPlanUpdateSerializer(
-            plan, 
-            data=request.data, 
-            partial=partial
-        )
-        
-        if serializer.is_valid():
-            serializer.save()
+        if request.user.is_authenticated :
+            partial = request.method == 'PATCH'  # PATCH는 부분 수정
+            if plan.user != request.user :
+                return Response(
+                    {'error': '본인만 수정할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+                )
             
-            # 수정된 전체 정보 반환
-            detail_serializer = TravelPlanDetailSerializer(plan)
-            return Response(detail_serializer.data)
+            serializer = TravelPlanUpdateSerializer(
+                plan, 
+                data=request.data, 
+                partial=partial
+            )
+            
+            if serializer.is_valid():
+                serializer.save()
+                
+                # 수정된 전체 정보 반환
+                detail_serializer = TravelPlanDetailSerializer(plan)
+                return Response(detail_serializer.data)
+            
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        else:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            ) 
     
     elif request.method == 'DELETE':
         # 삭제
-        plan.delete()
-        return Response(
-            {'message': '일정이 삭제되었습니다.'},
-            status=status.HTTP_200_OK
-        )
+
+        if request.user.is_authenticated :
+            if plan.user != request.user :
+                return Response(
+                    {'error': '본인만 삭제할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+                )
+            plan.delete()
+            return Response(
+                {'message': '일정이 삭제되었습니다.'},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            ) 
 
 
 # ==================== 날짜별 장소 CRUD ====================
@@ -267,40 +293,51 @@ def detail_list_create(request, plan_id):
         return Response(serializer.data)
     
     elif request.method == 'POST':
-        serializer = PlanDetailCreateSerializer(data=request.data)
+        if request.user.is_authenticated :
+            if plan.user != request.user :
+                return Response(
+                    {'error': '본인만 이용할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+                )
+            serializer = PlanDetailCreateSerializer(data=request.data)
 
-        if serializer.is_valid():
-            # 1. place_name이 있는지 확인
-            place_name = request.data.get('place_name')
+            if serializer.is_valid():
+                # 1. place_name이 있는지 확인
+                place_name = request.data.get('place_name')
 
-            if place_name:
-                # 2. services.py의 함수 호출 (import 필요)
-                try:
-                    place, created = get_or_create_place_from_search(place_name)
-                    # 3. serializer.save()에 place 전달
-                    serializer.save(plan=plan, place=place)
-                except ValueError as e:
-                    # 장소를 찾지 못한 경우 에러 반환
-                    return Response({'error': str(e)}, status=404)
-                except requests.RequestException as e:
-                    # FastAPI 연결 실패
-                    return Response({'error': '장소 검색 서버에 연결할 수 없습니다'}, status=503)
-            else:
-                # place_name이 없으면 기존 로직 (place_id 사용)
-                serializer.save(plan=plan)
+                if place_name:
+                    # 2. services.py의 함수 호출 (import 필요)
+                    try:
+                        place, created = get_or_create_place_from_search(place_name)
+                        # 3. serializer.save()에 place 전달
+                        serializer.save(plan=plan, place=place)
+                    except ValueError as e:
+                        # 장소를 찾지 못한 경우 에러 반환
+                        return Response({'error': str(e)}, status=404)
+                    except requests.RequestException as e:
+                        # FastAPI 연결 실패
+                        return Response({'error': '장소 검색 서버에 연결할 수 없습니다'}, status=503)
+                else:
+                    # place_name이 없으면 기존 로직 (place_id 사용)
+                    serializer.save(plan=plan)
 
-            detail = serializer.instance
-            response_serializer = PlanDetailUpdateSerializer(detail)
+                detail = serializer.instance
+                response_serializer = PlanDetailUpdateSerializer(detail)
+
+                return Response(
+                    response_serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
 
             return Response(
-                response_serializer.data,
-                status=status.HTTP_201_CREATED
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
             )
-
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        else:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 @extend_schema(
@@ -364,43 +401,65 @@ def detail_retrieve_update_delete(request, detail_id):
         return Response(serializer.data)
     
     elif request.method in ['PUT', 'PATCH']:
-        partial = request.method == 'PATCH'
-        serializer = PlanDetailCreateSerializer(
-            detail,
-            data=request.data,
-            partial=partial
-        )
+        if request.user.is_authenticated :
+            if detail.plan.user != request.user :
+                return Response(
+                    {'error': '본인만 수정할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+                )
+            partial = request.method == 'PATCH'
+            serializer = PlanDetailCreateSerializer(
+                detail,
+                data=request.data,
+                partial=partial
+            )
 
-        if serializer.is_valid():
-            # place_name이 있으면 장소 검색 후 업데이트
-            place_name = request.data.get('place_name')
+            if serializer.is_valid():
+                # place_name이 있으면 장소 검색 후 업데이트
+                place_name = request.data.get('place_name')
 
-            if place_name:
-                try:
-                    place, created = get_or_create_place_from_search(place_name)
-                    serializer.save(plan=detail.plan, place=place)
-                except ValueError as e:
-                    return Response({'error': str(e)}, status=404)
-                except requests.RequestException as e:
-                    return Response({'error': '장소 검색 서버에 연결할 수 없습니다'}, status=503)
-            else:
-                # plan은 변경 불가, 기존 plan 유지
-                serializer.save(plan=detail.plan)
+                if place_name:
+                    try:
+                        place, created = get_or_create_place_from_search(place_name)
+                        serializer.save(plan=detail.plan, place=place)
+                    except ValueError as e:
+                        return Response({'error': str(e)}, status=404)
+                    except requests.RequestException as e:
+                        return Response({'error': '장소 검색 서버에 연결할 수 없습니다'}, status=503)
+                else:
+                    # plan은 변경 불가, 기존 plan 유지
+                    serializer.save(plan=detail.plan)
 
-            response_serializer = PlanDetailUpdateSerializer(detail)
-            return Response(response_serializer.data)
+                response_serializer = PlanDetailUpdateSerializer(detail)
+                return Response(response_serializer.data)
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
     
     elif request.method == 'DELETE':
-        detail.delete()
-        return Response(
-            {'message': '장소가 삭제되었습니다.'},
-            status=status.HTTP_200_OK
-        )
+        if request.user.is_authenticated :
+            if detail.plan.user != request.user :
+                return Response(
+                    {'error': '본인만 수정할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+                )
+            detail.delete()
+            return Response(
+                {'message': '장소가 삭제되었습니다.'},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 # ==================== 장소 이미지 CRUD ====================
@@ -435,20 +494,31 @@ def image_list_create(request, detail_id):
         return Response(serializer.data)
     
     elif request.method == 'POST':
-        serializer = PlanDetailImageCreateSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            serializer.save(detail=detail)
+        if request.user.is_authenticated :
+            if detail.plan.user != request.user :
+                return Response(
+                    {'error': '본인만 이용할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+                )
+            serializer = PlanDetailImageCreateSerializer(data=request.data)
+            
+            if serializer.is_valid():
+                serializer.save(detail=detail)
+                
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
             
             return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
             )
-        
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        else:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 @extend_schema(
     tags=['장소 관리'],
@@ -518,7 +588,7 @@ def image_retrieve_update_delete(request, image_id):
     }
 )
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_request_create(request):
     """
     AI 여행 추천 요청
@@ -537,60 +607,58 @@ def ai_request_create(request):
         "additional_request": "맛집 위주로 추천해주세요"
     }
     """
-    serializer = AITravelRequestSerializer(data=request.data)
+    if request.user.is_authenticated :
+        serializer = AITravelRequestSerializer(data=request.data)
 
-    if not serializer.is_valid():
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # AITravelRequest 생성 (status='pending')
+        ai_request = serializer.save(user=request.user, status='pending')
+
+        try:
+            # AI 추천 생성
+            logger.info(f"AI 추천 요청 시작: {ai_request.id}")
+            plan = generate_travel_recommendation(ai_request)
+            logger.info(f"AI 추천 완료: Plan {plan.id}")
+
+            # 성공 응답
+            response_serializer = AITravelRequestDetailSerializer(ai_request)
+            return Response(
+                response_serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+
+        except ValueError as e:
+            # JSON 파싱 실패 등
+            ai_request.status = 'failed'
+            ai_request.error_message = str(e)
+            ai_request.save()
+
+            logger.error(f"AI 추천 실패 (ValueError): {str(e)}")
+            return Response(
+                {'error': f'AI 응답 처리 실패: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except Exception as e:
+            # API 호출 실패, 기타 오류
+            ai_request.status = 'failed'
+            ai_request.error_message = str(e)
+            ai_request.save()
+
+            logger.error(f"AI 추천 실패: {str(e)}")
+            return Response(
+                {'error': f'AI 서비스 오류: {str(e)}'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+    else:
         return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    # 임시: 첫 번째 유저 사용 (나중에 request.user로 변경)
-    user = User.objects.first()
-    if not user:
-        user = User.objects.create_user(
-            username='testuser',
-            password='test1234'
-        )
-
-    # AITravelRequest 생성 (status='pending')
-    ai_request = serializer.save(user=user, status='pending')
-
-    try:
-        # AI 추천 생성
-        logger.info(f"AI 추천 요청 시작: {ai_request.id}")
-        plan = generate_travel_recommendation(ai_request)
-        logger.info(f"AI 추천 완료: Plan {plan.id}")
-
-        # 성공 응답
-        response_serializer = AITravelRequestDetailSerializer(ai_request)
-        return Response(
-            response_serializer.data,
-            status=status.HTTP_201_CREATED
-        )
-
-    except ValueError as e:
-        # JSON 파싱 실패 등
-        ai_request.status = 'failed'
-        ai_request.error_message = str(e)
-        ai_request.save()
-
-        logger.error(f"AI 추천 실패 (ValueError): {str(e)}")
-        return Response(
-            {'error': f'AI 응답 처리 실패: {str(e)}'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    except Exception as e:
-        # API 호출 실패, 기타 오류
-        ai_request.status = 'failed'
-        ai_request.error_message = str(e)
-        ai_request.save()
-
-        logger.error(f"AI 추천 실패: {str(e)}")
-        return Response(
-            {'error': f'AI 서비스 오류: {str(e)}'},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE
+            {'error': '로그인 후 이용해주세요.'},
+            status=status.HTTP_401_UNAUTHORIZED
         )
 
 
@@ -616,6 +684,22 @@ def ai_request_retrieve(request, request_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    # 권한 체크: 본인이 아니고 비공개면 접근 불가
+    if request.user.is_authenticated:
+    # 로그인 유저: 본인 요청이거나 공개된 일정만 조회 가능
+        if ai_request.user != request.user and (not ai_request.created_plan or not ai_request.created_plan.is_public):
+            return Response(
+                {'error': '공개되지 않은 일정입니다.'},
+                status=status.HTTP_403_FORBIDDEN
+        )
+    else:
+        # 비로그인 유저: 공개된 일정만 조회 가능
+        if not ai_request.created_plan or not ai_request.created_plan.is_public:
+            return Response(
+                {'error': '공개되지 않은 일정입니다.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
     serializer = AITravelRequestDetailSerializer(ai_request)
     return Response(serializer.data)
 
@@ -626,21 +710,15 @@ def ai_request_retrieve(request, request_id):
     responses={200: AITravelRequestDetailSerializer(many=True)}
 )
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def ai_requests_list(request):
     """
     AI 추천 요청 목록 조회
 
     GET /api/plans/ai/requests/
-    - 사용자별 필터링: ?user=<user_id>
     - 상태별 필터링: ?status=success
     """
-    ai_requests = AITravelRequest.objects.all().order_by('-created_at')
-
-    # 필터링
-    user_id = request.query_params.get('user')
-    if user_id:
-        ai_requests = ai_requests.filter(user_id=user_id)
+    ai_requests = AITravelRequest.objects.filter(user=request.user).order_by('-created_at')
 
     status_filter = request.query_params.get('status')
     if status_filter:
@@ -648,38 +726,3 @@ def ai_requests_list(request):
 
     serializer = AITravelRequestDetailSerializer(ai_requests, many=True)
     return Response(serializer.data)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def kakao_static_map(request):
-    """
-    다음 지도 정적 이미지 프록시
-    다음 지도 이미지 서비스를 사용하여 지도 미리보기 이미지 반환
-    """
-    from django.http import HttpResponse
-
-    latitude = request.GET.get('lat')
-    longitude = request.GET.get('lng')
-
-    if not latitude or not longitude:
-        return Response({'error': 'lat and lng parameters are required'}, status=400)
-
-    try:
-        # 다음 지도 정적 이미지 서비스 사용 (실제 지도 이미지 반환)
-        # 좌표를 WGS84에서 Daum Map 좌표계로 변환 (근사값 사용)
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-
-        # Daum 지도 이미지 서비스 - 마커 포함
-        static_image_url = f'https://map2.daum.net/map/imageservice?MX={longitude}&MY={latitude}&SCALE=2.5&IW=400&IH=250'
-
-        img_response = requests.get(static_image_url, headers=headers, timeout=10)
-        img_response.raise_for_status()
-
-        return HttpResponse(img_response.content, content_type='image/jpeg')
-
-    except Exception as e:
-        logger.error(f"카카오맵 이미지 로드 실패: {str(e)}")
-        return Response({'error': str(e)}, status=500)

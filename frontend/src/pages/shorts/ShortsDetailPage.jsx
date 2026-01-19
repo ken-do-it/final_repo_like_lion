@@ -125,6 +125,10 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
+    // Like State
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+
 
 
     const { user, isAuthenticated } = useAuth()
@@ -228,13 +232,18 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                 thumb: item.thumbnail_url,
                 video: item.video_url,
                 lang: item.source_lang || 'N/A',
-                lang: item.source_lang || 'N/A',
+                location: item.location || '', // Add location field
                 ownerId: item.user,
                 // Add Creator Info
                 creatorName: item.nickname || `User ${item.user}`,
                 creatorAvatar: item.profile_image_url,
+                totalComments: item.total_comments,
+                prevId: item.prev_id,
+                nextId: item.next_id,
             })
-
+            // Initialize Like State
+            setLiked(item.is_liked)
+            setLikeCount(item.total_likes)
 
         } catch (err) {
             setError(err.response?.data?.detail || err.message)
@@ -243,9 +252,45 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
         }
     }
 
+    // Like Handlers
+
+
+    const handleLikeToggle = async () => {
+        if (!isAuthenticated) {
+            alert("Please login to like.");
+            return;
+        }
+
+        // Optimistic UI Update
+        const prevLiked = liked;
+        const prevCount = likeCount;
+
+        setLiked(!prevLiked);
+        setLikeCount(prevLiked ? prevCount - 1 : prevCount + 1);
+
+        try {
+            if (prevLiked) {
+                await axiosInstance.delete(`/shortforms/${id}/unlike/`);
+            } else {
+                await axiosInstance.post(`/shortforms/${id}/like/`);
+            }
+        } catch (error) {
+            console.error("Like toggle failed:", error);
+            // Revert on error
+            setLiked(prevLiked);
+            setLikeCount(prevCount);
+        }
+    };
+
+
+
+
     useEffect(() => {
         if (id) {
             fetchDetail()
+            // Increment view count
+            axiosInstance.post(`/shortforms/${id}/view/`)
+                .catch(err => console.error("Failed to increment view count:", err));
         }
     }, [id, langCode])
 
@@ -303,11 +348,40 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
 
             <div className="detail-content-wrapper">
                 {/* Left Column: Video Player */}
-                <div className="player-wrapper">
-                    <video controls autoPlay poster={shortform.thumb}>
-                        <source src={shortform.video} type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
+                <div className="player-wrapper relative group">
+                    {/* Left Button -> Next Video (Newer) */}
+                    {shortform.nextId && (
+                        <button
+                            onClick={() => navigate(`/shorts/${shortform.nextId}`)}
+                            className="absolute -left-18 md:-left-24 top-1/2 -translate-y-1/2 p-2 
+                                       text-gray-400 hover:text-gray-700 
+                                       transition-colors z-30 md:drop-shadow-none"
+                            title="Next Video"
+                        >
+                            <span className="material-symbols-outlined !text-6xl md:!text-6xl font-light">chevron_left</span>
+                        </button>
+                    )}
+
+                    {/* Video Container (Clipped) */}
+                    <div className="w-full h-full rounded-2xl overflow-hidden relative shadow-2xl bg-black z-10">
+                        <video controls poster={shortform.thumb} className="w-full h-full object-cover">
+                            <source src={shortform.video} type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+
+                    {/* Right Button -> Previous Video (Older) */}
+                    {shortform.prevId && (
+                        <button
+                            onClick={() => navigate(`/shorts/${shortform.prevId}`)}
+                            className="absolute -right-18 md:-right-24 top-1/2 -translate-y-1/2 p-2 
+                                       text-gray-400 hover:text-gray-700 
+                                       transition-colors z-30 md:drop-shadow-none"
+                            title="Previous Video"
+                        >
+                            <span className="material-symbols-outlined !text-6xl md:!text-6xl font-light">chevron_right</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Right Column: Sidebar */}
@@ -318,7 +392,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                         <h1 className="text-xl font-bold leading-tight">{shortform.title}</h1>
 
                         <button onClick={handleBack} className="btn-close">
-                            {t.close}
+                            <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>
 
@@ -336,8 +410,8 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                         <div className="creator-info">
                             <h3>{shortform.creatorName}</h3>
                             <p>
-                                <span className="material-symbols-outlined text-xs">location_on</span>
-                                {mockData.creator.location} · {mockData.creator.time}
+                                <span>📍</span>
+                                {shortform.location_translated || shortform.location || mockData.creator.location} · {mockData.creator.time}
                             </p>
                         </div>
                         <button className="btn-follow">{t.follow}</button>
@@ -366,16 +440,26 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                     {/* Description & Hashtags */}
                     <div className="video-desc">
                         {shortform.desc}
-                        <div className="video-hashtags">{mockData.hashtags}</div>
+                        {/* <div className="video-hashtags">{mockData.hashtags}</div> */}
                     </div>
 
                     {/* Stats Row */}
                     <div className="stats-row">
-                        <div className="stat-item">
-                            <span className="material-symbols-outlined">favorite</span> 1.2k
+                        <div className="stat-item" onClick={handleLikeToggle}>
+                            <button
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors group ${liked ? 'bg-red-50 dark:bg-red-900/30 text-red-500' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                            >
+                                <span
+                                    className={`text-2xl transition-colors ${liked ? 'text-red-500' : 'group-hover:text-red-500'}`}
+                                    style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
+                                >
+                                    ♥
+                                </span>
+                            </button>
+                            <span className={`font-medium ml-2 ${liked ? 'text-red-500' : ''}`}>{likeCount}</span>
                         </div>
                         <div className="stat-item">
-                            <span className="material-symbols-outlined">chat_bubble</span> 45
+                            <span className="material-symbols-outlined">chat_bubble</span> {shortform.totalComments || 0}
                         </div>
                         <div className="stat-item">
                             <span className="material-symbols-outlined">share</span> {t.share}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import axiosInstance from '../../api/axios';
@@ -8,14 +8,14 @@ import './shortspage.css'; // Reusing form styles
 const ShortsUploadPage = () => {
     const navigate = useNavigate();
     const { id } = useParams(); // If exists, we are in EDIT mode
-    const location = useLocation();
-    const { isAuthenticated, user } = useAuth();
-    const { t, language } = useLanguage();
+    const { isAuthenticated } = useAuth();
+    const { t } = useLanguage();
 
     const isEditMode = Boolean(id);
 
     // Form State
     const [title, setTitle] = useState('');
+    const [locationInput, setLocationInput] = useState('');
     const [description, setDescription] = useState('');
     const [videoFile, setVideoFile] = useState(null);
     // For previewing existing video or selected file
@@ -52,6 +52,7 @@ const ShortsUploadPage = () => {
             // checking user match roughly if possible, or relying on backend 403.
 
             setTitle(data.title || '');
+            setLocationInput(data.location || '');
             setDescription(data.content || '');
             setPreviewUrl(data.video_url || '');
         } catch (err) {
@@ -80,6 +81,7 @@ const ShortsUploadPage = () => {
         try {
             const formData = new FormData();
             formData.append('title', title);
+            formData.append('location', locationInput);
             formData.append('content', description);
 
             // If creating, file is required. If editing, file is optional (update only if changed)
@@ -101,7 +103,7 @@ const ShortsUploadPage = () => {
                     setIsSubmitting(false);
                     return;
                 }
-                const res = await axiosInstance.post('/shortforms/', formData, {
+                await axiosInstance.post('/shortforms/', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 alert(t('upload_success'));
@@ -136,10 +138,10 @@ const ShortsUploadPage = () => {
                     <span className="material-symbols-outlined mr-1">arrow_back</span>
                     {t('back')}
                 </button>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white text-center">
                     {isEditMode ? t('upload_title_edit') : t('upload_title_new')}
                 </h1>
-                <p className="text-gray-500 text-sm mt-1">
+                <p className="text-gray-500 text-sm mt-1 text-center">
                     {isEditMode ? t('upload_sub_edit') : t('upload_sub_new')}
                 </p>
             </div>
@@ -207,6 +209,22 @@ const ShortsUploadPage = () => {
                         placeholder={t('ph_title')}
                         required
                     />
+                </div>
+
+                {/* Location Input - ADDED */}
+                <div className="form-group">
+                    <label className="form-label mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Location
+                    </label>
+                    <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">location_on</span>
+                        <input
+                            className="form-input w-full !pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-gray-800 dark:border-gray-600 outline-none transition-all"
+                            value={locationInput}
+                            onChange={(e) => setLocationInput(e.target.value)}
+                            placeholder="e.g. Korea"
+                        />
+                    </div>
                 </div>
 
                 {/* Description Input */}

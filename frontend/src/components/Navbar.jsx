@@ -47,11 +47,22 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
         }
     };
 
+    // Logout confirmation state
+    const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
+
     const handleLogout = () => {
-        logout();
+        setShowLogoutConfirm(true);
         setIsMenuOpen(false);
+    };
+
+    const confirmLogout = () => {
+        logout();
+        setShowLogoutConfirm(false);
         navigate('/');
-        // window.location.reload(); // Context updates automatically, reload not needed usually
+    };
+
+    const cancelLogout = () => {
+        setShowLogoutConfirm(false);
     };
 
     // User display info
@@ -216,6 +227,41 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                     )}
                 </div>
             </div>
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-[#1e2b36] rounded-2xl shadow-2xl p-6 mx-4 max-w-sm w-full animate-in zoom-in-95 duration-200">
+                        <div className="text-center">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                                {t('logout_confirm_title') || '로그아웃 하시겠습니까?'}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                                {t('logout_confirm_desc') || '정말 로그아웃 하시겠습니까?'}
+                            </p>
+                            <div className="flex gap-3 justify-center">
+                                <button
+                                    onClick={cancelLogout}
+                                    className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+                                >
+                                    {t('no') || '아니요'}
+                                </button>
+                                <button
+                                    onClick={confirmLogout}
+                                    className="px-5 py-2.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-sm"
+                                >
+                                    {t('yes') || '예'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </nav>
     );
 };
