@@ -106,9 +106,6 @@ class ShortformViewSet(viewsets.ModelViewSet):
         if not video_file:
             raise exceptions.ValidationError({"video_file": ["This field is required."]})
 
-        if not video_file:
-            raise exceptions.ValidationError({"video_file": ["This field is required."]})
-
         # [Refactoring] Use helper method
         video_data = self._process_video_upload(video_file)
 
@@ -140,62 +137,68 @@ class ShortformViewSet(viewsets.ModelViewSet):
         TranslationService.invalidate_cache("shortform", self.get_object().id)
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        try:
+            queryset = self.get_queryset()
 
-        # [Performance] N+1 Query Fix (is_liked)
-        # exists() 서브쿼리를 사용하여 메인 쿼리 한 번에 좋아요 여부 가져오기
-        if request.user.is_authenticated:
-            from django.db.models import OuterRef, Exists
-            is_liked_subquery = ShortformLike.objects.filter(
-                shortform=OuterRef('pk'), 
-                user=request.user
-            )
-            queryset = queryset.annotate(is_liked_val=Exists(is_liked_subquery))
+            # [Performance] N+1 Query Fix (is_liked)
+            if request.user.is_authenticated:
+                from django.db.models import OuterRef, Exists
+                is_liked_subquery = ShortformLike.objects.filter(
+                    shortform=OuterRef('pk'), 
+                    user=request.user
+                )
+                queryset = queryset.annotate(is_liked_val=Exists(is_liked_subquery))
 
-        queryset = self.filter_queryset(queryset)
+            queryset = self.filter_queryset(queryset)
 
-        # [필터] 작성자 (사용자)
-        writer_param = request.query_params.get("writer")
-        if writer_param:
-            if writer_param == 'me':
-                if request.user.is_authenticated:
-                    queryset = queryset.filter(user=request.user)
+            # [필터] 작성자 (사용자)
+            writer_param = request.query_params.get("writer")
+            if writer_param:
+                if writer_param == 'me':
+                    if request.user.is_authenticated:
+                        queryset = queryset.filter(user=request.user)
+                    else:
+                        raise exceptions.NotAuthenticated("Authentication required to filter by 'me'.")
                 else:
-                    raise exceptions.NotAuthenticated("Authentication required to filter by 'me'.")
+                    try:
+                        queryset = queryset.filter(user_id=int(writer_param))
+                    except ValueError:
+                        pass # 잘못된 ID는 무시
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                resp_data = serializer.data
             else:
+                serializer = self.get_serializer(queryset, many=True)
+                resp_data = serializer.data
+
+            # 기존 번역 로직
+            target_lang = request.query_params.get("lang")
+            use_batch = request.query_params.get("batch", "true") == "true"
+            
+            if target_lang:
                 try:
-                    queryset = queryset.filter(user_id=int(writer_param))
-                except ValueError:
-                    pass # 잘못된 ID는 무시
+                    # [서비스 레이어] 번역 적용
+                    if use_batch:
+                        resp_data = TranslationService.apply_translation_batch(resp_data, target_lang)
+                    else:
+                        resp_data = TranslationService.apply_translation_sequential(resp_data, target_lang)
+                except Exception as e:
+                    logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during list")
+            
+            if page is not None:
+                return self.get_paginated_response(resp_data)
+            
+            return Response(resp_data)
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            resp_data = serializer.data
-            # DRF 설정에 따라 페이지네이션 응답 구조 처리가 필요할 수 있음
-            # 하지만 나중에 resp.data를 수정하는 기존 패턴을 따름
-        else:
-            serializer = self.get_serializer(queryset, many=True)
-            resp_data = serializer.data
-
-        # 기존 번역 로직
-        target_lang = request.query_params.get("lang")
-        use_batch = request.query_params.get("batch", "true") == "true"
-        
-        if target_lang:
-            try:
-                # [서비스 레이어] 번역 적용
-                if use_batch:
-                    resp_data = TranslationService.apply_translation_batch(resp_data, target_lang)
-                else:
-                    resp_data = TranslationService.apply_translation_sequential(resp_data, target_lang)
-            except Exception as e:
-                logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during list")
-        
-        if page is not None:
-            return self.get_paginated_response(resp_data)
-        
-        return Response(resp_data)
+        except Exception as e:
+            logger.exception("Unexpected error in ShortformViewSet.list")
+            # 500 대신 읽기 가능한 에러 메시지 반환 (디버깅용)
+            return Response(
+                {"detail": "Internal Server Error during shortform list fetch.", "error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @extend_schema(
         summary="숏폼 상세 조회 (Retrieve Shortform)",
