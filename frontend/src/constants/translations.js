@@ -64,8 +64,8 @@ export const translations = {
         // Quick Actions
         action_flight: "Book Flight",
         action_stays: "Find Stays",
-        action_rentals: "Rentals",
-        action_activities: "Activities",
+        action_places: "Places",
+        action_geoquiz: "GeoQuiz",
 
         // Sections
         sec_upcoming: "Upcoming Adventure",
@@ -217,8 +217,8 @@ export const translations = {
         // Quick Actions
         action_flight: "항공권 예약",
         action_stays: "숙소 찾기",
-        action_rentals: "렌터카",
-        action_activities: "액티비티",
+        action_places: "여행지 찾기",
+        action_geoquiz: "지리 퀴즈",
 
         // Sections
         sec_upcoming: "다가오는 여행",
@@ -367,8 +367,8 @@ export const translations = {
         // Quick Actions
         action_flight: "航空券予約",
         action_stays: "宿泊先を探す",
-        action_rentals: "レンタカー",
-        action_activities: "アクティビティ",
+        action_places: "観光地",
+        action_geoquiz: "ジオクイズ",
 
         // Sections
         sec_upcoming: "これからの旅行",
