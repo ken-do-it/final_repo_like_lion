@@ -59,15 +59,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
         ]
     )
 
-    def perform_create(self, serializer):
-        user = self.request.user
-        if not user.is_authenticated:
-            raise exceptions.NotAuthenticated("Authentication required to upload.")
-
-        video_file = self.request.FILES.get('video_file') or serializer.validated_data.get('video_file')
-        if not video_file:
-            raise exceptions.ValidationError({"video_file": ["This field is required."]})
-
+    def _process_video_upload(self, video_file, serializer_instance=None):
+        """
+        [Refactoring] Deduped video processing logic.
+        Handles video save, metadata extraction, thumbnail generation, and language detection.
+        Returns a dict of fields to save.
+        """
         # [서비스 레이어] 비디오 처리
         saved_path, saved_url = VideoService.save_video_file(video_file)
         
@@ -78,50 +75,53 @@ class ShortformViewSet(viewsets.ModelViewSet):
         meta = VideoService.extract_metadata(abs_path)
         thumb_path, thumb_url = VideoService.generate_thumbnail(abs_path)
 
-        # [서비스 레이어] 언어 감지
-        title = serializer.validated_data.get('title', '')
-        content = serializer.validated_data.get('content', '')
+        # [서비스 레이어] 언어 감지 (제목/내용 필요)
+        # serializer_instance가 있으면 (update) 기존 값 사용, 없으면 (create) 빈 문자열
+        if serializer_instance:
+            title = self.request.data.get('title', serializer_instance.title)
+            content = self.request.data.get('content', serializer_instance.content)
+        else:
+            title = self.request.data.get('title', '')
+            content = self.request.data.get('content', '')
+            
         full_text = f"{title} {content}".strip()
         detected_lang = TranslationService.detect_language(full_text)
 
-        serializer.save(
-            user=user,
-            video_url=saved_url,
-            file_size=video_file.size,
-            duration=meta.get("duration"),
-            width=meta.get("width"),
-            height=meta.get("height"),
-            thumbnail_url=thumb_url,
-            source_lang=detected_lang,
-        )
+        return {
+            'video_url': saved_url,
+            'file_size': video_file.size,
+            'duration': meta.get("duration"),
+            'width': meta.get("width"),
+            'height': meta.get("height"),
+            'thumbnail_url': thumb_url,
+            'source_lang': detected_lang,
+        }
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if not user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to upload.")
+
+        video_file = self.request.FILES.get('video_file') or serializer.validated_data.get('video_file')
+        if not video_file:
+            raise exceptions.ValidationError({"video_file": ["This field is required."]})
+
+        if not video_file:
+            raise exceptions.ValidationError({"video_file": ["This field is required."]})
+
+        # [Refactoring] Use helper method
+        video_data = self._process_video_upload(video_file)
+
+        serializer.save(user=user, **video_data)
 
     def perform_update(self, serializer):
         user = self.request.user
         video_file = self.request.FILES.get('video_file')
         
         if video_file:
-            # [서비스 레이어] 비디오 처리
-            saved_path, saved_url = VideoService.save_video_file(video_file)
-            from django.core.files.storage import default_storage
-            abs_path = default_storage.path(saved_path)
-            
-            meta = VideoService.extract_metadata(abs_path)
-            thumb_path, thumb_url = VideoService.generate_thumbnail(abs_path)
-
-            title = serializer.validated_data.get('title', self.get_object().title)
-            content = serializer.validated_data.get('content', self.get_object().content)
-            full_text = f"{title} {content}".strip()
-            detected_lang = TranslationService.detect_language(full_text)
-
-            serializer.save(
-                video_url=saved_url,
-                file_size=video_file.size,
-                duration=meta.get("duration"),
-                width=meta.get("width"),
-                height=meta.get("height"),
-                thumbnail_url=thumb_url,
-                source_lang=detected_lang,
-            )
+             # [Refactoring] Use helper method
+            video_data = self._process_video_upload(video_file, serializer_instance=self.get_object())
+            serializer.save(**video_data)
         else:
             title = serializer.validated_data.get('title')
             content = serializer.validated_data.get('content')
