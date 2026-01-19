@@ -29,11 +29,30 @@ export const translations = {
         nav_support: "Support",
         nav_version: "Version Info",
 
+        // Review Banner
+        banner_review_title: "How was your trip to {dest}?",
+        banner_review_desc: "Share your memories and help others!",
+        banner_review_btn: "Write Review",
+        nav_ticket: "Flight Booking",
+        nav_likes: "Liked Places",
+        nav_settings: "Settings",
+        nav_support: "Support",
+        nav_version: "Version Info",
+
         // MainPage Hero
         hero_title_1: "Where to next?",
         hero_title_2: "Korea awaits.",
         search_placeholder: "Search destinations, flights, hotels...",
+        search_placeholder: "Search destinations, flights, hotels...",
         search_btn: "Search",
+
+        // Hero Tabs & Plan
+        hero_tab_search: "Search",
+        hero_tab_plan: "Create Trip",
+        plan_title_ph: "Trip Title (e.g. Summer Vacation)",
+        plan_start: "Start Date",
+        plan_end: "End Date",
+        plan_create_btn: "Start Planning",
 
         // Filter Chips
         filter_all: "All",
@@ -163,11 +182,30 @@ export const translations = {
         nav_support: "고객센터",
         nav_version: "버전 정보",
 
+        // Review Banner
+        banner_review_title: "{dest} 여행은 어떠셨나요?",
+        banner_review_desc: "여행의 추억을 기록하고 공유해보세요!",
+        banner_review_btn: "리뷰 작성하기",
+        nav_ticket: "항공권 예약",
+        nav_likes: "찜한 장소",
+        nav_settings: "설정",
+        nav_support: "고객센터",
+        nav_version: "버전 정보",
+
         // MainPage Hero
         hero_title_1: "어디로 떠나시나요?",
         hero_title_2: "한국이 기다립니다.",
         search_placeholder: "여행지, 항공권, 호텔 검색...",
+        search_placeholder: "여행지, 항공권, 호텔 검색...",
         search_btn: "검색",
+
+        // Hero Tabs & Plan
+        hero_tab_search: "검색",
+        hero_tab_plan: "일정 만들기",
+        plan_title_ph: "여행 제목 (예: 제주도 여행)",
+        plan_start: "가는 날",
+        plan_end: "오는 날",
+        plan_create_btn: "일정 생성",
 
         // Filter Chips
         filter_all: "전체",
@@ -292,6 +330,13 @@ export const translations = {
         nav_ai_plan: "AI日程作成",
         nav_column: "地元グルメコラム",
         nav_ticket: "航空券予約",
+        nav_settings: "設定",
+
+        // Review Banner
+        banner_review_title: "{dest}への旅行はいかがでしたか？",
+        banner_review_desc: "旅の思い出をシェアしましょう！",
+        banner_review_btn: "レビューを書く",
+        nav_ticket: "航空券予約",
         nav_likes: "お気に入り",
         nav_settings: "設定",
         nav_support: "カスタマーサポート",
@@ -301,7 +346,16 @@ export const translations = {
         hero_title_1: "次はどこへ？",
         hero_title_2: "韓国が待っています。",
         search_placeholder: "目的地、航空券、ホテルを検索...",
+        search_placeholder: "目的地、航空券、ホテルを検索...",
         search_btn: "検索",
+
+        // Hero Tabs & Plan
+        hero_tab_search: "検索",
+        hero_tab_plan: "日程作成",
+        plan_title_ph: "旅行タイトル (例: 夏休み)",
+        plan_start: "出発日",
+        plan_end: "到着日",
+        plan_create_btn: "作成開始",
 
         // Filter Chips
         filter_all: "すべて",
@@ -427,6 +481,13 @@ export const translations = {
         nav_column: "本地美食专栏",
         nav_ticket: "机票预订",
         nav_likes: "收藏地点",
+
+        // Review Banner
+        banner_review_title: "{dest}之旅怎么样？",
+        banner_review_desc: "分享您的美好回忆！",
+        banner_review_btn: "写点评",
+        nav_ticket: "机票预订",
+        nav_likes: "收藏地点",
         nav_settings: "设置",
         nav_support: "客户中心",
         nav_version: "版本信息",
@@ -435,7 +496,16 @@ export const translations = {
         hero_title_1: "下个目的地？",
         hero_title_2: "韩国等你来。",
         search_placeholder: "搜索目的地、机票、酒店...",
+        search_placeholder: "搜索目的地、机票、酒店...",
         search_btn: "搜索",
+
+        // Hero Tabs & Plan
+        hero_tab_search: "搜索",
+        hero_tab_plan: "行程制作",
+        plan_title_ph: "旅行标题 (例: 暑假)",
+        plan_start: "出发日期",
+        plan_end: "返回日期",
+        plan_create_btn: "开始规划",
 
         // Filter Chips
         filter_all: "全部",
