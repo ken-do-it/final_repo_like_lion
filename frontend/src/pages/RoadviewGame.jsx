@@ -56,6 +56,7 @@ const RoadviewGame = () => {
   // [추가] 실제 로드뷰가 존재하는 지점을 저장할 상태
   const [panoLocation, setPanoLocation] = useState(null);
   const [noPano, setNoPano] = useState(false); // 로드뷰 없음 상태
+  const [distanceWarning, setDistanceWarning] = useState(null); // [New] Distance warning
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const [guess, setGuess] = useState(null);
@@ -121,32 +122,55 @@ const RoadviewGame = () => {
 
   const { imageUrl, totalPhotos, id: gameId } = targetData;
 
-  // 3. Coordinate Correction Logic
+  // 3. Coordinate Correction Logic (Progressive Search)
   useEffect(() => {
+    // Reset states when round changes
+    setPanoLocation(null);
+    setNoPano(false);
+    setDistanceWarning(null);
+
     if (isLoaded && lat && lng) {
       const service = new window.google.maps.StreetViewService();
 
-      // Defensive check: valid numbers?
       if (isNaN(lat) || isNaN(lng)) return;
 
-      service.getPanorama({
-        location: { lat, lng },
-        radius: 200,
-      }, (data, status) => {
-        if (status === "OK") {
-          setPanoLocation({
-            lat: data.location.latLng.lat(),
-            lng: data.location.latLng.lng()
-          });
-          setNoPano(false);
-        } else {
-          console.warn("No street view found within 200m.");
-          setPanoLocation(null);
+      const radii = [300, 500, 700];
+
+      const findPano = (radiusIndex) => {
+        if (radiusIndex >= radii.length) {
+          console.warn("No street view found within 700m.");
           setNoPano(true);
+          return;
         }
-      });
+
+        const currentRadius = radii[radiusIndex];
+
+        service.getPanorama({
+          location: { lat, lng },
+          radius: currentRadius,
+        }, (data, status) => {
+          if (status === "OK") {
+            setPanoLocation({
+              lat: data.location.latLng.lat(),
+              lng: data.location.latLng.lng()
+            });
+            setNoPano(false);
+
+            // Show warning if radius > 300
+            if (currentRadius > 300) {
+              setDistanceWarning(`근처 로드뷰가 없어 약 ${currentRadius}m 떨어진 위치의 로드뷰입니다.`);
+            }
+          } else {
+            // Try next radius
+            findPano(radiusIndex + 1);
+          }
+        });
+      };
+
+      // Start search with 300m
+      findPano(0);
     }
-  }, [isLoaded, lat, lng]); // Triggers when lat/lng changes (new game)
+  }, [isLoaded, lat, lng, round]);
 
 
 
@@ -332,6 +356,17 @@ const RoadviewGame = () => {
             <span className="text-[18px]">📷</span>
             <span className="text-xs font-bold">Street View</span>
           </div>
+
+          {/* [New] Distance Warning Toast */}
+          {distanceWarning && (
+            <div className="absolute top-16 left-4 right-4 z-20 bg-orange-500/90 backdrop-blur-sm text-white px-4 py-3 rounded-xl flex items-start gap-3 shadow-lg animate-fade-in-down">
+              <span className="text-xl">⚠️</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold">Warning</span>
+                <span className="text-xs opacity-90">{distanceWarning}</span>
+              </div>
+            </div>
+          )}
 
           {noPano && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900 text-white p-4 text-center">
