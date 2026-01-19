@@ -380,6 +380,14 @@ class TranslationProxyView(APIView):
         entity_id = request.data.get("entity_id") or 0
         field = request.data.get("field") or "text"
 
+        # [Security] Whitelist Validation
+        ALLOWED_ENTITY_TYPES = ['shortform', 'shortform_comment', 'review', 'raw']
+        if entity_type not in ALLOWED_ENTITY_TYPES:
+            return Response(
+                {"detail": f"Invalid entity_type. Allowed: {ALLOWED_ENTITY_TYPES}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if not text:
             return Response({"detail": "text is required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -455,6 +463,13 @@ class TranslationBatchView(APIView):
             entity_type = item.get("entity_type", "raw")
             entity_id = item.get("entity_id", 0)
             field = item.get("field", "text")
+
+            # [Security] Whitelist Validation (Skip invalid items or error out? Let's skip safely)
+            ALLOWED_ENTITY_TYPES = ['shortform', 'shortform_comment', 'review', 'raw']
+            if entity_type not in ALLOWED_ENTITY_TYPES:
+                logger.warning(f"Skipping invalid entity_type in batch: {entity_type}")
+                results[idx] = text # Return original text without translation/caching
+                continue
             
             # 캐시 확인
             entry = TranslationEntry.objects.filter(
