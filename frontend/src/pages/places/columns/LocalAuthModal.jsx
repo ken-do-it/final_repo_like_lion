@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { placesAxios as api } from '../../../api/axios';
 import Button from '../../../components/ui/Button';
@@ -8,6 +8,15 @@ const LocalAuthModal = ({ isOpen, onClose }) => {
     const [status, setStatus] = useState('idle'); // idle, loading, success, error
     const [message, setMessage] = useState('');
     const [badgeData, setBadgeData] = useState(null);
+
+    // 모달이 열리거나 사용자가 변경될 때 상태 초기화
+    useEffect(() => {
+        if (isOpen) {
+            setStatus('idle');
+            setMessage('');
+            setBadgeData(null);
+        }
+    }, [isOpen, user?.id]);
 
     if (!isOpen) return null;
 

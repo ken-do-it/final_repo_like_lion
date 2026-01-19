@@ -83,8 +83,13 @@ const LocalColumnDetail = () => {
                             {column.title}
                         </h1>
                         <div className="flex items-center text-gray-200 text-sm md:text-base gap-4">
-                            <span className="font-medium bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                            <span className="font-medium bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm flex items-center gap-1">
                                 {column.user_nickname}
+                                {column.user_level && (
+                                    <span className="text-xs bg-yellow-400/20 text-yellow-200 px-1.5 py-0.5 rounded-full border border-yellow-400/30">
+                                        🏅 Lv.{column.user_level}
+                                    </span>
+                                )}
                             </span>
                             <span>{new Date(column.created_at).toLocaleDateString()}</span>
                             <span>조회 {column.view_count}</span>
