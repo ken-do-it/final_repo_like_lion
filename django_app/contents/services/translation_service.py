@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 # FastAPI 번역 서버 (분리됨: Port 8003)
 FASTAPI_TRANSLATE_URL = "http://fastapi-ai-translation:8003/api/ai/translate"
+# [Security] API Key (Must match FastAPI's settings)
+AI_SERVICE_API_KEY = os.getenv("AI_SERVICE_API_KEY", "secure-api-key-1234")
 
 # 언어 코드 매핑 (langdetect code -> NLLB code)
 LANG_CODE_MAP = {
@@ -71,7 +73,8 @@ class TranslationService:
         
         try:
             # 1. Primary URL
-            resp = requests.post(FASTAPI_TRANSLATE_URL, json=payload, timeout=(3, timeout))
+            headers = {"x-ai-api-key": AI_SERVICE_API_KEY}
+            resp = requests.post(FASTAPI_TRANSLATE_URL, json=payload, headers=headers, timeout=(3, timeout))
             resp.raise_for_status()
             data = resp.json()
             return data.get("translated_text"), data.get("provider", "fastapi")
@@ -81,7 +84,7 @@ class TranslationService:
                 fallback_url = "http://127.0.0.1:8003/api/ai/translate"
                 try:
                     logger.info(f"Primary failed. Retrying fallback: {fallback_url}")
-                    resp = requests.post(fallback_url, json=payload, timeout=timeout)
+                    resp = requests.post(fallback_url, json=payload, headers=headers, timeout=timeout)
                     resp.raise_for_status()
                     data = resp.json()
                     return data.get("translated_text"), data.get("provider", "fastapi-local")
@@ -101,7 +104,8 @@ class TranslationService:
         url = f"{FASTAPI_TRANSLATE_URL.replace('/translate', '')}/translate/batch"
         
         try:
-            resp = requests.post(url, json=payload, timeout=(3, timeout))
+            headers = {"x-ai-api-key": AI_SERVICE_API_KEY}
+            resp = requests.post(url, json=payload, headers=headers, timeout=(3, timeout))
             resp.raise_for_status()
             data = resp.json()
             return data.get("translations", []), data.get("provider", "fastapi-batch")
@@ -109,7 +113,7 @@ class TranslationService:
             logger.warning(f"Primary batch failed: {first_error}. Retrying fallback...")
             fallback_url = "http://127.0.0.1:8003/api/ai/translate/batch"
             try:
-                resp = requests.post(fallback_url, json=payload, timeout=timeout)
+                resp = requests.post(fallback_url, json=payload, headers=headers, timeout=timeout)
                 resp.raise_for_status()
                 data = resp.json()
                 return data.get("translations", []), data.get("provider", "fastapi-local-batch")
