@@ -30,6 +30,8 @@ const defaultCenter = {
   lng: 127.3845475
 };
 
+const STORAGE_KEY = 'roadview_game_session';
+
 const RoadviewGame = () => {
   const locationState = useLocation().state;
   const navigate = useNavigate();
@@ -39,13 +41,24 @@ const RoadviewGame = () => {
     lat: locationState?.lat,
     lng: locationState?.lng,
     imageUrl: locationState?.imageUrl,
-    totalPhotos: locationState?.totalPhotos || 1
+    totalPhotos: 1, // Will be updated to queue length
+    placeName: '',
+    placeId: null,
+    reviewContent: '',
+    reviewerNickname: ''
   });
   const [isDataLoading, setIsDataLoading] = useState(!locationState?.lat);
+
+  // Game Session Queue State
+  const [gameQueue, setGameQueue] = useState([]);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
+  const [sessionResults, setSessionResults] = useState([]); // Store results for final page
+  const [showSessionSummary, setShowSessionSummary] = useState(false); // Toggle result view
 
   // [추가] 실제 로드뷰가 존재하는 지점을 저장할 상태
   const [panoLocation, setPanoLocation] = useState(null);
   const [noPano, setNoPano] = useState(false); // 로드뷰 없음 상태
+  const [distanceWarning, setDistanceWarning] = useState(null); // [New] Distance warning
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const [guess, setGuess] = useState(null);
@@ -60,69 +73,155 @@ const RoadviewGame = () => {
     libraries: libraries
   });
 
-  // [추가/수정] 데이터 가져오기 로직
-  useEffect(() => {
-    const fetchRandomGame = async () => {
-      // 이미 데이터가 있다면(state로 넘어왔다면) 바로 종료
-      if (targetData.lat && targetData.lng) {
-        setIsDataLoading(false);
-        return;
-      }
-      try {
-        setIsDataLoading(true);
-        const response = await api.get('/roadview/random');
-        const data = response.data;
-        // 백엔드 필드명(latitude/longitude)에 맞춰 업데이트
-        setTargetData({
-          lat: data.latitude || data.lat,
-          lng: data.longitude || data.lng,
-          imageUrl: data.image_url,
-          totalPhotos: 1
-        });
-      } catch (err) {
-        console.error("게임 데이터를 불러오지 못했습니다:", err);
-      } finally {
-        setIsDataLoading(false);
-      }
-    };
-    fetchRandomGame();
-  }, [locationState]);
+  // [Modified] Fetch Game Session Function
+  const fetchGameSession = useCallback(async () => {
+    try {
+      setIsDataLoading(true);
+      const response = await api.get('/roadview/session', { params: { limit: 10 } });
+      const { games } = response.data;
 
-  // 2. 좌표 변수 추출 (Hook보다 위에 있어야 에러가 안 납니다)
+      if (games && games.length > 0) {
+        setGameQueue(games);
+        setCurrentQueueIndex(0);
+
+        // Init first game
+        const firstGame = games[0];
+        setTargetData({
+          id: firstGame.game_id,
+          lat: firstGame.lat,
+          lng: firstGame.lng,
+          imageUrl: firstGame.image_url,
+          totalPhotos: games.length,
+          placeName: firstGame.place_name,
+          placeId: firstGame.place_id,
+          reviewContent: firstGame.review_content,
+          reviewerNickname: firstGame.reviewer_nickname
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch game session:", err);
+    } finally {
+      setIsDataLoading(false);
+    }
+  }, []);
+
+  // [New] Effect to Save Session
+  useEffect(() => {
+    // Only save if we have a valid session running
+    if (gameQueue.length > 0) {
+      const sessionData = {
+        gameQueue,
+        currentQueueIndex,
+        sessionResults,
+        targetData,
+        round,
+        showSessionSummary,
+        // We can optionally save timeLeft if we want perfect resume, 
+        // but might be tricky with timer intervals. Let's restart timer or keep it simple.
+        // For now, let's not save timeLeft to avoid complex sync issues, user gets full time on refresh? 
+        // Or maybe calculate elapsed? Let's give full time on refresh for simplicity or maybe save it.
+        // Let's save it.
+        timeLeft
+      };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+    }
+  }, [gameQueue, currentQueueIndex, sessionResults, targetData, round, showSessionSummary, timeLeft]);
+
+  // Initial Fetch / Load Session
+  useEffect(() => {
+    // 1. If data passed via state (e.g. from upload), use it (Priority 1)
+    if (locationState?.lat && locationState?.lng) {
+      setIsDataLoading(false);
+      return;
+    }
+
+    // 2. Check for saved session (Priority 2)
+    const savedSession = sessionStorage.getItem(STORAGE_KEY);
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession);
+        // Verify if valid
+        if (parsed.gameQueue && parsed.gameQueue.length > 0) {
+          setGameQueue(parsed.gameQueue);
+          setCurrentQueueIndex(parsed.currentQueueIndex);
+          setSessionResults(parsed.sessionResults);
+          setTargetData(parsed.targetData);
+          setRound(parsed.round);
+          setShowSessionSummary(parsed.showSessionSummary);
+          if (parsed.timeLeft) setTimeLeft(parsed.timeLeft);
+
+          setIsDataLoading(false);
+          return; // Skip fetching new session
+        }
+      } catch (e) {
+        console.error("Failed to load saved session", e);
+        sessionStorage.removeItem(STORAGE_KEY);
+      }
+    }
+
+    // 3. Otherwise fetch new session (Priority 3)
+    fetchGameSession();
+  }, [locationState, fetchGameSession]);
+
+
+  // 2. Extract Coordinates
   const lat = useMemo(() => parseFloat(targetData.lat), [targetData.lat]);
   const lng = useMemo(() => parseFloat(targetData.lng), [targetData.lng]);
   const answerLocation = useMemo(() => ({ lat, lng }), [lat, lng]);
 
-  // [수정] totalPhotos, imageUrl 등도 targetData에서 추출
-  const { imageUrl, totalPhotos } = targetData;
+  const { imageUrl, totalPhotos, id: gameId } = targetData;
 
-  // 3. [핵심 추가] 카카오 좌표 -> 구글 로드뷰 도로 좌표 보정 로직
-  // 3. [핵심 추가] 카카오 좌표 -> 구글 로드뷰 도로 좌표 보정 로직
+  // 3. Coordinate Correction Logic (Progressive Search)
   useEffect(() => {
+    // Reset states when round changes
+    setPanoLocation(null);
+    setNoPano(false);
+    setDistanceWarning(null);
+
     if (isLoaded && lat && lng) {
       const service = new window.google.maps.StreetViewService();
 
-      // 입력된 좌표 주변 200m (범위 확대) 이내의 가장 가까운 '도로' 지점을 검색
-      service.getPanorama({
-        location: { lat, lng },
-        radius: 200,
-        // source: window.google.maps.StreetViewSource.OUTDOOR // 제한 해제
-      }, (data, status) => {
-        if (status === "OK") {
-          // 구글이 찾은 실제 도로 위 좌표로 업데이트 (객체 변환)
-          setPanoLocation({
-            lat: data.location.latLng.lat(),
-            lng: data.location.latLng.lng()
-          });
-          setNoPano(false);
-        } else {
-          console.warn("주변 200m 이내에 로드뷰가 없습니다.");
-          setPanoLocation(null);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const radii = [300, 500, 700];
+
+      const findPano = (radiusIndex) => {
+        if (radiusIndex >= radii.length) {
+          console.warn("No street view found within 700m.");
           setNoPano(true);
+          return;
         }
-      });
+
+        const currentRadius = radii[radiusIndex];
+
+        service.getPanorama({
+          location: { lat, lng },
+          radius: currentRadius,
+        }, (data, status) => {
+          if (status === "OK") {
+            setPanoLocation({
+              lat: data.location.latLng.lat(),
+              lng: data.location.latLng.lng()
+            });
+            setNoPano(false);
+
+            // Show warning if radius > 300
+            if (currentRadius > 300) {
+              setDistanceWarning(`근처 로드뷰가 없어 약 ${currentRadius}m 떨어진 위치의 로드뷰입니다.`);
+            }
+          } else {
+            // Try next radius
+            findPano(radiusIndex + 1);
+          }
+        });
+      };
+
+      // Start search with 300m
+      findPano(0);
     }
-  }, [isLoaded, lat, lng]);
+  }, [isLoaded, lat, lng, round]);
+
+
 
   // Timer Effect
   useEffect(() => {
@@ -150,8 +249,6 @@ const RoadviewGame = () => {
   const handleSubmit = () => {
     if (!guess || !lat || !lng) return;
 
-    // [수정] 정답 좌표 설정: panoLocation(로드뷰 스냅 위치)이 있으면 그걸 사용, 없으면 원본 lat/lng
-    // 이렇게 해야 사용자가 로드뷰에서 본 정확한 위치를 찍었을 때 정답으로 인정됨
     const correctLat = panoLocation?.lat ? ((typeof panoLocation.lat === 'function') ? panoLocation.lat() : panoLocation.lat) : lat;
     const correctLng = panoLocation?.lng ? ((typeof panoLocation.lng === 'function') ? panoLocation.lng() : panoLocation.lng) : lng;
 
@@ -166,29 +263,123 @@ const RoadviewGame = () => {
     const distanceKm = R * c;
 
     let score = 0;
-    // [수정] 점수 로직 강화: 2000 -> 50 으로 감쇠 계수 대폭 축소 (거리가 멀어질수록 점수가 급격히 떨어짐)
-    // 50m 이내: 5000점 만점
-    // 예: 1km 차이 -> 5000 * exp(-1/50) ≈ 4900점 (여전히 후함) -> 더 줄여야 함?
-    // User request: "거리에 따른 점수 차이를 더 키워야 할 것 같다"
-    // Let's try constant 10.
-    // 1km error -> 5000 * exp(-1/10) = 4524 pts
-    // 10km error -> 5000 * exp(-10/10) = 1839 pts
-    // 20km error -> 5000 * exp(-20/10) = 676 pts
-    // This seems reasonable for a city/province scale game.
     if (distanceKm < 0.05) score = 5000;
     else score = Math.floor(5000 * Math.exp(-distanceKm / 10));
 
-    setResult({
+    const roundResult = {
       distance: distanceKm,
-      score: score
-    });
+      score: score,
+      placeName: targetData.placeName,
+      placeId: targetData.placeId,
+      imageUrl: targetData.imageUrl,
+      reviewContent: targetData.reviewContent,
+      reviewerNickname: targetData.reviewerNickname
+    };
+
+    setResult(roundResult);
     setShowResult(true);
+    setSessionResults(prev => [...prev, roundResult]);
+
+    if (gameId) {
+      // Still track history on backend for analytics/duplication if we revive it later
+      api.post(`/roadview/complete/${gameId}`).catch(err => console.error(err));
+    }
   };
 
   const handleNext = () => {
-    // 다음 라운드를 위해 페이지 새로고침(또는 state 초기화)
-    window.location.reload();
+    // Check if next game exists in queue
+    const nextIndex = currentQueueIndex + 1;
+
+    if (nextIndex < gameQueue.length) {
+      // Load next game
+      const nextGame = gameQueue[nextIndex];
+      setTargetData({
+        id: nextGame.game_id,
+        lat: nextGame.lat,
+        lng: nextGame.lng,
+        imageUrl: nextGame.image_url,
+        totalPhotos: gameQueue.length,
+        placeName: nextGame.place_name,
+        placeId: nextGame.place_id,
+        reviewContent: nextGame.review_content,
+        reviewerNickname: nextGame.reviewer_nickname
+      });
+      setCurrentQueueIndex(nextIndex);
+      setRound(prev => prev + 1);
+
+      // Reset states
+      setGuess(null);
+      setResult(null);
+      setShowResult(false);
+      setTimeLeft(180);
+      setPanoLocation(null);
+      setNoPano(false);
+    } else {
+      // End of session - show summary
+      setShowSessionSummary(true);
+    }
   };
+
+  // [New] Session Summary View
+  if (showSessionSummary) {
+    const totalScore = sessionResults.reduce((acc, curr) => acc + curr.score, 0);
+
+    return (
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] p-6 lg:p-10 text-[#0d161b] dark:text-white font-sans flex flex-col items-center">
+        <div className="max-w-4xl w-full flex flex-col gap-8">
+          <div className="text-center flex flex-col gap-2">
+            <h1 className="text-4xl font-bold">Game Over!</h1>
+            <p className="text-slate-500 text-lg">Your Total Score: <span className="text-[#1392ec] font-bold text-2xl">{totalScore}</span></p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {sessionResults.map((item, idx) => (
+              <div key={idx} className="bg-white dark:bg-[#1e2936] rounded-2xl overflow-hidden shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 flex flex-col">
+                <div className="h-48 w-full bg-gray-200 relative">
+                  <img src={item.imageUrl} alt={item.placeName} className="w-full h-full object-cover" />
+                  <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
+                    {item.score} pts
+                  </div>
+                </div>
+                <div className="p-4 flex flex-col gap-3 flex-1">
+                  <h3 className="font-bold text-lg leading-tight">{item.placeName || "Unknown Place"}</h3>
+                  <p className="text-sm text-slate-500 line-clamp-2 italic">
+                    "{item.reviewContent || "No review content"}"
+                  </p>
+                  <div className="mt-auto pt-2 flex justify-between items-center text-xs text-slate-400">
+                    <span>by {item.reviewerNickname}</span>
+                    {item.placeId && (
+                      <button
+                        onClick={() => navigate(`/places/${item.placeId}`)}
+                        className="text-[#1392ec] hover:underline font-bold"
+                      >
+                        View Place →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-center gap-4 mt-8">
+            <button onClick={() => {
+              sessionStorage.removeItem(STORAGE_KEY);
+              navigate('/');
+            }} className="px-8 py-3 bg-slate-200 dark:bg-slate-700 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+              Go Home
+            </button>
+            <button onClick={() => {
+              sessionStorage.removeItem(STORAGE_KEY);
+              window.location.reload();
+            }} className="px-8 py-3 bg-[#1392ec] text-white rounded-xl font-bold hover:bg-blue-600 transition-colors">
+              Play Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // [추가] 로딩 중 화면
   if (isDataLoading) {
@@ -203,7 +394,10 @@ const RoadviewGame = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f6f7f8] dark:bg-[#101a22]">
         <h2 className="text-2xl font-bold dark:text-white">장소 정보를 불러올 수 없습니다.</h2>
-        <button onClick={() => navigate('/')} className="mt-4 px-6 py-2 bg-[#1392ec] text-white rounded-lg">홈으로 가기</button>
+        <button onClick={() => {
+          sessionStorage.removeItem(STORAGE_KEY);
+          navigate('/');
+        }} className="mt-4 px-6 py-2 bg-[#1392ec] text-white rounded-lg">홈으로 가기</button>
       </div>
     );
   }
@@ -220,6 +414,17 @@ const RoadviewGame = () => {
             <span className="text-[18px]">📷</span>
             <span className="text-xs font-bold">Street View</span>
           </div>
+
+          {/* [New] Distance Warning Toast */}
+          {distanceWarning && (
+            <div className="absolute top-16 left-4 right-4 z-20 bg-orange-500/90 backdrop-blur-sm text-white px-4 py-3 rounded-xl flex items-start gap-3 shadow-lg animate-fade-in-down">
+              <span className="text-xl">⚠️</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold">Warning</span>
+                <span className="text-xs opacity-90">{distanceWarning}</span>
+              </div>
+            </div>
+          )}
 
           {noPano && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900 text-white p-4 text-center">

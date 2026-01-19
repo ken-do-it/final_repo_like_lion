@@ -477,7 +477,10 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                         </div>
                         <div className="ai-title">{t.wantToVisit}</div>
                         <div className="ai-desc">{t.aiSuggest}</div>
-                        <button className="btn-ai-action">
+                        <button
+                            className="btn-ai-action"
+                            onClick={() => navigate('/plans')}
+                        >
                             {t.addToTrip} <span className="material-symbols-outlined">add_circle</span>
                         </button>
                     </div>

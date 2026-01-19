@@ -78,6 +78,10 @@ class ShortformSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def get_is_liked(self, obj):
+        # [Performance] Use annotated value if available
+        if hasattr(obj, 'is_liked_val'):
+            return obj.is_liked_val
+
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             # ShortformLike 모델을 여기서 import하여 순환 참조 방지

@@ -25,8 +25,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     const bottomItems = [
         { label: `❤️ ${t('nav_likes')}`, path: null },
         { label: `📍 ${t('nav_local_auth') || '현지인 인증'}`, action: 'local_auth' },
-        { label: `⚙️ ${t('nav_settings')}`, path: null },
-        { label: `📞 ${t('nav_support')}`, path: null },
         { label: `${t('nav_version')} v1.0`, path: null },
     ];
 

@@ -18,10 +18,23 @@ const FlightSeat = () => {
 
   /**
    * 이전 페이지에서 전달받은 데이터
-   * flight - 선택한 항공편 정보
-   * searchConditions - 검색 조건 (승객 수 등)
+   * - 새 형식: outboundFlight, inboundFlight, searchConditions, isRoundTrip
+   * - 기존 형식: flight, searchConditions (하위 호환성 유지)
    */
-  const { flight, searchConditions } = location.state || {};
+  const locationState = location.state || {};
+
+  // 새 형식과 기존 형식 모두 지원
+  const outboundFlight = locationState.outboundFlight || locationState.flight;
+  const inboundFlight = locationState.inboundFlight || null;
+  const searchConditions = locationState.searchConditions || {};
+  const isRoundTrip = locationState.isRoundTrip || false;
+
+  // 기존 코드 호환성을 위해 flight 변수 유지
+  const flight = outboundFlight;
+
+  // passengers 계산 (새 형식: adults+children+infants, 기존 형식: passengers)
+  const totalPassengers = searchConditions.passengers ||
+    (searchConditions.adults || 1) + (searchConditions.children || 0) + (searchConditions.infants || 0);
 
   /**
    * 선택된 좌석 등급 상태
@@ -45,10 +58,10 @@ const FlightSeat = () => {
    * 로컬스토리지 키 생성 (항공편/날짜/승객수 기반)
    */
   const storageKey = useMemo(() => {
-    if (!flight || !searchConditions) return null;
-    const flightKey = `${flight.flightNumber || 'UNKNOWN'}-${flight.depPlandTime || ''}`;
-    return `flightSeatPassengers:${flightKey}:${searchConditions.passengers}`;
-  }, [flight, searchConditions]);
+    if (!flight) return null;
+    const flightKey = `${flight.flightNumber || 'UNKNOWN'}-${flight.depAt || flight.depPlandTime || ''}`;
+    return `flightSeatPassengers:${flightKey}:${totalPassengers}`;
+  }, [flight, totalPassengers]);
 
   // 자동완성(히스토리) 상태 및 유틸
   const [lastNameHistory, setLastNameHistory] = useState([]);
@@ -95,7 +108,7 @@ const FlightSeat = () => {
 
     // 탑승자 정보 배열 초기화 (저장된 값이 있으면 복원)
     const initialPassengers = Array.from(
-      { length: searchConditions.passengers },
+      { length: totalPassengers },
       (_, index) => ({
         id: index + 1,
         lastName: '',
@@ -134,7 +147,7 @@ const FlightSeat = () => {
     if (searchConditions.seatClass) {
       setSelectedClass(searchConditions.seatClass);
     }
-  }, [flight, searchConditions, navigate, storageKey]);
+  }, [flight, totalPassengers, navigate, storageKey]);
 
   // 자동완성 히스토리 로드 (최초 마운트 시)
   useEffect(() => {
@@ -163,25 +176,51 @@ const FlightSeat = () => {
 
   /**
    * 시간 포맷팅 함수
-   * "202501151430" -> "14:30"
+   * ISO 형식 "2026-01-25T06:05:00" 또는 기존 형식 "202501151430" 지원
    */
   const formatTime = (timeString) => {
-    if (!timeString || timeString.length < 12) return timeString;
-    const hours = timeString.substring(8, 10);
-    const minutes = timeString.substring(10, 12);
-    return `${hours}:${minutes}`;
+    if (!timeString) return '-';
+    // ISO 형식 체크
+    if (timeString.includes('T') || timeString.includes('-')) {
+      try {
+        const date = new Date(timeString);
+        return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+      } catch {
+        return timeString;
+      }
+    }
+    // 기존 형식 "202501151430"
+    if (timeString.length >= 12) {
+      const hours = timeString.substring(8, 10);
+      const minutes = timeString.substring(10, 12);
+      return `${hours}:${minutes}`;
+    }
+    return timeString;
   };
 
   /**
    * 날짜 포맷팅 함수
-   * "202501151430" -> "2025년 1월 15일"
+   * ISO 형식 또는 기존 형식 지원
    */
   const formatDate = (dateString) => {
-    if (!dateString || dateString.length < 8) return dateString;
-    const year = dateString.substring(0, 4);
-    const month = dateString.substring(4, 6);
-    const day = dateString.substring(6, 8);
-    return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
+    if (!dateString) return '-';
+    // ISO 형식 체크
+    if (dateString.includes('T') || dateString.includes('-')) {
+      try {
+        const date = new Date(dateString);
+        return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+      } catch {
+        return dateString;
+      }
+    }
+    // 기존 형식 "202501151430"
+    if (dateString.length >= 8) {
+      const year = dateString.substring(0, 4);
+      const month = dateString.substring(4, 6);
+      const day = dateString.substring(6, 8);
+      return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
+    }
+    return dateString;
   };
 
   /**
@@ -189,10 +228,15 @@ const FlightSeat = () => {
    */
   const calculateTotalPrice = (seatClass) => {
     if (!flight) return 0;
-    const pricePerPerson = seatClass === 'economy'
-      ? flight.economyCharge
-      : flight.prestigeCharge;
-    return pricePerPerson * searchConditions.passengers;
+    // 기존 형식: economyCharge / prestigeCharge
+    if (flight.economyCharge || flight.prestigeCharge) {
+      const pricePerPerson = seatClass === 'economy' ? flight.economyCharge : flight.prestigeCharge;
+      return (pricePerPerson || 0) * totalPassengers;
+    }
+    // 새 형식: totalPrice 또는 pricePerPerson (비즈니스석은 2배)
+    const basePrice = flight.pricePerPerson || flight.totalPrice || 0;
+    const multiplier = seatClass === 'economy' ? 1 : 2;
+    return basePrice * multiplier * totalPassengers;
   };
 
   /**
@@ -242,14 +286,21 @@ const FlightSeat = () => {
       return;
     }
 
+    // 총 가격 계산 (가는편 + 오는편)
+    const totalPrice = (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+      (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0);
+
     // 결제 페이지로 이동
     navigate('/reservations/flights/payment', {
       state: {
-        flight,
+        flight: outboundFlight,
+        outboundFlight,
+        inboundFlight,
+        isRoundTrip,
         searchConditions,
-        selectedClass,
+        selectedClass: searchConditions.seatClass,
         passengers,
-        totalPrice: calculateTotalPrice(selectedClass),
+        totalPrice,
       }
     });
   };
@@ -279,206 +330,123 @@ const FlightSeat = () => {
             {/* 선택한 항공편 정보 카드 */}
             <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4 dark:text-white">
-                선택한 항공편
+                선택한 항공편 {isRoundTrip && <span className="text-sm font-normal text-primary ml-2">왕복</span>}
               </h2>
 
               <div className="space-y-4">
-                {/* 항공사 및 편명 */}
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-2xl">
-                      airlines
-                    </span>
+                {/* 가는편 */}
+                <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="material-symbols-outlined text-primary">flight_takeoff</span>
+                    <span className="font-semibold text-primary">가는편</span>
                   </div>
-                  <div>
-                    <p className="font-semibold text-lg dark:text-white">
-                      {flight.airlineName}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {flight.flightNumber}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                        <span className="material-symbols-outlined text-primary">airlines</span>
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">{outboundFlight?.airlineName}</p>
+                        <p className="text-xs text-slate-500">{outboundFlight?.flightNumber}</p>
+                      </div>
+                    </div>
+                    <div className="text-center flex-1 px-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="text-right">
+                          <p className="text-lg font-bold dark:text-white">{formatTime(outboundFlight?.depAt)}</p>
+                          <p className="text-xs text-slate-500">{outboundFlight?.departureAirport}</p>
+                        </div>
+                        <div className="flex flex-col items-center px-3">
+                          <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
+                            <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-xs">flight</span>
+                          </div>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-lg font-bold dark:text-white">{formatTime(outboundFlight?.arrAt)}</p>
+                          <p className="text-xs text-slate-500">{outboundFlight?.arrivalAirport}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1">{formatDate(outboundFlight?.depAt)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-primary">
+                        {(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0).toLocaleString()}원
+                      </p>
+                    </div>
                   </div>
                 </div>
+
+                {/* 오는편 (왕복일 때만) */}
+                {isRoundTrip && inboundFlight && (
+                  <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="material-symbols-outlined text-mint">flight_land</span>
+                      <span className="font-semibold text-mint">오는편</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                          <span className="material-symbols-outlined text-mint">airlines</span>
+                        </div>
+                        <div>
+                          <p className="font-medium dark:text-white">{inboundFlight?.airlineName}</p>
+                          <p className="text-xs text-slate-500">{inboundFlight?.flightNumber}</p>
+                        </div>
+                      </div>
+                      <div className="text-center flex-1 px-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="text-right">
+                            <p className="text-lg font-bold dark:text-white">{formatTime(inboundFlight?.depAt)}</p>
+                            <p className="text-xs text-slate-500">{inboundFlight?.departureAirport}</p>
+                          </div>
+                          <div className="flex flex-col items-center px-3">
+                            <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
+                              <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-mint text-xs">flight</span>
+                            </div>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-lg font-bold dark:text-white">{formatTime(inboundFlight?.arrAt)}</p>
+                            <p className="text-xs text-slate-500">{inboundFlight?.arrivalAirport}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">{formatDate(inboundFlight?.depAt)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-mint">
+                          {(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0).toLocaleString()}원
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* 구분선 */}
                 <div className="border-t border-slate-200 dark:border-slate-700"></div>
 
-                {/* 출발/도착 정보 */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* 출발 정보 */}
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                      출발
-                    </p>
-                    <p className="text-2xl font-bold dark:text-white">
-                      {formatTime(flight.depPlandTime)}
-                    </p>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      {flight.departureAirport}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {formatDate(flight.depPlandTime)}
-                    </p>
-                  </div>
-
-                  {/* 도착 정보 */}
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                      도착
-                    </p>
-                    <p className="text-2xl font-bold dark:text-white">
-                      {formatTime(flight.arrPlandTime)}
-                    </p>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      {flight.arrivalAirport}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {formatDate(flight.arrPlandTime)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 승객 수 */}
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <span className="material-symbols-outlined text-xl">
-                    person
-                  </span>
-                  <span>
-                    승객 {searchConditions.passengers}명
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* 좌석 등급 선택 카드 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-4 dark:text-white">
-                좌석 등급 선택
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 일반석 카드 */}
-                <div
-                  onClick={() => handleSelectClass('economy')}
-                  className={`
-                    border-2 rounded-xl p-6 cursor-pointer transition-all duration-300
-                    ${selectedClass === 'economy'
-                      ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }
-                  `}
-                >
-                  {/* 체크 아이콘 */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-3xl text-slate-600 dark:text-slate-400">
-                        airline_seat_recline_normal
-                      </span>
-                      <h3 className="text-lg font-semibold dark:text-white">
-                        일반석
-                      </h3>
+                {/* 승객 수, 좌석 등급, 총 항공료 */}
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <span className="material-symbols-outlined text-xl">person</span>
+                      <span>승객 {totalPassengers}명</span>
                     </div>
-                    {selectedClass === 'economy' && (
-                      <span className="material-symbols-outlined text-primary text-2xl">
-                        check_circle
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="material-symbols-outlined text-xl text-slate-400">airline_seat_recline_normal</span>
+                      <span className="px-2 py-1 bg-primary/10 text-primary rounded font-medium">
+                        {searchConditions.seatClass === 'ECONOMY' && '일반석'}
+                        {searchConditions.seatClass === 'PREMIUM' && '프리미엄 일반석'}
+                        {searchConditions.seatClass === 'BUSINESS' && '비즈니스석'}
+                        {!['ECONOMY', 'PREMIUM', 'BUSINESS'].includes(searchConditions.seatClass) && '일반석'}
                       </span>
-                    )}
-                  </div>
-
-                  {/* 혜택 목록 */}
-                  <ul className="space-y-2 mb-4 text-sm text-slate-600 dark:text-slate-400">
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">check</span>
-                      <span>기내식 제공</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">check</span>
-                      <span>수하물 15kg</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">check</span>
-                      <span>좌석 지정</span>
-                    </li>
-                  </ul>
-
-                  {/* 가격 */}
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                      1인당
-                    </p>
-                    <p className="text-2xl font-bold text-primary">
-                      {flight.economyCharge.toLocaleString()}원
-                    </p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                      총 {calculateTotalPrice('economy').toLocaleString()}원
-                      <span className="text-xs ml-1">
-                        ({searchConditions.passengers}명)
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* 비즈니스석 카드 */}
-                <div
-                  onClick={() => handleSelectClass('business')}
-                  className={`
-                    border-2 rounded-xl p-6 cursor-pointer transition-all duration-300
-                    ${selectedClass === 'business'
-                      ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                    }
-                  `}
-                >
-                  {/* 체크 아이콘 */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-3xl text-primary">
-                        airline_seat_flat
-                      </span>
-                      <h3 className="text-lg font-semibold dark:text-white">
-                        비즈니스석
-                      </h3>
                     </div>
-                    {selectedClass === 'business' && (
-                      <span className="material-symbols-outlined text-primary text-2xl">
-                        check_circle
-                      </span>
-                    )}
                   </div>
-
-                  {/* 혜택 목록 */}
-                  <ul className="space-y-2 mb-4 text-sm text-slate-600 dark:text-slate-400">
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">check</span>
-                      <span>프리미엄 기내식</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">check</span>
-                      <span>수하물 30kg</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">check</span>
-                      <span>라운지 이용</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">check</span>
-                      <span>우선 탑승</span>
-                    </li>
-                  </ul>
-
-                  {/* 가격 */}
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-                      1인당
-                    </p>
-                    <p className="text-2xl font-bold text-primary">
-                      {flight.prestigeCharge.toLocaleString()}원
-                    </p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                      총 {calculateTotalPrice('business').toLocaleString()}원
-                      <span className="text-xs ml-1">
-                        ({searchConditions.passengers}명)
-                      </span>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500">총 항공료</p>
+                    <p className="text-xl font-bold text-primary">
+                      {(
+                        (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+                        (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
+                      ).toLocaleString()}원
                     </p>
                   </div>
                 </div>
@@ -612,10 +580,17 @@ const FlightSeat = () => {
                     총 결제 금액
                   </p>
                   <p className="text-3xl font-bold text-primary">
-                    {calculateTotalPrice(selectedClass).toLocaleString()}원
+                    {(
+                      (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+                      (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
+                    ).toLocaleString()}원
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    {selectedClass === 'economy' ? '일반석' : '비즈니스석'} · {searchConditions.passengers}명
+                    {searchConditions.seatClass === 'ECONOMY' && '일반석'}
+                    {searchConditions.seatClass === 'PREMIUM' && '프리미엄 일반석'}
+                    {searchConditions.seatClass === 'BUSINESS' && '비즈니스석'}
+                    {!['ECONOMY', 'PREMIUM', 'BUSINESS'].includes(searchConditions.seatClass) && '일반석'}
+                    {' · '}{totalPassengers}명{isRoundTrip && ' · 왕복'}
                   </p>
                 </div>
               </div>

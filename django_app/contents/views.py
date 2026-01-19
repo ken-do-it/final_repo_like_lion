@@ -59,15 +59,12 @@ class ShortformViewSet(viewsets.ModelViewSet):
         ]
     )
 
-    def perform_create(self, serializer):
-        user = self.request.user
-        if not user.is_authenticated:
-            raise exceptions.NotAuthenticated("Authentication required to upload.")
-
-        video_file = self.request.FILES.get('video_file') or serializer.validated_data.get('video_file')
-        if not video_file:
-            raise exceptions.ValidationError({"video_file": ["This field is required."]})
-
+    def _process_video_upload(self, video_file, serializer_instance=None):
+        """
+        [Refactoring] Deduped video processing logic.
+        Handles video save, metadata extraction, thumbnail generation, and language detection.
+        Returns a dict of fields to save.
+        """
         # [서비스 레이어] 비디오 처리
         saved_path, saved_url = VideoService.save_video_file(video_file)
         
@@ -78,50 +75,50 @@ class ShortformViewSet(viewsets.ModelViewSet):
         meta = VideoService.extract_metadata(abs_path)
         thumb_path, thumb_url = VideoService.generate_thumbnail(abs_path)
 
-        # [서비스 레이어] 언어 감지
-        title = serializer.validated_data.get('title', '')
-        content = serializer.validated_data.get('content', '')
+        # [서비스 레이어] 언어 감지 (제목/내용 필요)
+        # serializer_instance가 있으면 (update) 기존 값 사용, 없으면 (create) 빈 문자열
+        if serializer_instance:
+            title = self.request.data.get('title', serializer_instance.title)
+            content = self.request.data.get('content', serializer_instance.content)
+        else:
+            title = self.request.data.get('title', '')
+            content = self.request.data.get('content', '')
+            
         full_text = f"{title} {content}".strip()
         detected_lang = TranslationService.detect_language(full_text)
 
-        serializer.save(
-            user=user,
-            video_url=saved_url,
-            file_size=video_file.size,
-            duration=meta.get("duration"),
-            width=meta.get("width"),
-            height=meta.get("height"),
-            thumbnail_url=thumb_url,
-            source_lang=detected_lang,
-        )
+        return {
+            'video_url': saved_url,
+            'file_size': video_file.size,
+            'duration': meta.get("duration"),
+            'width': meta.get("width"),
+            'height': meta.get("height"),
+            'thumbnail_url': thumb_url,
+            'source_lang': detected_lang,
+        }
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if not user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to upload.")
+
+        video_file = self.request.FILES.get('video_file') or serializer.validated_data.get('video_file')
+        if not video_file:
+            raise exceptions.ValidationError({"video_file": ["This field is required."]})
+
+        # [Refactoring] Use helper method
+        video_data = self._process_video_upload(video_file)
+
+        serializer.save(user=user, **video_data)
 
     def perform_update(self, serializer):
         user = self.request.user
         video_file = self.request.FILES.get('video_file')
         
         if video_file:
-            # [서비스 레이어] 비디오 처리
-            saved_path, saved_url = VideoService.save_video_file(video_file)
-            from django.core.files.storage import default_storage
-            abs_path = default_storage.path(saved_path)
-            
-            meta = VideoService.extract_metadata(abs_path)
-            thumb_path, thumb_url = VideoService.generate_thumbnail(abs_path)
-
-            title = serializer.validated_data.get('title', self.get_object().title)
-            content = serializer.validated_data.get('content', self.get_object().content)
-            full_text = f"{title} {content}".strip()
-            detected_lang = TranslationService.detect_language(full_text)
-
-            serializer.save(
-                video_url=saved_url,
-                file_size=video_file.size,
-                duration=meta.get("duration"),
-                width=meta.get("width"),
-                height=meta.get("height"),
-                thumbnail_url=thumb_url,
-                source_lang=detected_lang,
-            )
+             # [Refactoring] Use helper method
+            video_data = self._process_video_upload(video_file, serializer_instance=self.get_object())
+            serializer.save(**video_data)
         else:
             title = serializer.validated_data.get('title')
             content = serializer.validated_data.get('content')
@@ -140,50 +137,68 @@ class ShortformViewSet(viewsets.ModelViewSet):
         TranslationService.invalidate_cache("shortform", self.get_object().id)
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        try:
+            queryset = self.get_queryset()
 
-        # [필터] 작성자 (사용자)
-        writer_param = request.query_params.get("writer")
-        if writer_param:
-            if writer_param == 'me':
-                if request.user.is_authenticated:
-                    queryset = queryset.filter(user=request.user)
+            # [Performance] N+1 Query Fix (is_liked)
+            if request.user.is_authenticated:
+                from django.db.models import OuterRef, Exists
+                is_liked_subquery = ShortformLike.objects.filter(
+                    shortform=OuterRef('pk'), 
+                    user=request.user
+                )
+                queryset = queryset.annotate(is_liked_val=Exists(is_liked_subquery))
+
+            queryset = self.filter_queryset(queryset)
+
+            # [필터] 작성자 (사용자)
+            writer_param = request.query_params.get("writer")
+            if writer_param:
+                if writer_param == 'me':
+                    if request.user.is_authenticated:
+                        queryset = queryset.filter(user=request.user)
+                    else:
+                        raise exceptions.NotAuthenticated("Authentication required to filter by 'me'.")
                 else:
-                    raise exceptions.NotAuthenticated("Authentication required to filter by 'me'.")
+                    try:
+                        queryset = queryset.filter(user_id=int(writer_param))
+                    except ValueError:
+                        pass # 잘못된 ID는 무시
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                resp_data = serializer.data
             else:
+                serializer = self.get_serializer(queryset, many=True)
+                resp_data = serializer.data
+
+            # 기존 번역 로직
+            target_lang = request.query_params.get("lang")
+            use_batch = request.query_params.get("batch", "true") == "true"
+            
+            if target_lang:
                 try:
-                    queryset = queryset.filter(user_id=int(writer_param))
-                except ValueError:
-                    pass # 잘못된 ID는 무시
+                    # [서비스 레이어] 번역 적용
+                    if use_batch:
+                        resp_data = TranslationService.apply_translation_batch(resp_data, target_lang)
+                    else:
+                        resp_data = TranslationService.apply_translation_sequential(resp_data, target_lang)
+                except Exception as e:
+                    logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during list")
+            
+            if page is not None:
+                return self.get_paginated_response(resp_data)
+            
+            return Response(resp_data)
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            resp_data = serializer.data
-            # DRF 설정에 따라 페이지네이션 응답 구조 처리가 필요할 수 있음
-            # 하지만 나중에 resp.data를 수정하는 기존 패턴을 따름
-        else:
-            serializer = self.get_serializer(queryset, many=True)
-            resp_data = serializer.data
-
-        # 기존 번역 로직
-        target_lang = request.query_params.get("lang")
-        use_batch = request.query_params.get("batch", "true") == "true"
-        
-        if target_lang:
-            try:
-                # [서비스 레이어] 번역 적용
-                if use_batch:
-                    resp_data = TranslationService.apply_translation_batch(resp_data, target_lang)
-                else:
-                    resp_data = TranslationService.apply_translation_sequential(resp_data, target_lang)
-            except Exception as e:
-                logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during list")
-        
-        if page is not None:
-            return self.get_paginated_response(resp_data)
-        
-        return Response(resp_data)
+        except Exception as e:
+            logger.exception("Unexpected error in ShortformViewSet.list")
+            # 500 대신 읽기 가능한 에러 메시지 반환 (디버깅용)
+            return Response(
+                {"detail": "Internal Server Error during shortform list fetch.", "error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @extend_schema(
         summary="숏폼 상세 조회 (Retrieve Shortform)",
@@ -312,16 +327,26 @@ class ShortformViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def view(self, request, pk=None):
         shortform = self.get_object()
-        ip = request.META.get('REMOTE_ADDR')
+        
+        # [Privacy] IP Address Hashing (SHA-256 + Base64)
+        raw_ip = request.META.get('REMOTE_ADDR', '')
+        if raw_ip:
+            # 해시 생성 (SHA-256) 후 Base64 인코딩하여 길이 단축 (44자)
+            import base64
+            hashed_bytes = hashlib.sha256(raw_ip.encode('utf-8')).digest()
+            ip_hash = base64.b64encode(hashed_bytes).decode('utf-8')
+        else:
+            ip_hash = None
+
         user = request.user if request.user.is_authenticated else None
         
         if user:
-            exists = ShortformView.objects.filter(shortform=shortform).filter(Q(user=user) | Q(ip_address=ip)).exists()
+            exists = ShortformView.objects.filter(shortform=shortform).filter(Q(user=user) | Q(ip_address=ip_hash)).exists()
         else:
-            exists = ShortformView.objects.filter(shortform=shortform, ip_address=ip).exists()
+            exists = ShortformView.objects.filter(shortform=shortform, ip_address=ip_hash).exists()
 
         if not exists:
-            ShortformView.objects.create(shortform=shortform, user=user, ip_address=ip)
+            ShortformView.objects.create(shortform=shortform, user=user, ip_address=ip_hash)
             Shortform.objects.filter(pk=shortform.pk).update(total_views=F('total_views') + 1)
             shortform.refresh_from_db(fields=['total_views'])
 
@@ -379,6 +404,14 @@ class TranslationProxyView(APIView):
         entity_type = request.data.get("entity_type") or "raw"
         entity_id = request.data.get("entity_id") or 0
         field = request.data.get("field") or "text"
+
+        # [Security] Whitelist Validation
+        ALLOWED_ENTITY_TYPES = ['shortform', 'shortform_comment', 'review', 'raw']
+        if entity_type not in ALLOWED_ENTITY_TYPES:
+            return Response(
+                {"detail": f"Invalid entity_type. Allowed: {ALLOWED_ENTITY_TYPES}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not text:
             return Response({"detail": "text is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -455,6 +488,13 @@ class TranslationBatchView(APIView):
             entity_type = item.get("entity_type", "raw")
             entity_id = item.get("entity_id", 0)
             field = item.get("field", "text")
+
+            # [Security] Whitelist Validation (Skip invalid items or error out? Let's skip safely)
+            ALLOWED_ENTITY_TYPES = ['shortform', 'shortform_comment', 'review', 'raw']
+            if entity_type not in ALLOWED_ENTITY_TYPES:
+                logger.warning(f"Skipping invalid entity_type in batch: {entity_type}")
+                results[idx] = text # Return original text without translation/caching
+                continue
             
             # 캐시 확인
             entry = TranslationEntry.objects.filter(
