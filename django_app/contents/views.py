@@ -140,7 +140,19 @@ class ShortformViewSet(viewsets.ModelViewSet):
         TranslationService.invalidate_cache("shortform", self.get_object().id)
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
+
+        # [Performance] N+1 Query Fix (is_liked)
+        # exists() 서브쿼리를 사용하여 메인 쿼리 한 번에 좋아요 여부 가져오기
+        if request.user.is_authenticated:
+            from django.db.models import OuterRef, Exists
+            is_liked_subquery = ShortformLike.objects.filter(
+                shortform=OuterRef('pk'), 
+                user=request.user
+            )
+            queryset = queryset.annotate(is_liked_val=Exists(is_liked_subquery))
+
+        queryset = self.filter_queryset(queryset)
 
         # [필터] 작성자 (사용자)
         writer_param = request.query_params.get("writer")
@@ -312,16 +324,26 @@ class ShortformViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def view(self, request, pk=None):
         shortform = self.get_object()
-        ip = request.META.get('REMOTE_ADDR')
+        
+        # [Privacy] IP Address Hashing (SHA-256 + Base64)
+        raw_ip = request.META.get('REMOTE_ADDR', '')
+        if raw_ip:
+            # 해시 생성 (SHA-256) 후 Base64 인코딩하여 길이 단축 (44자)
+            import base64
+            hashed_bytes = hashlib.sha256(raw_ip.encode('utf-8')).digest()
+            ip_hash = base64.b64encode(hashed_bytes).decode('utf-8')
+        else:
+            ip_hash = None
+
         user = request.user if request.user.is_authenticated else None
         
         if user:
-            exists = ShortformView.objects.filter(shortform=shortform).filter(Q(user=user) | Q(ip_address=ip)).exists()
+            exists = ShortformView.objects.filter(shortform=shortform).filter(Q(user=user) | Q(ip_address=ip_hash)).exists()
         else:
-            exists = ShortformView.objects.filter(shortform=shortform, ip_address=ip).exists()
+            exists = ShortformView.objects.filter(shortform=shortform, ip_address=ip_hash).exists()
 
         if not exists:
-            ShortformView.objects.create(shortform=shortform, user=user, ip_address=ip)
+            ShortformView.objects.create(shortform=shortform, user=user, ip_address=ip_hash)
             Shortform.objects.filter(pk=shortform.pk).update(total_views=F('total_views') + 1)
             shortform.refresh_from_db(fields=['total_views'])
 
@@ -379,6 +401,14 @@ class TranslationProxyView(APIView):
         entity_type = request.data.get("entity_type") or "raw"
         entity_id = request.data.get("entity_id") or 0
         field = request.data.get("field") or "text"
+
+        # [Security] Whitelist Validation
+        ALLOWED_ENTITY_TYPES = ['shortform', 'shortform_comment', 'review', 'raw']
+        if entity_type not in ALLOWED_ENTITY_TYPES:
+            return Response(
+                {"detail": f"Invalid entity_type. Allowed: {ALLOWED_ENTITY_TYPES}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not text:
             return Response({"detail": "text is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -455,6 +485,13 @@ class TranslationBatchView(APIView):
             entity_type = item.get("entity_type", "raw")
             entity_id = item.get("entity_id", 0)
             field = item.get("field", "text")
+
+            # [Security] Whitelist Validation (Skip invalid items or error out? Let's skip safely)
+            ALLOWED_ENTITY_TYPES = ['shortform', 'shortform_comment', 'review', 'raw']
+            if entity_type not in ALLOWED_ENTITY_TYPES:
+                logger.warning(f"Skipping invalid entity_type in batch: {entity_type}")
+                results[idx] = text # Return original text without translation/caching
+                continue
             
             # 캐시 확인
             entry = TranslationEntry.objects.filter(
