@@ -31,6 +31,21 @@ except Exception as e:
     client = None
 
 
+def warmup_model():
+    """
+    모델 가중치를 메모리에 로드하고 추론 엔진을 예열하기 위해 더미 번역을 수행합니다.
+    이 작업을 통해 첫 번째 사용자 요청이 느려지는 것을 방지할 수 있습니다.
+    """
+    if client:
+        try:
+            logger.info("🔥 Warming up AI Translation Model...")
+            # Translate a simple "Hello" to force model loading
+            client.translate("Hello", "eng_Latn", "kor_Hang")
+            logger.info("✅ Model Warm-up Completed!")
+        except Exception as e:
+            logger.warning(f"⚠️ Model Warm-up Failed (Non-critical): {e}")
+
+
 class TranslateRequest(BaseModel):
     text: str
     source_lang: str = "kor_Hang"

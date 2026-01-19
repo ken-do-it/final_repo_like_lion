@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 // import Navbar from '../../components/Navbar'
 import './shortspage.css'
@@ -25,29 +25,53 @@ function ShortsPage({ onShortClick, embed = false }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [useBatch, setUseBatch] = useState(true)
+    const [page, setPage] = useState(1)
+    const [hasMore, setHasMore] = useState(true)
+    const observer = useRef()
 
     const langCode = langToCode[language] || 'eng_Latn'
 
-
-
-
+    // Intersection Observer callback
+    const lastShortElementRef = useCallback(node => {
+        if (loading) return
+        if (observer.current) observer.current.disconnect()
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prevPage => prevPage + 1)
+            }
+        })
+        if (node) observer.current.observe(node)
+    }, [loading, hasMore])
 
     // Data Fetching
-    const fetchShortforms = useCallback(async () => {
+    const fetchShortforms = useCallback(async (pageNum) => {
         try {
             setLoading(true)
             setError('')
 
-            // Use axiosInstance for GET request (Automatic token attachment + 401 handling)
             const res = await axiosInstance.get(`/shortforms/`, {
                 params: {
                     lang: langCode,
-                    batch: useBatch
+                    batch: useBatch,
+                    page: pageNum
                 }
             })
 
             const data = res.data
-            const listData = Array.isArray(data) ? data : data.results || []
+            // DRF PageNumberPagination response structure: { count, next, previous, results }
+            // If pagination is not enabled, it might return array directly. Check structure.
+            let listData = []
+            let nextLink = null
+
+            if (Array.isArray(data)) {
+                listData = data
+                setHasMore(false) // No pagination metadata, assume all loaded or try to implement offset check?
+                // If backend forces pagination, it won't be array.
+            } else {
+                listData = data.results || []
+                nextLink = data.next
+                setHasMore(!!nextLink)
+            }
 
             const mapped = listData.map((item) => ({
                 id: item.id,
@@ -60,26 +84,37 @@ function ShortsPage({ onShortClick, embed = false }) {
                     : '',
                 lang: item.source_lang || 'N/A',
             }))
-            setShortforms(mapped)
+
+            setShortforms(prev => pageNum === 1 ? mapped : [...prev, ...mapped])
         } catch (err) {
             console.error(err)
-            setError('Failed to load shorts. Please check the server/connection.')
-            setShortforms([])
+            // 404 means page out of range usually
+            if (err.response && err.response.status === 404) {
+                setHasMore(false)
+                return
+            }
+            setError('Failed to load shorts.')
         } finally {
             setLoading(false)
         }
     }, [langCode, useBatch])
 
     useEffect(() => {
-        fetchShortforms()
-    }, [fetchShortforms])
+        // Reset list when language changes
+        setShortforms([])
+        setPage(1)
+        setHasMore(true)
+    }, [langCode, useBatch])
 
+    useEffect(() => {
+        fetchShortforms(page)
+    }, [fetchShortforms, page])
 
 
     return (
         <div className={`shorts-page ${embed ? 'embed-view' : 'page-view'}`}>
+            {/* ... header ... */}
             {/* Show Navbar only if not embedded (Standalone Page) */}
-            {/* Navbar Removed - Handled by Global Layout (App.jsx) */}
             {/* {!embed && <Navbar toggleSidebar={() => { }} />} */}
 
             <main className={`${embed ? 'w-full' : 'container mx-auto px-4 max-w-screen-xl'} ${!embed ? 'py-8' : ''}`}>
@@ -99,19 +134,10 @@ function ShortsPage({ onShortClick, embed = false }) {
                             </button>
                         )}
                     </div>
-
-
                 </div>
 
                 {/* Grid Content */}
                 <div className="shorts-grid">
-                    {loading && (
-                        <div className="state-message">
-                            <span className="state-icon material-symbols-outlined spin">sync</span>
-                            <p>{t('loading')}</p>
-                        </div>
-                    )}
-
                     {!loading && !error && shortforms.length === 0 && (
                         <div className="state-message">
                             <span className="state-icon material-symbols-outlined">videocam_off</span>
@@ -119,55 +145,56 @@ function ShortsPage({ onShortClick, embed = false }) {
                         </div>
                     )}
 
-                    {shortforms.map((s, idx) => (
-                        <div
-                            className="card shorts-card"
-                            key={`${s.title}-${idx}`}
-                            onClick={() => {
-                                if (!s.id) return
-                                if (onShortClick) {
-                                    onShortClick(s.id)
-                                } else {
-                                    navigate(`/shorts/${s.id}`)
-                                }
-                            }}
-                        >
-                            <div className="shorts-thumb">
-                                <img
-                                    src={s.thumb}
-                                    alt={s.title}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
-                                    }}
-                                />
-                                <span className="duration-badge">{s.duration || t('duration_missing')}</span>
-                            </div>
-                            <div className="shorts-body">
-                                <span className="shorts-lang-tag">{s.lang}</span>
-                                <h3 className="shorts-title">{s.title}</h3>
-                                <p className="shorts-desc">{s.desc}</p>
-                                <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
-                                    <span className="mr-1 align-middle">📍</span>
-                                    {s.location_translated || s.location || 'Korea'}
+                    {shortforms.map((s, idx) => {
+                        if (shortforms.length === idx + 1) {
+                            return (
+                                <div ref={lastShortElementRef} className="card shorts-card" key={`${s.title}-${idx}-${s.id}`} onClick={() => onShortClick ? onShortClick(s.id) : navigate(`/shorts/${s.id}`)}>
+                                    <div className="shorts-thumb">
+                                        <img src={s.thumb} alt={s.title} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail'; }} />
+                                        <span className="duration-badge">{s.duration || t('duration_missing')}</span>
+                                    </div>
+                                    <div className="shorts-body">
+                                        <span className="shorts-lang-tag">{s.lang}</span>
+                                        <h3 className="shorts-title">{s.title}</h3>
+                                        <p className="shorts-desc">{s.desc}</p>
+                                        <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
+                                            <span className="mr-1 align-middle">📍</span>
+                                            {s.location_translated || s.location || 'Korea'}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            )
+                        } else {
+                            return (
+                                <div className="card shorts-card" key={`${s.title}-${idx}-${s.id}`} onClick={() => onShortClick ? onShortClick(s.id) : navigate(`/shorts/${s.id}`)}>
+                                    <div className="shorts-thumb">
+                                        <img src={s.thumb} alt={s.title} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail'; }} />
+                                        <span className="duration-badge">{s.duration || t('duration_missing')}</span>
+                                    </div>
+                                    <div className="shorts-body">
+                                        <span className="shorts-lang-tag">{s.lang}</span>
+                                        <h3 className="shorts-title">{s.title}</h3>
+                                        <p className="shorts-desc">{s.desc}</p>
+                                        <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
+                                            <span className="mr-1 align-middle">📍</span>
+                                            {s.location_translated || s.location || 'Korea'}
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        }
+                    })}
 
-                            <div className="shorts-actions">
-                                <button className="btn-ghost">
-                                    <span className="material-symbols-outlined text-lg">play_arrow</span>
-                                    {t('play')}
-                                </button>
-                            </div>
+                    {loading && (
+                        <div className="state-message col-span-full">
+                            <span className="state-icon material-symbols-outlined spin">sync</span>
+                            <p>{t('loading')}</p>
                         </div>
-                    ))}
+                    )}
 
                     {error && <p className="text-red-500 text-center col-span-full">{error}</p>}
                 </div>
             </main>
-
-
         </div>
     )
 }

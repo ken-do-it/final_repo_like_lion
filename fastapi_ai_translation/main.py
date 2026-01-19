@@ -2,7 +2,7 @@ import logging
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from translation.router import router as translation_router
+from translation.router import router as translation_router, warmup_model
 from prometheus_fastapi_instrumentator import Instrumentator
 from dotenv import load_dotenv
 
@@ -56,7 +56,7 @@ async def startup_event():
     logger.info("🚀 AI Translation Service (Port 8003) Starting...")
     # Add any model warm-up logic here if needed
     # The client initializes the model lazily or on import, check client.py behavior
-    pass
+    warmup_model()
 
 @app.get("/health")
 def health_check():
