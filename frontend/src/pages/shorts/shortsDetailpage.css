@@ -391,15 +391,19 @@
     border-radius: 20px;
 
     /* Subtle Glass / Gradient Background */
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(240, 249, 255, 0.8));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.9));
     border: 1px solid rgba(19, 146, 236, 0.2);
     box-shadow: 0 4px 20px rgba(19, 146, 236, 0.08);
-    overflow: hidden;
+    /* overflow: hidden; Removed to prevent clipping shadows or content */
     backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    /* Align button to left */
 }
 
 .dark .ai-card {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.5));
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.6));
     border-color: rgba(56, 189, 248, 0.2);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
@@ -414,6 +418,16 @@
     height: 200%;
     background: radial-gradient(circle, rgba(19, 146, 236, 0.05) 0%, transparent 70%);
     pointer-events: none;
+    z-index: 0;
+}
+
+.ai-header,
+.ai-title,
+.ai-desc,
+.btn-ai-action {
+    position: relative;
+    z-index: 1;
+    /* Ensure content is above background effects */
 }
 
 .ai-header {
@@ -439,28 +453,38 @@
     font-size: 14px;
     color: var(--detail-text-sub);
     line-height: 1.5;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    /* Increased margin for better spacing */
 }
 
 .btn-ai-action {
-    display: flex;
+    display: inline-flex;
+    /* Ensure it takes button shape */
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
+    padding: 10px 20px;
+    /* Slightly larger clickable area */
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
-    color: white;
-    background: var(--detail-accent);
+    color: white !important;
+    /* Force white text */
+    background: var(--detail-accent, #1392ec);
+    /* Fallback color */
     border: none;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 12px rgba(19, 146, 236, 0.3);
 }
 
 .btn-ai-action:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(19, 146, 236, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(19, 146, 236, 0.4);
+    filter: brightness(1.05);
+}
+
+.btn-ai-action:active {
+    transform: translateY(0);
 }
 
 /* Comments Section */
