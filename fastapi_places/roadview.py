@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
 from typing import List
@@ -8,7 +8,7 @@ from datetime import datetime
 # 기존 모듈들 임포트
 from database import get_db
 from auth import require_auth
-from models import Place, PlaceReview, RoadviewGameImage  # models.py에 RoadviewGameImage 추가 필요
+from models import Place, PlaceReview, RoadviewGameImage, RoadviewGameHistory
 
 # 별도의 라우터 정의
 router = APIRouter(
@@ -129,19 +129,121 @@ def create_roadview_from_review(
     }
 
 # ---------------------------------------------------------
-# 3. 랜덤 게임 이미지 가져오기
+# 3. 랜덤 게임 이미지 가져오기 (중복 방지 포함)
 # ---------------------------------------------------------
 @router.get("/random")
-def get_random_game_image(db: Session = Depends(get_db)):
-    random_image = db.query(RoadviewGameImage).order_by(func.random()).first()
+def get_random_game_image(
+    exclude_ids: str = Query(None, description="제외할 게임 ID 목록 (쉼표로 구분)"),
+    db: Session = Depends(get_db),
+    # user_id: int | None = Depends(get_current_user_optional) # 영구 중복 방지 제거 요청으로 인해 주석 처리
+):
+    query = db.query(RoadviewGameImage)
+
+    # [세션 기반 중복 방지]
+    # 프론트엔드에서 현재 세션(한 번의 플레이 흐름) 동안 플레이한 ID 목록을 보내줌
+    if exclude_ids:
+        try:
+            # "1,2,3" -> [1, 2, 3]
+            exclude_list = [int(id_str.strip()) for id_str in exclude_ids.split(",") if id_str.strip().isdigit()]
+            if exclude_list:
+                query = query.filter(RoadviewGameImage.id.notin_(exclude_list))
+        except Exception:
+            pass  # 파싱 에러 시 무시
+
+    # [영구 중복 방지 로직 제거됨]
+    # 사용자 요청: "완전 중복 플레이 방지가 아니라 한번 플레이할때 같은 장소가 안나오게 하고 싶은건데"
+    # -> DB 기록(History) 기반 필터링은 제거하고, 세션 기반(exclude_ids) 필터링만 적용
+
+    random_image = query.order_by(func.random()).first()
+
     if not random_image:
-        raise HTTPException(status_code=404, detail="등록된 게임 이미지가 없습니다.")
+        # 만약 안 푼 문제가 없다면? (전부 다 풀었을 경우) -> 그냥 전체 중에서 랜덤? 아니면 완료 메시지?
+        # 일단은 풀었던 것 중에서도 랜덤으로 주도록 fallback (또는 에러 반환)
+        # 1차 시도: 그냥 전체 랜덤 (fallback)
+        random_image = db.query(RoadviewGameImage).order_by(func.random()).first()
+        
+        if not random_image:
+             raise HTTPException(status_code=404, detail="등록된 게임 이미지가 없습니다.")
         
     return {
-        "review_id": random_image.id,
+        "review_id": random_image.id, # 실제로는 game_image.id
         "place_name": "랜덤 장소",
         "image_url": random_image.image_url,
-        "lat": float(random_image.latitude),  # latitude -> lat으로 통일
-        "lng": float(random_image.longitude), # longitude -> lng으로 통일
+        "lat": float(random_image.latitude),
+        "lng": float(random_image.longitude),
         "city": random_image.city
     }
+
+
+@router.get("/session")
+def get_game_session(
+    limit: int = Query(10, le=20, description="가져올 최대 게임 수"),
+    db: Session = Depends(get_db)
+):
+    """
+    게임 세션 시작 시 한 번에 여러 개의 게임 데이터를 가져옵니다.
+    최대 limit(=10)개까지 랜덤으로 선택하여 반환합니다.
+    (결과 페이지를 위해 장소 ID, 리뷰 내용 등 추가 정보 포함)
+    """
+    # 랜덤으로 limit 개수만큼 조회
+    game_images = db.query(RoadviewGameImage).order_by(func.random()).limit(limit).all()
+    
+    if not game_images:
+        raise HTTPException(status_code=404, detail="등록된 게임 이미지가 없습니다.")
+
+    results = []
+    for img in game_images:
+        # [추가] 장소 정보와 리뷰 내용 찾기 (역추적)
+        # 1. 좌표로 장소 찾기
+        place = db.query(Place).filter(
+            Place.latitude == img.latitude,
+            Place.longitude == img.longitude
+        ).first()
+
+        # 2. 이미지 URL로 리뷰 찾기
+        review = db.query(PlaceReview).filter(
+            PlaceReview.image_url == img.image_url
+        ).first()
+
+        results.append({
+            "game_id": img.id,
+            "place_name": place.name if place else "알 수 없는 장소",
+            "place_id": place.id if place else None, # 상세 페이지 이동용
+            "image_url": img.image_url,
+            "lat": float(img.latitude),
+            "lng": float(img.longitude),
+            "city": img.city,
+            "review_content": review.content if review else None, # 리뷰 내용
+            "reviewer_nickname": review.user.nickname if review and review.user else "Anonymous"
+        })
+        
+    return {
+        "total_count": len(results),
+        "games": results
+    }
+
+
+# ---------------------------------------------------------
+# 4. 게임 완료 기록 저장 (중복 방지용)
+# ---------------------------------------------------------
+@router.post("/complete/{game_image_id}")
+def complete_game(
+    game_image_id: int,
+    user_id: int = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    # 이미 기록이 있는지 확인
+    exists = db.query(RoadviewGameHistory).filter(
+        RoadviewGameHistory.user_id == user_id,
+        RoadviewGameHistory.game_image_id == game_image_id
+    ).first()
+
+    if not exists:
+        history = RoadviewGameHistory(
+            user_id=user_id,
+            game_image_id=game_image_id
+        )
+        db.add(history)
+        db.commit()
+    
+    return {"status": "success", "message": "Game history saved"}
