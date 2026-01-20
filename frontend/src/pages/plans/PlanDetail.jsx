@@ -39,7 +39,7 @@ const PlanDetail = () => {
     fetchPlanDetail();
     fetchLikeStatus();
     fetchComments();
-  }, [planId]);
+  }, [planId, language]);
 
   // 좋아요 상태 조회
   const fetchLikeStatus = async () => {

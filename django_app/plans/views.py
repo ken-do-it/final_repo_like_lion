@@ -153,14 +153,25 @@ def plan_retrieve_update_delete(request, plan_id):
         target_lang = request.query_params.get('lang')
         if target_lang:
             try:
-                # 단일 객체이므로 리스트로 감싸서 배치 처리하거나 sequential 사용
-                # apply_translation_batch는 리스트/단일 모두 처리하도록 _normalize_data가 되어 있음
+                # 1. 여행 일정 제목/설명 번역
                 data = TranslationService.apply_translation_batch(
                     data, 
                     target_lang,
                     entity_type="travel_plan",
                     fields={'title': 'title_translated', 'description': 'description_translated'}
                 )
+
+                # 2. 중첩된 세부 일정(장소) 번역
+                if 'details' in data and data['details']:
+                    data['details'] = TranslationService.apply_translation_batch(
+                        data['details'],
+                        target_lang,
+                        entity_type="plan_detail",
+                        fields={
+                            'description': 'description',
+                            'place_name': 'place_name'
+                        }
+                    )
             except Exception as e:
                 logger.error(f"Plan detail translation failed: {e}")
 

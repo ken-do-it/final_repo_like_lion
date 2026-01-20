@@ -52,6 +52,7 @@ export default {
     action_stays: "宿泊先を探す",
     action_places: "観光地",
     action_geoquiz: "ジオクイズ",
+    title_transport: "交通",
 
     // Sections
     sec_upcoming: "これからの旅行",

@@ -84,7 +84,10 @@ const MainPage = () => {
     if (isAuthenticated && user) {
       const fetchPlans = async () => {
         try {
-          const res = await plansService.plans.getPlans();
+          // [UPDATED] Pass lang parameter
+          const res = await plansService.plans.getPlans({
+            lang: API_LANG_CODES[language] || 'eng_Latn'
+          });
           const allPlans = Array.isArray(res.data) ? res.data : (res.data.results || []);
 
           // Filter for current user's plans
@@ -121,7 +124,7 @@ const MainPage = () => {
       setUpcomingPlan(null);
       setCompletedPlan(null);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, language]); // [UPDATED] Added language dependency
 
   const handleCreatePlan = async () => {
     if (!isAuthenticated) {
@@ -385,7 +388,7 @@ const MainPage = () => {
             >
               <div className="relative w-full md:w-2/5 h-48 md:h-64 overflow-hidden">
                 <img
-                  alt={upcomingPlan.title}
+                  alt={upcomingPlan.title_translated || upcomingPlan.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   src={getThumbnailUrl(upcomingPlan.thumbnail_url)} // Use helper
                   onError={(e) => {
@@ -400,14 +403,16 @@ const MainPage = () => {
               </div>
               <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white line-clamp-2">{upcomingPlan.title}</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white line-clamp-2">
+                    {upcomingPlan.title_translated || upcomingPlan.title}
+                  </h3>
                   <p className="text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-2">
                     <span>📅</span>
                     {new Date(upcomingPlan.start_date).toLocaleDateString()} - {new Date(upcomingPlan.end_date).toLocaleDateString()}
                   </p>
-                  {upcomingPlan.description && (
+                  {(upcomingPlan.description_translated || upcomingPlan.description) && (
                     <p className="text-slate-600 dark:text-slate-300 mt-4 line-clamp-2 text-sm">
-                      {upcomingPlan.description}
+                      {upcomingPlan.description_translated || upcomingPlan.description}
                     </p>
                   )}
                 </div>
@@ -429,7 +434,7 @@ const MainPage = () => {
             >
               <div className="relative w-full md:w-2/5 h-48 md:h-64 overflow-hidden bg-indigo-900">
                 <img
-                  alt={completedPlan.title}
+                  alt={completedPlan.title_translated || completedPlan.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80"
                   src={getThumbnailUrl(completedPlan.thumbnail_url)}
                   onError={(e) => {
@@ -443,7 +448,9 @@ const MainPage = () => {
               </div>
               <div className="flex-1 p-6 md:p-8 flex flex-col justify-center items-center text-center space-y-4">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {(t('banner_review_title') || 'How was your trip to {dest}?').replace('{dest}', completedPlan.area || completedPlan.title)}
+                  {(t('banner_review_title') || 'How was your trip to {dest}?').replace('{dest}',
+                    completedPlan.area || completedPlan.title_translated || completedPlan.title
+                  )}
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400">
                   {(t('banner_review_desc') || 'Share your memories and help others!')}

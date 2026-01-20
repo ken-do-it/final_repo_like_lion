@@ -49,9 +49,10 @@ export default {
 
     // Quick Actions
     action_flight: "预订机票",
+    title_transport: "交通",
     action_stays: "查找住宿",
-    action_rentals: "租车",
-    action_activities: "活动",
+    action_places: "查找景点",
+    action_geoquiz: "地理测验",
 
     // Sections
     sec_upcoming: "即将开始的旅程",
