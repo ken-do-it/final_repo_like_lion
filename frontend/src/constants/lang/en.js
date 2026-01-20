@@ -107,6 +107,13 @@ export default {
     tab_saved: "Saved",
     tab_reviews: "Reviews",
 
+    // Reservations
+    no_reservations: "No Reservations Yet",
+    no_reservations_desc: "Book your first flight to explore Korea!",
+    search_flights: "Search Flights",
+    my_reservations: "My Reservations",
+    new_reservation: "New Booking",
+
     tab_profile: "Profile",
     profile_basic: "Basic Info",
     profile_basic_desc: "This information will be displayed to other users.",

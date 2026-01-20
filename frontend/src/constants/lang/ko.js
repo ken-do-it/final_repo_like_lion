@@ -112,6 +112,13 @@ export default {
     tab_saved: "저장한 장소",
     tab_reviews: "내 리뷰",
 
+    // Reservations
+    no_reservations: "예약 내역이 없습니다",
+    no_reservations_desc: "첫 항공권을 예약하고 한국을 탐험해보세요!",
+    search_flights: "항공권 검색",
+    my_reservations: "내 예약",
+    new_reservation: "새 예약",
+
     profile_basic: "기본 정보",
     profile_basic_desc: "다른 사용자에게 공개되는 프로필 정보입니다.",
     edit_btn: "수정하기",
