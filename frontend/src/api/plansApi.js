@@ -85,12 +85,38 @@ export const aiTravelApi = {
   getAIRequests: (params) => axiosInstance.get('/plans/ai/requests/', { params }),
 };
 
+// Like APIs
+export const planLikesApi = {
+  // Get like status
+  getLikeStatus: (planId) => axiosInstance.get(`/plans/${planId}/like/`),
+
+  // Toggle like
+  toggleLike: (planId) => axiosInstance.post(`/plans/${planId}/like/`),
+};
+
+// Comment APIs
+export const planCommentsApi = {
+  // Get comments for plan
+  getComments: (planId) => axiosInstance.get(`/plans/${planId}/comments/`),
+
+  // Create comment
+  createComment: (planId, data) => axiosInstance.post(`/plans/${planId}/comments/`, data),
+
+  // Update comment
+  updateComment: (commentId, data) => axiosInstance.put(`/plans/comments/${commentId}/`, data),
+
+  // Delete comment
+  deleteComment: (commentId) => axiosInstance.delete(`/plans/comments/${commentId}/`),
+};
+
 // Export all as a single object
 const plansService = {
   plans: plansApi,
   details: planDetailsApi,
   images: planImagesApi,
   ai: aiTravelApi,
+  likes: planLikesApi,
+  comments: planCommentsApi,
 };
 
 export default plansService;

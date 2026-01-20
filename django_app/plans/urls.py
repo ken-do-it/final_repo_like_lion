@@ -20,4 +20,11 @@ urlpatterns = [
     path('ai/request/', views.ai_request_create, name='ai-request-create'),
     path('ai/request/<int:request_id>/', views.ai_request_retrieve, name='ai-request-detail'),
     path('ai/requests/', views.ai_requests_list, name='ai-requests-list'),
+
+    # 좋아요
+    path('<int:plan_id>/like/', views.plan_like_toggle, name='plan-like-toggle'),
+
+    # 댓글
+    path('<int:plan_id>/comments/', views.plan_comment_list_create, name='plan-comment-list-create'),
+    path('comments/<int:comment_id>/', views.plan_comment_update_delete, name='plan-comment-update-delete'),
 ]

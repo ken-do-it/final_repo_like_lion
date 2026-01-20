@@ -32,16 +32,60 @@ const FlightSeat = () => {
   // 기존 코드 호환성을 위해 flight 변수 유지
   const flight = outboundFlight;
 
-  // passengers 계산 (새 형식: adults+children+infants, 기존 형식: passengers)
-  const totalPassengers = searchConditions.passengers ||
-    (searchConditions.adults || 1) + (searchConditions.children || 0) + (searchConditions.infants || 0);
+  // 승객 유형별 인원수
+  const adults = searchConditions.adults || 1;
+  const children = searchConditions.children || 0;
+  const infants = searchConditions.infants || 0;
+  const totalPassengers = searchConditions.passengers || (adults + children + infants);
 
   /**
    * 선택된 좌석 등급 상태
-   * economy - 일반석
-   * business - 비즈니스석
+   * ECONOMY - 일반석
+   * PREMIUM - 프리미엄 일반석
+   * BUSINESS - 비즈니스석
    */
-  const [selectedClass, setSelectedClass] = useState('economy');
+  const [selectedClass, setSelectedClass] = useState('ECONOMY');
+
+  /**
+   * 좌석 등급별 가격 배수
+   * - ECONOMY: 1.0배
+   * - PREMIUM: 1.5배
+   * - BUSINESS: 2.0배
+   */
+  const getSeatClassMultiplier = () => {
+    switch (selectedClass) {
+      case 'PREMIUM': return 1.5;
+      case 'BUSINESS': return 2.0;
+      case 'ECONOMY':
+      default: return 1.0;
+    }
+  };
+
+  /**
+   * 좌석 등급 정보
+   */
+  const seatClassOptions = [
+    { value: 'ECONOMY', label: '일반석', multiplier: 1.0, description: '기본 좌석' },
+    { value: 'PREMIUM', label: '프리미엄 일반석', multiplier: 1.5, description: '넓은 좌석 간격' },
+    { value: 'BUSINESS', label: '비즈니스석', multiplier: 2.0, description: '최고급 서비스' },
+  ];
+
+  /**
+   * 할인율 적용 총 가격 계산
+   * - 좌석 등급: ECONOMY 1배, PREMIUM 1.5배, BUSINESS 2배
+   * - 성인: 100%
+   * - 소아 (2-11세): 75%
+   * - 유아 (0-1세): 10%
+   */
+  const calculateDiscountedTotal = (pricePerPerson) => {
+    const seatMultiplier = getSeatClassMultiplier();
+    const adjustedPrice = pricePerPerson * seatMultiplier;
+
+    const adultPrice = adjustedPrice * adults * 1.0;      // 성인 100%
+    const childPrice = adjustedPrice * children * 0.75;   // 소아 75%
+    const infantPrice = adjustedPrice * infants * 0.1;    // 유아 10%
+    return Math.round(adultPrice + childPrice + infantPrice);
+  };
 
   /**
    * 탑승자 정보 입력 표시 상태
@@ -286,9 +330,9 @@ const FlightSeat = () => {
       return;
     }
 
-    // 총 가격 계산 (가는편 + 오는편)
-    const totalPrice = (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
-      (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0);
+    // 총 가격 계산 (가는편 + 오는편) - 소아/유아 할인 적용
+    const totalPrice = calculateDiscountedTotal(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+      (isRoundTrip && inboundFlight ? calculateDiscountedTotal(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0);
 
     // 결제 페이지로 이동
     navigate('/reservations/flights/payment', {
@@ -298,7 +342,7 @@ const FlightSeat = () => {
         inboundFlight,
         isRoundTrip,
         searchConditions,
-        selectedClass: searchConditions.seatClass,
+        selectedClass,  // 사용자가 선택한 좌석 등급
         passengers,
         totalPrice,
       }
@@ -433,23 +477,72 @@ const FlightSeat = () => {
                     <div className="flex items-center gap-2 text-sm">
                       <span className="material-symbols-outlined text-xl text-slate-400">airline_seat_recline_normal</span>
                       <span className="px-2 py-1 bg-primary/10 text-primary rounded font-medium">
-                        {searchConditions.seatClass === 'ECONOMY' && '일반석'}
-                        {searchConditions.seatClass === 'PREMIUM' && '프리미엄 일반석'}
-                        {searchConditions.seatClass === 'BUSINESS' && '비즈니스석'}
-                        {!['ECONOMY', 'PREMIUM', 'BUSINESS'].includes(searchConditions.seatClass) && '일반석'}
+                        {selectedClass === 'ECONOMY' && '일반석'}
+                        {selectedClass === 'PREMIUM' && '프리미엄 일반석'}
+                        {selectedClass === 'BUSINESS' && '비즈니스석'}
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-slate-500">총 항공료</p>
+                    <p className="text-sm text-slate-500">
+                      총 항공료 (성인 {adults}명{children > 0 && `, 소아 ${children}명`}{infants > 0 && `, 유아 ${infants}명`})
+                    </p>
                     <p className="text-xl font-bold text-primary">
                       {(
-                        (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
-                        (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
+                        calculateDiscountedTotal(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+                        (isRoundTrip && inboundFlight ? calculateDiscountedTotal(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
                       ).toLocaleString()}원
                     </p>
+                    {(children > 0 || infants > 0) && (
+                      <p className="text-xs text-slate-400 mt-1">소아 25% · 유아 90% 할인 적용</p>
+                    )}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* 좌석 등급 선택 카드 */}
+            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold mb-4 dark:text-white">
+                좌석 등급 선택
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {seatClassOptions.map((option) => {
+                  const basePrice = outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0;
+                  const optionPrice = Math.round(basePrice * option.multiplier);
+                  const isSelected = selectedClass === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setSelectedClass(option.value)}
+                      className={`p-4 rounded-xl border-2 transition-all text-left ${
+                        isSelected
+                          ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`font-semibold ${isSelected ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
+                          {option.label}
+                        </span>
+                        {isSelected && (
+                          <span className="material-symbols-outlined text-primary">check_circle</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{option.description}</p>
+                      <p className={`text-lg font-bold ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {optionPrice.toLocaleString()}원
+                        <span className="text-xs font-normal text-slate-400 ml-1">/1인</span>
+                      </p>
+                      {option.multiplier > 1 && (
+                        <p className="text-xs text-slate-400 mt-1">기본가 대비 {((option.multiplier - 1) * 100).toFixed(0)}% 추가</p>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -577,21 +670,25 @@ const FlightSeat = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    총 결제 금액
+                    총 결제 금액 (성인 {adults}명{children > 0 && `, 소아 ${children}명`}{infants > 0 && `, 유아 ${infants}명`})
                   </p>
                   <p className="text-3xl font-bold text-primary">
                     {(
-                      (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
-                      (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
+                      calculateDiscountedTotal(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+                      (isRoundTrip && inboundFlight ? calculateDiscountedTotal(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
                     ).toLocaleString()}원
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    {searchConditions.seatClass === 'ECONOMY' && '일반석'}
-                    {searchConditions.seatClass === 'PREMIUM' && '프리미엄 일반석'}
-                    {searchConditions.seatClass === 'BUSINESS' && '비즈니스석'}
-                    {!['ECONOMY', 'PREMIUM', 'BUSINESS'].includes(searchConditions.seatClass) && '일반석'}
+                    {selectedClass === 'ECONOMY' && '일반석'}
+                    {selectedClass === 'PREMIUM' && '프리미엄 일반석'}
+                    {selectedClass === 'BUSINESS' && '비즈니스석'}
                     {' · '}{totalPassengers}명{isRoundTrip && ' · 왕복'}
                   </p>
+                  {(children > 0 || infants > 0) && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      ✓ 소아 25% · 유아 90% 할인 적용됨
+                    </p>
+                  )}
                 </div>
               </div>
 

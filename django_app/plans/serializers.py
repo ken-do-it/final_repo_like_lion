@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TravelPlan, PlanDetail, PlanDetailImage, AITravelRequest
+from .models import TravelPlan, PlanDetail, PlanDetailImage, AITravelRequest, PlanLike, PlanComment
 from places.models import Place
 
 class PlanDetailImageCreateSerializer(serializers.ModelSerializer):
@@ -53,15 +53,34 @@ class TravelPlanDetailSerializer(serializers.ModelSerializer):
     """일정 상세 조회용 Serializer (날짜별 장소 포함)"""
     details = PlanDetailSerializer(many=True, read_only=True)
     user_nickname = serializers.CharField(source='user.nickname', read_only=True)
-    
+    like_count = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+
     class Meta:
         model = TravelPlan
         fields = [
-            'id', 'user', 'user_nickname', 'title', 'description', 
-            'plan_type', 'ai_prompt', 'start_date', 'end_date', 
-            'is_public', 'details', 'created_at', 'updated_at'
+            'id', 'user', 'user_nickname', 'title', 'description',
+            'plan_type', 'ai_prompt', 'start_date', 'end_date',
+            'is_public', 'details', 'like_count', 'comment_count', 'is_liked',
+            'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+    def get_like_count(self, obj)->int:
+        """좋아요 개수"""
+        return obj.likes.count()
+
+    def get_comment_count(self, obj)->int:
+        """댓글 개수"""
+        return obj.comments.count()
+
+    def get_is_liked(self, obj)->bool:
+        """현재 사용자가 좋아요 했는지 여부"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
 
 
 class TravelPlanCreateSerializer(serializers.ModelSerializer):
@@ -171,21 +190,31 @@ class PlanDetailUpdateSerializer(serializers.ModelSerializer):
 
 class TravelPlanListSerializer(serializers.ModelSerializer):
     """여행 일정 목록 조회용 (간단 정보만)"""
-    
+
     user_nickname = serializers.CharField(source='user.nickname', read_only=True)
     detail_count = serializers.SerializerMethodField()
-    
+    like_count = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
+
     class Meta:
         model = TravelPlan
         fields = [
             'id', 'user', 'user_nickname', 'title', 'description',
             'plan_type', 'start_date', 'end_date', 'is_public',
-            'detail_count', 'created_at', 'updated_at'
+            'detail_count', 'like_count', 'comment_count', 'created_at', 'updated_at'
         ]
-    
+
     def get_detail_count(self, obj)->int:
         """일정에 포함된 장소 개수"""
         return obj.details.count()
+
+    def get_like_count(self, obj)->int:
+        """좋아요 개수"""
+        return obj.likes.count()
+
+    def get_comment_count(self, obj)->int:
+        """댓글 개수"""
+        return obj.comments.count()
 
 
 class TravelPlanUpdateSerializer(serializers.ModelSerializer):
@@ -197,6 +226,33 @@ class TravelPlanUpdateSerializer(serializers.ModelSerializer):
             'title', 'description', 'plan_type', 'ai_prompt',
             'start_date', 'end_date', 'is_public'
         ]
+
+
+class PlanCommentSerializer(serializers.ModelSerializer):
+    """댓글 조회용"""
+    user_nickname = serializers.CharField(source='user.nickname', read_only=True)
+
+    class Meta:
+        model = PlanComment
+        fields = ['id', 'plan', 'user', 'user_nickname', 'content', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'plan', 'user', 'created_at', 'updated_at']
+
+
+class PlanCommentCreateSerializer(serializers.ModelSerializer):
+    """댓글 생성용"""
+
+    class Meta:
+        model = PlanComment
+        fields = ['content']
+
+
+class PlanLikeSerializer(serializers.ModelSerializer):
+    """좋아요 조회용"""
+
+    class Meta:
+        model = PlanLike
+        fields = ['id', 'plan', 'user', 'created_at']
+        read_only_fields = ['id', 'plan', 'user', 'created_at']
 
 
 class AITravelRequestSerializer(serializers.ModelSerializer):
