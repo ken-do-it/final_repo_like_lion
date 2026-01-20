@@ -8,6 +8,7 @@ const PlanList = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filter, setFilter] = useState('all'); // 'all', 'public', 'mine'
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
 
@@ -22,7 +23,6 @@ const PlanList = () => {
       setPlans(response.data);
     } catch (err) {
       setError('여행 계획을 불러오는데 실패했습니다.');
-      console.error('Error fetching plans:', err);
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,6 @@ const PlanList = () => {
       setPlans(plans.filter(plan => plan.id !== planId));
     } catch (err) {
       alert('삭제하는데 실패했습니다.');
-      console.error('Error deleting plan:', err);
     }
   };
 
@@ -71,12 +70,11 @@ const PlanList = () => {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            나의 여행 계획
+            여행 계획
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            나만의 특별한 여행을 계획하고 관리하세요
-          </p>
-        </div>
+          다른 사용자가 만든 여행 계획을 탐색하거나 자신만의 여행을 만들어보세요.
+          </p>        </div>
         <div className="flex gap-4">
           <button
             onClick={() => {
@@ -105,12 +103,58 @@ const PlanList = () => {
         </div>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="flex gap-2 mb-8">
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+            filter === 'all'
+              ? 'bg-[#1392ec] text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+        >
+          전체
+        </button>
+        <button
+          onClick={() => setFilter('public')}
+          className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+            filter === 'public'
+              ? 'bg-[#1392ec] text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+        >
+          공유된 일정
+        </button>
+        {isAuthenticated && (
+          <button
+            onClick={() => setFilter('mine')}
+            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+              filter === 'mine'
+                ? 'bg-[#1392ec] text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            내 일정
+          </button>
+        )}
+      </div>
+
       {/* Plans Grid */}
-      {/* 비공개 일정은 본인만 볼 수 있도록 필터링 */}
       {(() => {
-        const filteredPlans = plans.filter(plan =>
+        // 먼저 비공개 일정 필터링 (본인 것만 볼 수 있음)
+        const visiblePlans = plans.filter(plan =>
           plan.is_public || (isAuthenticated && user && plan.user === user.id)
         );
+
+        // 그 다음 탭 필터 적용
+        let filteredPlans = visiblePlans;
+        if (filter === 'public') {
+          filteredPlans = visiblePlans.filter(plan => plan.is_public);
+        } else if (filter === 'mine') {
+          filteredPlans = visiblePlans.filter(plan =>
+            isAuthenticated && user && plan.user === user.id
+          );
+        }
         return filteredPlans.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-gray-400 dark:text-gray-600 mb-6">
@@ -183,6 +227,22 @@ const PlanList = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {Math.ceil((new Date(plan.end_date) - new Date(plan.start_date)) / (1000 * 60 * 60 * 24))}일 여행
+                  </div>
+                </div>
+
+                {/* Likes and Comments */}
+                <div className="flex items-center text-gray-600 dark:text-gray-400 mt-4">
+                  <div className="flex items-center mr-4">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.667l1.318-1.35a4.5 4.5 0 016.364 6.364L12 20.333l-7.682-7.682a4.5 4.5 0 010-6.364z"></path>
+                    </svg>
+                    <span>{plan.like_count}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <span>{plan.comment_count}</span>
                   </div>
                 </div>
 

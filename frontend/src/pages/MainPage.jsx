@@ -331,12 +331,12 @@ const MainPage = () => {
         </section>
 
         {/* 2. Quick Actions Grid (Static for visuals, wired slightly) */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <section className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-5xl mx-auto">
           <div onClick={() => navigate('/reservations/flights')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
             <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
               ✈️
             </div>
-            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('action_flight')}</span>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">Transport</span>
           </div>
 
           <div onClick={() => navigate('/accommodations')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
@@ -356,6 +356,13 @@ const MainPage = () => {
               📸
             </div>
             <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('action_geoquiz')}</span>
+          </div>
+          {/* [NEW] Local Columns Button */}
+          <div onClick={() => navigate('/local-columns')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+            <div className="w-12 h-12 rounded-full bg-teal-50 dark:bg-teal-900/20 text-teal-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
+              📰
+            </div>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">Local Columns</span>
           </div>
         </section>
 
