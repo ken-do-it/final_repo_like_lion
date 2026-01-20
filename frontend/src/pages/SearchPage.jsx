@@ -119,8 +119,8 @@ const SearchPage = () => {
                           <h3 className="line-clamp-1 text-lg font-bold group-hover:text-[#1392ec]">{place.content?.split('\n')[0] || 'Unknown Place'}</h3>
                           <div className="flex items-center gap-1 text-[#1392ec]">
                             <span>★</span>
-                            {/* 점수 계산 로직 수정 (1 - distance) */}
-                            <span className="text-sm font-bold">{getMatchScore(place.distance)}</span>
+                            <span className="text-sm font-bold">{place.average_rating ? place.average_rating.toFixed(1) : "0.0"}</span>
+                            <span className="text-xs text-gray-500">({place.review_count || 0})</span>
                           </div>
                         </div>
                         <p className="text-sm text-gray-500 line-clamp-2">{place.content}</p>
@@ -323,7 +323,7 @@ const SearchPage = () => {
           </>
         )}
       </main>
-    </div>
+    </div >
   );
 };
 
