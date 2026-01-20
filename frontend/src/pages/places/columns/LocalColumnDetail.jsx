@@ -148,7 +148,7 @@ const LocalColumnDetail = () => {
                                     onClick={() => navigate(`/places/${section.place_id}`)}
                                 >
                                     <span>📍</span>
-                                    <span className="text-[#1392ec] font-medium text-sm">관련 장소 보기</span>
+                                    <span className="text-[#1392ec] font-medium text-sm">장소 정보 보기</span>
                                 </div>
                             )}
                         </section>
@@ -167,7 +167,7 @@ const LocalColumnDetail = () => {
                         </Button>
                         <Button
                             onClick={handleDelete}
-                            className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+                            className="bg-red-500 hover:bg-red-600 text-white"
                         >
                             삭제하기
                         </Button>
