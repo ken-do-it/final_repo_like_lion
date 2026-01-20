@@ -154,14 +154,20 @@ def index_data(request: IndexRequest):
             );
         """)
         
+        # ★ Unique Index 추가 (중복 방지용)
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_target_category ON search_vectors (target_id, category);")
+        
         # 텍스트 -> 벡터 변환
         embedding = model.encode(request.content).tolist()
         
-        # 데이터 저장 (꼬리표 포함)
-        cur.execute(
-            "INSERT INTO search_vectors (target_id, category, content, embedding) VALUES (%s, %s, %s, %s)",
-            (request.id, request.category, request.content, embedding)
-        )
+        # 데이터 저장 (UPSERT: 있으면 업데이트, 없으면 삽입)
+        query = """
+            INSERT INTO search_vectors (target_id, category, content, embedding) 
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (target_id, category) 
+            DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding;
+        """
+        cur.execute(query, (request.id, request.category, request.content, embedding))
         conn.commit()
         conn.close()
         
@@ -343,51 +349,82 @@ def search_grouped(request: SearchRequest):
             else:
                 grouped_results["others"].append(item)
         
-        # 4. 추가 정보(썸네일 등) 조회 - Place
+        # 4. 추가 정보(썸네일, 평점, 리뷰사진 등) 조회 - Place
         if place_ids:
             try:
                 conn_places = get_db_connection()
                 cur_places = conn_places.cursor()
-                # places 테이블에서 thumbnail_urls (JSON) 가져오기
-                place_query_sql = "SELECT id, thumbnail_urls FROM places WHERE id IN %s"
+                
+                # [1] Place 정보 (평점, 리뷰수, 기본 썸네일)
+                place_query_sql = "SELECT id, thumbnail_urls, average_rating, review_count FROM places WHERE id IN %s"
                 cur_places.execute(place_query_sql, (tuple(place_ids),))
                 place_rows = cur_places.fetchall()
                 
+                # [2] 리뷰 사진 (각 장소별 최신 1장)
+                # DISTINCT ON (place_id)를 사용하여 각 장소별 가장 최근 리뷰 이미지를 가져옴
+                review_query_sql = """
+                    SELECT DISTINCT ON (place_id) place_id, image_url 
+                    FROM place_reviews 
+                    WHERE place_id IN %s AND image_url IS NOT NULL AND image_url != ''
+                    ORDER BY place_id, created_at DESC
+                """
+                cur_places.execute(review_query_sql, (tuple(place_ids),))
+                review_rows = cur_places.fetchall()
+                review_map = {row[0]: row[1] for row in review_rows}
+                
                 place_map = {}
-                for pid, urls in place_rows:
+                for pid, urls, rating, count in place_rows:
                     thumb = None
-                    # JSON 리스트인 경우 첫 번째 이미지 사용
-                    if urls and isinstance(urls, list) and len(urls) > 0:
+                    
+                    # 우선순위: 리뷰 사진 > 장소 대표 사진
+                    if pid in review_map:
+                        thumb = review_map[pid]
+                    elif urls and isinstance(urls, list) and len(urls) > 0:
                         thumb = urls[0]
-                    place_map[pid] = thumb
+                    
+                    place_map[pid] = {
+                        "thumbnail_url": thumb,
+                        "average_rating": float(rating) if rating else 0.0,
+                        "review_count": count if count else 0
+                    }
                 
                 for item in grouped_results["places"]:
-                    item["thumbnail_url"] = place_map.get(item["id"])
+                    info = place_map.get(item["id"], {})
+                    item["thumbnail_url"] = info.get("thumbnail_url")
+                    item["average_rating"] = info.get("average_rating", 0.0)
+                    item["review_count"] = info.get("review_count", 0)
                 
                 cur_places.close()
                 conn_places.close()
             except Exception as e:
-                logger.error(f"Place 썸네일 조회 실패: {e}")
+                logger.error(f"Place 추가 정보 조회 실패: {e}")
 
-        # 5. 추가 정보(썸네일 등) 조회 - Shortform
+        # 5. 추가 정보(썸네일, 제목 등) 조회 - Shortform
         if short_ids:
             try:
                 conn_shorts = get_db_connection()
                 cur_shorts = conn_shorts.cursor()
-                # shortforms 테이블에서 thumbnail_url 가져오기
-                short_query_sql = "SELECT id, thumbnail_url FROM shortforms WHERE id IN %s"
+                # shortforms 테이블에서 thumbnail_url, title 가져오기
+                short_query_sql = "SELECT id, thumbnail_url, title FROM shortforms WHERE id IN %s"
                 cur_shorts.execute(short_query_sql, (tuple(short_ids),))
                 short_rows = cur_shorts.fetchall()
                 
-                short_map = {row[0]: row[1] for row in short_rows}
+                short_map = {}
+                for sid, thumb, title in short_rows:
+                    short_map[sid] = {
+                        "thumbnail_url": thumb,
+                        "title": title
+                    }
                 
                 for item in grouped_results["shorts"]:
-                    item["thumbnail_url"] = short_map.get(item["id"])
+                    info = short_map.get(item["id"], {})
+                    item["thumbnail_url"] = info.get("thumbnail_url")
+                    item["title"] = info.get("title")
                     
                 cur_shorts.close()
                 conn_shorts.close()
             except Exception as e:
-                logger.error(f"Shortform 썸네일 조회 실패: {e}")
+                logger.error(f"Shortform 추가 정보 조회 실패: {e}")
 
         return grouped_results
         
