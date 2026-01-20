@@ -316,6 +316,14 @@ export default {
 
     // Common Alerts
     alert_login_required: "로그인이 필요한 서비스입니다.",
+    alert_public_like_only: "공개된 일정만 좋아요할 수 있습니다.",
+    alert_like_fail: "좋아요 처리에 실패했습니다.",
+    alert_public_comment_only: "공개된 일정만 댓글을 작성할 수 있습니다.",
+    alert_comment_fail: "댓글 작성에 실패했습니다.",
+    alert_comment_update_fail: "댓글 수정에 실패했습니다.",
+    confirm_comment_delete: "댓글을 삭제하시겠습니까?",
+    alert_comment_delete_fail: "댓글 삭제에 실패했습니다.",
+    msg_load_fail: "여행 계획을 불러오는데 실패했습니다.",
 
     // Plan Detail
     error_invalid_access: "잘못된 접근입니다.",

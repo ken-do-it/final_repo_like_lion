@@ -119,6 +119,7 @@ export default {
     search_flights: "Search Flights",
     my_reservations: "My Reservations",
     new_reservation: "New Booking",
+
     profile_basic: "Basic Info",
     profile_basic_desc: "This information will be displayed to other users.",
     edit_btn: "Edit",
@@ -315,6 +316,14 @@ export default {
 
     // Common Alerts
     alert_login_required: "Login required to access this service.",
+    alert_public_like_only: "Only public plans can be liked.",
+    alert_like_fail: "Failed to update like status.",
+    alert_public_comment_only: "Only public plans can be commented on.",
+    alert_comment_fail: "Failed to post comment.",
+    alert_comment_update_fail: "Failed to update comment.",
+    confirm_comment_delete: "Are you sure you want to delete this comment?",
+    alert_comment_delete_fail: "Failed to delete comment.",
+    msg_load_fail: "Failed to load travel plans.",
 
     // Plan Detail
     error_invalid_access: "Invalid access.",

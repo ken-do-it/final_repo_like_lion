@@ -306,6 +306,14 @@ export default {
 
     // Common Alerts
     alert_login_required: "ログインが必要なサービスです。",
+    alert_public_like_only: "公開された日程のみいいねできます。",
+    alert_like_fail: "いいねの更新に失敗しました。",
+    alert_public_comment_only: "公開された日程のみコメントできます。",
+    alert_comment_fail: "コメントの投稿に失敗しました。",
+    alert_comment_update_fail: "コメントの更新に失敗しました。",
+    confirm_comment_delete: "コメントを削除してもよろしいですか？",
+    alert_comment_delete_fail: "コメントの削除に失敗しました。",
+    msg_load_fail: "旅行計画の読み込みに失敗しました。",
 
     // Plan Detail
     error_invalid_access: "不正なアクセスです。",

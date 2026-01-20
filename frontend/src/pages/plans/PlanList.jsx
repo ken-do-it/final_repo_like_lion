@@ -27,7 +27,7 @@ const PlanList = () => {
       });
       setPlans(response.data);
     } catch {
-      setError(t('msg_load_fail') || '여행 계획을 불러오는데 실패했습니다.');
+      setError(t('msg_load_fail'));
     } finally {
       setLoading(false);
     }
@@ -45,7 +45,7 @@ const PlanList = () => {
       await plansService.plans.deletePlan(planId);
       setPlans(plans.filter(plan => plan.id !== planId));
     } catch (err) {
-      alert(t('msg_delete_fail') || '삭제하는데 실패했습니다.');
+      alert(t('msg_delete_fail'));
       console.error('Error deleting plan:', err);
     }
   };
@@ -79,7 +79,7 @@ const PlanList = () => {
             {t('plan_list_title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {t('plan_list_subtitle') || "다른 사용자가 만든 여행 계획을 탐색하거나 자신만의 여행을 만들어보세요."}
+            {t('plan_list_subtitle')}
           </p>
         </div>
         <div className="flex gap-4">
@@ -119,7 +119,7 @@ const PlanList = () => {
             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
         >
-          {t('filter_all') || "전체"}
+          {t('filter_all')}
         </button>
         <button
           onClick={() => setFilter('public')}
@@ -128,7 +128,7 @@ const PlanList = () => {
             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
         >
-          {t('filter_public') || "공유된 일정"}
+          {t('filter_public')}
         </button>
         {isAuthenticated && (
           <button
@@ -138,7 +138,7 @@ const PlanList = () => {
               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
           >
-            {t('filter_mine') || "내 일정"}
+            {t('filter_mine')}
           </button>
         )}
       </div>

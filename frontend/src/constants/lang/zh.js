@@ -305,6 +305,14 @@ export default {
 
     // Common Alerts
     alert_login_required: "访问此服务需要登录。",
+    alert_public_like_only: "只有公开的行程才能点赞。",
+    alert_like_fail: "点赞更新失败。",
+    alert_public_comment_only: "只有公开的行程才能评论。",
+    alert_comment_fail: "评论发表失败。",
+    alert_comment_update_fail: "评论更新失败。",
+    confirm_comment_delete: "确定要删除此评论吗？",
+    alert_comment_delete_fail: "删除评论失败。",
+    msg_load_fail: "加载旅行计划失败。",
 
     // Plan Detail
     error_invalid_access: "无效访问。",

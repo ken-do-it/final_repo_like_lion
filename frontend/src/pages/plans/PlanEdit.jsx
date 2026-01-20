@@ -71,12 +71,12 @@ const PlanEdit = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      alert(t('alert_title_required'));
+      alert(t('alert_input_title'));
       return;
     }
 
     if (!formData.start_date || !formData.end_date) {
-      alert(t('alert_date_required'));
+      alert(t('alert_select_dates'));
       return;
     }
 
@@ -116,7 +116,7 @@ const PlanEdit = () => {
             onClick={() => navigate('/plans')}
             className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] transition-all"
           >
-            목록으로 돌아가기
+            {t('btn_back_to_list')}
           </button>
         </div>
       </div>

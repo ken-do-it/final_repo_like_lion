@@ -57,7 +57,7 @@ const PlanDetail = () => {
   // 좋아요 토글
   const handleLikeToggle = async () => {
     if (!isAuthenticated) {
-      alert('로그인 후 이용해주세요.');
+      alert(t('alert_login_required'));
       return;
     }
 
@@ -68,9 +68,9 @@ const PlanDetail = () => {
       setLikeCount(response.data.like_count);
     } catch (err) {
       if (err.response?.status === 403) {
-        alert('공개된 일정만 좋아요할 수 있습니다.');
+        alert(t('alert_public_like_only'));
       } else {
-        alert('좋아요 처리에 실패했습니다.');
+        alert(t('alert_like_fail'));
       }
       console.error('Error toggling like:', err);
     } finally {
@@ -98,7 +98,7 @@ const PlanDetail = () => {
     if (!newComment.trim()) return;
 
     if (!isAuthenticated) {
-      alert('로그인 후 이용해주세요.');
+      alert(t('alert_login_required'));
       return;
     }
 
@@ -109,9 +109,9 @@ const PlanDetail = () => {
       fetchComments();
     } catch (err) {
       if (err.response?.status === 403) {
-        alert('공개된 일정만 댓글을 작성할 수 있습니다.');
+        alert(t('alert_public_comment_only'));
       } else {
-        alert('댓글 작성에 실패했습니다.');
+        alert(t('alert_comment_fail'));
       }
       console.error('Error creating comment:', err);
     } finally {
@@ -129,20 +129,20 @@ const PlanDetail = () => {
       setEditingContent('');
       fetchComments();
     } catch (err) {
-      alert('댓글 수정에 실패했습니다.');
+      alert(t('alert_comment_update_fail'));
       console.error('Error updating comment:', err);
     }
   };
 
   // 댓글 삭제
   const handleCommentDelete = async (commentId) => {
-    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
+    if (!window.confirm(t('confirm_comment_delete'))) return;
 
     try {
       await plansService.comments.deleteComment(commentId);
       fetchComments();
     } catch (err) {
-      alert('댓글 삭제에 실패했습니다.');
+      alert(t('alert_comment_delete_fail'));
       console.error('Error deleting comment:', err);
     }
   };
