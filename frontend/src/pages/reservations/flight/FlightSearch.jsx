@@ -485,10 +485,10 @@ const FlightSearch = () => {
 
                 </div>
 
-                {/* 인원 및 좌석등급 섹션 */}
+                {/* 인원선택 섹션 */}
                 <div className="mt-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    인원 및 좌석등급
+                    인원선택
                   </h3>
 
                   {/* 안내 문구 */}
@@ -600,50 +600,6 @@ const FlightSearch = () => {
                         </button>
                       </div>
                     </div>
-                  </div>
-
-                  <hr className="border-slate-200 dark:border-slate-600 my-4" />
-
-                  {/* 좌석 등급 선택 */}
-                  <div className="space-y-3">
-                    {/* 일반석 */}
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <span className="font-medium text-gray-900 dark:text-white">일반석</span>
-                      <input
-                        type="radio"
-                        name="seatClass"
-                        value="ECONOMY"
-                        checked={formData.seatClass === 'ECONOMY'}
-                        onChange={(e) => setFormData(prev => ({ ...prev, seatClass: e.target.value }))}
-                        className="w-5 h-5 text-primary border-slate-300 focus:ring-primary"
-                      />
-                    </label>
-
-                    {/* 프리미엄 일반석 */}
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <span className="font-medium text-gray-900 dark:text-white">프리미엄 일반석</span>
-                      <input
-                        type="radio"
-                        name="seatClass"
-                        value="PREMIUM"
-                        checked={formData.seatClass === 'PREMIUM'}
-                        onChange={(e) => setFormData(prev => ({ ...prev, seatClass: e.target.value }))}
-                        className="w-5 h-5 text-primary border-slate-300 focus:ring-primary"
-                      />
-                    </label>
-
-                    {/* 비즈니스석 */}
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <span className="font-medium text-gray-900 dark:text-white">비즈니스석</span>
-                      <input
-                        type="radio"
-                        name="seatClass"
-                        value="BUSINESS"
-                        checked={formData.seatClass === 'BUSINESS'}
-                        onChange={(e) => setFormData(prev => ({ ...prev, seatClass: e.target.value }))}
-                        className="w-5 h-5 text-primary border-slate-300 focus:ring-primary"
-                      />
-                    </label>
                   </div>
                 </div>
 
