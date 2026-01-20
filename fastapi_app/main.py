@@ -383,25 +383,32 @@ def search_grouped(request: SearchRequest):
             except Exception as e:
                 logger.error(f"Place 추가 정보 조회 실패: {e}")
 
-        # 5. 추가 정보(썸네일 등) 조회 - Shortform
+        # 5. 추가 정보(썸네일, 제목 등) 조회 - Shortform
         if short_ids:
             try:
                 conn_shorts = get_db_connection()
                 cur_shorts = conn_shorts.cursor()
-                # shortforms 테이블에서 thumbnail_url 가져오기
-                short_query_sql = "SELECT id, thumbnail_url FROM shortforms WHERE id IN %s"
+                # shortforms 테이블에서 thumbnail_url, title 가져오기
+                short_query_sql = "SELECT id, thumbnail_url, title FROM shortforms WHERE id IN %s"
                 cur_shorts.execute(short_query_sql, (tuple(short_ids),))
                 short_rows = cur_shorts.fetchall()
                 
-                short_map = {row[0]: row[1] for row in short_rows}
+                short_map = {}
+                for sid, thumb, title in short_rows:
+                    short_map[sid] = {
+                        "thumbnail_url": thumb,
+                        "title": title
+                    }
                 
                 for item in grouped_results["shorts"]:
-                    item["thumbnail_url"] = short_map.get(item["id"])
+                    info = short_map.get(item["id"], {})
+                    item["thumbnail_url"] = info.get("thumbnail_url")
+                    item["title"] = info.get("title")
                     
                 cur_shorts.close()
                 conn_shorts.close()
             except Exception as e:
-                logger.error(f"Shortform 썸네일 조회 실패: {e}")
+                logger.error(f"Shortform 추가 정보 조회 실패: {e}")
 
         return grouped_results
         
