@@ -109,10 +109,14 @@ const SearchPage = () => {
                         <div className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition-transform hover:scale-110 cursor-pointer text-black">
                           🔖
                         </div>
-                        <div className="h-full w-full bg-gray-300 flex items-center justify-center text-gray-500">
-                          {/* Placeholder for image */}
-                          Image
-                        </div>
+                        {place.thumbnail_url ? (
+                          <img src={place.thumbnail_url} alt={place.content} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full bg-gray-300 flex items-center justify-center text-gray-500">
+                            {/* Placeholder for image */}
+                            Image
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col gap-1 px-1 pb-1">
                         <div className="flex items-center justify-between">
