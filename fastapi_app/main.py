@@ -349,21 +349,37 @@ def search_grouped(request: SearchRequest):
             else:
                 grouped_results["others"].append(item)
         
-        # 4. 추가 정보(썸네일, 평점 등) 조회 - Place
+        # 4. 추가 정보(썸네일, 평점, 리뷰사진 등) 조회 - Place
         if place_ids:
             try:
                 conn_places = get_db_connection()
                 cur_places = conn_places.cursor()
-                # places 테이블에서 thumbnail_urls (JSON), average_rating, review_count 가져오기
+                
+                # [1] Place 정보 (평점, 리뷰수, 기본 썸네일)
                 place_query_sql = "SELECT id, thumbnail_urls, average_rating, review_count FROM places WHERE id IN %s"
                 cur_places.execute(place_query_sql, (tuple(place_ids),))
                 place_rows = cur_places.fetchall()
                 
+                # [2] 리뷰 사진 (각 장소별 최신 1장)
+                # DISTINCT ON (place_id)를 사용하여 각 장소별 가장 최근 리뷰 이미지를 가져옴
+                review_query_sql = """
+                    SELECT DISTINCT ON (place_id) place_id, image_url 
+                    FROM place_reviews 
+                    WHERE place_id IN %s AND image_url IS NOT NULL AND image_url != ''
+                    ORDER BY place_id, created_at DESC
+                """
+                cur_places.execute(review_query_sql, (tuple(place_ids),))
+                review_rows = cur_places.fetchall()
+                review_map = {row[0]: row[1] for row in review_rows}
+                
                 place_map = {}
                 for pid, urls, rating, count in place_rows:
                     thumb = None
-                    # JSON 리스트인 경우 첫 번째 이미지 사용
-                    if urls and isinstance(urls, list) and len(urls) > 0:
+                    
+                    # 우선순위: 리뷰 사진 > 장소 대표 사진
+                    if pid in review_map:
+                        thumb = review_map[pid]
+                    elif urls and isinstance(urls, list) and len(urls) > 0:
                         thumb = urls[0]
                     
                     place_map[pid] = {
