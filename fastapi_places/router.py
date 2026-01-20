@@ -439,6 +439,7 @@ def get_local_columns(
     city: Optional[str] = Query(None, description="도시 필터"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db)
 ):
     """
@@ -458,13 +459,18 @@ def get_local_columns(
 
     # 사용자 닉네임 및 뱃지 레벨 조회
     result = []
+    
+    # [AI 번역 준비]
+    items_to_translate = []
+    
     for column in columns:
         user = db.query(User).filter(User.id == column.user_id).first()
         badge = db.query(LocalBadge).filter(
             LocalBadge.user_id == column.user_id,
             LocalBadge.is_active == True
         ).first()
-        result.append(LocalColumnListResponse(
+        
+        item = LocalColumnListResponse(
             id=column.id,
             user_id=column.user_id,
             user_nickname=user.nickname if user else None,
@@ -473,14 +479,36 @@ def get_local_columns(
             thumbnail_url=column.thumbnail_url,
             view_count=column.view_count,
             created_at=column.created_at
-        ))
+        )
+        result.append(item)
+        
+        # 번역 대상 수집
+        if lang:
+             items_to_translate.append({
+                "text": column.title,
+                "entity_type": "local_column_title",
+                "entity_id": column.id,
+                "field": "title"
+            })
+
+    # [AI 번역 적용]
+    if lang and items_to_translate:
+        try:
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            # 순서대로 매핑 (LocalColumnListResponse 객체의 title 수정)
+            for idx, item in enumerate(result):
+                if idx in translated_map:
+                    item.title = translated_map[idx]
+        except Exception as e:
+            print(f"Local columns translation failed: {e}")
 
     return result
 
 
 @router.get("/local-columns/{column_id}", response_model=LocalColumnResponse)
-def get_local_column_detail(
+async def get_local_column_detail(
     column_id: int,
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db)
 ):
     """
@@ -537,6 +565,46 @@ def get_local_column_detail(
         LocalBadge.user_id == column.user_id,
         LocalBadge.is_active == True
     ).first()
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = []
+            
+            # 1. Main Column Info (Title, Content)
+            items_to_translate.append({"text": column.title, "entity_type": "local_column", "entity_id": column.id, "field": "title"})
+            items_to_translate.append({"text": column.content, "entity_type": "local_column", "entity_id": column.id, "field": "content"})
+            
+            # 2. Sections Info (Title, Content)
+            # Keep track of indices
+            section_indices = []
+            for sec in section_data:
+                # Section Title
+                items_to_translate.append({"text": sec.title, "entity_type": "local_column_section", "entity_id": sec.id, "field": "title"})
+                # Section Content
+                items_to_translate.append({"text": sec.content, "entity_type": "local_column_section", "entity_id": sec.id, "field": "content"})
+            
+            # 3. Translate
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            
+            # 4. Apply Translations
+            # Main Info
+            if 0 in translated_map: column.title = translated_map[0]
+            if 1 in translated_map: column.content = translated_map[1]
+            
+            # Sections
+            # 0, 1 are used. Sections start from 2.
+            # Each section uses 2 indices (title, content).
+            current_idx = 2
+            for sec in section_data:
+                if current_idx in translated_map: sec.title = translated_map[current_idx]
+                current_idx += 1
+                
+                if current_idx in translated_map: sec.content = translated_map[current_idx]
+                current_idx += 1
+
+        except Exception as e:
+            print(f"Local column detail translation failed: {e}")
 
     return LocalColumnResponse(
         id=column.id,

@@ -8,18 +8,19 @@ const LocalColumnDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { language } = useLanguage();
     const [column, setColumn] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         fetchDetail();
-    }, [id]);
+    }, [id, language]);
 
     const fetchDetail = async () => {
         try {
             setLoading(true);
-            const data = await getLocalColumnDetail(id);
+            const data = await getLocalColumnDetail(id, API_LANG_CODES[language] || 'eng_Latn');
             setColumn(data);
         } catch (err) {
             console.error('Failed to fetch column detail:', err);
