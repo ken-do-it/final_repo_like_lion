@@ -487,7 +487,7 @@ const FlightPayment = () => {
               <button
                 onClick={() => navigate(-1)}
                 disabled={paymentStatus === 'creating' || paymentStatus === 'processing'}
-                className="w-full bg-white dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white dark:bg-[#1e2b36] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('btn_back_step')}
               </button>

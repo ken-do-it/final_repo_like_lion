@@ -149,7 +149,7 @@ const SubwayRoute = () => {
           {/* 왼쪽 영역: 경로 결과 */}
           <div className="lg:col-span-8">
             {/* 검색 조건 표시 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-4 mb-6">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -200,7 +200,7 @@ const SubwayRoute = () => {
               {routes.map((route, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-6"
+                  className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-6"
                 >
                   {/* 경로 헤더 */}
                   <div className="flex items-center justify-between mb-6 pb-4 border-b dark:border-gray-700">
@@ -241,9 +241,9 @@ const SubwayRoute = () => {
                     {route.steps?.map((step, stepIndex) => (
                       <div key={stepIndex} className="flex items-start gap-4">
                         {/* 노선 표시 */}
-                        <div className="flex-shrink-0 w-24">
+                        <div className="flex-shrink-0 w-32">
                           <div
-                            className="px-3 py-1 rounded-lg text-white text-sm font-semibold text-center"
+                            className="px-3 py-1 rounded-lg text-white text-sm font-semibold text-center whitespace-nowrap"
                             style={{ backgroundColor: step.lineColor || '#666' }}
                           >
                             {step.line}
@@ -276,7 +276,7 @@ const SubwayRoute = () => {
 
             {/* 결과가 없을 때 */}
             {routes.length === 0 && !error && (
-              <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-12 text-center">
+              <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-12 text-center">
                 <span className="material-symbols-outlined text-gray-400 text-6xl mb-4 block">
                   search_off
                 </span>
@@ -311,7 +311,7 @@ const SubwayRoute = () => {
                 </div>
 
                 {/* ODsay 크레딧 표시 */}
-                <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-4 text-center">
+                <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-4 text-center">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {t('label_provider')} <a href="https://www.odsay.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ODsay.com</a>
                   </p>

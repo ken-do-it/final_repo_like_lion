@@ -18,7 +18,7 @@ const SearchCard = ({ title, children, className = '' }) => {
   return (
     <div
       className={`
-        bg-white dark:bg-surface-dark
+        bg-white dark:bg-[#1e2b36]
         rounded-xl shadow-lg
         p-6
         transition-all duration-300

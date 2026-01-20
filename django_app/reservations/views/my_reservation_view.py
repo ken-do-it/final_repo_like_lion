@@ -3,8 +3,9 @@
 
 GET /api/v1/my/reservations/
 - 로그인한 사용자의 예약 목록을 조회합니다
-- 필터: type, status, fromDate, toDate
-- 페이지네이션: page, limit
+
+GET /api/v1/my/reservations/{reservationId}/
+- 로그인한 사용자의 예약 상세를 조회합니다
 """
 
 from rest_framework.views import APIView
@@ -14,6 +15,7 @@ from rest_framework import status
 
 from ..services.my_reservation_query_service import MSMyReservationQueryService
 from ..serializers.my_reservation import MSMyReservationListResponseSerializer
+from ..models import Reservation
 
 
 class MSMyReservationListView(APIView):
@@ -68,3 +70,35 @@ class MSMyReservationListView(APIView):
         serializer.is_valid(raise_exception=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MSMyReservationDetailView(APIView):
+    """
+    내 예약 상세 조회 API
+
+    GET /api/v1/my/reservations/{reservationId}/
+
+    Query Parameters:
+    - include: 추가 정보 (segments,passengers,seats)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, reservation_id):
+        service = MSMyReservationQueryService()
+
+        # include 파라미터 (예: segments,passengers,seats)
+        include = request.query_params.get('include', 'segments,passengers,seats')
+
+        try:
+            result = service.get_user_reservation_detail(
+                user=request.user,
+                reservation_id=reservation_id,
+                include=include,
+            )
+            return Response(result, status=status.HTTP_200_OK)
+
+        except Reservation.DoesNotExist:
+            return Response(
+                {"error": "예약을 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND
+            )
