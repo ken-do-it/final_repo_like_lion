@@ -154,14 +154,20 @@ def index_data(request: IndexRequest):
             );
         """)
         
+        # ★ Unique Index 추가 (중복 방지용)
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_target_category ON search_vectors (target_id, category);")
+        
         # 텍스트 -> 벡터 변환
         embedding = model.encode(request.content).tolist()
         
-        # 데이터 저장 (꼬리표 포함)
-        cur.execute(
-            "INSERT INTO search_vectors (target_id, category, content, embedding) VALUES (%s, %s, %s, %s)",
-            (request.id, request.category, request.content, embedding)
-        )
+        # 데이터 저장 (UPSERT: 있으면 업데이트, 없으면 삽입)
+        query = """
+            INSERT INTO search_vectors (target_id, category, content, embedding) 
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (target_id, category) 
+            DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding;
+        """
+        cur.execute(query, (request.id, request.category, request.content, embedding))
         conn.commit()
         conn.close()
         
