@@ -343,31 +343,39 @@ def search_grouped(request: SearchRequest):
             else:
                 grouped_results["others"].append(item)
         
-        # 4. 추가 정보(썸네일 등) 조회 - Place
+        # 4. 추가 정보(썸네일, 평점 등) 조회 - Place
         if place_ids:
             try:
                 conn_places = get_db_connection()
                 cur_places = conn_places.cursor()
-                # places 테이블에서 thumbnail_urls (JSON) 가져오기
-                place_query_sql = "SELECT id, thumbnail_urls FROM places WHERE id IN %s"
+                # places 테이블에서 thumbnail_urls (JSON), average_rating, review_count 가져오기
+                place_query_sql = "SELECT id, thumbnail_urls, average_rating, review_count FROM places WHERE id IN %s"
                 cur_places.execute(place_query_sql, (tuple(place_ids),))
                 place_rows = cur_places.fetchall()
                 
                 place_map = {}
-                for pid, urls in place_rows:
+                for pid, urls, rating, count in place_rows:
                     thumb = None
                     # JSON 리스트인 경우 첫 번째 이미지 사용
                     if urls and isinstance(urls, list) and len(urls) > 0:
                         thumb = urls[0]
-                    place_map[pid] = thumb
+                    
+                    place_map[pid] = {
+                        "thumbnail_url": thumb,
+                        "average_rating": float(rating) if rating else 0.0,
+                        "review_count": count if count else 0
+                    }
                 
                 for item in grouped_results["places"]:
-                    item["thumbnail_url"] = place_map.get(item["id"])
+                    info = place_map.get(item["id"], {})
+                    item["thumbnail_url"] = info.get("thumbnail_url")
+                    item["average_rating"] = info.get("average_rating", 0.0)
+                    item["review_count"] = info.get("review_count", 0)
                 
                 cur_places.close()
                 conn_places.close()
             except Exception as e:
-                logger.error(f"Place 썸네일 조회 실패: {e}")
+                logger.error(f"Place 추가 정보 조회 실패: {e}")
 
         # 5. 추가 정보(썸네일 등) 조회 - Shortform
         if short_ids:
