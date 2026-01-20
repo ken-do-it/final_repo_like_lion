@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import UserPreference, LoginSession, EmailVerification, PasswordResetToken
+from .models import UserPreference, LoginSession, EmailVerification, PasswordResetToken, LocalBadge
 
 User = get_user_model()
 
@@ -26,9 +26,22 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
         ]
 
 
+class LocalBadgeSerializer(serializers.ModelSerializer):
+    """현지인 인증 뱃지 Serializer"""
+
+    class Meta:
+        model = LocalBadge
+        fields = [
+            'id', 'city', 'level', 'is_active',
+            'first_authenticated_at', 'last_authenticated_at',
+            'next_authentication_due', 'maintenance_months'
+        ]
+
+
 class UserSerializer(serializers.ModelSerializer):
     """사용자 기본 정보 Serializer"""
     preferences = UserPreferenceSerializer(read_only=True)
+    local_badges = LocalBadgeSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -37,7 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
             'birth_year', 'country', 'city',
             'phone_number', 'profile_image_url',
             'account_status', 'is_email_verified',
-            'provider_type', 'preferences',
+            'provider_type', 'preferences', 'local_badges',
             'date_joined', 'last_login'
         ]
         read_only_fields = [

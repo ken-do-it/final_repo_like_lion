@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 // import Navbar from '../../components/Navbar'
 import './shortspage.css'
 import { useLanguage } from '../../context/LanguageContext'
@@ -14,10 +14,11 @@ const langToCode = {
     中文: 'zho_Hans',
 }
 
-
-
 function ShortsPage({ onShortClick, embed = false }) {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const query = searchParams.get('q') || ''
+
     const { language, t } = useLanguage()
     const { isAuthenticated } = useAuth()
 
@@ -53,7 +54,8 @@ function ShortsPage({ onShortClick, embed = false }) {
                 params: {
                     lang: langCode,
                     batch: useBatch,
-                    page: pageNum
+                    page: pageNum,
+                    q: query // Add search query
                 }
             })
 
@@ -75,7 +77,7 @@ function ShortsPage({ onShortClick, embed = false }) {
 
             const mapped = listData.map((item) => ({
                 id: item.id,
-                title: item.title_translated || item.title || 'Untitled',
+                title: (item.title_translated && item.title_translated !== 'Untitled') ? item.title_translated : (item.title || 'Untitled'),
                 desc: item.content_translated || item.content || '',
                 thumb: item.thumbnail_url,
                 video: item.video_url,
@@ -83,6 +85,8 @@ function ShortsPage({ onShortClick, embed = false }) {
                     ? `${String(Math.floor(item.duration / 60)).padStart(2, '0')}:${String(item.duration % 60).padStart(2, '0')}`
                     : '',
                 lang: item.source_lang || 'N/A',
+                location: item.location,
+                location_translated: item.location_translated,
             }))
 
             setShortforms(prev => pageNum === 1 ? mapped : [...prev, ...mapped])
@@ -93,18 +97,18 @@ function ShortsPage({ onShortClick, embed = false }) {
                 setHasMore(false)
                 return
             }
-            setError('Failed to load shorts.')
+            setError(t('shorts_load_error'))
         } finally {
             setLoading(false)
         }
-    }, [langCode, useBatch])
+    }, [langCode, useBatch, query])
 
     useEffect(() => {
         // Reset list when language changes
         setShortforms([])
         setPage(1)
         setHasMore(true)
-    }, [langCode, useBatch])
+    }, [langCode, useBatch, query])
 
     useEffect(() => {
         fetchShortforms(page)
@@ -158,8 +162,8 @@ function ShortsPage({ onShortClick, embed = false }) {
                                         <h3 className="shorts-title">{s.title}</h3>
                                         <p className="shorts-desc">{s.desc}</p>
                                         <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
-                                            <span className="mr-1 align-middle">📍</span>
-                                            {s.location_translated || s.location || 'Korea'}
+                                            <span className="mr-1 align-middle font-bold text-sm text-blue-500">#</span>
+                                            {s.location_translated || s.location || '#Seoul'}
                                         </div>
                                     </div>
                                 </div>
@@ -176,8 +180,8 @@ function ShortsPage({ onShortClick, embed = false }) {
                                         <h3 className="shorts-title">{s.title}</h3>
                                         <p className="shorts-desc">{s.desc}</p>
                                         <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
-                                            <span className="mr-1 align-middle">📍</span>
-                                            {s.location_translated || s.location || 'Korea'}
+                                            <span className="mr-1 align-middle font-bold text-sm text-blue-500">#</span>
+                                            {s.location_translated || s.location || '#Seoul'}
                                         </div>
                                     </div>
                                 </div>

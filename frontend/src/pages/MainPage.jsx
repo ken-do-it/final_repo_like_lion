@@ -203,8 +203,8 @@ const MainPage = () => {
         <div className="absolute bottom-0 left-0 p-6 w-full">
           <h3 className="text-xl font-bold text-white mb-2 leading-tight line-clamp-2">{item.title}</h3>
           <div className="flex items-center gap-1 text-white/80 text-sm mb-3">
-            <span>📍</span>
-            {item.location_translated || item.location || 'Korea'}
+            <span className="mr-1 font-bold text-sm text-blue-500">#</span>
+            {item.location_translated || item.location || '#Seoul'}
           </div>
 
           <div className="flex items-center justify-between">
@@ -331,12 +331,12 @@ const MainPage = () => {
         </section>
 
         {/* 2. Quick Actions Grid (Static for visuals, wired slightly) */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <section className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-5xl mx-auto">
           <div onClick={() => navigate('/reservations/flights')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
             <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
               ✈️
             </div>
-            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('action_flight')}</span>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('title_transport')}</span>
           </div>
 
           <div onClick={() => navigate('/accommodations')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
@@ -356,6 +356,13 @@ const MainPage = () => {
               📸
             </div>
             <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('action_geoquiz')}</span>
+          </div>
+          {/* [NEW] Local Columns Button */}
+          <div onClick={() => navigate('/local-columns')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+            <div className="w-12 h-12 rounded-full bg-teal-50 dark:bg-teal-900/20 text-teal-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
+              📰
+            </div>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('col_title')}</span>
           </div>
         </section>
 
@@ -388,7 +395,7 @@ const MainPage = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute bottom-4 left-4 text-white">
-                  <p className="font-bold text-lg">{upcomingPlan.area || 'Travel'}</p>
+                  <p className="font-bold text-lg">{upcomingPlan.area || t('category_travel')}</p>
                 </div>
               </div>
               <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
@@ -406,10 +413,10 @@ const MainPage = () => {
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-full">
-                    {upcomingPlan.plan_type === 'personal' ? 'Personal Trip' : 'Group Trip'}
+                    {upcomingPlan.plan_type === 'personal' ? t('label_personal_trip') : t('label_group_trip')}
                   </span>
                   <span className="text-[#1392ec] font-bold text-sm group-hover:translate-x-1 transition-transform">
-                    View Itinerary →
+                    {t('link_view_itinerary')}
                   </span>
                 </div>
               </div>
@@ -455,13 +462,13 @@ const MainPage = () => {
           ) : (
             /* Fallback / CTA when no plan */
             <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-3xl shadow-lg p-8 text-center text-white flex flex-col items-center justify-center space-y-4">
-              <h3 className="text-3xl font-bold">Start your next journey!</h3>
-              <p className="text-white/90">You have no upcoming trips. Why not plan one now?</p>
+              <h3 className="text-3xl font-bold">{t('cta_start_journey')}</h3>
+              <p className="text-white/90">{t('cta_no_upcoming')}</p>
               <button
                 onClick={() => navigate('/plans/create')}
                 className="mt-4 px-8 py-3 bg-white text-blue-600 font-bold rounded-full hover:bg-blue-50 transition-colors shadow-lg"
               >
-                Create a Trip
+                {t('btn_create_trip')}
               </button>
             </div>
           )}

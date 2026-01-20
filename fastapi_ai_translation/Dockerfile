@@ -10,6 +10,9 @@ RUN echo "🚧 [알림] 현재 CPU 모드(Light)로 빌드 중입니다... 🚧"
 # 최소한의 시스템 패키지 설치
 RUN apt-get update && apt-get install -y \
     gcc \
+    g++ \
+    make \
+    cmake \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 

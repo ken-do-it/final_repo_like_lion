@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 import axios from '../../../api/axios';
 import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-components';
 
@@ -18,6 +19,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
 const SubwayRoute = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   /**
    * 이전 페이지(SubwaySearch)에서 전달받은 검색 조건
@@ -87,7 +89,7 @@ const SubwayRoute = () => {
        * 결과가 없으면 안내 메시지 표시
        */
       if (!response.data.routes || response.data.routes.length === 0) {
-        setError('경로를 찾을 수 없습니다. 역 이름을 확인하고 다시 검색해주세요.');
+        setError(t('msg_no_route_found_detail'));
       }
     } catch (err) {
       console.error('지하철 경로 검색 오류:', err);
@@ -96,10 +98,10 @@ const SubwayRoute = () => {
        * 백엔드 에러 메시지 처리
        */
       if (err.response?.data?.error) {
-        const errorMsg = err.response.data.error.message || '경로 검색 중 오류가 발생했습니다.';
+        const errorMsg = err.response.data.error.message || t('msg_subway_search_error');
         setError(errorMsg);
       } else {
-        setError('경로 검색 중 오류가 발생했습니다. 다시 시도해주세요.');
+        setError(t('msg_subway_search_error'));
       }
     } finally {
       setLoading(false);
@@ -111,10 +113,10 @@ const SubwayRoute = () => {
    * 검색 옵션 한글 변환
    */
   const getOptionLabel = (option) => {
-    switch(option) {
-      case 'FAST': return '최단시간';
-      case 'FEW_TRANSFER': return '최소환승';
-      case 'CHEAP': return '최소비용';
+    switch (option) {
+      case 'FAST': return t('option_fast');
+      case 'FEW_TRANSFER': return t('option_few_transfer');
+      case 'CHEAP': return t('option_cheap');
       default: return option;
     }
   };
@@ -129,7 +131,7 @@ const SubwayRoute = () => {
           <TransportTabs />
           <div className="mt-6 text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">최적 경로를 검색하고 있습니다...</p>
+            <p className="text-gray-600 dark:text-gray-400">{t('msg_searching_route')}</p>
           </div>
         </div>
       </div>
@@ -143,9 +145,9 @@ const SubwayRoute = () => {
         <TransportTabs />
 
         {/* 메인 그리드 레이아웃 (8:4) */}
-        <div className="mt-6 grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           {/* 왼쪽 영역: 경로 결과 */}
-          <div className="col-span-8">
+          <div className="lg:col-span-8">
             {/* 검색 조건 표시 */}
             <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-4 mb-6">
               <div className="flex items-center justify-between">
@@ -167,7 +169,7 @@ const SubwayRoute = () => {
                   onClick={() => navigate(-1)}
                   className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
                 >
-                  검색 조건 변경
+                  {t('btn_change_conditions')}
                 </button>
               </div>
             </div>
@@ -188,7 +190,7 @@ const SubwayRoute = () => {
             {routes.length > 0 && (
               <div className="mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  추천 경로 ({routes.length}개)
+                  {t('title_recommend_routes').replace('{count}', routes.length)}
                 </h2>
               </div>
             )}
@@ -204,31 +206,31 @@ const SubwayRoute = () => {
                   <div className="flex items-center justify-between mb-6 pb-4 border-b dark:border-gray-700">
                     <div className="flex items-center gap-4">
                       <span className="text-2xl font-bold text-primary">
-                        경로 {index + 1}
+                        {t('label_route_n').replace('{n}', index + 1)}
                       </span>
                       {index === 0 && (
                         <span className="px-3 py-1 bg-primary text-white text-xs font-semibold rounded-full">
-                          추천
+                          {t('badge_recommend')}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-6 text-sm">
                       <div className="text-center">
-                        <p className="text-gray-600 dark:text-gray-400">소요시간</p>
+                        <p className="text-gray-600 dark:text-gray-400">{t('label_duration')}</p>
                         <p className="text-lg font-bold text-gray-900 dark:text-white">
-                          {route.duration}분
+                          {route.duration}{t('unit_min')}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-gray-600 dark:text-gray-400">환승</p>
+                        <p className="text-gray-600 dark:text-gray-400">{t('label_transfers')}</p>
                         <p className="text-lg font-bold text-gray-900 dark:text-white">
-                          {route.transfers}회
+                          {route.transfers}{t('unit_times')}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-gray-600 dark:text-gray-400">요금</p>
+                        <p className="text-gray-600 dark:text-gray-400">{t('label_fare')}</p>
                         <p className="text-lg font-bold text-gray-900 dark:text-white">
-                          {route.fare?.card?.toLocaleString()}원
+                          {route.fare?.card?.toLocaleString()}{t('unit_krw')}
                         </p>
                       </div>
                     </div>
@@ -262,7 +264,7 @@ const SubwayRoute = () => {
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {step.stations}개 역 · 약 {step.duration}분
+                            {t('desc_route_step').replace('{stations}', step.stations).replace('{duration}', step.duration)}
                           </p>
                         </div>
                       </div>
@@ -279,13 +281,13 @@ const SubwayRoute = () => {
                   search_off
                 </span>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  경로를 찾을 수 없습니다
+                  {t('msg_no_route_found')}
                 </p>
                 <button
                   onClick={() => navigate(-1)}
                   className="text-primary hover:text-primary/80 transition-colors font-medium"
                 >
-                  다시 검색하기
+                  {t('btn_search_again')}
                 </button>
               </div>
             )}
@@ -298,20 +300,20 @@ const SubwayRoute = () => {
                     <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">
                       info
                     </span>
-                    이용 안내
+                    {t('title_usage_guide')}
                   </h3>
                   <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2 ml-8">
-                    <li>제시된 경로는 실시간 상황에 따라 변경될 수 있습니다</li>
-                    <li>요금은 교통카드 기준이며, 현금은 약간 더 비쌉니다</li>
-                    <li>첫차/막차 시간은 역마다 다르니 확인하세요</li>
-                    <li>실시간 도착 정보는 역 안내판을 참고해주세요</li>
+                    <li>{t('info_route_1')}</li>
+                    <li>{t('info_route_2')}</li>
+                    <li>{t('info_route_3')}</li>
+                    <li>{t('info_route_4')}</li>
                   </ul>
                 </div>
 
                 {/* ODsay 크레딧 표시 */}
                 <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-4 text-center">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    경로 정보 제공: <a href="https://www.odsay.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ODsay.com</a>
+                    {t('label_provider')} <a href="https://www.odsay.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ODsay.com</a>
                   </p>
                 </div>
               </div>
@@ -319,7 +321,7 @@ const SubwayRoute = () => {
           </div>
 
           {/* 오른쪽 영역: 사이드바 */}
-          <div className="col-span-4">
+          <div className="lg:col-span-4">
             <ReservationSidebar />
           </div>
         </div>

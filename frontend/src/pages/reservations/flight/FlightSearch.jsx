@@ -13,8 +13,11 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
  * - 승객 수 및 좌석 등급 선택
  * - 검색 버튼 클릭 시 결과 페이지로 이동
  */
+import { useLanguage } from '../../../context/LanguageContext';
+
 const FlightSearch = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   /**
    * 검색 폼 상태 관리
@@ -97,7 +100,7 @@ const FlightSearch = () => {
     } catch (error) {
       console.error('공항 목록 로딩 실패:', error);
       // 에러 발생 시 사용자에게 알림 (실제 구현 시 Toast 등 사용)
-      alert('공항 목록을 불러오는데 실패했습니다.');
+      alert(t('flight_load_error'));
     } finally {
       setLoading(false);
     }
@@ -173,13 +176,13 @@ const FlightSearch = () => {
 
     // 필수 입력값 검증
     if (!formData.depAirportId || !formData.arrAirportId || !formData.depDate) {
-      alert('출발지, 도착지, 날짜를 모두 선택해주세요.');
+      alert(t('flight_alert_fill_all'));
       return;
     }
 
     // 같은 공항 선택 방지
     if (formData.depAirportId === formData.arrAirportId) {
-      alert('출발지와 도착지는 달라야 합니다.');
+      alert(t('flight_alert_same_airport'));
       return;
     }
 
@@ -188,19 +191,19 @@ const FlightSearch = () => {
     today.setHours(0, 0, 0, 0);
     const selectedDate = new Date(formData.depDate);
     if (selectedDate < today) {
-      alert('과거 날짜는 선택할 수 없습니다.');
+      alert(t('flight_alert_past_date'));
       return;
     }
 
     // 왕복일 경우 귀국일 유효성 검사
     if (formData.tripType === 'roundtrip') {
       if (!formData.retDate) {
-        alert('왕복을 선택하셨습니다. 귀국일을 선택해주세요.');
+        alert(t('flight_alert_ret_req'));
         return;
       }
       const ret = new Date(formData.retDate);
       if (ret < selectedDate) {
-        alert('귀국일은 출발일 이후여야 합니다.');
+        alert(t('flight_alert_ret_after'));
         return;
       }
     }
@@ -236,7 +239,7 @@ const FlightSearch = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 페이지 제목 */}
         <h1 className="text-3xl font-bold mb-6 dark:text-white">
-          교통 
+          {t('flight_title')}
         </h1>
 
         {/* 탭 네비게이션 */}
@@ -247,7 +250,7 @@ const FlightSearch = () => {
           {/* 메인 콘텐츠 영역 */}
           <main className="lg:col-span-8 space-y-6">
             {/* 검색 폼 카드 */}
-            <SearchCard title="항공권 검색">
+            <SearchCard title={t('flight_search_title')}>
               <form onSubmit={handleSearch} className="space-y-4">
                 {/* 편도/왕복 선택 */}
                 <div className="flex items-center gap-2">
@@ -257,14 +260,14 @@ const FlightSearch = () => {
                       onClick={() => setFormData({ ...formData, tripType: 'oneway', retDate: '' })}
                       className={`${formData.tripType === 'oneway' ? 'bg-white dark:bg-slate-700 text-primary shadow' : 'text-slate-600 dark:text-slate-300'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
                     >
-                      편도
+                      {t('flight_oneway')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, tripType: 'roundtrip' })}
                       className={`${formData.tripType === 'roundtrip' ? 'bg-white dark:bg-slate-700 text-primary shadow' : 'text-slate-600 dark:text-slate-300'} px-4 py-2 rounded-md text-sm font-medium transition-colors`}
                     >
-                      왕복
+                      {t('flight_roundtrip')}
                     </button>
                   </div>
                 </div>
@@ -273,7 +276,7 @@ const FlightSearch = () => {
                   {/* 출발지 입력 */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      출발지
+                      {t('flight_dep')}
                     </label>
                     {/* 국내 공항 빠른 선택 (버튼) */}
                     <div className="mb-2">
@@ -300,7 +303,7 @@ const FlightSearch = () => {
                           setShowDepDropdown(true);
                         }}
                         onFocus={() => setShowDepDropdown(true)}
-                        placeholder="출발 공항을 선택하세요"
+                        placeholder={t('flight_placeholder_dep')}
                         className="w-full h-14 px-4 rounded-xl border border-slate-200
                                  dark:border-slate-600 dark:bg-slate-800 dark:text-white
                                  focus:ring-2 focus:ring-primary focus:border-transparent
@@ -314,7 +317,7 @@ const FlightSearch = () => {
                       <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-600 max-h-60 overflow-y-auto">
                         {filterAirports(depSearchTerm).length === 0 && (
                           <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                            {loading ? '공항 목록을 불러오는 중...' : '일치하는 공항이 없습니다.'}
+                            {loading ? t('flight_searching') : t('flight_no_results')}
                           </div>
                         )}
                         {filterAirports(depSearchTerm).map((airport) => (
@@ -355,7 +358,7 @@ const FlightSearch = () => {
                   {/* 도착지 입력 */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      도착지
+                      {t('flight_arr')}
                     </label>
                     {/* 국내 공항 빠른 선택 (버튼) */}
                     <div className="mb-2">
@@ -382,7 +385,7 @@ const FlightSearch = () => {
                           setShowArrDropdown(true);
                         }}
                         onFocus={() => setShowArrDropdown(true)}
-                        placeholder="도착 공항을 선택하세요"
+                        placeholder={t('flight_placeholder_arr')}
                         className="w-full h-14 px-4 rounded-xl border border-slate-200
                                  dark:border-slate-600 dark:bg-slate-800 dark:text-white
                                  focus:ring-2 focus:ring-primary focus:border-transparent
@@ -396,7 +399,7 @@ const FlightSearch = () => {
                       <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-600 max-h-60 overflow-y-auto">
                         {filterAirports(arrSearchTerm).length === 0 && (
                           <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                            {loading ? '공항 목록을 불러오는 중...' : '일치하는 공항이 없습니다.'}
+                            {loading ? t('flight_searching') : t('flight_no_results')}
                           </div>
                         )}
                         {filterAirports(arrSearchTerm).map((airport) => (
@@ -424,7 +427,7 @@ const FlightSearch = () => {
                   {/* 출발일 선택 */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      출발일
+                      {t('flight_dep_date')}
                     </label>
                     <div className="relative">
                       <input
@@ -444,7 +447,7 @@ const FlightSearch = () => {
                   {formData.tripType === 'roundtrip' && (
                     <div className="relative">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        귀국일
+                        {t('flight_ret_date')}
                       </label>
                       <div className="relative">
                         <input
@@ -463,7 +466,7 @@ const FlightSearch = () => {
                   {/* 항공사 선택 (선택사항) */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      항공사 (선택사항)
+                      {t('flight_airline')}
                     </label>
                     <div className="relative">
                       <select
@@ -473,7 +476,7 @@ const FlightSearch = () => {
                                  dark:border-slate-600 dark:bg-slate-800 dark:text-white appearance-none
                                  focus:ring-2 focus:ring-primary transition-all"
                       >
-                        <option value="">전체 항공사</option>
+                        <option value="">{t('flight_airline_all')}</option>
                         {airlines.map((airline) => (
                           <option key={airline.code} value={airline.code}>
                             {airline.nameKo}
@@ -488,14 +491,14 @@ const FlightSearch = () => {
                 {/* 인원선택 섹션 */}
                 <div className="mt-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    인원선택
+                    {t('flight_passengers')}
                   </h3>
 
                   {/* 안내 문구 */}
                   <div className="text-sm text-gray-500 dark:text-gray-400 mb-4 space-y-1">
-                    <p>· 총 9명까지만 한번에 검색 및 예약이 가능합니다.</p>
-                    <p>· 성인 1인당 유아 1인까지 동반 탑승 가능합니다.</p>
-                    <p>· 만 2세 미만의 유아라도 별도 좌석에 탑승하려면 소아로 선택해 주세요.</p>
+                    <p>· {t('flight_tip_1')}</p>
+                    <p>· {t('flight_tip_2')}</p>
+                    <p>· {t('flight_tip_3')}</p>
                   </div>
 
                   <hr className="border-slate-200 dark:border-slate-600 mb-4" />
@@ -505,8 +508,8 @@ const FlightSearch = () => {
                     {/* 성인 */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">성인</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">만 12세 이상 (국내선 만 13세 이상)</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{t('flight_adult')}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('flight_adult_desc')}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <button
@@ -538,8 +541,8 @@ const FlightSearch = () => {
                     {/* 소아 */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">소아</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">만 2세~만 12세 미만 (국내선 만 13세 미만)</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{t('flight_child')}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('flight_child_desc')}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <button
@@ -571,8 +574,8 @@ const FlightSearch = () => {
                     {/* 유아 */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">유아</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">만 2세 미만, 보호자와 동반착석</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{t('flight_infant')}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{t('flight_infant_desc')}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <button
@@ -609,7 +612,7 @@ const FlightSearch = () => {
                   disabled={searchLoading}
                   className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {searchLoading ? '검색 중...' : '항공편 검색하기'}
+                  {searchLoading ? t('flight_searching') : t('flight_search_btn')}
                 </button>
               </form>
             </SearchCard>
@@ -619,11 +622,11 @@ const FlightSearch = () => {
               <div className="flex gap-3">
                 <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">info</span>
                 <div className="text-sm text-blue-800 dark:text-blue-300">
-                  <p className="font-medium mb-1">검색 팁</p>
+                  <p className="font-medium mb-1">{t('flight_tip_title')}</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>출발 7일 전 예약 시 최대 30% 할인</li>
-                    <li>주중 항공편이 주말보다 저렴합니다</li>
-                    <li>새벽/심야 시간대 항공편 특가 확인하세요</li>
+                    <li>{t('flight_tip_1')}</li>
+                    <li>{t('flight_tip_2')}</li>
+                    <li>{t('flight_tip_3')}</li>
                   </ul>
                 </div>
               </div>

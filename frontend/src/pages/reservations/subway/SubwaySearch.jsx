@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-components';
 
 /**
@@ -16,6 +17,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
  */
 const SubwaySearch = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   /**
    * 폼 데이터 상태
@@ -41,9 +43,9 @@ const SubwaySearch = () => {
    * CHEAP - 최소비용
    */
   const searchOptions = [
-    { value: 'FAST', label: '최단시간', icon: 'schedule' },
-    { value: 'FEW_TRANSFER', label: '최소환승', icon: 'sync_alt' },
-    { value: 'CHEAP', label: '최소비용', icon: 'savings' },
+    { value: 'FAST', label: t('option_fast'), icon: 'schedule' },
+    { value: 'FEW_TRANSFER', label: t('option_few_transfer'), icon: 'sync_alt' },
+    { value: 'CHEAP', label: t('option_cheap'), icon: 'savings' },
   ];
 
   /**
@@ -102,7 +104,7 @@ const SubwaySearch = () => {
      * 필수 필드 검증
      */
     if (!formData.fromStation || !formData.toStation) {
-      alert('출발역과 도착역을 모두 입력해주세요.');
+      alert(t('alert_fill_all_subway_search'));
       return;
     }
 
@@ -110,7 +112,7 @@ const SubwaySearch = () => {
      * 출발역과 도착역이 같은지 확인
      */
     if (formData.fromStation === formData.toStation) {
-      alert('출발역과 도착역이 같을 수 없습니다.');
+      alert(t('alert_same_station'));
       return;
     }
 
@@ -130,31 +132,31 @@ const SubwaySearch = () => {
       <div className="max-w-screen-xl mx-auto px-4 py-8">
         {/* 페이지 제목 */}
         <h1 className="text-3xl font-bold mb-6 dark:text-white">
-          교통
+          {t('title_transport')}
         </h1>
 
         {/* 교통수단 탭 */}
         <TransportTabs />
 
         {/* 메인 그리드 레이아웃 (8:4) */}
-        <div className="mt-6 grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           {/* 왼쪽 영역: 검색 폼 */}
-          <div className="col-span-8">
-            <SearchCard title="지하철 경로 검색">
+          <div className="lg:col-span-8">
+            <SearchCard title={t('title_subway_search')}>
               <form onSubmit={handleSearch} className="space-y-6">
                 {/* 출발역 / 도착역 */}
                 <div className="grid grid-cols-12 gap-4 items-end">
                   {/* 출발역 */}
                   <div className="col-span-5">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      출발역
+                      {t('label_dep_station')}
                     </label>
                     <input
                       type="text"
                       name="fromStation"
                       value={formData.fromStation}
                       onChange={handleChange}
-                      placeholder="출발역 이름 입력"
+                      placeholder={t('placeholder_input_dep_station')}
                       required
                       list="from-stations"
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -181,14 +183,14 @@ const SubwaySearch = () => {
                   {/* 도착역 */}
                   <div className="col-span-5">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      도착역
+                      {t('label_arr_station')}
                     </label>
                     <input
                       type="text"
                       name="toStation"
                       value={formData.toStation}
                       onChange={handleChange}
-                      placeholder="도착역 이름 입력"
+                      placeholder={t('placeholder_input_arr_station')}
                       required
                       list="to-stations"
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -204,7 +206,7 @@ const SubwaySearch = () => {
                 {/* 검색 옵션 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    검색 옵션
+                    {t('label_search_option')}
                   </label>
                   <div className="grid grid-cols-3 gap-4">
                     {searchOptions.map((option) => (
@@ -212,24 +214,21 @@ const SubwaySearch = () => {
                         key={option.value}
                         type="button"
                         onClick={() => handleOptionChange(option.value)}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          formData.option === option.value
-                            ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                        }`}
+                        className={`p-4 rounded-lg border-2 transition-all ${formData.option === option.value
+                          ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          }`}
                       >
-                        <span className={`material-symbols-outlined block text-3xl mb-2 ${
-                          formData.option === option.value
-                            ? 'text-primary'
-                            : 'text-gray-400 dark:text-gray-500'
-                        }`}>
+                        <span className={`material-symbols-outlined block text-3xl mb-2 ${formData.option === option.value
+                          ? 'text-primary'
+                          : 'text-gray-400 dark:text-gray-500'
+                          }`}>
                           {option.icon}
                         </span>
-                        <span className={`text-sm font-medium ${
-                          formData.option === option.value
-                            ? 'text-primary'
-                            : 'text-gray-700 dark:text-gray-300'
-                        }`}>
+                        <span className={`text-sm font-medium ${formData.option === option.value
+                          ? 'text-primary'
+                          : 'text-gray-700 dark:text-gray-300'
+                          }`}>
                           {option.label}
                         </span>
                       </button>
@@ -243,7 +242,7 @@ const SubwaySearch = () => {
                   disabled={searchLoading}
                   className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {searchLoading ? '검색 중...' : '경로 검색하기'}
+                  {searchLoading ? t('btn_searching_train') : t('btn_search_route')}
                 </button>
               </form>
             </SearchCard>
@@ -252,20 +251,20 @@ const SubwaySearch = () => {
             <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                 <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">info</span>
-                지하철 경로 검색 안내
+                {t('title_subway_guide')}
               </h3>
               <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2 ml-8">
-                <li>서울, 부산, 대구, 광주, 대전 지하철 경로를 검색할 수 있습니다</li>
-                <li>최대 3개의 최적 경로를 제공합니다</li>
-                <li>소요시간, 환승 횟수, 요금 정보를 확인하세요</li>
-                <li>카카오맵으로 상세한 경로를 확인할 수 있습니다</li>
-                <li>실시간 도착 정보는 역 안내판을 참고해주세요</li>
+                <li>{t('info_subway_1')}</li>
+                <li>{t('info_subway_2')}</li>
+                <li>{t('info_subway_3')}</li>
+                <li>{t('info_subway_4')}</li>
+                <li>{t('info_subway_5')}</li>
               </ul>
             </div>
           </div>
 
           {/* 오른쪽 영역: 사이드바 */}
-          <div className="col-span-4">
+          <div className="lg:col-span-4">
             <ReservationSidebar />
           </div>
         </div>

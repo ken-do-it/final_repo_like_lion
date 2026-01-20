@@ -3,16 +3,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext'; // [NEW] Import language hook
 
 const PlanCreate = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage(); // [NEW] Use hook
   const [loading, setLoading] = useState(false);
 
   // 로그인 체크
   useEffect(() => {
     if (!isAuthenticated) {
-      alert('로그인이 필요한 서비스입니다.');
+      alert(t('alert_login_required_service'));
       navigate(-1); // 이전 페이지로 돌아가기
     }
   }, [isAuthenticated, navigate]);
@@ -38,26 +40,26 @@ const PlanCreate = () => {
 
     // Validation
     if (!formData.title.trim()) {
-      alert('여행 제목을 입력해주세요.');
+      alert(t('alert_input_title'));
       return;
     }
     if (!formData.start_date || !formData.end_date) {
-      alert('여행 날짜를 선택해주세요.');
+      alert(t('alert_select_dates'));
       return;
     }
     if (new Date(formData.start_date) > new Date(formData.end_date)) {
-      alert('종료 날짜는 시작 날짜보다 이후여야 합니다.');
+      alert(t('alert_date_order'));
       return;
     }
 
     try {
       setLoading(true);
       const response = await plansService.plans.createPlan(formData);
-      alert('여행 계획이 생성되었습니다!');
+      alert(t('msg_create_success'));
       navigate(`/plans/${response.data.id}`);
     } catch (err) {
       console.error('Error creating plan:', err);
-      alert('여행 계획 생성에 실패했습니다.');
+      alert(t('msg_create_fail'));
     } finally {
       setLoading(false);
     }
@@ -77,11 +79,11 @@ const PlanCreate = () => {
             </svg>
           </button>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-            새 여행 계획 만들기
+            {t('plan_create_title')}
           </h1>
         </div>
         <p className="text-gray-600 dark:text-gray-400">
-          나만의 특별한 여행을 계획해보세요
+          {t('plan_create_subtitle')}
         </p>
       </div>
 
@@ -91,7 +93,7 @@ const PlanCreate = () => {
           {/* Title */}
           <div className="mb-6">
             <label htmlFor="title" className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              여행 제목 <span className="text-red-500">*</span>
+              {t('label_trip_title')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -99,7 +101,7 @@ const PlanCreate = () => {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="예: 제주도 힐링 여행"
+              placeholder={t('placeholder_trip_title')}
               className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#101a22] text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent"
               required
             />
@@ -108,14 +110,14 @@ const PlanCreate = () => {
           {/* Description */}
           <div className="mb-6">
             <label htmlFor="description" className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              여행 설명
+              {t('label_trip_desc')}
             </label>
             <textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="여행에 대한 간단한 설명을 입력하세요"
+              placeholder={t('placeholder_trip_desc')}
               rows={4}
               className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#101a22] text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent resize-none"
             />
@@ -125,7 +127,7 @@ const PlanCreate = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label htmlFor="start_date" className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                시작 날짜 <span className="text-red-500">*</span>
+                {t('label_start_date')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -139,7 +141,7 @@ const PlanCreate = () => {
             </div>
             <div>
               <label htmlFor="end_date" className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                종료 날짜 <span className="text-red-500">*</span>
+                {t('label_end_date')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -165,9 +167,9 @@ const PlanCreate = () => {
                 className="w-5 h-5 text-[#1392ec] border-gray-300 dark:border-gray-600 rounded focus:ring-[#1392ec] focus:ring-2"
               />
               <span className="ml-3 text-gray-900 dark:text-gray-100">
-                공개 여행으로 설정
+                {t('label_public')}
                 <span className="block text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  다른 사용자들이 이 여행 계획을 볼 수 있습니다
+                  {t('desc_public')}
                 </span>
               </span>
             </label>
@@ -180,14 +182,14 @@ const PlanCreate = () => {
               onClick={() => navigate('/plans')}
               className="flex-1 h-12 px-6 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
             >
-              취소
+              {t('btn_cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="flex-1 h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              {loading ? '생성 중...' : '여행 계획 만들기'}
+              {loading ? t('btn_creating') : t('btn_submit_create')}
             </button>
           </div>
 
@@ -198,11 +200,11 @@ const PlanCreate = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div className="text-sm text-blue-800 dark:text-blue-300">
-                <p className="font-semibold mb-1">계획 생성 후에는</p>
+                <p className="font-semibold mb-1">{t('info_after_create_title')}</p>
                 <ul className="list-disc list-inside space-y-1 text-blue-700 dark:text-blue-400">
-                  <li>여행 장소를 추가할 수 있습니다</li>
-                  <li>날짜별로 일정을 구성할 수 있습니다</li>
-                  <li>장소마다 메모와 이미지를 추가할 수 있습니다</li>
+                  <li>{t('info_after_create_1')}</li>
+                  <li>{t('info_after_create_2')}</li>
+                  <li>{t('info_after_create_3')}</li>
                 </ul>
               </div>
             </div>

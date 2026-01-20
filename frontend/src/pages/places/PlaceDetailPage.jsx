@@ -3,12 +3,15 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { placesAxios as api } from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import PlaceReviewSection from './PlaceReviewSection';
+import { useLanguage } from '../../context/LanguageContext';
+import { API_LANG_CODES } from '../../constants/translations';
 
 const PlaceDetailPage = () => {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const { language, t } = useLanguage();
 
     const [place, setPlace] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -28,10 +31,13 @@ const PlaceDetailPage = () => {
             setError(null);
             try {
                 let response;
+                const langParam = API_LANG_CODES[language] || 'eng_Latn';
 
                 // Mode 1: DB ID-based (Existing place)
                 if (id) {
-                    response = await api.get(`/places/${id}`);
+                    response = await api.get(`/places/${id}`, {
+                        params: { lang: langParam }
+                    });
                 }
                 // Mode 2: API ID-based (New or unsaved place)
                 else if (apiId && provider) {
@@ -39,7 +45,8 @@ const PlaceDetailPage = () => {
                         params: {
                             place_api_id: apiId,
                             provider: provider,
-                            name: nameData
+                            name: nameData,
+                            lang: langParam
                         }
                     });
                 } else {
@@ -59,7 +66,7 @@ const PlaceDetailPage = () => {
         };
 
         fetchPlaceDetail();
-    }, [id, apiId, provider, nameData]);
+    }, [id, apiId, provider, nameData, language]);
 
     const mapRef = useRef(null);
     const reviewSectionRef = useRef(null);
@@ -130,7 +137,7 @@ const PlaceDetailPage = () => {
     if (loading) return (
         <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center">
             <div className="animate-pulse text-[#1392ec] font-bold text-xl">
-                장소 정보를 불러오는 중입니다...
+                {t('error_load_place')}
             </div>
         </div>
     );
@@ -142,32 +149,32 @@ const PlaceDetailPage = () => {
                 onClick={() => navigate(-1)}
                 className="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
-                뒤로 가기
+                {t('btn_go_back')}
             </button>
         </div>
     );
 
     const handleActionClick = (action) => {
         if (!isAuthenticated) {
-            if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+            if (window.confirm(t('msg_login_required'))) {
                 navigate('/login-page');
             }
             return;
         }
 
-        if (action === "리뷰 작성") {
+        if (action === "review" || action === "리뷰 작성") {
             reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
             return;
         }
 
         // TODO: Implement actual action logic
         console.log(`${action} executed by authenticated user`);
-        alert(`${action} 기능은 준비 중입니다.`);
+        alert(t('msg_feature_coming_soon').replace('{action}', action));
     };
 
     const handleBookmark = async () => {
         if (!isAuthenticated) {
-            if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+            if (window.confirm(t('msg_login_required'))) {
                 navigate('/login-page');
             }
             return;
@@ -191,7 +198,7 @@ const PlaceDetailPage = () => {
             console.error("Bookmark toggle failed:", err);
             // Revert on failure
             setIsBookmarked(previousState);
-            alert("찜하기 처리에 실패했습니다. 잠시 후 다시 시도해주세요.");
+            alert(t('msg_bookmark_error'));
         }
     };
 
@@ -210,7 +217,7 @@ const PlaceDetailPage = () => {
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                         <span className="text-4xl mb-2">🗺️</span>
-                        <span className="font-medium">이미지가 없습니다</span>
+                        <span className="font-medium">{t('msg_no_image')}</span>
                     </div>
                 )}
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -235,7 +242,7 @@ const PlaceDetailPage = () => {
                     <div className="lg:col-span-2 space-y-6">
                         {/* Basic Info Card */}
                         <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                            <h2 className="text-xl font-bold mb-4">기본 정보</h2>
+                            <h2 className="text-xl font-bold mb-4">{t('place_basic_info')}</h2>
                             <div className="space-y-4">
                                 <div className="flex items-start gap-3">
                                     <span className="w-6 text-center">📍</span>
@@ -275,7 +282,7 @@ const PlaceDetailPage = () => {
                         {/* Opening Hours */}
                         {place.opening_hours && place.opening_hours.length > 0 && (
                             <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                                <h2 className="text-xl font-bold mb-4">영업 시간</h2>
+                                <h2 className="text-xl font-bold mb-4">{t('place_opening_hours')}</h2>
                                 <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                                     {place.opening_hours.map((path, idx) => (
                                         <li key={idx} className="flex gap-2">
@@ -289,7 +296,7 @@ const PlaceDetailPage = () => {
 
                         {/* Kakao Map */}
                         <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                            <h2 className="text-xl font-bold mb-4">위치</h2>
+                            <h2 className="text-xl font-bold mb-4">{t('place_location')}</h2>
                             <div ref={mapRef} className="w-full h-64 rounded-lg bg-gray-100 dark:bg-gray-800"></div>
                         </div>
 
@@ -308,7 +315,7 @@ const PlaceDetailPage = () => {
                         <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 sticky top-24">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">평점</div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('place_rating')}</div>
                                     <div className="flex items-center gap-1">
                                         <span className="text-2xl font-bold text-[#111111] dark:text-white">
                                             {place.average_rating ? place.average_rating.toFixed(1) : "0.0"}
@@ -316,7 +323,7 @@ const PlaceDetailPage = () => {
                                         <span className="text-yellow-400 text-xl">★</span>
                                     </div>
                                     <div className="text-xs text-gray-400">
-                                        리뷰 {place.review_count || 0}개
+                                        {t('place_reviews').replace('{count}', place.review_count || 0)}
                                     </div>
                                 </div>
                                 <button
@@ -334,16 +341,16 @@ const PlaceDetailPage = () => {
                             </div>
 
                             <button
-                                onClick={() => handleActionClick("여행 계획에 추가")}
+                                onClick={() => handleActionClick("plan")}
                                 className="w-full py-3 bg-[#1392ec] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors mb-3"
                             >
-                                여행 계획에 추가
+                                {t('btn_add_to_plan')}
                             </button>
                             <button
-                                onClick={() => handleActionClick("리뷰 작성")}
+                                onClick={() => handleActionClick("review")}
                                 className="w-full py-3 bg-white dark:bg-transparent border border-[#1392ec] text-[#1392ec] font-bold rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                             >
-                                리뷰 작성하기
+                                {t('btn_write_review')}
                             </button>
                         </div>
                     </div>

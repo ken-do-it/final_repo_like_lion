@@ -98,67 +98,40 @@ class AIQuestion(models.Model):
         ]
 
 
-class TravelPost(models.Model):
+class PlanLike(models.Model):
     """
-    여행 후기 게시물 (travel_posts)
+    여행 일정 좋아요 (plan_likes)
     """
-    plan = models.ForeignKey(TravelPlan, on_delete=models.CASCADE, related_name='posts')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
-    
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    thumbnail_url = models.CharField(max_length=500, blank=True, null=True)
-    
-    view_count = models.IntegerField(default=0)
-    like_count = models.IntegerField(default=0)
-    comment_count = models.IntegerField(default=0)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    plan = models.ForeignKey(TravelPlan, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plan_likes')
 
-    class Meta:
-        db_table = 'travel_posts'
-        indexes = [
-            models.Index(fields=['user']),
-            models.Index(fields=['created_at']),
-            models.Index(fields=['like_count']),
-        ]
-
-
-class PostLike(models.Model):
-    """
-    게시물 좋아요 (post_likes)
-    """
-    post = models.ForeignKey(TravelPost, on_delete=models.CASCADE, related_name='likes')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'post_likes'
-        unique_together = ('post', 'user')
+        db_table = 'plan_likes'
+        unique_together = ('plan', 'user')
         indexes = [
-            models.Index(fields=['post']),
+            models.Index(fields=['plan']),
             models.Index(fields=['user']),
         ]
 
 
-class Comment(models.Model):
+class PlanComment(models.Model):
     """
-    댓글 (comments)
+    여행 일정 댓글 (plan_comments)
     """
-    post = models.ForeignKey(TravelPost, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
+    plan = models.ForeignKey(TravelPlan, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plan_comments')
     content = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'comments'
+        db_table = 'plan_comments'
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['post']),
+            models.Index(fields=['plan']),
             models.Index(fields=['user']),
             models.Index(fields=['created_at']),
         ]

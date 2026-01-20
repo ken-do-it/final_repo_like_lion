@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, StreetViewPanorama, Marker, Polyline } from '@react-google-maps/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { placesAxios as api } from '../api/axios'; // [수정] API 호출을 위해 추가
+import { useLanguage } from '../context/LanguageContext';
 
 const libraries = ['places', 'geometry'];
 
@@ -35,6 +36,7 @@ const STORAGE_KEY = 'roadview_game_session';
 const RoadviewGame = () => {
   const locationState = useLocation().state;
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // 1. 상태 및 변수 선언 (가장 상단)
   const [targetData, setTargetData] = useState({
@@ -207,7 +209,7 @@ const RoadviewGame = () => {
 
             // Show warning if radius > 300
             if (currentRadius > 300) {
-              setDistanceWarning(`근처 로드뷰가 없어 약 ${currentRadius}m 떨어진 위치의 로드뷰입니다.`);
+              setDistanceWarning(t('game_warn_distance', { d: currentRadius }));
             }
           } else {
             // Try next radius
@@ -328,8 +330,8 @@ const RoadviewGame = () => {
       <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] p-6 lg:p-10 text-[#0d161b] dark:text-white font-sans flex flex-col items-center">
         <div className="max-w-4xl w-full flex flex-col gap-8">
           <div className="text-center flex flex-col gap-2">
-            <h1 className="text-4xl font-bold">Game Over!</h1>
-            <p className="text-slate-500 text-lg">Your Total Score: <span className="text-[#1392ec] font-bold text-2xl">{totalScore}</span></p>
+            <h1 className="text-4xl font-bold">{t('game_over_title')}</h1>
+            <p className="text-slate-500 text-lg">{t('game_total_score')} <span className="text-[#1392ec] font-bold text-2xl">{totalScore}</span></p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -353,7 +355,7 @@ const RoadviewGame = () => {
                         onClick={() => navigate(`/places/${item.placeId}`)}
                         className="text-[#1392ec] hover:underline font-bold"
                       >
-                        View Place →
+                        {t('game_view_place')}
                       </button>
                     )}
                   </div>
@@ -367,13 +369,13 @@ const RoadviewGame = () => {
               sessionStorage.removeItem(STORAGE_KEY);
               navigate('/');
             }} className="px-8 py-3 bg-slate-200 dark:bg-slate-700 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
-              Go Home
+              {t('game_btn_home')}
             </button>
             <button onClick={() => {
               sessionStorage.removeItem(STORAGE_KEY);
               window.location.reload();
             }} className="px-8 py-3 bg-[#1392ec] text-white rounded-xl font-bold hover:bg-blue-600 transition-colors">
-              Play Again
+              {t('game_btn_play_again')}
             </button>
           </div>
         </div>
@@ -385,7 +387,7 @@ const RoadviewGame = () => {
   if (isDataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f6f7f8] dark:bg-[#101a22]">
-        <div className="text-[#1392ec] font-bold animate-pulse text-xl">새로운 장소를 찾는 중입니다...</div>
+        <div className="text-[#1392ec] font-bold animate-pulse text-xl">{t('game_loading_new')}</div>
       </div>
     );
   }
@@ -393,11 +395,11 @@ const RoadviewGame = () => {
   if (!lat || !lng) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f6f7f8] dark:bg-[#101a22]">
-        <h2 className="text-2xl font-bold dark:text-white">장소 정보를 불러올 수 없습니다.</h2>
+        <h2 className="text-2xl font-bold dark:text-white">{t('game_error_info')}</h2>
         <button onClick={() => {
           sessionStorage.removeItem(STORAGE_KEY);
           navigate('/');
-        }} className="mt-4 px-6 py-2 bg-[#1392ec] text-white rounded-lg">홈으로 가기</button>
+        }} className="mt-4 px-6 py-2 bg-[#1392ec] text-white rounded-lg">{t('game_btn_home')}</button>
       </div>
     );
   }
@@ -412,7 +414,7 @@ const RoadviewGame = () => {
         <div className="relative flex-1 group w-full h-[50vh] lg:h-auto rounded-2xl overflow-hidden shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
           <div className="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-md text-white px-3 py-1.5 rounded-full flex items-center gap-2 pointer-events-none">
             <span className="text-[18px]">📷</span>
-            <span className="text-xs font-bold">Street View</span>
+            <span className="text-xs font-bold">{t('game_title')}</span>
           </div>
 
           {/* [New] Distance Warning Toast */}
@@ -429,8 +431,8 @@ const RoadviewGame = () => {
           {noPano && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900 text-white p-4 text-center">
               <span className="text-4xl mb-2">🚫</span>
-              <p className="font-bold text-lg">로드뷰를 찾을 수 없습니다</p>
-              <p className="text-sm text-slate-400">주변 도로 데이터가 없거나 실내 장소일 수 있습니다.</p>
+              <p className="font-bold text-lg">{t('game_no_pano_title')}</p>
+              <p className="text-sm text-slate-400">{t('game_no_pano_desc')}</p>
             </div>
           )}
 
@@ -454,7 +456,7 @@ const RoadviewGame = () => {
         <aside className="w-full lg:w-[400px] xl:w-[440px] flex flex-col gap-4 lg:h-full overflow-y-auto scrollbar-hide">
           {imageUrl && (
             <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-4 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 flex flex-col gap-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Target Photo</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('game_target_photo')}</h3>
               <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                 <img src={imageUrl} alt="Target" className="w-full h-full object-contain" />
               </div>
@@ -465,7 +467,7 @@ const RoadviewGame = () => {
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg"><span>🚩</span></div>
               <div className="flex flex-col">
-                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Round</span>
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{t('game_round')}</span>
                 <span className="text-lg font-bold">{round} <span className="text-slate-400 text-sm">/ {totalPhotos}</span></span>
               </div>
             </div>
@@ -473,7 +475,7 @@ const RoadviewGame = () => {
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg"><span>⏱️</span></div>
               <div className="flex flex-col">
-                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</span>
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{t('game_time')}</span>
                 <span className={`text-lg font-bold font-mono ${timeLeft < 30 ? 'text-red-500 animate-pulse' : ''}`}>{formattedTime}</span>
               </div>
             </div>
@@ -481,8 +483,8 @@ const RoadviewGame = () => {
 
           <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-5 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 flex flex-col flex-1 gap-4">
             <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-bold text-[#0d161b] dark:text-white">Where was this taken?</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Find the location in the photo on the map!</p>
+              <h2 className="text-xl font-bold text-[#0d161b] dark:text-white">{t('game_question')}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('game_instruction')}</p>
             </div>
             <div className="relative w-full aspect-square lg:aspect-auto lg:flex-1 min-h-[400px] bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden ring-1 ring-slate-200 dark:ring-slate-700">
               <GoogleMap
@@ -506,31 +508,31 @@ const RoadviewGame = () => {
                   </>
                 )}
               </GoogleMap>
-              {!showResult && guess && <div className="absolute top-[10px] left-1/2 -translate-x-1/2 bg-[#1392ec] text-white text-xs font-bold px-3 py-1 rounded shadow animate-bounce">Pin Placed!</div>}
+              {!showResult && guess && <div className="absolute top-[10px] left-1/2 -translate-x-1/2 bg-[#1392ec] text-white text-xs font-bold px-3 py-1 rounded shadow animate-bounce">{t('game_pin_placed')}</div>}
             </div>
             <div className="flex flex-col gap-3 pt-2">
               {!showResult ? (
                 <button onClick={handleSubmit} disabled={!guess} className={`w-full h-12 flex items-center justify-center gap-2 text-white rounded-xl font-bold text-base shadow-lg transition-all ${guess ? 'bg-[#1392ec] hover:bg-blue-600 active:scale-[0.98]' : 'bg-gray-300 cursor-not-allowed'}`}>
-                  <span>✅</span>Confirm Guess
+                  <span>✅</span>{t('game_btn_confirm')}
                 </button>
               ) : (
                 <button onClick={handleNext} className="w-full h-12 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold text-base shadow-lg transition-all">
-                  <span>➡️</span>Next Round
+                  <span>➡️</span>{t('game_btn_next')}
                 </button>
               )}
             </div>
           </div>
           {showResult && result && (
             <div className="bg-white dark:bg-[#1e2936] rounded-2xl p-4 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800 animate-fade-in-up">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Round Result</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{t('game_result_title')}</h3>
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">Distance</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{t('game_distance')}</p>
                   <p className="text-2xl font-mono text-[#1392ec]">{result.distance < 1 ? `${(result.distance * 1000).toFixed(0)}m` : `${result.distance.toFixed(2)}km`}</p>
                 </div>
                 <div className="w-[1px] h-10 bg-gray-200 dark:bg-gray-700"></div>
                 <div className="flex-1 text-right">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">Score</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{t('game_score')}</p>
                   <div className="flex items-end justify-end gap-1"><span className="text-2xl font-bold text-[#1392ec]">{result.score}</span><span className="text-xs text-gray-500 pb-1">pts</span></div>
                 </div>
               </div>

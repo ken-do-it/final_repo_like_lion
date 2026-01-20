@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext'; // [NEW]
 
 const PlanEdit = () => {
   const { planId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage(); // [NEW]
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +52,7 @@ const PlanEdit = () => {
         is_public: planData.is_public,
       });
     } catch (err) {
-      setError('여행 계획을 불러오는데 실패했습니다.');
+      setError(t('msg_plan_not_found'));
       console.error('Error fetching plan:', err);
     } finally {
       setLoading(false);
@@ -69,17 +71,17 @@ const PlanEdit = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      alert('제목을 입력해주세요.');
+      alert(t('alert_title_required'));
       return;
     }
 
     if (!formData.start_date || !formData.end_date) {
-      alert('여행 날짜를 입력해주세요.');
+      alert(t('alert_date_required'));
       return;
     }
 
     if (formData.end_date < formData.start_date) {
-      alert('종료일은 시작일보다 이후여야 합니다.');
+      alert(t('alert_date_order'));
       return;
     }
 
@@ -89,7 +91,7 @@ const PlanEdit = () => {
       navigate(`/plans/${planId}`);
     } catch (err) {
       console.error('Error updating plan:', err);
-      alert(err.response?.data?.detail || err.response?.data?.error || '여행 계획을 수정하는데 실패했습니다.');
+      alert(err.response?.data?.detail || err.response?.data?.error || t('msg_create_fail')); // Reuse fail message
     } finally {
       setSubmitting(false);
     }
@@ -99,7 +101,7 @@ const PlanEdit = () => {
     return (
       <div className="container mx-auto px-4 max-w-screen-xl py-12">
         <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-gray-600 dark:text-gray-400">로딩 중...</div>
+          <div className="text-gray-600 dark:text-gray-400">{t('msg_loading')}</div>
         </div>
       </div>
     );
@@ -133,13 +135,13 @@ const PlanEdit = () => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            뒤로 가기
+            {t('btn_back')}
           </button>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            여행 계획 수정
+            {t('title_plan_edit')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            여행 계획의 기본 정보를 수정합니다
+            {t('subtitle_plan_edit')}
           </p>
         </div>
 
@@ -149,15 +151,14 @@ const PlanEdit = () => {
             {/* Plan Type (Read-only) */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                계획 유형
+                {t('label_plan_type')}
               </label>
               <div className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  plan.plan_type === 'ai_recommended'
-                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                }`}>
-                  {plan.plan_type === 'ai_recommended' ? 'AI 추천' : '직접 작성'}
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${plan.plan_type === 'ai_recommended'
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                  }`}>
+                  {plan.plan_type === 'ai_recommended' ? t('badge_ai') : t('badge_manual')}
                 </span>
               </div>
             </div>
@@ -165,7 +166,7 @@ const PlanEdit = () => {
             {/* Title */}
             <div>
               <label htmlFor="title" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                제목 *
+                {t('label_title')} *
               </label>
               <input
                 type="text"
@@ -173,7 +174,7 @@ const PlanEdit = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="여행 계획 제목을 입력하세요"
+                placeholder={t('placeholder_plan_title')}
                 className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f1921] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent"
                 required
               />
@@ -182,7 +183,7 @@ const PlanEdit = () => {
             {/* Description */}
             <div>
               <label htmlFor="description" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                설명
+                {t('label_description')}
               </label>
               <textarea
                 id="description"
@@ -190,7 +191,7 @@ const PlanEdit = () => {
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                placeholder="여행 계획에 대한 설명을 입력하세요 (선택사항)"
+                placeholder={t('placeholder_plan_desc')}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f1921] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent resize-none"
               />
             </div>
@@ -199,7 +200,7 @@ const PlanEdit = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="start_date" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  시작일 *
+                  {t('label_start_date')} *
                 </label>
                 <input
                   type="date"
@@ -214,7 +215,7 @@ const PlanEdit = () => {
 
               <div>
                 <label htmlFor="end_date" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  종료일 *
+                  {t('label_end_date')} *
                 </label>
                 <input
                   type="date"
@@ -239,11 +240,11 @@ const PlanEdit = () => {
                   className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-[#1392ec] focus:ring-2 focus:ring-[#1392ec] focus:ring-offset-0"
                 />
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  공개 여행 계획으로 설정
+                  {t('label_public_toggle')}
                 </span>
               </label>
               <p className="mt-2 ml-8 text-sm text-gray-500 dark:text-gray-400">
-                공개로 설정하면 다른 사용자들이 이 여행 계획을 볼 수 있습니다
+                {t('desc_public_toggle')}
               </p>
             </div>
 
@@ -256,10 +257,10 @@ const PlanEdit = () => {
                   </svg>
                   <div>
                     <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">
-                      날짜 변경 시 주의사항
+                      {t('title_date_warning')}
                     </p>
                     <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                      이 계획에는 이미 {plan.details.length}개의 장소가 추가되어 있습니다. 날짜를 변경하면 기존 장소의 날짜가 계획 범위를 벗어날 수 있습니다.
+                      {t('desc_date_warning', { count: plan.details.length })}
                     </p>
                   </div>
                 </div>
@@ -274,14 +275,14 @@ const PlanEdit = () => {
               onClick={() => navigate(`/plans/${planId}`)}
               className="flex-1 h-12 px-6 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
             >
-              취소
+              {t('btn_cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="flex-1 h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              {submitting ? '저장 중...' : '저장'}
+              {submitting ? t('btn_saving') : t('btn_save')}
             </button>
           </div>
         </form>

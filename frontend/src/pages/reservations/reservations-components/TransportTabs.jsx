@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext'; // [NEW] Import language hook
 
 /**
  * 교통 수단 탭 네비게이션 컴포넌트
@@ -11,6 +12,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const TransportTabs = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage(); // [NEW] Use hook
 
   /**
    * 현재 활성화된 탭 결정 함수
@@ -35,21 +37,11 @@ const TransportTabs = () => {
    * 각 탭의 표시 이름, 아이콘, 이동할 경로를 정의합니다
    */
   const tabs = [
-    {
-      label: '항공',
-      icon: 'flight',
-      path: '/reservations/flights'
-    },
-    {
-      label: '기차',
-      icon: 'train',
-      path: '/reservations/trains'
-    },
-    {
-      label: '지하철',
-      icon: 'subway',
-      path: '/reservations/subway'
-    },
+    { id: 'flight', label: t('tab_flight'), icon: 'flight', path: '/reservations/flights' },
+    { id: 'train', label: t('tab_train'), icon: 'train', path: '/reservations/trains' },
+    // { id: 'bus', label: t('tab_bus'), icon: 'directions_bus', path: '/reservations/buses' },
+    { id: 'subway', label: t('tab_subway'), icon: 'subway', path: '/reservations/subway' },
+    // { id: 'taxi', label: t('tab_taxi'), icon: 'local_taxi', path: '/reservations/taxi' },
   ];
 
   /**
@@ -72,10 +64,9 @@ const TransportTabs = () => {
           className={`
             px-6 py-4 font-medium transition-all duration-300
             flex items-center gap-2
-            ${
-              activeTab === index
-                ? 'text-primary border-b-[3px] border-primary'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+            ${activeTab === index
+              ? 'text-primary border-b-[3px] border-primary'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
             }
           `}
         >

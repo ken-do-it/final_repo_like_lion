@@ -32,6 +32,7 @@ from service import (
 )
 from database import get_db
 from auth import get_current_user, require_auth
+from translation_client import translate_batch_proxy
 
 router = APIRouter(prefix="/places", tags=["Places"])
 
@@ -128,6 +129,7 @@ async def search_places(
     query: str = Query(..., min_length=1, description="검색어"),
     category: Optional[str] = Query(None, description="카테고리 필터"),
     city: Optional[str] = Query(None, description="도시 필터"),
+    lang: Optional[str] = Query(None, description="타겟 언어 (예: eng_Latn)"),
     db: Session = Depends(get_db)
 ):
     """
@@ -136,6 +138,56 @@ async def search_places(
     참고: API 특성상 총 결과 수는 제한적일 수 있음 (카카오+구글 합쳐서 최대 ~45개)
     """
     all_results = await search_places_hybrid(query, category, city, db=db)
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = []
+            
+            # 각 결과에서 번역할 필드 수집
+            for res in all_results:
+                # Name
+                items_to_translate.append({
+                    "text": res.get("name", ""),
+                    "entity_type": "place_name",
+                    "entity_id": res.get("id") or 0,
+                    "field": "name"
+                })
+                # Address
+                items_to_translate.append({
+                    "text": res.get("address", ""),
+                    "entity_type": "place_address",
+                    "entity_id": res.get("id") or 0,
+                    "field": "address"
+                })
+                # Category
+                items_to_translate.append({
+                    "text": res.get("category_main", ""),
+                    "entity_type": "place_category",
+                    "entity_id": res.get("id") or 0,
+                    "field": "category_main"
+                })
+
+            if items_to_translate:
+                translated_map = await translate_batch_proxy(items_to_translate, lang)
+                
+                # 결과에 적용 (순서대로 3개씩 매칭)
+                current_idx = 0
+                for res in all_results:
+                    if current_idx in translated_map:
+                        res["name"] = translated_map[current_idx]
+                    current_idx += 1
+                    
+                    if current_idx in translated_map:
+                        res["address"] = translated_map[current_idx]
+                    current_idx += 1
+                    
+                    if current_idx in translated_map:
+                        res["category_main"] = translated_map[current_idx]
+                    current_idx += 1
+                    
+        except Exception as e:
+            print(f"Translation failed: {e}")
 
     return {
         "query": query,
@@ -176,6 +228,7 @@ async def get_place_detail_by_api_id(
     place_api_id: str = Query(..., description="외부 API의 장소 ID"),
     provider: str = Query("KAKAO", description="제공자 (KAKAO, GOOGLE)"),
     name: str = Query(..., description="장소명 (검색용)"),
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db),
     user_id: Optional[int] = Depends(get_current_user)
 ):
@@ -255,7 +308,7 @@ async def get_place_detail_by_api_id(
         is_bookmarked = bookmark is not None
 
     # 4. DB 데이터 + 동적 정보 합치기
-    return {
+    result_data = {
         # DB 정보
         "id": place.id,
         "provider": place.provider,
@@ -279,6 +332,46 @@ async def get_place_detail_by_api_id(
         # 사용자별 정보
         "is_bookmarked": is_bookmarked
     }
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = [
+                {"text": result_data["name"], "entity_type": "place", "entity_id": place.id, "field": "name"},
+                {"text": result_data["address"], "entity_type": "place", "entity_id": place.id, "field": "address"},
+                {"text": result_data["category_main"], "entity_type": "place", "entity_id": place.id, "field": "category_main"},
+                {"text": result_data["city"], "entity_type": "place", "entity_id": place.id, "field": "city"},
+            ]
+            
+            # opening_hours (list of strings) 처리
+            opening_base_idx = len(items_to_translate)
+            for oh in opening_hours:
+                items_to_translate.append({"text": oh, "entity_type": "place_opening_hours", "entity_id": place.id, "field": "opening_hours"})
+                
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            
+            # 기본 필드 적용
+            if 0 in translated_map: result_data["name"] = translated_map[0]
+            if 1 in translated_map: result_data["address"] = translated_map[1]
+            if 2 in translated_map: result_data["category_main"] = translated_map[2]
+            if 3 in translated_map: result_data["city"] = translated_map[3]
+            
+            # 영업시간 적용
+            new_opening_hours = []
+            for i in range(len(opening_hours)):
+                idx = opening_base_idx + i
+                if idx in translated_map:
+                    new_opening_hours.append(translated_map[idx])
+                else:
+                    new_opening_hours.append(opening_hours[i])
+            
+            if new_opening_hours:
+                result_data["opening_hours"] = new_opening_hours
+                
+        except Exception as e:
+            print(f"Detail translation failed: {e}")
+
+    return result_data
 
 
 # ==================== 현지인 인증 ====================
