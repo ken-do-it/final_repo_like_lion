@@ -35,7 +35,7 @@ const ReservationSidebar = () => {
   return (
     <aside className="space-y-6">
       {/* 혜택 안내 카드 */}
-      <div className="bg-slate-50 dark:bg-surface-dark rounded-xl p-6">
+      <div className="bg-slate-50 dark:bg-[#1e2b36] rounded-xl p-6">
         <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">
           Tripko 혜택
         </h3>

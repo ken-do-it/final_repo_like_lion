@@ -181,7 +181,7 @@ const TrainSearch = () => {
                       value={formData.depPlaceId}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e2b36] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       <option value="">출발역 선택</option>
                       {stations.map((station) => (
@@ -214,7 +214,7 @@ const TrainSearch = () => {
                       value={formData.arrPlaceId}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e2b36] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       <option value="">도착역 선택</option>
                       {stations.map((station) => (
@@ -238,7 +238,7 @@ const TrainSearch = () => {
                     onChange={handleChange}
                     min={getTodayString()}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e2b36] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
 
@@ -251,7 +251,7 @@ const TrainSearch = () => {
                     name="trainGradeCode"
                     value={formData.trainGradeCode}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1e2b36] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     {trainTypes.map((type) => (
                       <option key={type.code} value={type.code}>

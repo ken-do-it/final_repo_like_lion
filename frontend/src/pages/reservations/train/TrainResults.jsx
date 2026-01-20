@@ -165,7 +165,7 @@ const TrainResults = () => {
           {/* 왼쪽 영역: 검색 결과 */}
           <div className="lg:col-span-8">
             {/* 검색 조건 표시 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-4 mb-6">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -216,7 +216,7 @@ const TrainResults = () => {
               {trains.map((train, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-surface-dark rounded-xl shadow-sm hover:shadow-md transition-shadow p-6"
+                  className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6"
                 >
                   <div className="flex items-center justify-between">
                     {/* 왼쪽: 열차 정보 */}
@@ -298,7 +298,7 @@ const TrainResults = () => {
 
             {/* 결과가 없을 때 */}
             {trains.length === 0 && !error && (
-              <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-12 text-center">
+              <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-12 text-center">
                 <span className="material-symbols-outlined text-gray-400 text-6xl mb-4 block">
                   search_off
                 </span>

@@ -322,7 +322,7 @@ const FlightResults = () => {
         <TransportTabs />
 
         {/* 검색 조건 요약 */}
-        <div className="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-md mt-6 flex items-center justify-between flex-wrap gap-4">
+        <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-4 shadow-md mt-6 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">flight_takeoff</span>
@@ -353,7 +353,7 @@ const FlightResults = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
           {/* 왼쪽: 필터 */}
           <aside className="lg:col-span-3">
-            <div className="bg-white dark:bg-surface-dark rounded-xl p-6 shadow-lg sticky top-8">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-lg sticky top-8">
               <h3 className="font-semibold text-lg mb-4 dark:text-white">필터</h3>
 
               <div className="mb-6">
@@ -388,7 +388,7 @@ const FlightResults = () => {
 
                 {/* 왕복: 선택한 가는편 표시 */}
                 {isRoundTrip && selectedOutbound && (
-                  <div className="bg-white dark:bg-surface-dark rounded-xl p-6 shadow-md border-2 border-primary">
+                  <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-md border-2 border-primary">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">선택한 가는편</h3>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -431,7 +431,7 @@ const FlightResults = () => {
 
                 {/* 항공편 목록 */}
                 {currentFlights.length === 0 ? (
-                  <div className="bg-white dark:bg-surface-dark rounded-xl p-8 text-center">
+                  <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-8 text-center">
                     <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">flight</span>
                     <p className="text-gray-600 dark:text-gray-400">검색 조건에 맞는 항공편이 없습니다.</p>
                   </div>
@@ -439,7 +439,7 @@ const FlightResults = () => {
                   currentFlights.map((flight, index) => (
                     <div
                       key={flight.offerId || index}
-                      className="bg-white dark:bg-surface-dark rounded-xl shadow-md p-5 hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-primary"
+                      className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-md p-5 hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-primary"
                       onClick={() => isRoundTrip && selectedOutbound ? handleSelectInbound(flight) : handleSelectOutbound(flight)}
                     >
                       <div className="flex items-center justify-between">

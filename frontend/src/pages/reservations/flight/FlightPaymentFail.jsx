@@ -73,7 +73,7 @@ const FlightPaymentFail = () => {
 
   return (
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center px-4">
-      <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-12 max-w-md w-full">
+      <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-12 max-w-md w-full">
         {/* 에러 아이콘 */}
         <div className="bg-red-100 dark:bg-red-900/30 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
           <span className="material-symbols-outlined text-red-600 dark:text-red-400 text-5xl">
@@ -110,7 +110,7 @@ const FlightPaymentFail = () => {
           </button>
           <button
             onClick={handleStartOver}
-            className="w-full bg-white dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="w-full bg-white dark:bg-[#1e2b36] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             처음부터 다시 시작
           </button>

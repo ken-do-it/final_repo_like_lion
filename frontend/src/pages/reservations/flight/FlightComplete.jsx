@@ -63,7 +63,7 @@ const FlightComplete = () => {
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center px-4 py-12">
       <div className="max-w-2xl w-full">
         {/* 성공 메시지 카드 */}
-        <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-12 text-center mb-6">
+        <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-12 text-center mb-6">
           {/* 성공 아이콘 */}
           <div className="bg-green-100 dark:bg-green-900/30 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
             <span className="material-symbols-outlined text-green-600 dark:text-green-400 text-6xl">
@@ -161,14 +161,14 @@ const FlightComplete = () => {
         {/* 버튼 영역 */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() => navigate('/mypage')}
+            onClick={() => navigate('/mypage?tab=reservations')}
             className="bg-primary text-white py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
           >
             내 예약 보기
           </button>
           <button
             onClick={() => navigate('/')}
-            className="bg-white dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-4 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="bg-white dark:bg-[#1e2b36] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-4 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             홈으로 가기
           </button>

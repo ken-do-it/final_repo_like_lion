@@ -372,7 +372,7 @@ const FlightSeat = () => {
           {/* 메인 콘텐츠 영역 */}
           <main className="lg:col-span-8 space-y-6">
             {/* 선택한 항공편 정보 카드 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4 dark:text-white">
                 선택한 항공편 {isRoundTrip && <span className="text-sm font-normal text-primary ml-2">왕복</span>}
               </h2>
@@ -502,7 +502,7 @@ const FlightSeat = () => {
             </div>
 
             {/* 좌석 등급 선택 카드 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4 dark:text-white">
                 좌석 등급 선택
               </h2>
@@ -548,7 +548,7 @@ const FlightSeat = () => {
 
             {/* 탑승자 정보 입력 폼 (조건부 표시) */}
             {showPassengerForm && (
-              <div id="passenger-form" className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
+              <div id="passenger-form" className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4 dark:text-white">
                 탑승자 정보
               </h2>
@@ -666,7 +666,7 @@ const FlightSeat = () => {
             )}
 
             {/* 결제하기 버튼 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
