@@ -222,7 +222,7 @@ const ShortsUploadPage = () => {
                             className="form-input w-full !pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-gray-800 dark:border-gray-600 outline-none transition-all"
                             value={locationInput}
                             onChange={(e) => setLocationInput(e.target.value)}
-                            placeholder="e.g. Korea"
+                            placeholder={t('shorts_location_placeholder')}
                         />
                     </div>
                 </div>

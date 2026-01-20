@@ -281,8 +281,20 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost",
     "http://localhost:80",
+    "http://localhost:5173",
     "http://127.0.0.1",
     "http://127.0.0.1:80",
+    "http://127.0.0.1:5173",
+]
+
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:80",
+    "http://localhost:5173",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+    "http://127.0.0.1:5173",
 ]
 
 # Time Zone

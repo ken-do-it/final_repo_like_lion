@@ -4,10 +4,10 @@ import axiosInstance from './axios';
 // Travel Plan APIs
 export const plansApi = {
   // Get all plans
-  getPlans: () => axiosInstance.get('/plans/'),
+  getPlans: (params) => axiosInstance.get('/plans/', { params }),
 
   // Get plan by ID
-  getPlanById: (planId) => axiosInstance.get(`/plans/${planId}/`),
+  getPlanById: (planId, params) => axiosInstance.get(`/plans/${planId}/`, { params }),
 
   // Create new plan
   createPlan: (data) => axiosInstance.post('/plans/', data),
@@ -25,7 +25,7 @@ export const plansApi = {
 // Plan Details APIs
 export const planDetailsApi = {
   // Get plan details
-  getPlanDetails: (planId) => axiosInstance.get(`/plans/${planId}/details/`),
+  getPlanDetails: (planId, params) => axiosInstance.get(`/plans/${planId}/details/`, { params }),
 
   // Add place to plan
   addPlaceToplan: (planId, data) => axiosInstance.post(`/plans/${planId}/details/`, data),
@@ -97,7 +97,7 @@ export const planLikesApi = {
 // Comment APIs
 export const planCommentsApi = {
   // Get comments for plan
-  getComments: (planId) => axiosInstance.get(`/plans/${planId}/comments/`),
+  getComments: (planId, params) => axiosInstance.get(`/plans/${planId}/comments/`, { params }),
 
   // Create comment
   createComment: (planId, data) => axiosInstance.post(`/plans/${planId}/comments/`, data),
