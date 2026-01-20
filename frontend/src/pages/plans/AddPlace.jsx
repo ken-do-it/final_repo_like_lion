@@ -4,11 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
 import { placesAxios } from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext'; // [NEW]
 
 const AddPlace = () => {
   const { planId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage(); // [NEW]
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -29,7 +31,7 @@ const AddPlace = () => {
   // 로그인 체크
   useEffect(() => {
     if (!isAuthenticated) {
-      alert('로그인이 필요한 서비스입니다.');
+      alert(t('alert_login_required_service'));
       navigate(-1); // 이전 페이지로 돌아가기
     }
   }, [isAuthenticated, navigate]);
@@ -93,7 +95,7 @@ const AddPlace = () => {
         date: response.data.start_date,
       }));
     } catch (err) {
-      setError('여행 계획을 불러오는데 실패했습니다.');
+      setError(t('msg_plan_not_found'));
       console.error('Error fetching plan:', err);
     } finally {
       setLoading(false);
@@ -116,18 +118,18 @@ const AddPlace = () => {
     e.preventDefault();
 
     if (!formData.place_name.trim()) {
-      alert('장소 이름을 입력해주세요.');
+      alert(t('alert_place_name_required'));
       return;
     }
 
     if (!formData.date) {
-      alert('방문 날짜를 선택해주세요.');
+      alert(t('alert_visit_date_required'));
       return;
     }
 
     // Validate date is within plan range
     if (formData.date < plan.start_date || formData.date > plan.end_date) {
-      alert(`날짜는 ${plan.start_date}부터 ${plan.end_date} 사이여야 합니다.`);
+      alert(t('alert_date_range_error', { startDate: plan.start_date, endDate: plan.end_date }));
       return;
     }
 
@@ -137,7 +139,7 @@ const AddPlace = () => {
       navigate(`/plans/${planId}`);
     } catch (err) {
       console.error('Error adding place:', err);
-      alert(err.response?.data?.detail || err.response?.data?.error || '장소를 추가하는데 실패했습니다.');
+      alert(err.response?.data?.detail || err.response?.data?.error || t('alert_add_place_fail'));
     } finally {
       setSubmitting(false);
     }
@@ -147,7 +149,7 @@ const AddPlace = () => {
     return (
       <div className="container mx-auto px-4 max-w-screen-xl py-12">
         <div className="flex justify-center items-center min-h-[400px]">
-          <div className="text-gray-600 dark:text-gray-400">로딩 중...</div>
+          <div className="text-gray-600 dark:text-gray-400">{t('msg_loading')}</div>
         </div>
       </div>
     );
@@ -157,12 +159,12 @@ const AddPlace = () => {
     return (
       <div className="container mx-auto px-4 max-w-screen-xl py-12">
         <div className="flex flex-col justify-center items-center min-h-[400px]">
-          <div className="text-red-600 dark:text-red-400 mb-4">{error || '계획을 찾을 수 없습니다.'}</div>
+          <div className="text-red-600 dark:text-red-400 mb-4">{error || t('msg_plan_not_found')}</div>
           <button
             onClick={() => navigate('/plans')}
             className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] transition-all"
           >
-            목록으로 돌아가기
+            {t('btn_back_to_list')}
           </button>
         </div>
       </div>
@@ -190,13 +192,13 @@ const AddPlace = () => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            뒤로 가기
+            {t('btn_back')}
           </button>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            장소 추가
+            {t('title_add_place')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {plan.title}에 새로운 장소를 추가합니다
+            {t('subtitle_add_place', { planTitle: plan.title })}
           </p>
         </div>
 
@@ -206,7 +208,7 @@ const AddPlace = () => {
             {/* Place Name with Autocomplete */}
             <div className="relative">
               <label htmlFor="place_name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                장소 이름 *
+                {t('label_place_name')} *
               </label>
               <input
                 type="text"
@@ -222,7 +224,7 @@ const AddPlace = () => {
                 onBlur={() => {
                   setTimeout(() => setShowSuggestions(false), 200);
                 }}
-                placeholder="예: 경복궁, 남산타워"
+                placeholder={t('placeholder_place_name')}
                 className={`w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f1921] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent ${showSuggestions && suggestions.length > 0 ? 'rounded-b-none' : ''}`}
                 autoComplete="off"
                 required
@@ -269,7 +271,7 @@ const AddPlace = () => {
                     <svg className="w-4 h-4 text-[#1392ec]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="text-sm font-medium text-[#1392ec]">선택됨</span>
+                    <span className="text-sm font-medium text-[#1392ec]">{t('msg_selected')}</span>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     {selectedPlace.address}
@@ -279,7 +281,7 @@ const AddPlace = () => {
 
               {!selectedPlace && (
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  장소 이름을 입력하면 자동완성 목록이 나타납니다
+                  {t('msg_autocomplete_guide')}
                 </p>
               )}
             </div>
@@ -287,7 +289,7 @@ const AddPlace = () => {
             {/* Date */}
             <div>
               <label htmlFor="date" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                방문 날짜 *
+                {t('label_visit_date')} *
               </label>
               <select
                 id="date"
@@ -312,7 +314,7 @@ const AddPlace = () => {
             {/* Order Index */}
             <div>
               <label htmlFor="order_index" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                방문 순서
+                {t('label_visit_order')}
               </label>
               <input
                 type="number"
@@ -324,14 +326,14 @@ const AddPlace = () => {
                 className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f1921] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent"
               />
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                같은 날짜 내에서의 방문 순서 (0부터 시작)
+                {t('desc_visit_order')}
               </p>
             </div>
 
             {/* Description */}
             <div>
               <label htmlFor="description" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                메모
+                {t('label_memo')}
               </label>
               <textarea
                 id="description"
@@ -339,7 +341,7 @@ const AddPlace = () => {
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                placeholder="이 장소에 대한 메모를 입력하세요 (선택사항)"
+                placeholder={t('placeholder_memo')}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#0f1921] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent resize-none"
               />
             </div>
@@ -352,14 +354,14 @@ const AddPlace = () => {
               onClick={() => navigate(`/plans/${planId}`)}
               className="flex-1 h-12 px-6 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
             >
-              취소
+              {t('btn_cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="flex-1 h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              {submitting ? '추가 중...' : '장소 추가'}
+              {submitting ? t('btn_adding') : t('btn_add_place')}
             </button>
           </div>
         </form>

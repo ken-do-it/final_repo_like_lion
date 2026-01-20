@@ -162,7 +162,7 @@ const SearchPage = () => {
                         </div>
                       </div>
                       <div className="flex flex-col gap-1 px-1 pb-1">
-                        <h3 className="line-clamp-1 text-lg font-bold group-hover:text-[#1392ec]">{short.title || 'Untitled'}</h3>
+                        <h3 className="line-clamp-1 text-lg font-bold group-hover:text-[#1392ec]">{(short.title_translated && short.title_translated !== 'Untitled') ? short.title_translated : (short.title || 'Untitled')}</h3>
                         <p className="text-sm text-gray-500 line-clamp-2">{short.content || short.description}</p>
                       </div>
                     </div>

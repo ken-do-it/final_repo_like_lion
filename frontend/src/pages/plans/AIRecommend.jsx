@@ -3,31 +3,33 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext'; // [NEW]
 
 const DESTINATIONS = [
-  { value: 'gapyeong_yangpyeong', label: '가평/양평' },
-  { value: 'gangneung_sokcho', label: '강릉/속초' },
-  { value: 'gyeongju', label: '경주' },
-  { value: 'busan', label: '부산' },
-  { value: 'yeosu', label: '여수' },
-  { value: 'incheon', label: '인천' },
-  { value: 'jeonju', label: '전주' },
-  { value: 'jeju', label: '제주' },
-  { value: 'chuncheon_hongcheon', label: '춘천/홍천' },
-  { value: 'taean', label: '태안' },
+  { value: 'gapyeong_yangpyeong', labelKey: 'dest_gapyeong_yangpyeong' },
+  { value: 'gangneung_sokcho', labelKey: 'dest_gangneung_sokcho' },
+  { value: 'gyeongju', labelKey: 'dest_gyeongju' },
+  { value: 'busan', labelKey: 'dest_busan' },
+  { value: 'yeosu', labelKey: 'dest_yeosu' },
+  { value: 'incheon', labelKey: 'dest_incheon' },
+  { value: 'jeonju', labelKey: 'dest_jeonju' },
+  { value: 'jeju', labelKey: 'dest_jeju' },
+  { value: 'chuncheon_hongcheon', labelKey: 'dest_chuncheon_hongcheon' },
+  { value: 'taean', labelKey: 'dest_taean' },
 ];
 
 const TRAVEL_STYLES = [
-  { value: 'healing', label: '힐링/휴양', icon: '🧘', description: '조용하고 편안한 여행' },
-  { value: 'activity', label: '액티비티', icon: '🏄', description: '활동적이고 역동적인 여행' },
-  { value: 'culture', label: '문화/역사', icon: '🎭', description: '역사와 문화를 느끼는 여행' },
-  { value: 'food', label: '맛집 투어', icon: '🍜', description: '맛집 탐방 중심 여행' },
-  { value: 'nature', label: '자연 경관', icon: '🏔️', description: '자연을 만끽하는 여행' },
+  { value: 'healing', labelKey: 'style_healing', icon: '🧘', descriptionKey: 'style_healing_desc' },
+  { value: 'activity', labelKey: 'style_activity', icon: '🏄', descriptionKey: 'style_activity_desc' },
+  { value: 'culture', labelKey: 'style_culture', icon: '🎭', descriptionKey: 'style_culture_desc' },
+  { value: 'food', labelKey: 'style_food', icon: '🍜', descriptionKey: 'style_food_desc' },
+  { value: 'nature', labelKey: 'style_nature', icon: '🏔️', descriptionKey: 'style_nature_desc' },
 ];
 
 const AIRecommend = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage(); // [NEW]
   const [loading, setLoading] = useState(false);
   const [pollingRequestId, setPollingRequestId] = useState(null);
   const [formData, setFormData] = useState({
@@ -41,7 +43,7 @@ const AIRecommend = () => {
   // 로그인 체크
   useEffect(() => {
     if (!isAuthenticated) {
-      alert('로그인이 필요한 서비스입니다.');
+      alert(t('alert_login_required_service'));
       navigate(-1); // 이전 페이지로 돌아가기
     }
   }, [isAuthenticated, navigate]);
@@ -73,7 +75,7 @@ const AIRecommend = () => {
         if (request.status === 'success') {
           setLoading(false);
           setPollingRequestId(null);
-          alert('AI 여행 추천이 완료되었습니다!');
+          alert(t('msg_create_success'));
           if (request.created_plan) {
             navigate(`/plans/${request.created_plan}`);
           } else {
@@ -82,14 +84,14 @@ const AIRecommend = () => {
         } else if (request.status === 'failed') {
           setLoading(false);
           setPollingRequestId(null);
-          alert('AI 추천 생성에 실패했습니다. 다시 시도해주세요.');
+          alert(t('msg_create_fail'));
         } else if (attempts < maxAttempts) {
           attempts++;
           setTimeout(poll, 1000); // Poll every 1 second
         } else {
           setLoading(false);
           setPollingRequestId(null);
-          alert('요청 시간이 초과되었습니다. 나중에 다시 시도해주세요.');
+          alert(t('alert_ai_request_fail'));
         }
       } catch (err) {
         console.error('Error polling AI request:', err);
@@ -99,7 +101,7 @@ const AIRecommend = () => {
         } else {
           setLoading(false);
           setPollingRequestId(null);
-          alert('AI 추천 상태 확인에 실패했습니다.');
+          alert(t('alert_ai_polling_fail'));
         }
       }
     };
@@ -112,19 +114,19 @@ const AIRecommend = () => {
 
     // Validation
     if (!formData.destination) {
-      alert('목적지를 선택해주세요.');
+      alert(t('alert_dest_required'));
       return;
     }
     if (!formData.start_date || !formData.end_date) {
-      alert('여행 날짜를 선택해주세요.');
+      alert(t('alert_date_required'));
       return;
     }
     if (new Date(formData.start_date) > new Date(formData.end_date)) {
-      alert('종료 날짜는 시작 날짜보다 이후여야 합니다.');
+      alert(t('alert_date_order'));
       return;
     }
     if (!formData.travel_style) {
-      alert('여행 스타일을 선택해주세요.');
+      alert(t('alert_style_required'));
       return;
     }
 
@@ -138,7 +140,7 @@ const AIRecommend = () => {
       pollAIRequest(requestId);
     } catch (err) {
       console.error('Error creating AI request:', err);
-      alert('AI 추천 요청에 실패했습니다.');
+      alert(t('alert_ai_request_fail'));
       setLoading(false);
     }
   };
@@ -167,11 +169,11 @@ const AIRecommend = () => {
             </svg>
           </button>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
-            AI 여행 추천
+            {t('title_ai_recommend')}
           </h1>
         </div>
         <p className="text-gray-600 dark:text-gray-400">
-          인공지능이 당신의 취향에 맞는 완벽한 여행 일정을 만들어드립니다
+          {t('subtitle_ai_recommend')}
         </p>
       </div>
 
@@ -181,7 +183,7 @@ const AIRecommend = () => {
           {/* Destination */}
           <div className="mb-8">
             <label className="block text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
-              어디로 여행을 떠나시나요? <span className="text-red-500">*</span>
+              {t('q_destination')} <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {DESTINATIONS.map((dest) => (
@@ -189,13 +191,12 @@ const AIRecommend = () => {
                   key={dest.value}
                   type="button"
                   onClick={() => handleChange({ target: { name: 'destination', value: dest.value } })}
-                  className={`h-14 px-4 rounded-lg border-2 font-semibold transition-all ${
-                    formData.destination === dest.value
-                      ? 'border-[#1392ec] bg-[#1392ec] text-white'
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#101a22] text-gray-900 dark:text-gray-100 hover:border-[#1392ec] hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                  }`}
+                  className={`h-14 px-4 rounded-lg border-2 font-semibold transition-all ${formData.destination === dest.value
+                    ? 'border-[#1392ec] bg-[#1392ec] text-white'
+                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#101a22] text-gray-900 dark:text-gray-100 hover:border-[#1392ec] hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    }`}
                 >
-                  {dest.label}
+                  {t(dest.labelKey)}
                 </button>
               ))}
             </div>
@@ -204,12 +205,12 @@ const AIRecommend = () => {
           {/* Date Range */}
           <div className="mb-8">
             <label className="block text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
-              언제 여행을 떠나시나요? <span className="text-red-500">*</span>
+              {t('q_date')} <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="start_date" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  시작 날짜
+                  {t('label_start_date')}
                 </label>
                 <input
                   type="date"
@@ -223,7 +224,7 @@ const AIRecommend = () => {
               </div>
               <div>
                 <label htmlFor="end_date" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  종료 날짜
+                  {t('label_end_date')}
                 </label>
                 <input
                   type="date"
@@ -239,7 +240,7 @@ const AIRecommend = () => {
             </div>
             {calculateDays() > 0 && (
               <p className="mt-2 text-sm text-[#1392ec] font-semibold">
-                총 {calculateDays()}일 여행
+                {t('msg_total_days', { days: calculateDays() })}
               </p>
             )}
           </div>
@@ -247,7 +248,7 @@ const AIRecommend = () => {
           {/* Travel Style */}
           <div className="mb-8">
             <label className="block text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
-              어떤 여행을 원하시나요? <span className="text-red-500">*</span>
+              {t('q_style')} <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {TRAVEL_STYLES.map((style) => (
@@ -255,18 +256,17 @@ const AIRecommend = () => {
                   key={style.value}
                   type="button"
                   onClick={() => handleStyleSelect(style.value)}
-                  className={`p-6 rounded-xl border-2 text-left transition-all ${
-                    formData.travel_style === style.value
-                      ? 'border-[#1392ec] bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#101a22] hover:border-[#1392ec] hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                  }`}
+                  className={`p-6 rounded-xl border-2 text-left transition-all ${formData.travel_style === style.value
+                    ? 'border-[#1392ec] bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#101a22] hover:border-[#1392ec] hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    }`}
                 >
                   <div className="text-3xl mb-2">{style.icon}</div>
                   <div className="font-bold text-gray-900 dark:text-gray-100 mb-1">
-                    {style.label}
+                    {t(style.labelKey)}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {style.description}
+                    {t(style.descriptionKey)}
                   </div>
                 </button>
               ))}
@@ -276,14 +276,14 @@ const AIRecommend = () => {
           {/* Additional Info */}
           <div className="mb-8">
             <label htmlFor="additional_info" className="block text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
-              추가로 원하는 사항이 있나요?
+              {t('q_additional')}
             </label>
             <textarea
               id="additional_info"
               name="additional_info"
               value={formData.additional_info}
               onChange={handleChange}
-              placeholder="예: 애완동물과 함께 갈 수 있는 곳, 가족 단위 여행자에게 적합한 곳, 사진 찍기 좋은 곳 등"
+              placeholder={t('placeholder_additional')}
               rows={4}
               className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#101a22] text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1392ec] focus:border-transparent resize-none"
             />
@@ -297,7 +297,7 @@ const AIRecommend = () => {
               disabled={loading}
               className="flex-1 h-12 px-6 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              취소
+              {t('btn_cancel')}
             </button>
             <button
               type="submit"
@@ -310,10 +310,10 @@ const AIRecommend = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  AI가 여행 계획을 생성 중입니다...
+                  {t('btn_ai_generating')}
                 </span>
               ) : (
-                'AI 추천 받기'
+                t('btn_get_ai_recommend')
               )}
             </button>
           </div>
@@ -325,12 +325,12 @@ const AIRecommend = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
               <div className="text-sm text-purple-800 dark:text-purple-300">
-                <p className="font-semibold mb-1">AI 추천은 어떻게 동작하나요?</p>
+                <p className="font-semibold mb-1">{t('info_ai_how_title')}</p>
                 <ul className="list-disc list-inside space-y-1 text-purple-700 dark:text-purple-400">
-                  <li>입력하신 정보를 바탕으로 AI가 최적의 여행 일정을 생성합니다</li>
-                  <li>날짜별 방문 장소와 설명이 자동으로 추가됩니다</li>
-                  <li>생성된 일정은 언제든지 수정할 수 있습니다</li>
-                  <li>AI 생성에는 약 30초~1분 정도 소요됩니다</li>
+                  <li>{t('info_ai_how_1')}</li>
+                  <li>{t('info_ai_how_2')}</li>
+                  <li>{t('info_ai_how_3')}</li>
+                  <li>{t('info_ai_how_4')}</li>
                 </ul>
               </div>
             </div>

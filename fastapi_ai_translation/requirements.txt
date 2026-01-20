@@ -14,3 +14,4 @@ transformers==4.44.2
 sentencepiece==0.2.0
 huggingface-hub
 openai>=1.0.0
+# llama-cpp-python

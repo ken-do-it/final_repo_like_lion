@@ -150,20 +150,24 @@ class TranslationService:
             
             # Title
             t_text = item.get("title") or ""
-            item["title_translated"] = TranslationService._translate_field_single(entity_id, "title", t_text, src_lang, target_lang)
+            # Title 해시 계산
+            t_hash = hashlib.sha256(t_text.encode("utf-8")).hexdigest() if t_text else None
+            item["title_translated"] = TranslationService._translate_field_single(entity_id, "title", t_text, src_lang, target_lang, t_hash)
             
             # Content
             c_text = item.get("content") or ""
-            item["content_translated"] = TranslationService._translate_field_single(entity_id, "content", c_text, src_lang, target_lang)
+            c_hash = hashlib.sha256(c_text.encode("utf-8")).hexdigest() if c_text else None
+            item["content_translated"] = TranslationService._translate_field_single(entity_id, "content", c_text, src_lang, target_lang, c_hash)
 
             # Location
             l_text = item.get("location") or ""
-            item["location_translated"] = TranslationService._translate_field_single(entity_id, "location", l_text, src_lang, target_lang)
+            l_hash = hashlib.sha256(l_text.encode("utf-8")).hexdigest() if l_text else None
+            item["location_translated"] = TranslationService._translate_field_single(entity_id, "location", l_text, src_lang, target_lang, l_hash)
             
         return data
 
     @staticmethod
-    def _translate_field_single(entity_id, field, text, src_lang, target_lang):
+    def _translate_field_single(entity_id, field, text, src_lang, target_lang, current_hash=None):
         if not text: return ""
         
         entry = TranslationEntry.objects.filter(
@@ -171,7 +175,12 @@ class TranslationService:
         ).first()
         
         if entry:
-            return entry.translated_text
+            # 해시 확인 (자가 치유)
+            if current_hash and entry.source_hash != current_hash:
+                logger.info(f"Cache Hash Mismatch for {field}:{entity_id}. Invalidating...")
+                entry.delete()
+            else:
+                return entry.translated_text
         
         try:
             translated_text, provider = TranslationService.call_fastapi_translate(text, src_lang, target_lang)
@@ -190,59 +199,89 @@ class TranslationService:
             return text
 
     @staticmethod
-    def apply_translation_batch(data, target_lang):
+    def apply_translation_batch(data, target_lang, entity_type="shortform", fields=None):
+        """
+        데이터 목록에 대해 일괄 번역을 적용합니다.
+        
+        :param data: 번역할 데이터 (List or Dict)
+        :param target_lang: 타겟 언어 코드 (예: eng_Latn)
+        :param entity_type: 엔티티 타입 (기본값: shortform, travel_plan 등 사용 가능)
+        :param fields: 번역할 필드 매핑 (Dict: {source_field: target_field})
+                       None일 경우 기본값: {'title': 'title_translated', 'content': 'content_translated', 'location': 'location_translated'}
+        """
         if not target_lang: return data
         items = TranslationService._normalize_data(data)
         if not items: return data
 
+        if fields is None:
+            fields = {
+                'title': 'title_translated',
+                'content': 'content_translated', 
+                'location': 'location_translated'
+            }
+
         requests_map = {} 
         for item in items:
             if not isinstance(item, dict): continue
-            src_lang = item.get("source_lang") or "kor_Hang"
             
-            if src_lang == target_lang:
-                item["title_translated"] = item.get("title", "")
-                item["content_translated"] = item.get("content", "")
-                continue
-
+            # 1. Source Language Detection (if not present, default to Korean)
+            src_lang = item.get("source_lang") or "kor_Hang"
             entity_id = item.get("id") or 0
             
-            # Title
-            t_text = item.get("title") or ""
-            if t_text:
-                key = ("shortform", entity_id, "title", target_lang)
-                if key not in requests_map: requests_map[key] = {'text': t_text, 'consumers': [], 'src': src_lang}
-                requests_map[key]['consumers'].append((item, "title_translated"))
-            else:
-                item["title_translated"] = ""
+            # 2. Iterate through requested fields
+            for src_field, tgt_field in fields.items():
+                original_text = item.get(src_field) or ""
+                
+                # Skip empty text
+                if not original_text:
+                    item[tgt_field] = ""
+                    continue
+                
+                # Special Handling for Location and Comments (Detect language of text itself)
+                current_src_lang = src_lang
+                if src_field == 'location' or (entity_type == 'plan_comment' and src_field == 'content'):
+                    current_src_lang = TranslationService.detect_language(original_text)
 
-            # Content (Shortform)
-            if 'shortform' in item: # Check if it's a ShortformComment (which has 'shortform' field)
-                 # Comment Content
-                c_text = item.get("content") or ""
-                if c_text:
-                    # Use 'shortform_comment' as entity type
-                    key = ("shortform_comment", entity_id, "content", target_lang)
-                    if key not in requests_map: requests_map[key] = {'text': c_text, 'consumers': [], 'src': src_lang}
-                    requests_map[key]['consumers'].append((item, "content")) # Overwrite 'content' or use new field? User said "shown in Korean.. automatic translate". Usually better to keep original and translate, or overwrite if display-only. User implied replacement. Let's overwrite 'content' for now as existing UI uses it.
-            else:
-                # Content (Shortform Video)
-                c_text = item.get("content") or ""
-                if c_text:
-                    key = ("shortform", entity_id, "content", target_lang)
-                    if key not in requests_map: requests_map[key] = {'text': c_text, 'consumers': [], 'src': src_lang}
-                    requests_map[key]['consumers'].append((item, "content_translated"))
+                # If source == target, copy text
+                if current_src_lang == target_lang:
+                    item[tgt_field] = original_text
                 else:
-                    item["content_translated"] = ""
+                    # Special Handling for Shortform Comments
+                    # (This preserves existing specific logic for nested shortform structures if necessary,
+                    # but assumes 'shortform' key indicates a structure that might need unique handling.
+                    # For now, we generalize standard fields. If complex nested logic is needed, it should be handled by caller or mapped differently.)
+                    
+                    # Note: Original code had specific logic for 'shortform' in item which implied a Comment object.
+                    # We will support standard field mapping here. 
+                    # If specific logic for comments is needed, we should pass entity_type="shortform_comment"
+                    
+                    # For Shortform Comments logic preservation:
+                    if entity_type == "shortform" and 'shortform' in item and src_field == 'content':
+                        # It's a comment
+                        key = ("shortform_comment", entity_id, "content", target_lang)
+                         # Comments often modify 'content' in-place or use a specific target. 
+                         # The original code mapped it to 'content' (in-place) or 'content_translated'.
+                         # To be safe, we follow the passed `tgt_field`. 
+                         # But original logic used "shortform_comment" as entity_type for comments.
+                        if key not in requests_map: requests_map[key] = {'text': original_text, 'consumers': [], 'src': src_lang}
+                        requests_map[key]['consumers'].append((item, tgt_field))
+                        continue
 
-            # Location
-            l_text = item.get("location") or ""
-            if l_text:
-                key = ("shortform", entity_id, "location", target_lang)
-                if key not in requests_map: requests_map[key] = {'text': l_text, 'consumers': [], 'src': src_lang}
-                requests_map[key]['consumers'].append((item, "location_translated"))
-            else:
-                item["location_translated"] = ""
+                    # Standard Logic
+                    key = (entity_type, entity_id, src_field, target_lang)
+                    if key not in requests_map: 
+                        requests_map[key] = {
+                            'text': original_text, 
+                            'consumers': [], 
+                            'src': current_src_lang
+                        }
+                    requests_map[key]['consumers'].append((item, tgt_field))
+                    
+                    # 검증을 위한 해시 저장
+                    if not original_text:
+                        requests_map[key]['hash'] = None
+                    else:
+                        requests_map[key]['hash'] = hashlib.sha256(original_text.encode("utf-8")).hexdigest()
 
         if not requests_map: return data
 
@@ -259,9 +298,26 @@ class TranslationService:
         for key, info in requests_map.items():
             entry = entry_map.get(key)
             if entry:
-                # Hit
-                for (it, field_name) in info['consumers']:
-                    it[field_name] = entry.translated_text
+                # 해시 확인 (자가 치유)
+                text_hash = info.get('hash')
+                requested_src = info.get('src')
+                
+                # Hash match check
+                hash_mismatch = (text_hash and entry.source_hash != text_hash)
+                # Source Lang match check (e.g., detection logic changed)
+                lang_mismatch = (requested_src and entry.source_lang != requested_src)
+
+                if hash_mismatch or lang_mismatch:
+                     if lang_mismatch:
+                         logger.info(f"Cache Lang Mismatch for {key}. Cache:{entry.source_lang} vs Req:{requested_src}. Invalidating...")
+                     
+                     # 해시/언어 불일치 -> Miss로 처리 (강제 업데이트)
+                     entry.delete()
+                     api_call_keys.append(key)
+                else:
+                     # Hit
+                     for (it, field_name) in info['consumers']:
+                         it[field_name] = entry.translated_text
             else:
                 # Miss
                 api_call_keys.append(key)
