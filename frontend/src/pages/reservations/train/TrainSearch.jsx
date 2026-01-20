@@ -164,9 +164,9 @@ const TrainSearch = () => {
         <TransportTabs />
 
         {/* 메인 그리드 레이아웃 (8:4) */}
-        <div className="mt-6 grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           {/* 왼쪽 영역: 검색 폼 */}
-          <div className="col-span-8">
+          <div className="lg:col-span-8">
             <SearchCard title="기차 검색">
               <form onSubmit={handleSearch} className="space-y-6">
                 {/* 출발역 / 도착역 */}
@@ -292,7 +292,7 @@ const TrainSearch = () => {
           </div>
 
           {/* 오른쪽 영역: 사이드바 */}
-          <div className="col-span-4">
+          <div className="lg:col-span-4">
             <ReservationSidebar />
           </div>
         </div>
