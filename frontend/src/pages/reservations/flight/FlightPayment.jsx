@@ -318,9 +318,9 @@ const FlightPayment = () => {
         <TransportTabs />
 
         {/* 메인 그리드 레이아웃 (8:4) */}
-        <div className="mt-6 grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           {/* 왼쪽 영역: 결제 정보 */}
-          <div className="col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-6">
             {/* 예약 정보 요약 카드 */}
             <SearchCard title="예약 정보">
               <div className="space-y-4">
@@ -508,7 +508,7 @@ const FlightPayment = () => {
           </div>
 
           {/* 오른쪽 영역: 사이드바 */}
-          <div className="col-span-4">
+          <div className="lg:col-span-4">
             <ReservationSidebar />
           </div>
         </div>

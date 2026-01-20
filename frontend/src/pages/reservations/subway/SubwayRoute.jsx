@@ -143,9 +143,9 @@ const SubwayRoute = () => {
         <TransportTabs />
 
         {/* 메인 그리드 레이아웃 (8:4) */}
-        <div className="mt-6 grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           {/* 왼쪽 영역: 경로 결과 */}
-          <div className="col-span-8">
+          <div className="lg:col-span-8">
             {/* 검색 조건 표시 */}
             <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-4 mb-6">
               <div className="flex items-center justify-between">
@@ -319,7 +319,7 @@ const SubwayRoute = () => {
           </div>
 
           {/* 오른쪽 영역: 사이드바 */}
-          <div className="col-span-4">
+          <div className="lg:col-span-4">
             <ReservationSidebar />
           </div>
         </div>
