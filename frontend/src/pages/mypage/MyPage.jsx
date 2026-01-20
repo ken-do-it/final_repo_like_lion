@@ -25,6 +25,10 @@ const MyPage = () => {
     const [myShorts, setMyShorts] = useState([]);
     const [shortsLoading, setShortsLoading] = useState(false);
 
+    // My Reservations State
+    const [reservations, setReservations] = useState([]);
+    const [reservationsLoading, setReservationsLoading] = useState(false);
+
     useEffect(() => {
         if (!isAuthenticated) {
             // handled by AuthProvider mostly, but safe guard
@@ -35,6 +39,9 @@ const MyPage = () => {
     useEffect(() => {
         if (activeTab === 'shorts') {
             fetchMyShorts();
+        }
+        if (activeTab === 'reservations') {
+            fetchReservations();
         }
     }, [activeTab, language]);
 
@@ -67,6 +74,18 @@ const MyPage = () => {
             console.error("Failed to fetch shorts", err);
         } finally {
             setShortsLoading(false);
+        }
+    };
+
+    const fetchReservations = async () => {
+        setReservationsLoading(true);
+        try {
+            const response = await api.get('/v1/my/reservations/');
+            setReservations(response.data.items || []);
+        } catch (err) {
+            console.error("Failed to fetch reservations", err);
+        } finally {
+            setReservationsLoading(false);
         }
     };
 
@@ -278,6 +297,85 @@ const MyPage = () => {
         </div>
     );
 
+    const renderReservations = () => {
+        if (reservationsLoading) return <div className="text-center py-20">{t('loading')}</div>;
+
+        if (!reservations || reservations.length === 0) return (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">✈️</div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('no_reservations') || 'No Reservations Yet'}</h3>
+                <p className="mb-6">{t('no_reservations_desc') || 'Book your first flight to explore Korea!'}</p>
+                <Button
+                    onClick={() => navigate('/reservations/flights/search')}
+                    className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
+                >
+                    ✈️ {t('search_flights') || 'Search Flights'}
+                </Button>
+            </div>
+        );
+
+        return (
+            <div className="space-y-4">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                        {t('my_reservations') || 'My Reservations'} ({reservations.length})
+                    </h3>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/reservations/flights/search')}
+                        className="rounded-lg"
+                    >
+                        + {t('new_reservation') || 'New Booking'}
+                    </Button>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                    {reservations.map(reservation => (
+                        <div
+                            key={reservation.reservationId}
+                            className="p-5 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800/60 dark:to-blue-900/20 rounded-2xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all cursor-pointer"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center text-2xl shadow-sm">
+                                        {reservation.type === 'FLIGHT' ? '✈️' : reservation.type === 'TRAIN' ? '🚄' : '🚇'}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-900 dark:text-white text-lg">{reservation.title}</h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                                            {new Date(reservation.startAt).toLocaleDateString('ko-KR', {
+                                                year: 'numeric', month: 'short', day: 'numeric',
+                                                hour: '2-digit', minute: '2-digit'
+                                            })}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${reservation.status === 'CONFIRMED_TEST' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                                            reservation.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                reservation.status === 'CANCELLED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                    'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                        }`}>
+                                        {reservation.status === 'CONFIRMED_TEST' ? '✓ Confirmed' :
+                                            reservation.status === 'PENDING' ? '⏳ Pending' :
+                                                reservation.status === 'CANCELLED' ? '✕ Cancelled' : reservation.status}
+                                    </span>
+                                    <p className="mt-2 font-bold text-lg text-[#1392ec]">
+                                        {Number(reservation.totalAmount).toLocaleString()} {reservation.currency}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                                <span>Order: {reservation.testOrderNo}</span>
+                                <span>{new Date(reservation.createdAt).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     const tabList = [
         { id: 'profile', label: t('tab_profile'), icon: '👤' },
         { id: 'shorts', label: t('tab_shorts'), icon: '🎬' },
@@ -335,9 +433,10 @@ const MyPage = () => {
                             {activeTab === 'profile' && renderProfile()}
                             {activeTab === 'preferences' && renderPreferences()}
                             {activeTab === 'shorts' && renderMyShorts()}
+                            {activeTab === 'reservations' && renderReservations()}
 
                             {/* Placeholders for others */}
-                            {['schedules', 'columns', 'reservations', 'saved', 'reviews'].includes(activeTab) && (
+                            {['schedules', 'columns', 'saved', 'reviews'].includes(activeTab) && (
                                 <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                                     <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-3xl">🚧</div>
                                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Coming Soon</h3>
