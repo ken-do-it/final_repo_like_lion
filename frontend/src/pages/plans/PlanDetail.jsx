@@ -13,6 +13,18 @@ const PlanDetail = () => {
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
+  // 좋아요 상태
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  // 댓글 상태
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingContent, setEditingContent] = useState('');
+
   // 본인 일정인지 확인
   const isOwner = isAuthenticated && plan && user && plan.user === user.id;
 
@@ -22,7 +34,113 @@ const PlanDetail = () => {
 
   useEffect(() => {
     fetchPlanDetail();
+    fetchLikeStatus();
+    fetchComments();
   }, [planId]);
+
+  // 좋아요 상태 조회
+  const fetchLikeStatus = async () => {
+    console.log('fetchLikeStatus called for planId:', planId);
+    try {
+      const response = await plansService.likes.getLikeStatus(planId);
+      console.log('Like status response:', response.data);
+      setIsLiked(response.data.liked);
+      setLikeCount(response.data.like_count);
+    } catch (err) {
+      console.error('Error fetching like status:', err);
+    }
+  };
+
+  // 좋아요 토글
+  const handleLikeToggle = async () => {
+    if (!isAuthenticated) {
+      alert('로그인 후 이용해주세요.');
+      return;
+    }
+
+    try {
+      setLikeLoading(true);
+      const response = await plansService.likes.toggleLike(planId);
+      setIsLiked(response.data.liked);
+      setLikeCount(response.data.like_count);
+    } catch (err) {
+      if (err.response?.status === 403) {
+        alert('공개된 일정만 좋아요할 수 있습니다.');
+      } else {
+        alert('좋아요 처리에 실패했습니다.');
+      }
+      console.error('Error toggling like:', err);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  // 댓글 목록 조회
+  const fetchComments = async () => {
+    console.log('fetchComments called for planId:', planId);
+    try {
+      const response = await plansService.comments.getComments(planId);
+      console.log('Comments response:', response.data);
+      setComments(response.data);
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+    }
+  };
+
+  // 댓글 작성
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    if (!isAuthenticated) {
+      alert('로그인 후 이용해주세요.');
+      return;
+    }
+
+    try {
+      setCommentLoading(true);
+      await plansService.comments.createComment(planId, { content: newComment });
+      setNewComment('');
+      fetchComments();
+    } catch (err) {
+      if (err.response?.status === 403) {
+        alert('공개된 일정만 댓글을 작성할 수 있습니다.');
+      } else {
+        alert('댓글 작성에 실패했습니다.');
+      }
+      console.error('Error creating comment:', err);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  // 댓글 수정
+  const handleCommentUpdate = async (commentId) => {
+    if (!editingContent.trim()) return;
+
+    try {
+      await plansService.comments.updateComment(commentId, { content: editingContent });
+      setEditingCommentId(null);
+      setEditingContent('');
+      fetchComments();
+    } catch (err) {
+      alert('댓글 수정에 실패했습니다.');
+      console.error('Error updating comment:', err);
+    }
+  };
+
+  // 댓글 삭제
+  const handleCommentDelete = async (commentId) => {
+    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
+
+    try {
+      await plansService.comments.deleteComment(commentId);
+      fetchComments();
+    } catch (err) {
+      alert('댓글 삭제에 실패했습니다.');
+      console.error('Error deleting comment:', err);
+    }
+  };
 
   const fetchPlanDetail = async () => {
     try {
@@ -225,22 +343,52 @@ const PlanDetail = () => {
           </p>
         )}
 
-        {isOwner && (
-          <div className="flex gap-4">
+        <div className="flex items-center gap-4">
+          {isOwner && (
+            <>
+              <button
+                onClick={() => navigate(`/plans/${planId}/edit`)}
+                className="h-12 px-6 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
+              >
+                계획 수정
+              </button>
+              <button
+                onClick={() => navigate(`/plans/${planId}/add-place`)}
+                className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all"
+              >
+                장소 추가
+              </button>
+            </>
+          )}
+
+          {/* 좋아요 버튼 - 공개 일정에만 표시 */}
+          {plan.is_public && (
             <button
-              onClick={() => navigate(`/plans/${planId}/edit`)}
-              className="h-12 px-6 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
+              onClick={handleLikeToggle}
+              disabled={likeLoading}
+              className={`flex items-center gap-2 h-12 px-6 rounded-lg font-semibold transition-all ${
+                isLiked
+                  ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
             >
-              계획 수정
+              <svg
+                className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`}
+                fill={isLiked ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span>{likeCount}</span>
             </button>
-            <button
-              onClick={() => navigate(`/plans/${planId}/add-place`)}
-              className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] hover:-translate-y-0.5 transition-all"
-            >
-              장소 추가
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Date Tabs */}
@@ -410,6 +558,128 @@ const PlanDetail = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* 댓글 섹션 - 공개 일정에만 표시 */}
+      {plan.is_public && (
+        <div className="mt-12 bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+            댓글 ({comments.length})
+          </h2>
+
+          {/* 댓글 작성 폼 */}
+          <form onSubmit={handleCommentSubmit} className="mb-6">
+            <div className="flex gap-4">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder={isAuthenticated ? "댓글을 입력하세요..." : "로그인 후 댓글을 작성할 수 있습니다."}
+                disabled={!isAuthenticated || commentLoading}
+                className="flex-1 h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1392ec] disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={!isAuthenticated || commentLoading || !newComment.trim()}
+                className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {commentLoading ? '작성 중...' : '작성'}
+              </button>
+            </div>
+          </form>
+
+          {/* 댓글 목록 */}
+          <div className="space-y-4">
+            {comments.length === 0 ? (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!
+              </p>
+            ) : (
+              comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                          {comment.user_nickname || '익명'}
+                        </span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(comment.created_at).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+
+                      {editingCommentId === comment.id ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={editingContent}
+                            onChange={(e) => setEditingContent(e.target.value)}
+                            className="flex-1 h-10 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1392ec]"
+                          />
+                          <button
+                            onClick={() => handleCommentUpdate(comment.id)}
+                            className="px-4 py-2 rounded-lg bg-[#1392ec] text-white text-sm font-semibold hover:bg-[#0f7bc2]"
+                          >
+                            저장
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingCommentId(null);
+                              setEditingContent('');
+                            }}
+                            className="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-300 dark:hover:bg-gray-600"
+                          >
+                            취소
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {comment.content}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* 본인 댓글일 때만 수정/삭제 버튼 표시 */}
+                    {isAuthenticated && user && comment.user === user.id && editingCommentId !== comment.id && (
+                      <div className="flex gap-1 ml-4">
+                        <button
+                          onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditingContent(comment.content);
+                          }}
+                          className="p-2 text-gray-500 hover:text-[#1392ec] hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          title="수정"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleCommentDelete(comment.id)}
+                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="삭제"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>

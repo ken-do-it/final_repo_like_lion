@@ -726,3 +726,196 @@ def ai_requests_list(request):
 
     serializer = AITravelRequestDetailSerializer(ai_requests, many=True)
     return Response(serializer.data)
+
+
+# ==================== 좋아요 ====================
+@extend_schema(
+    tags=['일정 좋아요'],
+    summary="좋아요 조회 및 토글",
+    responses={
+        200: {'description': '좋아요 정보 또는 좋아요 취소됨'},
+        201: {'description': '좋아요 추가됨'},
+    }
+)
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
+def plan_like_toggle(request, plan_id):
+    """
+    좋아요 조회 / 토글
+
+    GET /api/plans/<plan_id>/like/
+    - 좋아요 수 및 현재 사용자 좋아요 여부 조회
+
+    POST /api/plans/<plan_id>/like/
+    - 좋아요 토글 (로그인 필요)
+    - 이미 좋아요한 경우: 좋아요 취소
+    - 좋아요하지 않은 경우: 좋아요 추가
+    """
+    from .models import PlanLike
+
+    try:
+        plan = TravelPlan.objects.get(id=plan_id)
+    except TravelPlan.DoesNotExist:
+        return Response(
+            {'error': '일정을 찾을 수 없습니다.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if request.method == 'GET':
+        # 좋아요 조회는 모든 유저 가능
+        is_liked = False
+        if request.user.is_authenticated:
+            is_liked = PlanLike.objects.filter(plan=plan, user=request.user).exists()
+
+        return Response({
+            'liked': is_liked,
+            'like_count': plan.likes.count()
+        }, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
+        # 좋아요 토글은 로그인 필요
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # 공개된 일정만 좋아요 가능
+        if not plan.is_public:
+            return Response(
+                {'error': '공개된 일정만 좋아요할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        like, created = PlanLike.objects.get_or_create(
+            plan=plan,
+            user=request.user
+        )
+
+        if not created:
+            # 이미 좋아요한 경우 취소
+            like.delete()
+            return Response({
+                'liked': False,
+                'like_count': plan.likes.count()
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            'liked': True,
+            'like_count': plan.likes.count()
+        }, status=status.HTTP_201_CREATED)
+
+
+# ==================== 댓글 ====================
+@extend_schema(
+    tags=['일정 댓글'],
+    summary="댓글 목록 조회 및 작성",
+    responses={200: 'PlanCommentSerializer(many=True)', 201: 'PlanCommentSerializer'}
+)
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
+def plan_comment_list_create(request, plan_id):
+    """
+    댓글 목록 조회 / 작성
+
+    GET /api/plans/<plan_id>/comments/
+    - 해당 일정의 모든 댓글 조회
+
+    POST /api/plans/<plan_id>/comments/
+    - 댓글 작성 (로그인 필요)
+    """
+    from .models import PlanComment
+    from .serializers import PlanCommentSerializer, PlanCommentCreateSerializer
+
+    try:
+        plan = TravelPlan.objects.get(id=plan_id)
+    except TravelPlan.DoesNotExist:
+        return Response(
+            {'error': '일정을 찾을 수 없습니다.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if request.method == 'GET':
+        # 공개된 일정 또는 본인 일정만 댓글 조회 가능
+        if not plan.is_public and (not request.user.is_authenticated or plan.user != request.user):
+            return Response(
+                {'error': '공개되지 않은 일정입니다.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        comments = PlanComment.objects.filter(plan=plan)
+        serializer = PlanCommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # 공개된 일정만 댓글 작성 가능
+        if not plan.is_public:
+            return Response(
+                {'error': '공개된 일정만 댓글을 작성할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = PlanCommentCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            comment = serializer.save(plan=plan, user=request.user)
+            response_serializer = PlanCommentSerializer(comment)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(
+    tags=['일정 댓글'],
+    summary="댓글 수정/삭제",
+    responses={200: 'PlanCommentSerializer', 204: None}
+)
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def plan_comment_update_delete(request, comment_id):
+    """
+    댓글 수정 / 삭제
+
+    PUT /api/plans/comments/<comment_id>/
+    - 본인 댓글 수정
+
+    DELETE /api/plans/comments/<comment_id>/
+    - 본인 댓글 삭제
+    """
+    from .models import PlanComment
+    from .serializers import PlanCommentSerializer, PlanCommentCreateSerializer
+
+    try:
+        comment = PlanComment.objects.get(id=comment_id)
+    except PlanComment.DoesNotExist:
+        return Response(
+            {'error': '댓글을 찾을 수 없습니다.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # 본인 댓글만 수정/삭제 가능
+    if comment.user != request.user:
+        return Response(
+            {'error': '본인의 댓글만 수정/삭제할 수 있습니다.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    if request.method == 'PUT':
+        serializer = PlanCommentCreateSerializer(comment, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            response_serializer = PlanCommentSerializer(comment)
+            return Response(response_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        comment.delete()
+        return Response(
+            {'message': '댓글이 삭제되었습니다.'},
+            status=status.HTTP_200_OK
+        )
