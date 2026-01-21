@@ -169,7 +169,8 @@ def plan_retrieve_update_delete(request, plan_id):
                         entity_type="plan_detail",
                         fields={
                             'description': 'description',
-                            'place_name': 'place_name'
+                            'place_name': 'place_name',
+                            'place_address': 'place_address'
                         }
                     )
             except Exception as e:
