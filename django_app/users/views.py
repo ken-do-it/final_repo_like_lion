@@ -423,6 +423,31 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         return self.request.user
 
+    def update(self, request, *args, **kwargs):
+        """프로필 업데이트 (PUT을 PATCH처럼 처리)"""
+        partial = kwargs.pop('partial', True)  # 기본적으로 부분 업데이트 허용
+        instance = self.get_object()
+        
+        # 업데이트 가능한 필드만 추출
+        allowed_fields = ['nickname', 'country', 'city', 'phone_number', 'birth_year']
+        update_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = self.get_serializer(instance, data=update_data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """프로필 부분 업데이트 (PATCH)"""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
     def destroy(self, request, *args, **kwargs):
         """회원 탈퇴"""
         serializer = UserWithdrawalSerializer(data=request.data)
@@ -456,6 +481,7 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
         return Response({
             'message': '회원 탈퇴가 완료되었습니다.'
         }, status=status.HTTP_200_OK)
+
 
 
 class PreferencesView(generics.RetrieveUpdateAPIView):
