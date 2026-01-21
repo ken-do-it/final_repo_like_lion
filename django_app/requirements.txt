@@ -21,3 +21,7 @@ openai==1.109.1
 httpx==0.28.1
 langdetect==1.0.9  #텍스트 언어를 자동으로 파악하여 언어코드로 변환하는 라이브러리
 
+
+# AWS S3 Storage
+boto3==1.34.8
+django-storages==1.14.2

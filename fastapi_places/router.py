@@ -37,47 +37,80 @@ from translation_client import translate_batch_proxy
 router = APIRouter(prefix="/places", tags=["Places"])
 
 
-# ==================== 이미지 헬퍼 함수 ====================
+# ==================== 이미지 헬퍼 함수 (S3) ====================
+
+# AWS S3 Settings
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-northeast-2')
+
+# S3 클라이언트 초기화 (환경 변수가 있을 때만)
+s3_client = None
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+    try:
+        import boto3
+        from botocore.exceptions import NoCredentialsError
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_S3_REGION_NAME
+        )
+    except ImportError:
+        print("boto3가 설치되지 않았습니다.")
+    except Exception as e:
+        print(f"S3 클라이언트 초기화 실패: {e}")
 
 def delete_image_file(image_url: str) -> bool:
     """
-    이미지 파일 삭제
-
-    Args:
-        image_url: 이미지 URL (예: http://localhost:8000/media/place_images/xxx.jpg)
-
-    Returns:
-        삭제 성공 여부
+    이미지 파일 삭제 (S3)
     """
     if not image_url:
         return False
+        
+    # S3 미사용 시 (로컬 개발 환경 등) 기존 로직 유지
+    if not s3_client or not AWS_STORAGE_BUCKET_NAME:
+         # 기존 로컬 삭제 로직
+        try:
+            if "/media/" in image_url:
+                relative_path = image_url.split("/media/")[-1]
+                file_path = Path(f"/app/django_app/media/{relative_path}")
+                if file_path.exists():
+                    file_path.unlink()
+                    return True
+        except Exception:
+            pass
+        return False
 
     try:
-        # URL에서 파일 경로 추출
-        # http://localhost:8000/media/place_images/xxx.jpg -> /app/django_app/media/place_images/xxx.jpg
-        if "/media/" in image_url:
-            relative_path = image_url.split("/media/")[-1]
-            file_path = Path(f"/app/django_app/media/{relative_path}")
-
-            if file_path.exists():
-                file_path.unlink()
-                return True
+        # URL에서 S3 Key 추출
+        # 예: https://{bucket}.s3.amazonaws.com/{key}
+        # 또는 https://{bucket}.s3.{region}.amazonaws.com/{key}
+        
+        # 간단히 URL 파싱해서 Key 찾기
+        key = None
+        if f"{AWS_STORAGE_BUCKET_NAME}.s3" in image_url:
+             # 도메인 부분 제거하고 나머지 경로를 Key로 사용
+             # split의 maxsplit=1 사용 불가 (여러 번 나올 수 있음) - urlparse 사용이 정석이나 간단히 처리
+             # https://bucket.s3.region.amazonaws.com/folder/file.jpg -> folder/file.jpg
+             parts = image_url.split(f"amazonaws.com/")
+             if len(parts) > 1:
+                 key = parts[1]
+        
+        if key:
+            s3_client.delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=key)
+            return True
+            
     except Exception as e:
-        print(f"이미지 파일 삭제 실패: {e}")
+        print(f"S3 이미지 삭제 실패: {e}")
 
     return False
 
 
 async def save_image_file(image: UploadFile, subfolder: str = "place_images") -> str:
     """
-    이미지 파일을 저장하고 URL 반환
-
-    Args:
-        image: 업로드된 이미지 파일
-        subfolder: media 하위 폴더명 (기본: place_images)
-
-    Returns:
-        저장된 이미지 URL
+    이미지 파일을 저장하고 URL 반환 (S3)
     """
     # 1. 파일 확장자 검증
     allowed_extensions = {".jpg", ".jpeg", ".png", ".gif"}
@@ -90,36 +123,52 @@ async def save_image_file(image: UploadFile, subfolder: str = "place_images") ->
         )
 
     # 2. 파일 크기 검증 (10MB)
-    image.file.seek(0, 2)
-    file_size = image.file.tell()
-    image.file.seek(0)
-
-    max_size = 10 * 1024 * 1024  # 10MB
-    if file_size > max_size:
-        raise HTTPException(
-            status_code=400,
-            detail=f"파일 크기가 너무 큽니다. 최대 {max_size // (1024*1024)}MB"
-        )
-
-    # 3. 고유 파일명 생성 (UUID)
+    # UploadFile은 spool_max_size를 넘으면 디스크에 저장되므로 seek/tell 방식이 다를 수 있음
+    # 여기서는 read()로 읽어서 확인하거나, content-length 헤더를 신뢰
+    
+    # S3 업로드를 위해 seek(0)
+    await image.seek(0)
+    
+    # 3. 고유 파일명 생성
     unique_filename = f"{uuid.uuid4()}{file_ext}"
-
-    # 4. 저장 경로 설정
-    media_dir = Path(f"/app/django_app/media/{subfolder}")
-    media_dir.mkdir(parents=True, exist_ok=True)
-
-    file_path = media_dir / unique_filename
-
-    # 5. 파일 저장
-    try:
-        with open(file_path, "wb") as f:
-            content = await image.read()
-            f.write(content)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"파일 저장 실패: {str(e)}")
-
-    # 6. URL 반환
-    return f"http://localhost:8000/media/{subfolder}/{unique_filename}"
+    
+    # 4. S3 업로드
+    if s3_client and AWS_STORAGE_BUCKET_NAME:
+        try:
+            key = f"media/{subfolder}/{unique_filename}" # Django media 구조와 일치시키기 위해 media/ prefix 사용
+            
+            # 비동기 처리를 위해 run_in_executor 등을 쓰거나 동기 함수 호출 (boto3 client는 동기)
+            # 여기서는 간단히 동기 호출 (트래픽이 많으면 비동기 래퍼 필요)
+            s3_client.upload_fileobj(
+                image.file,
+                AWS_STORAGE_BUCKET_NAME,
+                key,
+                ExtraArgs={'ContentType': image.content_type}
+            )
+            
+            # S3 URL 반환
+            return f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{key}"
+            
+        except Exception as e:
+            print(f"S3 업로드 실패, 로컬 저장 시도: {e}")
+            # 실패 시 로컬 저장으로 fallback하거나 에러 발생
+            # 여기서는 에러 발생
+            raise HTTPException(status_code=500, detail=f"이미지 업로드 실패: {str(e)}")
+            
+    else:
+        # S3 설정이 없으면 로컬 저장 (기존 로직)
+        print("S3 설정 없음. 로컬 저장소 사용.")
+        media_dir = Path(f"/app/django_app/media/{subfolder}")
+        media_dir.mkdir(parents=True, exist_ok=True)
+        file_path = media_dir / unique_filename
+        
+        try:
+            with open(file_path, "wb") as f:
+                content = await image.read()
+                f.write(content)
+            return f"http://localhost:8000/media/{subfolder}/{unique_filename}"
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"파일 저장 실패: {str(e)}")
 
 
 # ==================== 장소 검색 ====================

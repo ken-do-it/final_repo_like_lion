@@ -305,6 +305,34 @@ USE_TZ = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# AWS S3 Settings
+USE_S3 = os.getenv('USE_S3') == 'True'
+
+if USE_S3:
+    # AWS Settings
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-northeast-2')
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    
+    # S3버킷이 public access가 허용되어 있다면 False, 아니면 True
+    # 여기서는 이미지 파일이므로 Public Read가 가능하다고 가정 (또는 Presigned URL 사용)
+    AWS_QUERYSTRING_AUTH = False 
+    
+    # 캐시 설정 (선택사항)
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    
+    # Django Storages 설정
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    
+    # STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage' # 정적파일도 S3로 하려면
+    
+    # 미디어 파일 URL을 S3 URL로 변경
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
+
 # drf-spectacular Settings (API Documentation)
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Korea Travel API',
