@@ -61,22 +61,9 @@ class ShortformViewSet(viewsets.ModelViewSet):
 
     def _process_video_upload(self, video_file, serializer_instance=None):
         """
-        [Refactoring] Deduped video processing logic.
-        Handles video save, metadata extraction, thumbnail generation, and language detection.
-        Returns a dict of fields to save.
+        [Refactoring] Delegates to VideoService.process_video_pipeline
         """
-        # [서비스 레이어] 비디오 처리
-        saved_path, saved_url = VideoService.save_video_file(video_file)
-        
-        # VideoService는 내부적으로 절대 경로를 생성하지만, extract_metadata는 전체 경로가 필요함
-        from django.core.files.storage import default_storage
-        abs_path = default_storage.path(saved_path)
-        
-        meta = VideoService.extract_metadata(abs_path)
-        thumb_path, thumb_url = VideoService.generate_thumbnail(abs_path)
-
-        # [서비스 레이어] 언어 감지 (제목/내용 필요)
-        # serializer_instance가 있으면 (update) 기존 값 사용, 없으면 (create) 빈 문자열
+        # 제목/내용 추출 (언어 감지에 필요)
         if serializer_instance:
             title = self.request.data.get('title', serializer_instance.title)
             content = self.request.data.get('content', serializer_instance.content)
@@ -84,18 +71,8 @@ class ShortformViewSet(viewsets.ModelViewSet):
             title = self.request.data.get('title', '')
             content = self.request.data.get('content', '')
             
-        full_text = f"{title} {content}".strip()
-        detected_lang = TranslationService.detect_language(full_text)
-
-        return {
-            'video_url': saved_url,
-            'file_size': video_file.size,
-            'duration': meta.get("duration"),
-            'width': meta.get("width"),
-            'height': meta.get("height"),
-            'thumbnail_url': thumb_url,
-            'source_lang': detected_lang,
-        }
+        # [서비스 레이어] 파이프라인 호출 (S3/로컬 하이브리드)
+        return VideoService.process_video_pipeline(video_file, title=title, content=content)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -106,7 +83,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         if not video_file:
             raise exceptions.ValidationError({"video_file": ["This field is required."]})
 
-        # [Refactoring] Use helper method
+        # [Pipeline]
         video_data = self._process_video_upload(video_file)
 
         serializer.save(user=user, **video_data)
@@ -116,7 +93,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         video_file = self.request.FILES.get('video_file')
         
         if video_file:
-             # [Refactoring] Use helper method
+             # [Pipeline]
             video_data = self._process_video_upload(video_file, serializer_instance=self.get_object())
             serializer.save(**video_data)
         else:
