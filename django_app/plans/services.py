@@ -6,7 +6,9 @@ def search_place_from_fastapi(place_name: str):
     """
     FastAPI 장소 검색 API 호출 및 첫 번째 결과 반환
     """
-    url = "http://fastapi_places:8002/api/v1/places/search"
+    # FastAPI places 서버의 엔드포인트: /places/search
+    # Docker 환경에서는 서비스 이름(fastapi_places)으로 접근
+    url = "http://fastapi_places:8002/places/search"
     params = {'query': place_name, 'limit': 1}
     
     try:

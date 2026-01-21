@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 import axios from '../../../api/axios';
 import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-components';
 
@@ -17,6 +18,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
 const TrainResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   /**
    * 이전 페이지(TrainSearch)에서 전달받은 검색 조건
@@ -91,7 +93,7 @@ const TrainResults = () => {
        * 결과가 없으면 안내 메시지 표시
        */
       if (!response.data.results || response.data.results.length === 0) {
-        setError('검색된 기차편이 없습니다. 다른 조건으로 검색해주세요.');
+        setError(t('msg_no_trains_found'));
       }
     } catch (err) {
       console.error('기차편 검색 오류:', err);
@@ -99,7 +101,7 @@ const TrainResults = () => {
       /**
        * 백엔드 에러 메시지 처리
        */
-      const errorMsg = err.response?.data?.error || '기차편 검색 중 오류가 발생했습니다.';
+      const errorMsg = err.response?.data?.error || t('msg_train_search_error');
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -147,7 +149,7 @@ const TrainResults = () => {
           <TransportTabs />
           <div className="mt-6 text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">기차편을 검색하고 있습니다...</p>
+            <p className="text-gray-600 dark:text-gray-400">{t('msg_searching_trains')}</p>
           </div>
         </div>
       </div>
@@ -161,11 +163,11 @@ const TrainResults = () => {
         <TransportTabs />
 
         {/* 메인 그리드 레이아웃 (8:4) */}
-        <div className="mt-6 grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           {/* 왼쪽 영역: 검색 결과 */}
-          <div className="col-span-8">
+          <div className="lg:col-span-8">
             {/* 검색 조건 표시 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-4 mb-6">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -185,7 +187,7 @@ const TrainResults = () => {
                   onClick={() => navigate(-1)}
                   className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
                 >
-                  검색 조건 변경
+                  {t('btn_change_conditions')}
                 </button>
               </div>
             </div>
@@ -206,7 +208,7 @@ const TrainResults = () => {
             {trains.length > 0 && (
               <div className="mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  검색 결과 ({trains.length}개)
+                  {t('title_search_results_count').replace('{count}', trains.length)}
                 </h2>
               </div>
             )}
@@ -216,20 +218,19 @@ const TrainResults = () => {
               {trains.map((train, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-surface-dark rounded-xl shadow-sm hover:shadow-md transition-shadow p-6"
+                  className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6"
                 >
                   <div className="flex items-center justify-between">
                     {/* 왼쪽: 열차 정보 */}
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-4">
                         {/* 열차 종류 배지 */}
-                        <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                          train.trainType && train.trainType.includes('KTX')
+                        <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${train.trainType && train.trainType.includes('KTX')
                             ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                             : train.trainType && train.trainType.includes('SRT')
-                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                        }`}>
+                              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                          }`}>
                           {train.trainType}
                         </span>
 
@@ -276,7 +277,7 @@ const TrainResults = () => {
                     {/* 오른쪽: 요금 및 예매 버튼 */}
                     <div className="ml-6 text-right">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        어른 요금
+                        {t('label_adult_fare')}
                       </p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                         {train.adultFare?.toLocaleString()}원
@@ -285,7 +286,7 @@ const TrainResults = () => {
                         onClick={() => handleBooking(train)}
                         className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
                       >
-                        <span>예매하기</span>
+                        <span>{t('btn_book_ticket')}</span>
                         <span className="material-symbols-outlined text-sm">
                           open_in_new
                         </span>
@@ -298,18 +299,18 @@ const TrainResults = () => {
 
             {/* 결과가 없을 때 */}
             {trains.length === 0 && !error && (
-              <div className="bg-white dark:bg-surface-dark rounded-xl shadow-sm p-12 text-center">
+              <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-12 text-center">
                 <span className="material-symbols-outlined text-gray-400 text-6xl mb-4 block">
                   search_off
                 </span>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  검색된 기차편이 없습니다
+                  {t('msg_no_trains_empty')}
                 </p>
                 <button
                   onClick={() => navigate(-1)}
                   className="text-primary hover:text-primary/80 transition-colors font-medium"
                 >
-                  다른 조건으로 검색하기
+                  {t('btn_search_other_conditions')}
                 </button>
               </div>
             )}
@@ -321,21 +322,21 @@ const TrainResults = () => {
                   <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">
                     info
                   </span>
-                  예매 안내
+                  {t('title_booking_guide')}
                 </h3>
                 <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2 ml-8">
-                  <li>예매하기 버튼을 클릭하면 외부 예매 사이트로 이동합니다</li>
-                  <li>KTX, ITX, 새마을호, 무궁화호는 코레일 홈페이지에서 예매하세요</li>
-                  <li>SRT는 SRT 홈페이지에서만 예매 가능합니다</li>
-                  <li>예매 사이트에서 열차편과 좌석을 선택하여 예매를 완료하세요</li>
-                  <li>결제는 외부 사이트에서 진행됩니다</li>
+                  <li>{t('info_booking_1')}</li>
+                  <li>{t('info_booking_2')}</li>
+                  <li>{t('info_booking_3')}</li>
+                  <li>{t('info_booking_4')}</li>
+                  <li>{t('info_booking_5')}</li>
                 </ul>
               </div>
             )}
           </div>
 
           {/* 오른쪽 영역: 사이드바 */}
-          <div className="col-span-4">
+          <div className="lg:col-span-4">
             <ReservationSidebar />
           </div>
         </div>

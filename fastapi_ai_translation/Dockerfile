@@ -7,11 +7,8 @@ WORKDIR /app
 # 빌드 로그에 메시지 출력
 RUN echo "🚧 [알림] 현재 CPU 모드(Light)로 빌드 중입니다... 🚧"
 
-# 최소한의 시스템 패키지 설치
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# 최소한의 시스템 패키지 설치 (필요시 추가)
+# RUN apt-get update && apt-get install -y ...
 
 # CPU 전용 요구사항 파일 복사
 COPY requirements.txt .

@@ -165,6 +165,15 @@ class ShortformViewSet(viewsets.ModelViewSet):
                     except ValueError:
                         pass # 잘못된 ID는 무시
 
+            # [필터] 검색어 (q)
+            q_param = request.query_params.get("q")
+            if q_param:
+                queryset = queryset.filter(
+                    Q(title__icontains=q_param) | 
+                    Q(content__icontains=q_param) |
+                    Q(location__icontains=q_param)
+                )
+
             page = self.paginate_queryset(queryset)
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
@@ -389,6 +398,25 @@ class ShortformCommentViewSet(viewsets.ModelViewSet):
         # update total_comments using F expression to avoid race conditions
         Shortform.objects.filter(pk=shortform.pk, total_comments__gt=0).update(total_comments=F('total_comments') - 1)
 
+    def perform_update(self, serializer):
+        comment = serializer.save()
+        
+        # [번역] 최신 번역 보장을 위한 캐시 무효화
+        # TranslationService에 해시 기반 자가 치유(Self-Healing) 기능이 있지만,
+        # 수정 작업(Modify) 시에는 명시적으로 무효화하는 것이 좋은 습관임.
+        # 어떤 필드가 캐시되었는지 알아야 함(주로 "content").
+        # 그리고 리스트 조회 시 사용된 entity_type을 알아야 함.
+        # 보통 "shortform_comment"(올바르게 구현된 경우) 또는 "shortform"(레거시).
+        # 안전하게 둘 다 무효화 처리.
+        
+        TranslationService.invalidate_cache("shortform", comment.id) 
+        TranslationService.invalidate_cache("shortform_comment", comment.id)
+        
+        content = serializer.validated_data.get('content', '')
+        if content:
+             detected_lang = TranslationService.detect_language(content)
+             serializer.save(source_lang=detected_lang)
+
 
 class TranslationProxyView(APIView):
     """
@@ -406,7 +434,11 @@ class TranslationProxyView(APIView):
         field = request.data.get("field") or "text"
 
         # [Security] Whitelist Validation
-        ALLOWED_ENTITY_TYPES = ['shortform', 'shortform_comment', 'review', 'raw']
+        ALLOWED_ENTITY_TYPES = [
+            'shortform', 'shortform_comment', 'review', 'raw',
+            'place', 'place_name', 'place_address', 'place_category', 'place_opening_hours', 'place_desc',
+            'local_column', 'local_column_section'
+        ]
         if entity_type not in ALLOWED_ENTITY_TYPES:
             return Response(
                 {"detail": f"Invalid entity_type. Allowed: {ALLOWED_ENTITY_TYPES}"}, 
@@ -436,13 +468,20 @@ class TranslationProxyView(APIView):
             # 여기서 표준 저장을 복제하거나 서비스에 `translate_and_save_generic`을 추가할 수 있음.
             # 일단은 여기서 수동으로 명시적 저장을 함.
             
+            # 모델명 결정 로직
+            model_name = os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
+            if os.getenv("AI_ENGINE") == "gemma-cpu":
+                model_name = "google/gemma-2-2b-it-cpu"
+            elif os.getenv("GGUF_MODEL_PATH"):
+                 model_name = os.path.basename(os.getenv("GGUF_MODEL_PATH"))
+
             # 여기서 수동으로 저장
             TranslationEntry.objects.create(
                 entity_type=entity_type, entity_id=entity_id, field=field,
                 source_lang=source_lang, target_lang=target_lang,
                 source_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
                 translated_text=translated_text, provider=provider,
-                model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+                model=model_name,
                 last_used_at=timezone.now(),
             )
             
@@ -450,7 +489,7 @@ class TranslationProxyView(APIView):
                 "translated_text": translated_text,
                 "cached": False,
                 "provider": provider,
-                "model": "facebook/nllb-200-distilled-600M",
+                "model": model_name,
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -490,7 +529,11 @@ class TranslationBatchView(APIView):
             field = item.get("field", "text")
 
             # [Security] Whitelist Validation (Skip invalid items or error out? Let's skip safely)
-            ALLOWED_ENTITY_TYPES = ['shortform', 'shortform_comment', 'review', 'raw']
+            ALLOWED_ENTITY_TYPES = [
+                'shortform', 'shortform_comment', 'review', 'raw',
+                'place', 'place_name', 'place_address', 'place_category', 'place_opening_hours', 'place_desc',
+                'local_column', 'local_column_section'
+            ]
             if entity_type not in ALLOWED_ENTITY_TYPES:
                 logger.warning(f"Skipping invalid entity_type in batch: {entity_type}")
                 results[idx] = text # Return original text without translation/caching
@@ -512,6 +555,13 @@ class TranslationBatchView(APIView):
                 # API 호출을 위해 서비스 사용
                 translated_list, provider = TranslationService.call_fastapi_translate_batch(to_translate_texts, source_lang, target_lang)
                 
+                # 모델명 결정 로직 (Batch)
+                model_name = os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
+                if os.getenv("AI_ENGINE") == "gemma-cpu":
+                    model_name = "google/gemma-2-2b-it-cpu"
+                elif os.getenv("GGUF_MODEL_PATH"):
+                        model_name = os.path.basename(os.getenv("GGUF_MODEL_PATH"))
+
                 for internal_idx, translated_text in enumerate(translated_list):
                     original_idx = to_translate_indices[internal_idx]
                     results[original_idx] = translated_text
@@ -526,7 +576,7 @@ class TranslationBatchView(APIView):
                         source_lang=source_lang, target_lang=target_lang,
                         source_hash=hashlib.sha256(to_translate_texts[internal_idx].encode("utf-8")).hexdigest(),
                         translated_text=translated_text, provider=provider,
-                        model=os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M"),
+                        model=model_name,
                         last_used_at=timezone.now(),
                     )
             except Exception as e:

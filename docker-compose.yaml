@@ -70,6 +70,8 @@ services:
         VITE_PLACES_API_URL: ${VITE_PLACES_API_URL}
         # [3] 카카오 JS 키
         VITE_KAKAO_JS_KEY: ${VITE_KAKAO_JS_KEY}
+        # [4] 토스페이먼츠 클라이언트 키
+        VITE_TOSS_CLIENT_KEY: ${VITE_TOSS_CLIENT_KEY}
     ports:
       - "80:80"
     depends_on:

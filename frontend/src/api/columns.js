@@ -3,17 +3,20 @@ import { placesAxios } from './axios';
 // ==================== 조회 API ====================
 
 // 현지인 칼럼 목록 조회
-export const getLocalColumns = async ({ city, page = 1, limit = 20 }) => {
+export const getLocalColumns = async ({ city, page = 1, limit = 20, lang }) => {
     const params = { page, limit };
     if (city) params.city = city;
+    if (lang) params.lang = lang;
 
     const response = await placesAxios.get('/places/local-columns', { params });
     return response.data;
 };
 
 // 현지인 칼럼 상세 조회
-export const getLocalColumnDetail = async (columnId) => {
-    const response = await placesAxios.get(`/places/local-columns/${columnId}`);
+export const getLocalColumnDetail = async (columnId, lang) => {
+    const params = {};
+    if (lang) params.lang = lang;
+    const response = await placesAxios.get(`/places/local-columns/${columnId}`, { params });
     return response.data;
 };
 

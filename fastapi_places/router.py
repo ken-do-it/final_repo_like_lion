@@ -5,7 +5,7 @@ Places API Router
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 import uuid
 import json
@@ -34,6 +34,7 @@ from service import (
 )
 from database import get_db
 from auth import get_current_user, require_auth
+from translation_client import translate_batch_proxy
 
 router = APIRouter(prefix="/places", tags=["Places"])
 
@@ -130,6 +131,7 @@ async def search_places(
     query: str = Query(..., min_length=1, description="검색어"),
     category: Optional[str] = Query(None, description="카테고리 필터"),
     city: Optional[str] = Query(None, description="도시 필터"),
+    lang: Optional[str] = Query(None, description="타겟 언어 (예: eng_Latn)"),
     db: Session = Depends(get_db)
 ):
     """
@@ -138,6 +140,56 @@ async def search_places(
     참고: API 특성상 총 결과 수는 제한적일 수 있음 (카카오+구글 합쳐서 최대 ~45개)
     """
     all_results = await search_places_hybrid(query, category, city, db=db)
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = []
+            
+            # 각 결과에서 번역할 필드 수집
+            for res in all_results:
+                # Name
+                items_to_translate.append({
+                    "text": res.get("name", ""),
+                    "entity_type": "place_name",
+                    "entity_id": res.get("id") or 0,
+                    "field": "name"
+                })
+                # Address
+                items_to_translate.append({
+                    "text": res.get("address", ""),
+                    "entity_type": "place_address",
+                    "entity_id": res.get("id") or 0,
+                    "field": "address"
+                })
+                # Category
+                items_to_translate.append({
+                    "text": res.get("category_main", ""),
+                    "entity_type": "place_category",
+                    "entity_id": res.get("id") or 0,
+                    "field": "category_main"
+                })
+
+            if items_to_translate:
+                translated_map = await translate_batch_proxy(items_to_translate, lang)
+                
+                # 결과에 적용 (순서대로 3개씩 매칭)
+                current_idx = 0
+                for res in all_results:
+                    if current_idx in translated_map:
+                        res["name"] = translated_map[current_idx]
+                    current_idx += 1
+                    
+                    if current_idx in translated_map:
+                        res["address"] = translated_map[current_idx]
+                    current_idx += 1
+                    
+                    if current_idx in translated_map:
+                        res["category_main"] = translated_map[current_idx]
+                    current_idx += 1
+                    
+        except Exception as e:
+            print(f"Translation failed: {e}")
 
     return {
         "query": query,
@@ -178,6 +230,7 @@ async def get_place_detail_by_api_id(
     place_api_id: str = Query(..., description="외부 API의 장소 ID"),
     provider: str = Query("KAKAO", description="제공자 (KAKAO, GOOGLE)"),
     name: str = Query(..., description="장소명 (검색용)"),
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db),
     user_id: Optional[int] = Depends(get_current_user)
 ):
@@ -257,7 +310,7 @@ async def get_place_detail_by_api_id(
         is_bookmarked = bookmark is not None
 
     # 4. DB 데이터 + 동적 정보 합치기
-    return {
+    result_data = {
         # DB 정보
         "id": place.id,
         "provider": place.provider,
@@ -281,6 +334,46 @@ async def get_place_detail_by_api_id(
         # 사용자별 정보
         "is_bookmarked": is_bookmarked
     }
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = [
+                {"text": result_data["name"], "entity_type": "place", "entity_id": place.id, "field": "name"},
+                {"text": result_data["address"], "entity_type": "place", "entity_id": place.id, "field": "address"},
+                {"text": result_data["category_main"], "entity_type": "place", "entity_id": place.id, "field": "category_main"},
+                {"text": result_data["city"], "entity_type": "place", "entity_id": place.id, "field": "city"},
+            ]
+            
+            # opening_hours (list of strings) 처리
+            opening_base_idx = len(items_to_translate)
+            for oh in opening_hours:
+                items_to_translate.append({"text": oh, "entity_type": "place_opening_hours", "entity_id": place.id, "field": "opening_hours"})
+                
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            
+            # 기본 필드 적용
+            if 0 in translated_map: result_data["name"] = translated_map[0]
+            if 1 in translated_map: result_data["address"] = translated_map[1]
+            if 2 in translated_map: result_data["category_main"] = translated_map[2]
+            if 3 in translated_map: result_data["city"] = translated_map[3]
+            
+            # 영업시간 적용
+            new_opening_hours = []
+            for i in range(len(opening_hours)):
+                idx = opening_base_idx + i
+                if idx in translated_map:
+                    new_opening_hours.append(translated_map[idx])
+                else:
+                    new_opening_hours.append(opening_hours[i])
+            
+            if new_opening_hours:
+                result_data["opening_hours"] = new_opening_hours
+                
+        except Exception as e:
+            print(f"Detail translation failed: {e}")
+
+    return result_data
 
 
 # ==================== 현지인 인증 ====================
@@ -315,6 +408,21 @@ def get_badge_status(
     """
     현지인 뱃지 상태 조회
     """
+    # [TEMPORARY TEST MODE] 모든 사용자에게 Level 5 권한 부여 (테스트용)
+    # 번역 기능 테스트 종료 후 반드시 삭제/원복 필요
+    return LocalBadgeStatusResponse(
+        level=5,
+        city="테스트 권한",
+        is_active=True,
+        first_authenticated_at=date.today(),
+        last_authenticated_at=date.today(),
+        next_authentication_due=date.today() + timedelta(days=365),
+        maintenance_months=12,
+        authentication_count=999
+    )
+
+    # [ORIGINAL CODE - COMMENTED OUT FOR TESTING]
+    """
     badge = db.query(LocalBadge).filter(LocalBadge.user_id == user_id).first()
 
     if not badge:
@@ -337,17 +445,19 @@ def get_badge_status(
         last_authenticated_at=badge.last_authenticated_at,
         next_authentication_due=badge.next_authentication_due,
         maintenance_months=badge.maintenance_months,
-        authentication_count=0  # 추후 구현
+        authentication_count=0
     )
+    """
 
 
 # ==================== 현지인 칼럼 ====================
 
 @router.get("/local-columns", response_model=List[LocalColumnListResponse])
-def get_local_columns(
+async def get_local_columns(
     city: Optional[str] = Query(None, description="도시 필터"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db)
 ):
     """
@@ -367,13 +477,18 @@ def get_local_columns(
 
     # 사용자 닉네임 및 뱃지 레벨 조회
     result = []
+    
+    # [AI 번역 준비]
+    items_to_translate = []
+    
     for column in columns:
         user = db.query(User).filter(User.id == column.user_id).first()
         badge = db.query(LocalBadge).filter(
             LocalBadge.user_id == column.user_id,
             LocalBadge.is_active == True
         ).first()
-        result.append(LocalColumnListResponse(
+        
+        item = LocalColumnListResponse(
             id=column.id,
             user_id=column.user_id,
             user_nickname=user.nickname if user else None,
@@ -382,14 +497,36 @@ def get_local_columns(
             thumbnail_url=column.thumbnail_url,
             view_count=column.view_count,
             created_at=column.created_at
-        ))
+        )
+        result.append(item)
+        
+        # 번역 대상 수집
+        if lang:
+             items_to_translate.append({
+                "text": column.title,
+                "entity_type": "local_column",
+                "entity_id": column.id,
+                "field": "title"
+            })
+
+    # [AI 번역 적용]
+    if lang and items_to_translate:
+        try:
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            # 순서대로 매핑 (LocalColumnListResponse 객체의 title 수정)
+            for idx, item in enumerate(result):
+                if idx in translated_map:
+                    item.title = translated_map[idx]
+        except Exception as e:
+            print(f"Local columns translation failed: {e}")
 
     return result
 
 
 @router.get("/local-columns/{column_id}", response_model=LocalColumnResponse)
-def get_local_column_detail(
+async def get_local_column_detail(
     column_id: int,
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db)
 ):
     """
@@ -446,6 +583,50 @@ def get_local_column_detail(
         LocalBadge.user_id == column.user_id,
         LocalBadge.is_active == True
     ).first()
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = []
+            
+            # 1. Main Column Info (Title, Content)
+            items_to_translate.append({"text": column.title, "entity_type": "local_column", "entity_id": column.id, "field": "title"})
+            items_to_translate.append({"text": column.content, "entity_type": "local_column", "entity_id": column.id, "field": "content"})
+            
+            # 2. Sections Info (Title, Content)
+            # Keep track of indices
+            section_indices = []
+            for sec in section_data:
+                # Section Title
+                items_to_translate.append({"text": sec.title, "entity_type": "local_column_section", "entity_id": sec.id, "field": "title"})
+                # Section Content
+                items_to_translate.append({"text": sec.content, "entity_type": "local_column_section", "entity_id": sec.id, "field": "content"})
+            
+            # 3. Translate
+            print(f"[DEBUG] items_to_translate ({len(items_to_translate)}): {items_to_translate}")
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            print(f"[DEBUG] translated_map: {translated_map}")
+            
+            # 4. Apply Translations
+            # Main Info
+            if 0 in translated_map: column.title = translated_map[0]
+            if 1 in translated_map: column.content = translated_map[1]
+            
+            # Sections
+            # 0, 1 are used. Sections start from 2.
+            # Each section uses 2 indices (title, content).
+            current_idx = 2
+            for sec in section_data:
+                if current_idx in translated_map: sec.title = translated_map[current_idx]
+                current_idx += 1
+                
+                if current_idx in translated_map: sec.content = translated_map[current_idx]
+                current_idx += 1
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Local column detail translation failed: {e}")
 
     return LocalColumnResponse(
         id=column.id,

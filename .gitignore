@@ -229,7 +229,8 @@ technical_retrospective.md
 modify_mypage_shorts_translation.md
 docker_build_optimization_report.md
 kjin_portfolio/
-
+check_and_clean_vectors.py
+delete_duplicated_shorts.py 
 
 
 #최진석 부하테스트용
@@ -244,3 +245,7 @@ tmpclaude-*
 
 # Docker Compose 개인 설정
 docker-compose.override.yaml
+
+# AI Model Files
+*.gguf
+fastapi_ai_translation/models/

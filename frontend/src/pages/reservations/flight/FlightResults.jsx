@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from '../../../api/axios';
+import { useLanguage } from '../../../context/LanguageContext';
 import { TransportTabs, ReservationSidebar } from '../reservations-components';
 
 /**
@@ -12,6 +13,7 @@ import { TransportTabs, ReservationSidebar } from '../reservations-components';
  */
 const FlightResults = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
 
   /**
@@ -193,11 +195,14 @@ const FlightResults = () => {
   /**
    * 시간 포맷팅 (ISO -> HH:MM)
    */
+  /**
+   * 시간 포맷팅 (ISO -> HH:MM)
+   */
   const formatTime = (isoString) => {
     if (!isoString) return '-';
     try {
       const date = new Date(isoString);
-      return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     } catch {
       return isoString;
     }
@@ -210,7 +215,7 @@ const FlightResults = () => {
     if (!isoString) return '';
     try {
       const date = new Date(isoString);
-      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekdays = [t('weekday_sun'), t('weekday_mon'), t('weekday_tue'), t('weekday_wed'), t('weekday_thu'), t('weekday_fri'), t('weekday_sat')];
       return `${date.getMonth() + 1}.${date.getDate()}(${weekdays[date.getDay()]})`;
     } catch {
       return '';
@@ -224,7 +229,7 @@ const FlightResults = () => {
     if (!minutes) return '-';
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return `${hours}시간 ${mins}분`;
+    return `${hours}${t('unit_hour')} ${mins}${t('unit_min')}`;
   };
 
   /**
@@ -283,7 +288,7 @@ const FlightResults = () => {
             progress_activity
           </span>
           <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-            최적의 항공편을 찾고 있습니다...
+            {t('flight_searching_best')}
           </p>
         </div>
       </div>
@@ -297,9 +302,9 @@ const FlightResults = () => {
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
             <span className="material-symbols-outlined text-6xl text-red-500 mb-4">error</span>
-            <p className="text-red-800 dark:text-red-300 mb-4">{error}</p>
+            <p className="text-red-800 dark:text-red-300 mb-4">{error || t('flight_load_error_retry')}</p>
             <button onClick={handleModifySearch} className="px-6 py-3 bg-primary text-white rounded-xl">
-              다시 검색하기
+              {t('btn_retry_search')}
             </button>
           </div>
         </div>
@@ -316,13 +321,13 @@ const FlightResults = () => {
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22]">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 페이지 제목 */}
-        <h1 className="text-3xl font-bold mb-6 dark:text-white">항공편 검색 결과</h1>
+        <h1 className="text-3xl font-bold mb-6 dark:text-white">{t('flight_search_results_title')}</h1>
 
         {/* 탭 */}
         <TransportTabs />
 
         {/* 검색 조건 요약 */}
-        <div className="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-md mt-6 flex items-center justify-between flex-wrap gap-4">
+        <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-4 shadow-md mt-6 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">flight_takeoff</span>
@@ -341,11 +346,11 @@ const FlightResults = () => {
               {searchConditions.adults + searchConditions.children + searchConditions.infants}명
             </span>
             {isRoundTrip && (
-              <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">왕복</span>
+              <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">{t('flight_roundtrip_badge')}</span>
             )}
           </div>
           <button onClick={handleModifySearch} className="px-4 py-2 text-sm border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors">
-            검색 조건 수정
+            {t('btn_modify_search')}
           </button>
         </div>
 
@@ -353,22 +358,22 @@ const FlightResults = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
           {/* 왼쪽: 필터 */}
           <aside className="lg:col-span-3">
-            <div className="bg-white dark:bg-surface-dark rounded-xl p-6 shadow-lg sticky top-8">
-              <h3 className="font-semibold text-lg mb-4 dark:text-white">필터</h3>
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-lg sticky top-8">
+              <h3 className="font-semibold text-lg mb-4 dark:text-white">{t('filter_title')}</h3>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">정렬 기준</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('sort_by')}</label>
                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg">
-                  <option value="price">최저가순</option>
-                  <option value="departure">출발시간순</option>
-                  <option value="time">최단시간순</option>
+                  <option value="price">{t('sort_price')}</option>
+                  <option value="departure">{t('sort_departure')}</option>
+                  <option value="time">{t('sort_duration')}</option>
                 </select>
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">항공사</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('flight_airline_label')}</label>
                 <select value={selectedAirline} onChange={(e) => setSelectedAirline(e.target.value)} className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg">
-                  <option value="">전체</option>
+                  <option value="">{t('filter_all')}</option>
                   {allAirlines.map((airline) => (
                     <option key={airline} value={airline}>{airline}</option>
                   ))}
@@ -376,7 +381,7 @@ const FlightResults = () => {
               </div>
 
               <button onClick={() => { setSortBy('price'); setSelectedAirline(''); }} className="w-full px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
-                필터 초기화
+                {t('btn_reset_filter')}
               </button>
             </div>
           </aside>
@@ -388,8 +393,8 @@ const FlightResults = () => {
 
                 {/* 왕복: 선택한 가는편 표시 */}
                 {isRoundTrip && selectedOutbound && (
-                  <div className="bg-white dark:bg-surface-dark rounded-xl p-6 shadow-md border-2 border-primary">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">선택한 가는편</h3>
+                  <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-md border-2 border-primary">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('selected_outbound')}</h3>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -405,11 +410,11 @@ const FlightResults = () => {
                         <p className="text-sm text-gray-500">{formatDuration(selectedOutbound.durationMin)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-primary">{(selectedOutbound.totalPrice || 0).toLocaleString()}원</p>
+                        <p className="text-lg font-bold text-primary">{(selectedOutbound.totalPrice || 0).toLocaleString()}{t('unit_krw')}</p>
                       </div>
                     </div>
                     <button onClick={handleChangeOutbound} className="mt-4 w-full py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-slate-700">
-                      선택한 항공편 변경
+                      {t('btn_change_flight')}
                     </button>
                   </div>
                 )}
@@ -418,28 +423,28 @@ const FlightResults = () => {
                 <div className="mb-2">
                   <h2 className="text-xl font-bold text-primary">
                     {isRoundTrip
-                      ? (selectedOutbound ? '오는편을 선택해주세요' : '가는편을 선택해주세요')
-                      : '항공편을 선택해주세요'
+                      ? (selectedOutbound ? t('msg_select_inbound') : t('msg_select_outbound'))
+                      : t('msg_select_flight')
                     }
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     {isRoundTrip && !selectedOutbound && `${formatDate(searchConditions.depDate)}, `}
                     {isRoundTrip && selectedOutbound && `${formatDate(searchConditions.retDate)}, `}
-                    {currentFlights.length}개, 성인1인 편도요금
+                    {currentFlights.length}{t('flight_price_info_suffix')}
                   </p>
                 </div>
 
                 {/* 항공편 목록 */}
                 {currentFlights.length === 0 ? (
-                  <div className="bg-white dark:bg-surface-dark rounded-xl p-8 text-center">
+                  <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-8 text-center">
                     <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">flight</span>
-                    <p className="text-gray-600 dark:text-gray-400">검색 조건에 맞는 항공편이 없습니다.</p>
+                    <p className="text-gray-600 dark:text-gray-400">{t('msg_no_flights_found')}</p>
                   </div>
                 ) : (
                   currentFlights.map((flight, index) => (
                     <div
                       key={flight.offerId || index}
-                      className="bg-white dark:bg-surface-dark rounded-xl shadow-md p-5 hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-primary"
+                      className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-md p-5 hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-primary"
                       onClick={() => isRoundTrip && selectedOutbound ? handleSelectInbound(flight) : handleSelectOutbound(flight)}
                     >
                       <div className="flex items-center justify-between">
@@ -464,7 +469,7 @@ const FlightResults = () => {
                             <div className="w-20 h-px bg-slate-300 dark:bg-slate-600 relative">
                               <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-xs">flight</span>
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">직항</p>
+                            <p className="text-xs text-gray-400 mt-1">{t('flight_direct')}</p>
                           </div>
                           <div className="text-center">
                             <p className="text-lg font-bold dark:text-white">{formatTime(flight.arrAt)}</p>
@@ -474,7 +479,7 @@ const FlightResults = () => {
 
                         {/* 가격 */}
                         <div className="text-right min-w-[100px]">
-                          <p className="text-xl font-bold text-primary">{(flight.pricePerPerson || flight.totalPrice || 0).toLocaleString()}원</p>
+                          <p className="text-xl font-bold text-primary">{(flight.pricePerPerson || flight.totalPrice || 0).toLocaleString()}{t('unit_krw')}</p>
                           {flight.seatAvailabilityNote && (
                             <p className="text-xs text-mint mt-1">{flight.seatAvailabilityNote}</p>
                           )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 
 /**
  * 항공권 예약 완료 페이지
@@ -13,6 +14,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 const FlightComplete = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   /**
    * 이전 페이지(FlightPaymentSuccess)에서 전달받은 데이터
@@ -63,7 +65,7 @@ const FlightComplete = () => {
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center px-4 py-12">
       <div className="max-w-2xl w-full">
         {/* 성공 메시지 카드 */}
-        <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-12 text-center mb-6">
+        <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-12 text-center mb-6">
           {/* 성공 아이콘 */}
           <div className="bg-green-100 dark:bg-green-900/30 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
             <span className="material-symbols-outlined text-green-600 dark:text-green-400 text-6xl">
@@ -73,10 +75,10 @@ const FlightComplete = () => {
 
           {/* 제목 */}
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-            예약이 완료되었습니다
+            {t('title_reservation_complete')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            항공권 예약이 성공적으로 완료되었습니다.
+            {t('msg_reservation_success')}
           </p>
 
           {/* 예약 정보 */}
@@ -84,7 +86,7 @@ const FlightComplete = () => {
             {/* 주문 번호 */}
             <div className="border-b dark:border-gray-700 pb-4">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                예약 번호
+                {t('label_reservation_number')}
               </p>
               <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {orderId}
@@ -95,7 +97,7 @@ const FlightComplete = () => {
             <div className="grid grid-cols-2 gap-4 text-left">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  결제 금액
+                  {t('title_payment_amount')}
                 </p>
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">
                   {getPaymentAmount().toLocaleString()}원
@@ -103,10 +105,10 @@ const FlightComplete = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  결제 수단
+                  {t('label_payment_method')}
                 </p>
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {paymentData.method || '카드'}
+                  {paymentData.method || t('payment_method_card')}
                 </p>
               </div>
             </div>
@@ -115,7 +117,7 @@ const FlightComplete = () => {
             {paymentData.approvedAt && (
               <div className="text-left">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  결제 일시
+                  {t('label_payment_date')}
                 </p>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {formatDateTime(paymentData.approvedAt)}
@@ -135,7 +137,7 @@ const FlightComplete = () => {
                   <span className="material-symbols-outlined text-lg">
                     receipt_long
                   </span>
-                  영수증 확인하기
+                  {t('link_receipt')}
                 </a>
               </div>
             )}
@@ -147,13 +149,13 @@ const FlightComplete = () => {
               <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">
                 info
               </span>
-              예약 안내
+              {t('title_reservation_guide')}
             </h3>
             <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 ml-7">
-              <li>예약 확인 이메일을 발송해드렸습니다</li>
-              <li>탑승 시 신분증을 지참해주세요</li>
-              <li>출발 2시간 전까지 공항에 도착해주세요</li>
-              <li>예약 변경 및 취소는 마이페이지에서 가능합니다</li>
+              <li>{t('info_complete_1')}</li>
+              <li>{t('info_complete_2')}</li>
+              <li>{t('info_complete_3')}</li>
+              <li>{t('info_complete_4')}</li>
             </ul>
           </div>
         </div>
@@ -161,16 +163,16 @@ const FlightComplete = () => {
         {/* 버튼 영역 */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() => navigate('/mypage')}
+            onClick={() => navigate('/mypage?tab=reservations')}
             className="bg-primary text-white py-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
           >
-            내 예약 보기
+            {t('btn_my_bookings')}
           </button>
           <button
             onClick={() => navigate('/')}
-            className="bg-white dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-4 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="bg-white dark:bg-[#1e2b36] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-4 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            홈으로 가기
+            {t('btn_go_home')}
           </button>
         </div>
 
@@ -180,7 +182,7 @@ const FlightComplete = () => {
             onClick={() => navigate('/reservations/flights')}
             className="text-primary hover:text-primary/80 transition-colors font-medium text-sm"
           >
-            다른 항공권 예약하기
+            {t('btn_book_another')}
           </button>
         </div>
       </div>

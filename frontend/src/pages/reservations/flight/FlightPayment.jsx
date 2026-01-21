@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 import axios from '../../../api/axios';
 import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-components';
 
@@ -19,6 +20,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
 const FlightPayment = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   /**
    * 이전 페이지(FlightSeat)에서 전달받은 데이터 또는 localStorage에서 복원
@@ -83,7 +85,7 @@ const FlightPayment = () => {
    */
   useEffect(() => {
     if (!flight || !searchConditions || !selectedClass || !passengers || !totalPrice) {
-      alert('결제 정보가 없습니다. 처음부터 다시 진행해주세요.');
+      alert(t('alert_no_payment_info'));
       navigate('/reservations/flights');
     }
   }, [flight, searchConditions, selectedClass, passengers, totalPrice, navigate]);
@@ -127,7 +129,7 @@ const FlightPayment = () => {
        */
       script.onerror = () => {
         console.error('토스페이먼츠 SDK 로드 실패');
-        setError('결제 시스템을 불러올 수 없습니다.');
+        setError(t('alert_payment_create_fail'));
       };
 
       document.head.appendChild(script);
@@ -207,11 +209,11 @@ const FlightPayment = () => {
 
         // 로그인 페이지로 리다이렉트 (현재 경로를 redirect 파라미터로 전달)
         setPaymentStatus('idle');
-        alert('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
+        alert(t('alert_login_required_payment'));
         window.location.href = `/login-page?redirect=${encodeURIComponent('/reservations/flights/payment')}`;
         return;
       } else {
-        setError('결제 생성에 실패했습니다. 다시 시도해주세요.');
+        setError(t('alert_payment_create_fail'));
       }
       setPaymentStatus('idle');
     }
@@ -223,7 +225,7 @@ const FlightPayment = () => {
    */
   const handlePayment = async () => {
     if (!tossPayments || !paymentData) {
-      alert('결제 준비가 완료되지 않았습니다.');
+      alert(t('alert_payment_not_ready'));
       return;
     }
 
@@ -271,7 +273,8 @@ const FlightPayment = () => {
       console.error('에러 코드:', err.code);
       console.error('에러 메시지:', err.message);
       console.error('전체 에러 객체:', JSON.stringify(err, null, 2));
-      setError(`결제 요청에 실패했습니다. (${err.code || err.message || '알 수 없는 오류'})`);
+      console.error('전체 에러 객체:', JSON.stringify(err, null, 2));
+      setError(`${t('alert_payment_req_fail')} (${err.code || err.message || 'Error'})`);
       setPaymentStatus('ready');
     }
   };
@@ -280,7 +283,7 @@ const FlightPayment = () => {
    * 좌석 등급 한글 변환
    */
   const getSeatClassName = () => {
-    return selectedClass === 'economy' ? '일반석' : '비즈니스석';
+    return selectedClass === 'economy' ? t('class_economy') : t('class_business');
   };
 
   /**
@@ -318,50 +321,50 @@ const FlightPayment = () => {
         <TransportTabs />
 
         {/* 메인 그리드 레이아웃 (8:4) */}
-        <div className="mt-6 grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           {/* 왼쪽 영역: 결제 정보 */}
-          <div className="col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-6">
             {/* 예약 정보 요약 카드 */}
-            <SearchCard title="예약 정보">
+            <SearchCard title={t('title_reservation_info')}>
               <div className="space-y-4">
                 {/* 항공편 정보 */}
                 <div className="border-b dark:border-gray-700 pb-4">
                   <h3 className="font-semibold text-lg mb-3 text-gray-900 dark:text-white">
-                    항공편 정보
+                    {t('title_flight_info')}
                   </h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600 dark:text-gray-400">항공사</p>
+                      <p className="text-gray-600 dark:text-gray-400">{t('label_airline')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {flight.airlineNm}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 dark:text-gray-400">노선</p>
+                      <p className="text-gray-600 dark:text-gray-400">{t('label_route')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {flight.vihRouteName}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 dark:text-gray-400">출발</p>
+                      <p className="text-gray-600 dark:text-gray-400">{t('label_departure')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {formatTime(flight.depPlandTime)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 dark:text-gray-400">도착</p>
+                      <p className="text-gray-600 dark:text-gray-400">{t('label_arrival')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {formatTime(flight.arrPlandTime)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 dark:text-gray-400">날짜</p>
+                      <p className="text-gray-600 dark:text-gray-400">{t('label_date')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {formatDate(searchConditions.depDate)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600 dark:text-gray-400">좌석 등급</p>
+                      <p className="text-gray-600 dark:text-gray-400">{t('title_select_class')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {getSeatClassName()}
                       </p>
@@ -372,7 +375,7 @@ const FlightPayment = () => {
                 {/* 승객 정보 */}
                 <div>
                   <h3 className="font-semibold text-lg mb-3 text-gray-900 dark:text-white">
-                    승객 정보 ({passengers.length}명)
+                    {t('title_passenger_count_info').replace('{count}', passengers.length)}
                   </h3>
                   <div className="space-y-3">
                     {passengers.map((passenger, index) => (
@@ -382,19 +385,19 @@ const FlightPayment = () => {
                       >
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-gray-600 dark:text-gray-400">승객 {index + 1}</p>
+                            <p className="text-gray-600 dark:text-gray-400">{t('passenger_n').replace('{n}', index + 1)}</p>
                             <p className="font-medium text-gray-900 dark:text-white">
                               {passenger.lastName} {passenger.firstName}
                             </p>
                           </div>
                           <div>
-                            <p className="text-gray-600 dark:text-gray-400">생년월일</p>
+                            <p className="text-gray-600 dark:text-gray-400">{t('label_dob')}</p>
                             <p className="font-medium text-gray-900 dark:text-white">
                               {passenger.dateOfBirth}
                             </p>
                           </div>
                           <div className="col-span-2">
-                            <p className="text-gray-600 dark:text-gray-400">여권 번호</p>
+                            <p className="text-gray-600 dark:text-gray-400">{t('label_passport')}</p>
                             <p className="font-medium text-gray-900 dark:text-white">
                               {passenger.passportNumber}
                             </p>
@@ -408,25 +411,25 @@ const FlightPayment = () => {
             </SearchCard>
 
             {/* 결제 금액 카드 */}
-            <SearchCard title="결제 금액">
+            <SearchCard title={t('title_payment_amount')}>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">
-                    항공권 ({searchConditions.passengers}명)
+                    {t('label_ticket_count').replace('{count}', searchConditions.passengers)}
                   </span>
                   <span className="font-medium text-gray-900 dark:text-white">
                     {totalPrice.toLocaleString()}원
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">좌석 등급</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t('title_select_class')}</span>
                   <span className="font-medium text-gray-900 dark:text-white">
                     {getSeatClassName()}
                   </span>
                 </div>
                 <div className="border-t dark:border-gray-700 pt-3 flex justify-between">
                   <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    총 결제 금액
+                    {t('label_total_payment')}
                   </span>
                   <span className="text-2xl font-bold text-primary">
                     {totalPrice.toLocaleString()}원
@@ -454,13 +457,13 @@ const FlightPayment = () => {
                   onClick={createPayment}
                   className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors"
                 >
-                  결제 준비하기
+                  {t('btn_prepare_payment')}
                 </button>
               )}
 
               {paymentStatus === 'creating' && (
                 <div className="w-full bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400 py-4 rounded-lg font-semibold text-lg text-center">
-                  결제 준비중...
+                  {t('msg_payment_preparing')}
                 </div>
               )}
 
@@ -470,13 +473,13 @@ const FlightPayment = () => {
                   className="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined">payment</span>
-                  {totalPrice.toLocaleString()}원 결제하기
+                  {t('btn_pay_amount').replace('{amount}', totalPrice.toLocaleString())}
                 </button>
               )}
 
               {paymentStatus === 'processing' && (
                 <div className="w-full bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400 py-4 rounded-lg font-semibold text-lg text-center">
-                  결제 진행중...
+                  {t('msg_payment_processing')}
                 </div>
               )}
 
@@ -484,9 +487,9 @@ const FlightPayment = () => {
               <button
                 onClick={() => navigate(-1)}
                 disabled={paymentStatus === 'creating' || paymentStatus === 'processing'}
-                className="w-full bg-white dark:bg-surface-dark border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white dark:bg-[#1e2b36] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                이전 단계로
+                {t('btn_back_step')}
               </button>
             </div>
 
@@ -496,19 +499,19 @@ const FlightPayment = () => {
                 <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">
                   info
                 </span>
-                결제 안내
+                {t('title_payment_guide')}
               </h4>
               <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 ml-8">
-                <li>결제는 토스페이먼츠를 통해 안전하게 처리됩니다</li>
-                <li>결제 정보는 암호화되어 전송됩니다</li>
-                <li>결제 후 예약 확정까지 최대 5분이 소요될 수 있습니다</li>
-                <li>결제 문제 발생시 고객센터로 문의해주세요</li>
+                <li>{t('info_payment_1')}</li>
+                <li>{t('info_payment_2')}</li>
+                <li>{t('info_payment_3')}</li>
+                <li>{t('info_payment_4')}</li>
               </ul>
             </div>
           </div>
 
           {/* 오른쪽 영역: 사이드바 */}
-          <div className="col-span-4">
+          <div className="lg:col-span-4">
             <ReservationSidebar />
           </div>
         </div>

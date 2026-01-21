@@ -19,6 +19,7 @@ from .views.train import (
     MSTrainSearchView,
     MSKorailLinkView,
 )
+from .views.my_reservation_view import MSMyReservationListView, MSMyReservationDetailView
 
 app_name = 'reservations_api'
 
@@ -31,13 +32,13 @@ urlpatterns = [
         name='reservation-create-flight'
     ),
 
-    # TODO: 내 예약 목록 (마이페이지)
+    # 내 예약 목록 (마이페이지)
     # GET /api/v1/my/reservations/
-    # path('my/reservations', MSMyReservationListView.as_view(), name='my-reservations'),
+    path('my/reservations/', MSMyReservationListView.as_view(), name='my-reservations'),
 
-    # TODO: 내 예약 상세
+    # 내 예약 상세
     # GET /api/v1/my/reservations/{reservationId}/
-    # path('my/reservations/<uuid:reservation_id>', MSMyReservationDetailView.as_view(), name='my-reservation-detail'),
+    path('my/reservations/<uuid:reservation_id>/', MSMyReservationDetailView.as_view(), name='my-reservation-detail'),
 
     # ========================================
     # 기차 API

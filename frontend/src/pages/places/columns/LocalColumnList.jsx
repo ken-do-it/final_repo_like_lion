@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getLocalColumns, checkColumnPermission } from '../../../api/columns';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../context/LanguageContext';
+import { API_LANG_CODES } from '../../../constants/translations';
 import Button from '../../../components/ui/Button';
 
 const LocalColumnList = () => {
     const navigate = useNavigate();
+    const { t, language } = useLanguage();
     const { isAuthenticated } = useAuth();
     const [columns, setColumns] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -13,16 +16,20 @@ const LocalColumnList = () => {
 
     useEffect(() => {
         fetchColumns();
-    }, []);
+    }, [language]);
 
     const fetchColumns = async () => {
         try {
             setLoading(true);
-            const data = await getLocalColumns({ page: 1, limit: 20 });
+            const data = await getLocalColumns({
+                page: 1,
+                limit: 20,
+                lang: API_LANG_CODES[language] || 'eng_Latn'
+            });
             setColumns(data);
         } catch (err) {
             console.error('Failed to fetch columns:', err);
-            setError('칼럼을 불러오는데 실패했습니다.');
+            setError(t('col_fetch_error'));
         } finally {
             setLoading(false);
         }
@@ -30,7 +37,7 @@ const LocalColumnList = () => {
 
     const handleWriteClick = async () => {
         if (!isAuthenticated) {
-            if (window.confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+            if (window.confirm(t('msg_login_required'))) {
                 navigate('/login-page');
             }
             return;
@@ -38,7 +45,12 @@ const LocalColumnList = () => {
 
         const permission = await checkColumnPermission();
         if (!permission.allowed) {
-            alert(permission.message);
+            let msg = permission.message;
+            if (permission.reason === 'badge_inactive') msg = t('msg_auth_inactive');
+            else if (permission.reason === 'level_low') msg = t('msg_auth_level_low');
+            else if (permission.reason === 'error') msg = t('msg_auth_error');
+
+            alert(msg);
             return;
         }
 
@@ -52,12 +64,12 @@ const LocalColumnList = () => {
                 {/* Header */}
                 <div className="mb-8 text-center">
                     <h1 className="text-3xl font-bold mb-10">
-                        현지인 칼럼
+                        {t('col_title')}
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
-                        진짜 현지인이 알려주는 숨은 명소와 맛집 이야기를 만나보세요.
+                        {t('col_desc_1')}
                         <br />
-                        검증된 현지인만이 들려줄 수 있는 특별한 정보가 가득합니다.
+                        {t('col_desc_2')}
                     </p>
 
                     {/* Write Button */}
@@ -67,7 +79,7 @@ const LocalColumnList = () => {
                             className="bg-[#1392ec] hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-colors shadow-sm"
                         >
                             <span>✏️</span>
-                            <span>칼럼 쓰기</span>
+                            <span>{t('col_write_btn')}</span>
                         </Button>
                     </div>
                 </div>
@@ -80,7 +92,7 @@ const LocalColumnList = () => {
                             onClick={fetchColumns}
                             className="mt-2 text-sm underline hover:text-red-700 dark:hover:text-red-300"
                         >
-                            다시 시도
+                            {t('col_retry')}
                         </button>
                     </div>
                 )}
@@ -100,9 +112,9 @@ const LocalColumnList = () => {
                         {columns.length === 0 ? (
                             <div className="text-center py-20">
                                 <div className="text-6xl mb-4">📝</div>
-                                <h3 className="text-xl font-bold mb-2">아직 작성된 칼럼이 없습니다.</h3>
+                                <h3 className="text-xl font-bold mb-2">{t('col_no_cols')}</h3>
                                 <p className="text-gray-500 dark:text-gray-400">
-                                    첫 번째 칼럼의 주인공이 되어보세요!
+                                    {t('col_be_first')}
                                 </p>
                             </div>
                         ) : (
@@ -138,7 +150,7 @@ const LocalColumnList = () => {
                                                         {column.user_nickname ? column.user_nickname[0] : '?'}
                                                     </div>
                                                     <span className="font-medium text-gray-600 dark:text-gray-300 truncate max-w-[120px] flex items-center gap-1">
-                                                        {column.user_nickname || '익명'}
+                                                        {column.user_nickname || t('col_anonymous')}
                                                         {column.user_level && (
                                                             <span className="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
                                                                 🏅 Lv.{column.user_level}

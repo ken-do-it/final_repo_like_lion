@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { placesAxios as api } from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { API_LANG_CODES } from '../../constants/translations';
 
 const PlaceSearch = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const { language, t } = useLanguage();
     const queryFromUrl = searchParams.get('query') || '';
 
     const [results, setResults] = useState([]);
@@ -27,7 +30,7 @@ const PlaceSearch = () => {
             setSearchInput(queryFromUrl);
             fetchPlaces(queryFromUrl);
         }
-    }, [queryFromUrl]);
+    }, [queryFromUrl, language]); // Refetch when language changes
 
     // Debounced Autocomplete
     useEffect(() => {
@@ -46,7 +49,11 @@ const PlaceSearch = () => {
     const fetchSuggestions = async (query) => {
         try {
             const response = await api.get('/places/autocomplete', {
-                params: { q: query, limit: 5 }
+                params: {
+                    q: query,
+                    limit: 5,
+                    lang: API_LANG_CODES[language] || 'eng_Latn'
+                }
             });
             // Double check ref before showing
             if (shouldFetchSuggestions.current && response.data.suggestions && response.data.suggestions.length > 0) {
@@ -94,7 +101,10 @@ const PlaceSearch = () => {
         setError(null);
         try {
             const response = await api.get('/places/search', {
-                params: { query: query }
+                params: {
+                    query: query,
+                    lang: API_LANG_CODES[language] || 'eng_Latn'
+                }
             });
 
             setResults(response.data.results || []);
@@ -132,7 +142,9 @@ const PlaceSearch = () => {
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold mb-6 text-center">
-                        {queryFromUrl ? `'${queryFromUrl}' 검색 결과` : '장소 검색'}
+                        {queryFromUrl
+                            ? t('search_results_title').replace('{query}', queryFromUrl)
+                            : t('place_search_title')}
                     </h1>
 
                     {/* Dedicated Search Input */}
@@ -144,7 +156,7 @@ const PlaceSearch = () => {
                             <input
                                 type="text"
                                 className={`w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e2b36] focus:ring-2 focus:ring-[#1392ec] focus:border-transparent outline-none transition-all text-lg shadow-sm ${showSuggestions && suggestions.length > 0 ? 'rounded-b-none' : ''}`}
-                                placeholder="어디로 떠나고 싶으신가요?"
+                                placeholder={t('place_search_placeholder')}
                                 value={searchInput}
                                 onChange={handleInputChange}
                                 onKeyDown={handleKeyDown}
@@ -163,7 +175,7 @@ const PlaceSearch = () => {
                                 type="submit"
                                 className="absolute right-2 top-2 bottom-2 px-6 bg-[#1392ec] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors"
                             >
-                                검색
+                                {t('search_btn')}
                             </button>
                         </div>
 
@@ -204,10 +216,10 @@ const PlaceSearch = () => {
 
                     <p className="text-gray-600 dark:text-gray-400 text-center">
                         {loading
-                            ? '검색 중입니다...'
+                            ? t('searching')
                             : queryFromUrl
-                                ? `총 ${searchMeta.total}개의 장소를 찾았습니다.`
-                                : '원하는 여행지를 검색해보세요.'}
+                                ? t('search_result_count').replace('{count}', searchMeta.total)
+                                : t('search_initial_msg')}
                     </p>
                 </div>
 
@@ -296,8 +308,8 @@ const PlaceSearch = () => {
                 {!loading && queryFromUrl && results.length === 0 && (
                     <div className="text-center py-20">
                         <div className="text-6xl mb-4">🏝️</div>
-                        <h3 className="text-xl font-bold mb-2">검색 결과가 없습니다</h3>
-                        <p className="text-gray-500">다른 검색어로 다시 시도해보세요.</p>
+                        <h3 className="text-xl font-bold mb-2">{t('no_results_title')}</h3>
+                        <p className="text-gray-500">{t('no_results_desc')}</p>
                     </div>
                 )}
             </main>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 import { TransportTabs, ReservationSidebar } from '../reservations-components';
 
 /**
@@ -14,6 +15,7 @@ import { TransportTabs, ReservationSidebar } from '../reservations-components';
  */
 const FlightSeat = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const location = useLocation();
 
   /**
@@ -32,16 +34,60 @@ const FlightSeat = () => {
   // 기존 코드 호환성을 위해 flight 변수 유지
   const flight = outboundFlight;
 
-  // passengers 계산 (새 형식: adults+children+infants, 기존 형식: passengers)
-  const totalPassengers = searchConditions.passengers ||
-    (searchConditions.adults || 1) + (searchConditions.children || 0) + (searchConditions.infants || 0);
+  // 승객 유형별 인원수
+  const adults = searchConditions.adults || 1;
+  const children = searchConditions.children || 0;
+  const infants = searchConditions.infants || 0;
+  const totalPassengers = searchConditions.passengers || (adults + children + infants);
 
   /**
    * 선택된 좌석 등급 상태
-   * economy - 일반석
-   * business - 비즈니스석
+   * ECONOMY - 일반석
+   * PREMIUM - 프리미엄 일반석
+   * BUSINESS - 비즈니스석
    */
-  const [selectedClass, setSelectedClass] = useState('economy');
+  const [selectedClass, setSelectedClass] = useState('ECONOMY');
+
+  /**
+   * 좌석 등급별 가격 배수
+   * - ECONOMY: 1.0배
+   * - PREMIUM: 1.5배
+   * - BUSINESS: 2.0배
+   */
+  const getSeatClassMultiplier = () => {
+    switch (selectedClass) {
+      case 'PREMIUM': return 1.5;
+      case 'BUSINESS': return 2.0;
+      case 'ECONOMY':
+      default: return 1.0;
+    }
+  };
+
+  /**
+   * 좌석 등급 정보
+   */
+  const seatClassOptions = [
+    { value: 'ECONOMY', label: t('class_economy'), multiplier: 1.0, description: t('class_desc_economy') },
+    { value: 'PREMIUM', label: t('class_premium'), multiplier: 1.5, description: t('class_desc_premium') },
+    { value: 'BUSINESS', label: t('class_business'), multiplier: 2.0, description: t('class_desc_business') },
+  ];
+
+  /**
+   * 할인율 적용 총 가격 계산
+   * - 좌석 등급: ECONOMY 1배, PREMIUM 1.5배, BUSINESS 2배
+   * - 성인: 100%
+   * - 소아 (2-11세): 75%
+   * - 유아 (0-1세): 10%
+   */
+  const calculateDiscountedTotal = (pricePerPerson) => {
+    const seatMultiplier = getSeatClassMultiplier();
+    const adjustedPrice = pricePerPerson * seatMultiplier;
+
+    const adultPrice = adjustedPrice * adults * 1.0;      // 성인 100%
+    const childPrice = adjustedPrice * children * 0.75;   // 소아 75%
+    const infantPrice = adjustedPrice * infants * 0.1;    // 유아 10%
+    return Math.round(adultPrice + childPrice + infantPrice);
+  };
 
   /**
    * 탑승자 정보 입력 표시 상태
@@ -81,7 +127,7 @@ const FlightSeat = () => {
   const setHistory = (field, arr) => {
     try {
       localStorage.setItem(historyKey(field), JSON.stringify(arr));
-    } catch {}
+    } catch { }
   };
   const addToHistory = (field, value) => {
     const v = (value || '').trim();
@@ -282,13 +328,13 @@ const FlightSeat = () => {
     );
 
     if (!isValid) {
-      alert('모든 탑승자 정보를 입력해주세요.');
+      alert(t('alert_fill_all_passengers'));
       return;
     }
 
-    // 총 가격 계산 (가는편 + 오는편)
-    const totalPrice = (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
-      (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0);
+    // 총 가격 계산 (가는편 + 오는편) - 소아/유아 할인 적용
+    const totalPrice = calculateDiscountedTotal(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+      (isRoundTrip && inboundFlight ? calculateDiscountedTotal(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0);
 
     // 결제 페이지로 이동
     navigate('/reservations/flights/payment', {
@@ -298,7 +344,7 @@ const FlightSeat = () => {
         inboundFlight,
         isRoundTrip,
         searchConditions,
-        selectedClass: searchConditions.seatClass,
+        selectedClass,  // 사용자가 선택한 좌석 등급
         passengers,
         totalPrice,
       }
@@ -317,7 +363,7 @@ const FlightSeat = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 페이지 제목 */}
         <h1 className="text-3xl font-bold mb-6 dark:text-white">
-          좌석 선택
+          {t('title_select_seat')}
         </h1>
 
         {/* 탭 네비게이션 */}
@@ -328,9 +374,9 @@ const FlightSeat = () => {
           {/* 메인 콘텐츠 영역 */}
           <main className="lg:col-span-8 space-y-6">
             {/* 선택한 항공편 정보 카드 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4 dark:text-white">
-                선택한 항공편 {isRoundTrip && <span className="text-sm font-normal text-primary ml-2">왕복</span>}
+                {t('subtitle_selected_flights')} {isRoundTrip && <span className="text-sm font-normal text-primary ml-2">{t('flight_roundtrip_badge')}</span>}
               </h2>
 
               <div className="space-y-4">
@@ -338,7 +384,7 @@ const FlightSeat = () => {
                 <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="material-symbols-outlined text-primary">flight_takeoff</span>
-                    <span className="font-semibold text-primary">가는편</span>
+                    <span className="font-semibold text-primary">{t('label_outbound')}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -381,7 +427,7 @@ const FlightSeat = () => {
                   <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="material-symbols-outlined text-mint">flight_land</span>
-                      <span className="font-semibold text-mint">오는편</span>
+                      <span className="font-semibold text-mint">{t('label_inbound')}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -428,67 +474,115 @@ const FlightSeat = () => {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                       <span className="material-symbols-outlined text-xl">person</span>
-                      <span>승객 {totalPassengers}명</span>
+                      <span>{t('passenger_count_fmt').replace('{count}', totalPassengers)}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <span className="material-symbols-outlined text-xl text-slate-400">airline_seat_recline_normal</span>
                       <span className="px-2 py-1 bg-primary/10 text-primary rounded font-medium">
-                        {searchConditions.seatClass === 'ECONOMY' && '일반석'}
-                        {searchConditions.seatClass === 'PREMIUM' && '프리미엄 일반석'}
-                        {searchConditions.seatClass === 'BUSINESS' && '비즈니스석'}
-                        {!['ECONOMY', 'PREMIUM', 'BUSINESS'].includes(searchConditions.seatClass) && '일반석'}
+                        {selectedClass === 'ECONOMY' && t('class_economy')}
+                        {selectedClass === 'PREMIUM' && t('class_premium')}
+                        {selectedClass === 'BUSINESS' && t('class_business')}
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-slate-500">총 항공료</p>
+                    <p className="text-sm text-slate-500">
+                      {t('total_fare_breakdown').replace('{a}', adults).replace('{c}', children).replace('{i}', infants)}
+                    </p>
                     <p className="text-xl font-bold text-primary">
                       {(
-                        (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
-                        (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
+                        calculateDiscountedTotal(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+                        (isRoundTrip && inboundFlight ? calculateDiscountedTotal(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
                       ).toLocaleString()}원
                     </p>
+                    {(children > 0 || infants > 0) && (
+                      <p className="text-xs text-slate-400 mt-1">{t('discount_applied_desc')}</p>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 탑승자 정보 입력 폼 (조건부 표시) */}
-            {showPassengerForm && (
-              <div id="passenger-form" className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
+            {/* 좌석 등급 선택 카드 */}
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4 dark:text-white">
-                탑승자 정보
+                {t('title_select_class')}
               </h2>
 
-              {/* 자동완성용 datalist (공유) */}
-              <datalist id="lastNameSuggestions">
-                {lastNameHistory.map((v, i) => (
-                  <option key={`ln-${i}`} value={v} />
-                ))}
-              </datalist>
-              <datalist id="firstNameSuggestions">
-                {firstNameHistory.map((v, i) => (
-                  <option key={`fn-${i}`} value={v} />
-                ))}
-              </datalist>
-              <datalist id="passportSuggestions">
-                {passportHistory.map((v, i) => (
-                  <option key={`pp-${i}`} value={v} />
-                ))}
-              </datalist>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {seatClassOptions.map((option) => {
+                  const basePrice = outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0;
+                  const optionPrice = Math.round(basePrice * option.multiplier);
+                  const isSelected = selectedClass === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setSelectedClass(option.value)}
+                      className={`p-4 rounded-xl border-2 transition-all text-left ${isSelected
+                        ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                        }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`font-semibold ${isSelected ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
+                          {option.label}
+                        </span>
+                        {isSelected && (
+                          <span className="material-symbols-outlined text-primary">check_circle</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{option.description}</p>
+                      <p className={`text-lg font-bold ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {optionPrice.toLocaleString()}원
+                        <span className="text-xs font-normal text-slate-400 ml-1">{t('per_person')}</span>
+                      </p>
+                      {option.multiplier > 1 && (
+                        <p className="text-xs text-slate-400 mt-1">{t('surcharge_desc').replace('{percent}', ((option.multiplier - 1) * 100).toFixed(0))}</p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 탑승자 정보 입력 폼 (조건부 표시) */}
+            {showPassengerForm && (
+              <div id="passenger-form" className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold mb-4 dark:text-white">
+                  {t('title_passenger_info')}
+                </h2>
+
+                {/* 자동완성용 datalist (공유) */}
+                <datalist id="lastNameSuggestions">
+                  {lastNameHistory.map((v, i) => (
+                    <option key={`ln-${i}`} value={v} />
+                  ))}
+                </datalist>
+                <datalist id="firstNameSuggestions">
+                  {firstNameHistory.map((v, i) => (
+                    <option key={`fn-${i}`} value={v} />
+                  ))}
+                </datalist>
+                <datalist id="passportSuggestions">
+                  {passportHistory.map((v, i) => (
+                    <option key={`pp-${i}`} value={v} />
+                  ))}
+                </datalist>
 
                 <div className="space-y-6">
                   {passengers.map((passenger, index) => (
                     <div key={passenger.id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
                       <h3 className="font-medium text-lg mb-4 dark:text-white">
-                        탑승자 {index + 1}
+                        {t('passenger_n').replace('{n}', index + 1)}
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* 성 (영문) */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            성 (영문) <span className="text-red-500">*</span>
+                            {t('label_lastname')} <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -505,7 +599,7 @@ const FlightSeat = () => {
                         {/* 이름 (영문) */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            이름 (영문) <span className="text-red-500">*</span>
+                            {t('label_firstname')} <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -522,7 +616,7 @@ const FlightSeat = () => {
                         {/* 생년월일 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            생년월일 <span className="text-red-500">*</span>
+                            {t('label_dob')} <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="date"
@@ -536,7 +630,7 @@ const FlightSeat = () => {
                         {/* 여권번호 */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            여권번호 <span className="text-red-500">*</span>
+                            {t('label_passport')} <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -561,10 +655,10 @@ const FlightSeat = () => {
                       info
                     </span>
                     <div className="text-sm text-blue-800 dark:text-blue-300">
-                      <p className="font-medium mb-1">탑승자 정보 입력 안내</p>
+                      <p className="font-medium mb-1">{t('info_passenger_title')}</p>
                       <ul className="list-disc list-inside space-y-1">
-                        <li>여권에 기재된 영문 이름을 정확히 입력해주세요</li>
-                        <li>이름과 여권번호 불일치 시 탑승이 거부될 수 있습니다</li>
+                        <li>{t('info_passenger_1')}</li>
+                        <li>{t('info_passenger_2')}</li>
                       </ul>
                     </div>
                   </div>
@@ -573,25 +667,29 @@ const FlightSeat = () => {
             )}
 
             {/* 결제하기 버튼 */}
-            <div className="bg-white dark:bg-surface-dark rounded-xl shadow-lg p-6">
+            <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    총 결제 금액
+                    {t('label_total_payment')} ({t('passenger_count_fmt').replace('{count}', totalPassengers)})
                   </p>
                   <p className="text-3xl font-bold text-primary">
                     {(
-                      (outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
-                      (isRoundTrip && inboundFlight ? (inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
+                      calculateDiscountedTotal(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
+                      (isRoundTrip && inboundFlight ? calculateDiscountedTotal(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
                     ).toLocaleString()}원
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    {searchConditions.seatClass === 'ECONOMY' && '일반석'}
-                    {searchConditions.seatClass === 'PREMIUM' && '프리미엄 일반석'}
-                    {searchConditions.seatClass === 'BUSINESS' && '비즈니스석'}
-                    {!['ECONOMY', 'PREMIUM', 'BUSINESS'].includes(searchConditions.seatClass) && '일반석'}
-                    {' · '}{totalPassengers}명{isRoundTrip && ' · 왕복'}
+                    {selectedClass === 'ECONOMY' && t('class_economy')}
+                    {selectedClass === 'PREMIUM' && t('class_premium')}
+                    {selectedClass === 'BUSINESS' && t('class_business')}
+                    {' · '}{totalPassengers}명{isRoundTrip && ` · ${t('flight_roundtrip_badge')}`}
                   </p>
+                  {(children > 0 || infants > 0) && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      ✓ {t('discount_applied')}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -603,7 +701,7 @@ const FlightSeat = () => {
                   {showPassengerForm ? 'payment' : 'arrow_forward'}
                 </span>
                 <span>
-                  {showPassengerForm ? '결제하기' : '다음 단계 (탑승자 정보 입력)'}
+                  {showPassengerForm ? t('btn_payment') : t('btn_next_passenger_input')}
                 </span>
               </button>
             </div>

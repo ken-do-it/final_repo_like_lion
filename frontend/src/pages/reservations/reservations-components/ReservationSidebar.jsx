@@ -1,13 +1,16 @@
 import React from 'react';
+import { useLanguage } from '../../../context/LanguageContext';
 
 /**
  * 예약 페이지 사이드바 컴포넌트
- * 혜택 안내, 인기 여행지, 고객 지원 정보를 표시합니다
+ * 혜택 안내, 고객 지원 정보를 표시합니다
  *
  * 사용 예시:
  * <ReservationSidebar />
  */
 const ReservationSidebar = () => {
+  const { t } = useLanguage();
+
   // 외부 도메인 호출 없이 생성하는 SVG 플레이스홀더 (DNS 이슈 방지)
   const makePlaceholder = (label = 'Tripko', w = 600, h = 400) => {
     const bg = '#e2e8f0'; // slate-200
@@ -29,19 +32,19 @@ const ReservationSidebar = () => {
   const benefits = [
     {
       icon: 'support_agent',
-      text: '24시간 고객 지원'
+      text: t('benefit_support')
     },
     {
       icon: 'verified',
-      text: '최저가 보장'
+      text: t('benefit_guarantee')
     },
     {
       icon: 'lock',
-      text: '안전한 결제'
+      text: t('benefit_secure')
     },
     {
       icon: 'sync',
-      text: '무료 취소 및 변경'
+      text: t('benefit_cancel')
     },
   ];
 
@@ -53,23 +56,22 @@ const ReservationSidebar = () => {
    */
   const popularDestinations = [
     {
-      name: '제주도',
+      name: t('dest_jeju'),
       price: '65000',
       image: makePlaceholder('Jeju', 600, 400)
     },
     {
-      name: '부산',
+      name: t('dest_busan'),
       price: '55000',
       image: makePlaceholder('Busan', 600, 400)
     },
   ];
-
   return (
     <aside className="space-y-6">
       {/* 혜택 안내 카드 */}
-      <div className="bg-slate-50 dark:bg-surface-dark rounded-xl p-6">
+      <div className="bg-slate-50 dark:bg-[#1e2b36] rounded-xl p-6">
         <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">
-          Tripko 혜택
+          {t('title_benefits')}
         </h3>
 
         <ul className="space-y-3">
@@ -92,7 +94,7 @@ const ReservationSidebar = () => {
       {/* 인기 여행지 카드 */}
       <div className="bg-white dark:bg-surface-dark rounded-xl p-6 shadow-lg">
         <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">
-          인기 여행지
+          {t('title_popular_dest')}
         </h3>
 
         <div className="space-y-4">
@@ -118,7 +120,7 @@ const ReservationSidebar = () => {
                     {destination.name}
                   </p>
                   <p className="text-sm opacity-90">
-                    {parseInt(destination.price).toLocaleString()}원부터
+                    {parseInt(destination.price).toLocaleString()}{t('unit_from')}
                   </p>
                 </div>
               </div>
@@ -126,7 +128,6 @@ const ReservationSidebar = () => {
           ))}
         </div>
       </div>
-
       {/* 고객 지원 카드 */}
       <div className="bg-primary text-white rounded-xl p-6">
         <div className="flex items-start gap-3">
@@ -138,13 +139,13 @@ const ReservationSidebar = () => {
           {/* 지원 정보 */}
           <div>
             <h3 className="font-semibold mb-2">
-              도움이 필요하신가요?
+              {t('title_need_help')}
             </h3>
             <p className="text-sm opacity-90 mb-3">
-              예약 관련 문의사항은 언제든지 연락주세요
+              {t('desc_need_help')}
             </p>
             <button className="bg-white text-primary px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-100 transition-colors">
-              고객센터 연결
+              {t('btn_contact_support')}
             </button>
           </div>
         </div>

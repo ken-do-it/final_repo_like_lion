@@ -8,9 +8,16 @@ export const LanguageProvider = ({ children }) => {
     const [language, setLanguage] = useState('English');
 
     // Helper: Translate key based on current language
-    const t = useCallback((key) => {
+    const t = useCallback((key, params = {}) => {
         const langData = translations[language] || translations['English'];
-        return langData[key] || translations['English'][key] || key;
+        let text = langData[key] || translations['English'][key] || key;
+
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(param => {
+                text = text.replace(new RegExp(`{${param}}`, 'g'), params[param]);
+            });
+        }
+        return text;
     }, [language]);
 
     return (

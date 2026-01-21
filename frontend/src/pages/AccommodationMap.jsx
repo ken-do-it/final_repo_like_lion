@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { placesAxios } from '../api/axios';
+import { useLanguage } from '../context/LanguageContext';
 
 const containerStyle = {
   width: '100%',
@@ -30,6 +31,7 @@ const mapOptions = {
 
 const AccommodationMap = () => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { t } = useLanguage();
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -162,8 +164,8 @@ const AccommodationMap = () => {
     window.open(url, '_blank');
   };
 
-  if (loadError) return <div className="flex h-screen items-center justify-center text-red-500">Error loading maps</div>;
-  if (!isLoaded) return <div className="flex h-screen items-center justify-center dark:bg-[#101a22] text-white">Loading Maps...</div>;
+  if (loadError) return <div className="flex h-screen items-center justify-center text-red-500">{t('stays_error_map')}</div>;
+  if (!isLoaded) return <div className="flex h-screen items-center justify-center dark:bg-[#101a22] text-white">{t('stays_loading_map')}</div>;
 
   return (
     <div className="flex flex-col h-screen bg-[#f6f7f8] dark:bg-[#101a22] transition-colors overflow-hidden">
@@ -172,7 +174,7 @@ const AccommodationMap = () => {
       <div className="container mx-auto px-4 max-w-screen-xl py-4 flex-none z-10">
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-[#111111] dark:text-[#f1f5f9]">Find Stays</h1>
+            <h1 className="text-2xl font-bold text-[#111111] dark:text-[#f1f5f9]">{t('stays_title')}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">{searchStatus}</p>
           </div>
 
@@ -182,7 +184,7 @@ const AccommodationMap = () => {
               <span className="material-symbols-outlined text-gray-400">search</span>
               <input
                 type="text"
-                placeholder="Search location (e.g. Gangnam)"
+                placeholder={t('stays_search_placeholder')}
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleKeywordSearch()}
@@ -192,24 +194,24 @@ const AccommodationMap = () => {
                 onClick={handleKeywordSearch}
                 className="text-[#1392ec] font-bold text-sm hover:underline"
               >
-                Search
+                {t('stays_search_btn')}
               </button>
             </div>
 
             {/* Filter Bar */}
             <div className="flex items-center gap-3 bg-white dark:bg-[#1e2b36] px-4 py-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-              <label className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">Type:</label>
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">{t('stays_type_label')}</label>
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
                 className="bg-transparent border-none text-sm font-medium focus:ring-0 text-[#111111] dark:text-[#f1f5f9] cursor-pointer"
               >
-                <option value="">All Stays</option>
-                <option value="호텔">Hotel</option>
-                <option value="모텔">Motel</option>
-                <option value="펜션">Pension</option>
-                <option value="게스트하우스">Guesthouse</option>
-                <option value="리조트">Resort</option>
+                <option value="">{t('stays_type_all')}</option>
+                <option value="호텔">{t('stays_type_hotel')}</option>
+                <option value="모텔">{t('stays_type_motel')}</option>
+                <option value="펜션">{t('stays_type_pension')}</option>
+                <option value="게스트하우스">{t('stays_type_guesthouse')}</option>
+                <option value="리조트">{t('stays_type_resort')}</option>
               </select>
             </div>
           </div>
@@ -225,7 +227,7 @@ const AccommodationMap = () => {
           {accommodations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500">
               <span className="text-4xl mb-4">🗺️</span>
-              <p>Click on the map area to search for accommodations.</p>
+              <p>{t('stays_initial_msg')}</p>
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -275,7 +277,7 @@ const AccommodationMap = () => {
 
           {loading && (
             <div className="p-4 border-t border-gray-100 dark:border-gray-700 text-center text-sm text-[#1392ec] font-bold animate-pulse">
-              Updating results...
+              {t('stays_updating')}
             </div>
           )}
         </div>
@@ -324,7 +326,7 @@ const AccommodationMap = () => {
                     onClick={() => openExternalMap(selectedAccommodation)}
                     className="w-full bg-[#1392ec] hover:bg-blue-600 text-white text-xs font-bold py-1.5 rounded transition-colors"
                   >
-                    View Details ↗
+                    {t('stays_view_details')}
                   </button>
                 </div>
               </InfoWindow>
@@ -336,7 +338,7 @@ const AccommodationMap = () => {
             <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center z-10">
               <div className="bg-white dark:bg-[#1e2b36] px-6 py-3 rounded-full shadow-xl flex items-center gap-3">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1392ec] border-t-transparent"></div>
-                <span className="text-sm font-bold text-[#111111] dark:text-white">Finding places...</span>
+                <span className="text-sm font-bold text-[#111111] dark:text-white">{t('stays_finding')}</span>
               </div>
             </div>
           )}

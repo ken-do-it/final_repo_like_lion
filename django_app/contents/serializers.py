@@ -4,7 +4,7 @@ from .models import Shortform, ShortformComment
 
 class ShortformSerializer(serializers.ModelSerializer):
     # 업로드용 파일 필드 (write-only)
-    video_file = serializers.FileField(write_only=True, required=True)
+    video_file = serializers.FileField(write_only=True, required=False)
     # 번역 결과를 담을 읽기 전용 필드
     title_translated = serializers.CharField(read_only=True)
     content_translated = serializers.CharField(read_only=True)

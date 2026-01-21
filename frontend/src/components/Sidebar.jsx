@@ -17,9 +17,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: `📸 ${t('nav_geoquiz')}`, path: '/geo-quiz' },
         { label: `🎮 ${t('nav_game')}`, path: '/game' },
         { label: `📅 ${t('nav_ai_plan')}`, path: '/plans' },
-        { label: `🥘 ${t('nav_column')}`, path: null },
+        { label: `🥘 ${t('nav_column')}`, path: '/local-columns' },
         { label: `🔥 ${t('nav_shorts')}`, path: '/shorts' },
-        { label: `✈️ ${t('nav_ticket')}`, path: '/reservations/flights' },
+        { label: `✈️ ${t('title_transport')}`, path: '/reservations/flights' },
         { label: `🏙️ ${t('nav_city') || '도시 검색'}`, path: '/places/city' },
     ];
 
