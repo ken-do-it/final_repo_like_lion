@@ -279,6 +279,8 @@ EMAIL_HOST_PASSWORD = ''
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
+    "https://tripko.p-e.kr",
+    "http://tripko.p-e.kr",
     "http://localhost",
     "http://localhost:80",
     "http://localhost:5173",
@@ -289,6 +291,8 @@ CORS_ALLOWED_ORIGINS = [
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = [
+    "https://tripko.p-e.kr",
+    "http://tripko.p-e.kr",
     "http://localhost",
     "http://localhost:80",
     "http://localhost:5173",
