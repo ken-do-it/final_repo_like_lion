@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createLocalColumn, updateLocalColumn, getLocalColumnDetail } from '../../../api/columns';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../context/LanguageContext'; // Added
 import Button from '../../../components/ui/Button';
 import PlaceAutosuggest from './PlaceAutosuggest';
 
@@ -9,6 +10,7 @@ const LocalColumnForm = () => {
     const navigate = useNavigate();
     const { id } = useParams(); // If id exists, it's edit mode
     const isEditMode = !!id;
+    const { t } = useLanguage(); // Added hook
 
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(isEditMode);
@@ -64,7 +66,7 @@ const LocalColumnForm = () => {
 
         } catch (error) {
             console.error('Failed to load column:', error);
-            alert('데이터를 불러오는데 실패했습니다.');
+            alert(t('msg_load_fail')); // Translated
             navigate('/local-columns');
         } finally {
             setInitialLoading(false);
@@ -111,7 +113,7 @@ const LocalColumnForm = () => {
 
     const removeSection = (index) => {
         if (sections.length === 1) {
-            alert('최소 하나의 섹션은 필요합니다.');
+            alert(t('err_section_min')); // Translated
             return;
         }
         const newSections = [...sections];
@@ -127,12 +129,12 @@ const LocalColumnForm = () => {
 
     const handleSubmit = async () => {
         if (!title.trim()) {
-            setTitleError('제목을 입력해주세요.');
+            setTitleError(t('err_title_req')); // Translated
             window.scrollTo(0, 0);
             return;
         }
         if (!thumbnail) {
-            alert('썸네일 이미지는 필수입니다.');
+            alert(t('err_thumb_req')); // Translated
             return;
         }
 
@@ -188,15 +190,15 @@ const LocalColumnForm = () => {
         try {
             if (isEditMode) {
                 await updateLocalColumn(id, formData);
-                alert('칼럼이 수정되었습니다.');
+                alert(t('msg_col_updated')); // Translated
             } else {
                 await createLocalColumn(formData);
-                alert('칼럼이 작성되었습니다.');
+                alert(t('msg_col_created')); // Translated
             }
             navigate('/local-columns');
         } catch (error) {
             console.error('Submit failed:', error);
-            const msg = error.response?.data?.detail || '저장에 실패했습니다.';
+            const msg = error.response?.data?.detail || t('msg_save_fail'); // Translated fallback
             alert(msg);
         } finally {
             setLoading(false);
@@ -205,21 +207,21 @@ const LocalColumnForm = () => {
 
 
     if (initialLoading) {
-        return <div className="p-8 text-center">Loading...</div>;
+        return <div className="p-8 text-center">{t('msg_loading')}</div>; // Translated
     }
 
     return (
         <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] py-8 pb-20">
             <div className="max-w-3xl mx-auto bg-white dark:bg-[#1e2b36] rounded-2xl shadow-sm p-6 md:p-8">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-                    {isEditMode ? '칼럼 수정' : '새 칼럼 작성'}
+                    {isEditMode ? t('col_edit_title') : t('col_write_title')}
                 </h1>
 
                 <div className="space-y-8">
                     {/* Title */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            제목 <span className="text-red-500">*</span>
+                            {t('col_input_title')} <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -229,7 +231,7 @@ const LocalColumnForm = () => {
                                 if (e.target.value) setTitleError('');
                             }}
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-[#1392ec] outline-none transition-all dark:text-white"
-                            placeholder="매력적인 제목을 지어주세요"
+                            placeholder={t('col_input_title_ph')}
                         />
                         {titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
                     </div>
@@ -237,7 +239,7 @@ const LocalColumnForm = () => {
                     {/* Thumbnail */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            썸네일 (대표 이미지) <span className="text-red-500">*</span>
+                            {t('col_input_thumb')} <span className="text-red-500">*</span>
                         </label>
                         {thumbnail ? (
                             <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden group">
@@ -247,7 +249,7 @@ const LocalColumnForm = () => {
                                         onClick={() => removeImage('thumbnail')}
                                         className="bg-red-500 text-white px-4 py-2 rounded-full text-sm hover:bg-red-600"
                                     >
-                                        삭제
+                                        {t('btn_delete')}
                                     </button>
                                 </div>
                             </div>
@@ -255,7 +257,7 @@ const LocalColumnForm = () => {
                             <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-[#1392ec] hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all">
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                     <span className="text-3xl mb-2">🖼️</span>
-                                    <p className="text-sm text-gray-500">클릭하여 이미지 업로드</p>
+                                    <p className="text-sm text-gray-500">{t('col_upload_thumb')}</p>
                                 </div>
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'thumbnail')} />
                             </label>
@@ -265,32 +267,32 @@ const LocalColumnForm = () => {
                     {/* Intro Content */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            서론 (Intro)
+                            {t('col_input_intro')}
                         </label>
                         <textarea
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             rows={4}
                             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-[#1392ec] outline-none transition-all dark:text-white resize-none"
-                            placeholder="칼럼의 시작을 여는 글을 작성해주세요."
+                            placeholder={t('col_input_intro_ph')}
                         />
                     </div>
 
                     {/* Intro Image */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            서론 이미지 (선택)
+                            {t('col_input_intro_img')}
                         </label>
                         {introImage ? (
                             <div className="relative w-full h-48 rounded-xl overflow-hidden group">
                                 <img src={introImage.preview} alt="Intro" className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <button onClick={() => removeImage('intro')} className="bg-red-500 text-white px-4 py-2 rounded-full text-sm">삭제</button>
+                                    <button onClick={() => removeImage('intro')} className="bg-red-500 text-white px-4 py-2 rounded-full text-sm">{t('btn_delete')}</button>
                                 </div>
                             </div>
                         ) : (
                             <label className="flex items-center justify-center w-full h-24 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                                <span className="text-gray-500 text-sm">➕ 이미지 추가</span>
+                                <span className="text-gray-500 text-sm">➕ {t('col_intro_img_add')}</span>
                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'intro')} />
                             </label>
                         )}
@@ -303,10 +305,10 @@ const LocalColumnForm = () => {
                         {sections.map((section, idx) => (
                             <div key={section.id} className="bg-gray-50 dark:bg-[#18222c] rounded-xl p-6 relative border border-gray-100 dark:border-gray-700">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-bold text-[#1392ec]">#{idx + 1} 섹션</h3>
+                                    <h3 className="text-lg font-bold text-[#1392ec]">{t('col_section_n')} #{idx + 1}</h3>
                                     {sections.length > 1 && (
                                         <button onClick={() => removeSection(idx)} className="text-red-500 text-sm hover:underline">
-                                            섹션 삭제
+                                            {t('btn_del_section')}
                                         </button>
                                     )}
                                 </div>
@@ -317,7 +319,7 @@ const LocalColumnForm = () => {
                                         value={section.title}
                                         onChange={(e) => updateSection(idx, 'title', e.target.value)}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#1e2b36] focus:ring-1 focus:ring-[#1392ec] dark:text-white"
-                                        placeholder="소제목을 입력하세요"
+                                        placeholder={t('col_input_subtitle_ph')}
                                     />
 
                                     <textarea
@@ -325,16 +327,16 @@ const LocalColumnForm = () => {
                                         onChange={(e) => updateSection(idx, 'content', e.target.value)}
                                         rows={5}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#1e2b36] focus:ring-1 focus:ring-[#1392ec] dark:text-white resize-none"
-                                        placeholder="내용을 작성해주세요"
+                                        placeholder={t('col_input_content_ph')}
                                     />
 
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">📍 관련 장소:</span>
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">📍 {t('col_related_place')}:</span>
                                             <PlaceAutosuggest
                                                 value={section.place} // Pass the whole object
                                                 onChange={(newPlace) => updateSection(idx, 'place', newPlace)}
-                                                placeholder="장소 이름을 검색하세요 (예: 남산타워)"
+                                                placeholder={t('col_place_ph')}
                                             />
                                         </div>
 
@@ -367,7 +369,7 @@ const LocalColumnForm = () => {
                         variant="secondary"
                         className="w-full py-4 border-dashed border-2 border-gray-300 hover:border-[#1392ec] hover:text-[#1392ec]"
                     >
-                        + 섹션 추가하기
+                        + {t('btn_add_section')}
                     </Button>
 
                     <div className="flex gap-4 pt-8">
@@ -376,14 +378,14 @@ const LocalColumnForm = () => {
                             variant="secondary"
                             className="flex-1"
                         >
-                            취소
+                            {t('btn_cancel')}
                         </Button>
                         <Button
                             onClick={handleSubmit}
                             isLoading={loading}
                             className="flex-1 bg-[#1392ec] hover:bg-blue-600 text-white"
                         >
-                            {isEditMode ? '수정 완료' : '작성 완료'}
+                            {isEditMode ? t('btn_submit_edit') : t('btn_submit_create')}
                         </Button>
                     </div>
                 </div>

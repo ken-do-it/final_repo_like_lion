@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { getLocalColumns, checkColumnPermission } from '../../../api/columns';
 import { useAuth } from '../../../context/AuthContext';
 import { useLanguage } from '../../../context/LanguageContext';
+import { API_LANG_CODES } from '../../../constants/translations';
 import Button from '../../../components/ui/Button';
 
 const LocalColumnList = () => {
     const navigate = useNavigate();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { isAuthenticated } = useAuth();
     const [columns, setColumns] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,12 +16,16 @@ const LocalColumnList = () => {
 
     useEffect(() => {
         fetchColumns();
-    }, []);
+    }, [language]);
 
     const fetchColumns = async () => {
         try {
             setLoading(true);
-            const data = await getLocalColumns({ page: 1, limit: 20 });
+            const data = await getLocalColumns({
+                page: 1,
+                limit: 20,
+                lang: API_LANG_CODES[language] || 'eng_Latn'
+            });
             setColumns(data);
         } catch (err) {
             console.error('Failed to fetch columns:', err);
@@ -40,7 +45,12 @@ const LocalColumnList = () => {
 
         const permission = await checkColumnPermission();
         if (!permission.allowed) {
-            alert(permission.message);
+            let msg = permission.message;
+            if (permission.reason === 'badge_inactive') msg = t('msg_auth_inactive');
+            else if (permission.reason === 'level_low') msg = t('msg_auth_level_low');
+            else if (permission.reason === 'error') msg = t('msg_auth_error');
+
+            alert(msg);
             return;
         }
 

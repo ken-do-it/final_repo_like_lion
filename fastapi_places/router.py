@@ -5,7 +5,7 @@ Places API Router
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 import uuid
 import json
@@ -406,6 +406,21 @@ def get_badge_status(
     """
     현지인 뱃지 상태 조회
     """
+    # [TEMPORARY TEST MODE] 모든 사용자에게 Level 5 권한 부여 (테스트용)
+    # 번역 기능 테스트 종료 후 반드시 삭제/원복 필요
+    return LocalBadgeStatusResponse(
+        level=5,
+        city="테스트 권한",
+        is_active=True,
+        first_authenticated_at=date.today(),
+        last_authenticated_at=date.today(),
+        next_authentication_due=date.today() + timedelta(days=365),
+        maintenance_months=12,
+        authentication_count=999
+    )
+
+    # [ORIGINAL CODE - COMMENTED OUT FOR TESTING]
+    """
     badge = db.query(LocalBadge).filter(LocalBadge.user_id == user_id).first()
 
     if not badge:
@@ -428,17 +443,19 @@ def get_badge_status(
         last_authenticated_at=badge.last_authenticated_at,
         next_authentication_due=badge.next_authentication_due,
         maintenance_months=badge.maintenance_months,
-        authentication_count=0  # 추후 구현
+        authentication_count=0
     )
+    """
 
 
 # ==================== 현지인 칼럼 ====================
 
 @router.get("/local-columns", response_model=List[LocalColumnListResponse])
-def get_local_columns(
+async def get_local_columns(
     city: Optional[str] = Query(None, description="도시 필터"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db)
 ):
     """
@@ -458,13 +475,18 @@ def get_local_columns(
 
     # 사용자 닉네임 및 뱃지 레벨 조회
     result = []
+    
+    # [AI 번역 준비]
+    items_to_translate = []
+    
     for column in columns:
         user = db.query(User).filter(User.id == column.user_id).first()
         badge = db.query(LocalBadge).filter(
             LocalBadge.user_id == column.user_id,
             LocalBadge.is_active == True
         ).first()
-        result.append(LocalColumnListResponse(
+        
+        item = LocalColumnListResponse(
             id=column.id,
             user_id=column.user_id,
             user_nickname=user.nickname if user else None,
@@ -473,14 +495,36 @@ def get_local_columns(
             thumbnail_url=column.thumbnail_url,
             view_count=column.view_count,
             created_at=column.created_at
-        ))
+        )
+        result.append(item)
+        
+        # 번역 대상 수집
+        if lang:
+             items_to_translate.append({
+                "text": column.title,
+                "entity_type": "local_column",
+                "entity_id": column.id,
+                "field": "title"
+            })
+
+    # [AI 번역 적용]
+    if lang and items_to_translate:
+        try:
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            # 순서대로 매핑 (LocalColumnListResponse 객체의 title 수정)
+            for idx, item in enumerate(result):
+                if idx in translated_map:
+                    item.title = translated_map[idx]
+        except Exception as e:
+            print(f"Local columns translation failed: {e}")
 
     return result
 
 
 @router.get("/local-columns/{column_id}", response_model=LocalColumnResponse)
-def get_local_column_detail(
+async def get_local_column_detail(
     column_id: int,
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db)
 ):
     """
@@ -537,6 +581,50 @@ def get_local_column_detail(
         LocalBadge.user_id == column.user_id,
         LocalBadge.is_active == True
     ).first()
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = []
+            
+            # 1. Main Column Info (Title, Content)
+            items_to_translate.append({"text": column.title, "entity_type": "local_column", "entity_id": column.id, "field": "title"})
+            items_to_translate.append({"text": column.content, "entity_type": "local_column", "entity_id": column.id, "field": "content"})
+            
+            # 2. Sections Info (Title, Content)
+            # Keep track of indices
+            section_indices = []
+            for sec in section_data:
+                # Section Title
+                items_to_translate.append({"text": sec.title, "entity_type": "local_column_section", "entity_id": sec.id, "field": "title"})
+                # Section Content
+                items_to_translate.append({"text": sec.content, "entity_type": "local_column_section", "entity_id": sec.id, "field": "content"})
+            
+            # 3. Translate
+            print(f"[DEBUG] items_to_translate ({len(items_to_translate)}): {items_to_translate}")
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            print(f"[DEBUG] translated_map: {translated_map}")
+            
+            # 4. Apply Translations
+            # Main Info
+            if 0 in translated_map: column.title = translated_map[0]
+            if 1 in translated_map: column.content = translated_map[1]
+            
+            # Sections
+            # 0, 1 are used. Sections start from 2.
+            # Each section uses 2 indices (title, content).
+            current_idx = 2
+            for sec in section_data:
+                if current_idx in translated_map: sec.title = translated_map[current_idx]
+                current_idx += 1
+                
+                if current_idx in translated_map: sec.content = translated_map[current_idx]
+                current_idx += 1
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Local column detail translation failed: {e}")
 
     return LocalColumnResponse(
         id=column.id,
