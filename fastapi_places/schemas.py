@@ -317,10 +317,12 @@ class CityContentResponse(BaseModel):
     local_columns: List[LocalColumnListResponse] = Field(default_factory=list)
     shortforms: List[ShortformListResponse] = Field(default_factory=list)
     travel_plans: List[TravelPlanListResponse] = Field(default_factory=list)
+    display_name: Optional[str] = None
 
 
 class PopularCityResponse(BaseModel):
     """인기 도시 응답"""
     city_name: str
+    display_name: Optional[str] = None
     country: str = "대한민국"
     description: Optional[str] = None

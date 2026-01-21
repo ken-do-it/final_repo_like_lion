@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCityContent } from '../../../api/destinations';
+import { useLanguage } from '../../../context/LanguageContext';
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick.css";
@@ -18,6 +19,7 @@ const Icons = {
 const CityResultPage = () => {
     const { cityName } = useParams();
     const navigate = useNavigate();
+    const { t, language } = useLanguage();
     const [content, setContent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -25,16 +27,16 @@ const CityResultPage = () => {
     useEffect(() => {
         if (!cityName) return;
         fetchContent();
-    }, [cityName]);
+    }, [cityName, language]);
 
     const fetchContent = async () => {
         setLoading(true);
         try {
-            const data = await getCityContent(cityName);
+            const data = await getCityContent(cityName, language);
             setContent(data);
         } catch (err) {
             console.error(err);
-            setError("콘텐츠를 불러오는 중 오류가 발생했습니다.");
+            setError(t('city_load_error'));
         } finally {
             setLoading(false);
         }
@@ -94,13 +96,13 @@ const CityResultPage = () => {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#f6f7f8] dark:bg-[#101a22] text-center p-4">
                 <span className="text-4xl mb-4">😢</span>
-                <h2 className="text-xl font-bold mb-2 dark:text-white">오류가 발생했습니다</h2>
-                <p className="text-gray-500 mb-6">{error || "정보를 찾을 수 없습니다."}</p>
+                <h2 className="text-xl font-bold mb-2 dark:text-white">{t('city_error_title')}</h2>
+                <p className="text-gray-500 mb-6">{error || t('city_load_error')}</p>
                 <button
                     onClick={() => navigate('/places/city')}
                     className="px-6 py-2 bg-[#1392ec] text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
-                    다른 도시 검색하기
+                    {t('city_btn_retry_search')}
                 </button>
             </div>
         );
@@ -132,8 +134,8 @@ const CityResultPage = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#101a22] to-transparent"></div>
                 <div className="absolute bottom-0 left-0 w-full p-8 container mx-auto max-w-screen-xl">
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{cityName}</h1>
-                    <p className="text-gray-300 text-lg">이 도시의 모든 여행 정보를 모아봤어요.</p>
+                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{content ? (content.display_name || cityName) : cityName}</h1>
+                    <p className="text-gray-300 text-lg">{t('city_header_desc')}</p>
                 </div>
             </div>
 
@@ -143,7 +145,7 @@ const CityResultPage = () => {
 
                 {/* 1. Travel Plans */}
                 <section>
-                    <SectionHeader title={`${cityName} 여행 일정`} icon={Icons.plan} />
+                    <SectionHeader title={t('city_sec_plan', { city: content ? (content.display_name || cityName) : cityName })} icon={Icons.plan} />
                     {hasPlans ? (
                         <Slider {...sliderSettings} className="px-2 -mx-2">
                             {content.travel_plans.map(plan => (
@@ -168,7 +170,7 @@ const CityResultPage = () => {
                             ))}
                         </Slider>
                     ) : (
-                        <EmptySection text={`아직 ${cityName} 여행 일정이 없습니다.`} />
+                        <EmptySection text={t('city_empty_plan', { city: content ? (content.display_name || cityName) : cityName })} />
                     )}
                 </section>
 
@@ -176,7 +178,7 @@ const CityResultPage = () => {
 
                 {/* 2. Recommended Places */}
                 <section>
-                    <SectionHeader title={`${cityName} 추천 장소`} icon={Icons.place} />
+                    <SectionHeader title={t('city_sec_place', { city: content ? (content.display_name || cityName) : cityName })} icon={Icons.place} />
                     {hasPlaces ? (
                         <Slider {...sliderSettings} className="px-2 -mx-2">
                             {content.places.map((place, idx) => (
@@ -214,7 +216,7 @@ const CityResultPage = () => {
                             ))}
                         </Slider>
                     ) : (
-                        <EmptySection text={`아직 ${cityName}에 등록된 장소가 없습니다.`} />
+                        <EmptySection text={t('city_empty_place', { city: content ? (content.display_name || cityName) : cityName })} />
                     )}
                 </section>
 
@@ -222,7 +224,7 @@ const CityResultPage = () => {
 
                 {/* 3. Shortforms */}
                 <section>
-                    <SectionHeader title="숏폼" icon={Icons.shortform} />
+                    <SectionHeader title={t('nav_shorts')} icon={Icons.shortform} />
                     {hasShortforms ? (
                         <Slider {...{ ...sliderSettings, slidesToShow: 5.5, responsive: [{ breakpoint: 1024, settings: { slidesToShow: 4.5 } }, { breakpoint: 768, settings: { slidesToShow: 3.5 } }] }} className="px-2 -mx-2">
                             {content.shortforms.map(short => (
@@ -250,7 +252,7 @@ const CityResultPage = () => {
                             ))}
                         </Slider>
                     ) : (
-                        <EmptySection text="관련된 숏폼 영상이 없습니다." />
+                        <EmptySection text={t('city_empty_shorts')} />
                     )}
                 </section>
 
@@ -258,7 +260,7 @@ const CityResultPage = () => {
 
                 {/* 4. Local Columns */}
                 <section>
-                    <SectionHeader title="현지인 칼럼" icon={Icons.column} />
+                    <SectionHeader title={t('nav_column')} icon={Icons.column} />
                     {hasColumns ? (
                         <Slider {...sliderSettings} className="px-2 -mx-2">
                             {content.local_columns.map(column => (
@@ -296,7 +298,7 @@ const CityResultPage = () => {
                             ))}
                         </Slider>
                     ) : (
-                        <EmptySection text={`아직 ${cityName} 관련 현지인 칼럼이 없습니다.`} />
+                        <EmptySection text={t('city_empty_column', { city: content ? (content.display_name || cityName) : cityName })} />
                     )}
                 </section>
             </div>

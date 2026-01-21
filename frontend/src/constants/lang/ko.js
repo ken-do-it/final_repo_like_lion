@@ -17,6 +17,7 @@ export default {
     nav_column: "로컬 칼럼",
     nav_ticket: "항공권 예약",
     nav_city: "도시 검색",
+    nav_local_auth: "현지인 인증",
     nav_likes: "찜한 장소",
     nav_settings: "설정",
     nav_support: "고객센터",
@@ -720,5 +721,21 @@ export default {
     msg_auth_level_low: "현지인 레벨 3부터 작성 가능합니다.",
     msg_auth_error: "권한 정보를 확인할 수 없습니다.",
     col_upload_thumb: "클릭하여 이미지 업로드",
-    col_intro_img_add: "이미지 추가"
+    col_intro_img_add: "이미지 추가",
+
+    // City Pages
+    city_search_title: "어디로 떠나시나요? ✈️",
+    city_search_desc: "도시 이름을 검색하고 통합된 여행 정보를 만나보세요.",
+    city_search_ph: "도시 이름 검색 (예: 서울, 부산, 대전)",
+    city_popular_title: "인기 여행지 🔥",
+    city_header_desc: "이 도시의 모든 여행 정보를 모아봤어요.",
+    city_sec_plan: "{city} 여행 일정",
+    city_sec_place: "{city} 추천 장소",
+    city_empty_plan: "아직 {city} 여행 일정이 없습니다.",
+    city_empty_place: "아직 {city}에 등록된 장소가 없습니다.",
+    city_empty_shorts: "관련된 숏폼 영상이 없습니다.",
+    city_empty_column: "아직 {city} 관련 현지인 칼럼이 없습니다.",
+    city_error_title: "오류가 발생했습니다",
+    city_btn_retry_search: "다른 도시 검색하기",
+    city_load_error: "콘텐츠를 불러오는 중 오류가 발생했습니다."
 };
