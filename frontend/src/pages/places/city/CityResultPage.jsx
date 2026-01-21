@@ -179,11 +179,17 @@ const CityResultPage = () => {
                     <SectionHeader title={`${cityName} 추천 장소`} icon={Icons.place} />
                     {hasPlaces ? (
                         <Slider {...sliderSettings} className="px-2 -mx-2">
-                            {content.places.map(place => (
-                                <div key={place.id} className="px-2">
+                            {content.places.map((place, idx) => (
+                                <div key={place.place_api_id || place.id || idx} className="px-2">
                                     <div className="bg-white dark:bg-[#1e2b36] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group"
                                         onMouseDown={handleMouseDown}
-                                        onMouseUp={(e) => handleMouseUp(e, `/places/${place.id}`)}
+                                        onMouseUp={(e) => {
+                                            // DB에 있는 장소는 id로, API 결과는 api_id로 이동
+                                            const path = place.id && place.id > 0
+                                                ? `/places/${place.id}`
+                                                : `/places/detail?api_id=${place.place_api_id}&provider=${place.provider}&name=${encodeURIComponent(place.name)}`;
+                                            handleMouseUp(e, path);
+                                        }}
                                     >
                                         <div className="relative aspect-video overflow-hidden">
                                             <img
@@ -259,7 +265,7 @@ const CityResultPage = () => {
                                 <div key={column.id} className="px-2">
                                     <div className="bg-white dark:bg-[#1e2b36] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group h-full"
                                         onMouseDown={handleMouseDown}
-                                        onMouseUp={(e) => handleMouseUp(e, `/places/columns/${column.id}`)}
+                                        onMouseUp={(e) => handleMouseUp(e, `/local-columns/${column.id}`)}
                                     >
                                         <div className="relative aspect-[4/3] overflow-hidden">
                                             <img
