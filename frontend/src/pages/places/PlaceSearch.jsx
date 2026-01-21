@@ -79,7 +79,8 @@ const PlaceSearch = () => {
         setSearchInput(suggestion.name);
         setShowSuggestions(false);
         setSuggestions([]);
-        fetchPlaces(suggestion.name);
+        // fetchPlaces(suggestion.name); // [Deleted] Direct fetch
+        navigate(`?query=${encodeURIComponent(suggestion.name)}`); // [Added] Update URL to trigger useEffect
     };
 
     const handleSearchSubmit = (e) => {
@@ -87,7 +88,8 @@ const PlaceSearch = () => {
         shouldFetchSuggestions.current = false; // Prevent late arrivals
         setShowSuggestions(false);
         setSuggestions([]);
-        fetchPlaces(searchInput);
+        // fetchPlaces(searchInput); // [Deleted] Direct fetch
+        navigate(`?query=${encodeURIComponent(searchInput)}`); // [Added] Update URL to trigger useEffect
     };
 
     const handleKeyDown = (e) => {

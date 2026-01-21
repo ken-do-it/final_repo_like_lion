@@ -15,8 +15,12 @@ services:
 
   # 2. 메인 백엔드 (Django)
   django:
-    image: ${DOCKER_USERNAME}/korea-trip-be:latest
+    build:
+      context: ./django_app
+      dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./django_app:/app
     ports:
       - "8000:8000"
     depends_on:
@@ -26,8 +30,12 @@ services:
 
   # 3. AI 서버 (FastAPI)
   fastapi:
-    image: ${DOCKER_USERNAME}/korea-trip-ai:latest
+    build:
+      context: ./fastapi_app
+      dockerfile: Dockerfile
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./fastapi_app:/app
     ports:
       - "8001:8000"
     depends_on:
@@ -37,8 +45,12 @@ services:
 
   # 3.5. AI 번역 서버 (FastAPI Translation Only)
   fastapi-ai-translation:
-    image: ${DOCKER_USERNAME}/korea-trip-translation:latest
+    build:
+      context: ./fastapi_ai_translation
+      dockerfile: ${AI_DOCKERFILE:-Dockerfile}
     command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+    volumes:
+      - ./fastapi_ai_translation:/app
     ports:
       - "8003:8003"
     env_file:
@@ -46,7 +58,20 @@ services:
 
   # 4. 프론트엔드 (React + Nginx)
   frontend:
-    image: ${DOCKER_USERNAME}/korea-trip-fe:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # [1] 구글 맵 키
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
+        # [2] 백엔드 API 주소들 (이게 없으면 코드 내의 기본값(localhost) 등이 사용됨)
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_SEARCH_API_URL: ${VITE_SEARCH_API_URL}
+        VITE_PLACES_API_URL: ${VITE_PLACES_API_URL}
+        # [3] 카카오 JS 키
+        VITE_KAKAO_JS_KEY: ${VITE_KAKAO_JS_KEY}
+        # [4] 토스페이먼츠 클라이언트 키
+        VITE_TOSS_CLIENT_KEY: ${VITE_TOSS_CLIENT_KEY}
     ports:
       - "80:80"
       - "443:443"
@@ -59,7 +84,9 @@ services:
 
   # 5. 장소 검색 서버 (FastAPI Places)
   fastapi_places:
-    image: ${DOCKER_USERNAME}/korea-trip-places:latest
+    build:
+      context: ./fastapi_places
+      dockerfile: Dockerfile
     command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
     volumes:
       - ./fastapi_places:/app

@@ -94,9 +94,8 @@ class OpenAIAdapter:
              f"Translate the given text into {target_lang_name}.\n\n"
              f"Rules:\n"
              f"1. **Accuracy is paramount.** Do not hallucinate city names or places.\n"
-             f"2. **Proper Nouns:** **Transliterate** specific brand names (e.g., 'Seongsimdang') and place names into the target language's script. **DO NOT** keep Korean characters if the target is English/Alphabet.\n"
-             f"3. **Titles:** Make them natural and engaging, but DO NOT alter the meaning.\n"
-             f"   (e.g., '대전 성심당' -> 'Daejeon Seongsimdang Bakery')\n"
+             f"2. **Script Enforcement (for CJK languages only):** If translating to Japanese/Chinese, use the appropriate script (Kanji/Kana for Japanese, Hanzi for Chinese). Do NOT use Romanization for these languages.\n"
+             f"3. **For English:** Translate Korean text into natural English. Proper nouns can be transliterated (e.g., 'Jebidabang Cafe').\n"
              f"4. **No Explanations:** Return ONLY the translated text.\n"
              f"5. **Batch Requests:** Return a strictly valid JSON object: {{ \"translations\": [ \"string1\", \"string2\" ] }}"
         )

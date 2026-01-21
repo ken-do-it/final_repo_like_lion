@@ -32,35 +32,58 @@ async def translate_batch_proxy(items: List[Dict[str, Any]], target_lang: str) -
     Returns:
         Dict[index, translated_text]: 원본 리스트의 인덱스를 키로 하는 번역 결과 맵
     """
+    import asyncio
+
     if not items or not target_lang:
         return {}
 
-    try:
-        print(f"DEBUG: Proxying to Django: {DJANGO_URL}/api/translations/batch/", flush=True)
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            payload = {
-                "items": items,
-                "source_lang": "kor_Hang", # 기본값 (대부분 한국어 데이터)
-                "target_lang": NLLB_LANG_MAP.get(target_lang, target_lang)
-            }
-            
-            response = await client.post(
-                f"{DJANGO_URL}/api/translations/batch/",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                print(f"DEBUG: Proxy Success: {len(data.get('results', {}))} items", flush=True)
-                results = data.get("results", {})
-                return {int(k): v for k, v in results.items()}
-            else:
-                print(f"DEBUG: Proxy Status Error: {response.status_code} {response.text}", flush=True)
-                return {}
+    BATCH_SIZE = 15
+    
+    async def process_chunk(chunk_items: List[Dict[str, Any]], start_index: int) -> Dict[int, str]:
+        try:
+            # print(f"DEBUG: Proxy Chunk {start_index} -> Django", flush=True)
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                payload = {
+                    "items": chunk_items,
+                    "source_lang": "kor_Hang", # 기본값
+                    "target_lang": NLLB_LANG_MAP.get(target_lang, target_lang)
+                }
+                
+                response = await client.post(
+                    f"{DJANGO_URL}/api/translations/batch/",
+                    json=payload
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    chunk_results = data.get("results", {})
+                    # Map relative index (0..9) to absolute index (start_index..start_index+9)
+                    mapped_results = {}
+                    for k, v in chunk_results.items():
+                        mapped_results[int(k) + start_index] = v
+                    return mapped_results
+                else:
+                    print(f"DEBUG: Proxy Chunk Error: {response.status_code} {response.text}", flush=True)
+                    return {}
+        except Exception as e:
+            print(f"DEBUG: Proxy Chunk Exception: {e}", flush=True)
+            return {}
 
-    except Exception as e:
-        print(f"DEBUG: Proxy Exception: {e}", flush=True)
-        return {}
+    tasks = []
+    for i in range(0, len(items), BATCH_SIZE):
+        chunk = items[i:i + BATCH_SIZE]
+        tasks.append(process_chunk(chunk, i))
+
+    print(f"DEBUG: Proxying {len(items)} items in {len(tasks)} chunks to Django...", flush=True)
+    
+    results = {}
+    chunk_results_list = await asyncio.gather(*tasks)
+    
+    for chunk_res in chunk_results_list:
+        results.update(chunk_res)
+        
+    print(f"DEBUG: Proxy Total Success: {len(results)}/{len(items)} items", flush=True)
+    return results
 
 
 async def translate_texts(texts: List[str], target_lang: str) -> List[str]:
