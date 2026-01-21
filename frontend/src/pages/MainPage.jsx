@@ -331,7 +331,7 @@ const MainPage = () => {
         </section>
 
         {/* 2. Quick Actions Grid (Static for visuals, wired slightly) */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <section className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-5xl mx-auto">
           <div onClick={() => navigate('/reservations/flights')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
             <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
               ✈️
@@ -351,6 +351,14 @@ const MainPage = () => {
             </div>
             <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('action_places')}</span>
           </div>
+
+          <div onClick={() => navigate('/places/city')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
+            <div className="w-12 h-12 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
+              🏙️
+            </div>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('nav_city') || 'City Search'}</span>
+          </div>
+
           <div onClick={() => navigate('/game')} className="bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col items-center gap-3 group">
             <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
               📸

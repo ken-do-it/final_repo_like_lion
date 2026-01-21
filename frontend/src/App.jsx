@@ -17,6 +17,8 @@ import { PlanList, PlanDetail, PlanCreate, PlanEdit, AIRecommend, AddPlace, Edit
 import LocalColumnList from './pages/places/columns/LocalColumnList';
 import LocalColumnDetail from './pages/places/columns/LocalColumnDetail';
 import LocalColumnForm from './pages/places/columns/LocalColumnForm';
+import CitySearchPage from './pages/places/city/CitySearchPage';
+import CityResultPage from './pages/places/city/CityResultPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import FindAccountPage from './pages/auth/FindAccountPage';
@@ -166,6 +168,8 @@ function App() {
           <Route path="/places/search" element={<PlaceSearch />} />
           <Route path="/places/detail" element={<PlaceDetailPage />} />
           <Route path="/places/:id" element={<PlaceDetailPage />} />
+          <Route path="/places/city" element={<CitySearchPage />} />
+          <Route path="/places/city/:cityName" element={<CityResultPage />} />
 
           {/* Travel Plans */}
           <Route path="/plans" element={<PlanList />} />
