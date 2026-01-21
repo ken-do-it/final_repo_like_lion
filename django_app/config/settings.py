@@ -315,7 +315,6 @@ if USE_S3:
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-northeast-2')
     AWS_S3_SIGNATURE_VERSION = 's3v4'
-    AWS_DEFAULT_ACL = 'public-read'
     
     # S3버킷이 public access가 허용되어 있다면 False, 아니면 True
     # 여기서는 이미지 파일이므로 Public Read가 가능하다고 가정 (또는 Presigned URL 사용)
@@ -326,6 +325,8 @@ if USE_S3:
         'CacheControl': 'max-age=86400',
     }
     
+    MAX_MEMORY_SIZE = 10485760  # 10MB (필요에 따라 조절)
+    
     # Django Storages 설정 (Django 5.0+ 부터는 STORAGES 사용 필수)
     STORAGES = {
         "default": {
@@ -335,7 +336,7 @@ if USE_S3:
                 "secret_key": AWS_SECRET_ACCESS_KEY,
                 "bucket_name": AWS_STORAGE_BUCKET_NAME,
                 "region_name": AWS_S3_REGION_NAME,
-                "default_acl": AWS_DEFAULT_ACL,
+                # "default_acl": None, # 버킷이 ACL 비활성화(Object Ownership: Bucket owner enforced) 상태일 경우 주석 처리
                 "querystring_auth": AWS_QUERYSTRING_AUTH,
                 "object_parameters": AWS_S3_OBJECT_PARAMETERS,
                 "signature_version": AWS_S3_SIGNATURE_VERSION,
