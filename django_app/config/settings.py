@@ -326,10 +326,25 @@ if USE_S3:
         'CacheControl': 'max-age=86400',
     }
     
-    # Django Storages 설정
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    
-    # STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage' # 정적파일도 S3로 하려면
+    # Django Storages 설정 (Django 5.0+ 부터는 STORAGES 사용 필수)
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key": AWS_ACCESS_KEY_ID,
+                "secret_key": AWS_SECRET_ACCESS_KEY,
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "region_name": AWS_S3_REGION_NAME,
+                "default_acl": AWS_DEFAULT_ACL,
+                "querystring_auth": AWS_QUERYSTRING_AUTH,
+                "object_parameters": AWS_S3_OBJECT_PARAMETERS,
+                "signature_version": AWS_S3_SIGNATURE_VERSION,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
     
     # 미디어 파일 URL을 S3 URL로 변경
     MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
