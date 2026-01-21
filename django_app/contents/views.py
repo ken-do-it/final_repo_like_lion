@@ -65,18 +65,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
         Handles video save, metadata extraction, thumbnail generation, and language detection.
         Returns a dict of fields to save.
         """
-        # [서비스 레이어] 비디오 처리
-        saved_path, saved_url = VideoService.save_video_file(video_file)
+        # [서비스 레이어] 비디오 처리 (S3 호환 파이프라인)
+        # process_video returns: {'video_url', 'thumbnail_url', 'duration', 'width', 'height', ...}
+        video_data = VideoService.process_video(video_file)
         
-        # VideoService는 내부적으로 절대 경로를 생성하지만, extract_metadata는 전체 경로가 필요함
-        from django.core.files.storage import default_storage
-        abs_path = default_storage.path(saved_path)
-        
-        meta = VideoService.extract_metadata(abs_path)
-        thumb_path, thumb_url = VideoService.generate_thumbnail(abs_path)
-
         # [서비스 레이어] 언어 감지 (제목/내용 필요)
-        # serializer_instance가 있으면 (update) 기존 값 사용, 없으면 (create) 빈 문자열
         if serializer_instance:
             title = self.request.data.get('title', serializer_instance.title)
             content = self.request.data.get('content', serializer_instance.content)
@@ -86,16 +79,10 @@ class ShortformViewSet(viewsets.ModelViewSet):
             
         full_text = f"{title} {content}".strip()
         detected_lang = TranslationService.detect_language(full_text)
-
-        return {
-            'video_url': saved_url,
-            'file_size': video_file.size,
-            'duration': meta.get("duration"),
-            'width': meta.get("width"),
-            'height': meta.get("height"),
-            'thumbnail_url': thumb_url,
-            'source_lang': detected_lang,
-        }
+        
+        video_data['source_lang'] = detected_lang
+        
+        return video_data
 
     def perform_create(self, serializer):
         user = self.request.user
