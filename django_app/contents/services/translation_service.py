@@ -324,7 +324,7 @@ class TranslationService:
 
         if not api_call_keys: return data
 
-        # Batch Call by Language
+        # Batch Call by Language (Parallelized)
         batches_by_lang = {}
         for key in api_call_keys:
             src = requests_map[key]['src']
@@ -333,37 +333,60 @@ class TranslationService:
             batches_by_lang[src]['keys'].append(key)
 
         new_entries = []
-        for src_lang, batch_data in batches_by_lang.items():
-            texts = batch_data['texts']
-            keys = batch_data['keys']
+        
+        # 병렬 처리를 위한 Executor
+        import concurrent.futures
+        
+        # 배치 크기 설정 (OpenAI 최적화를 위해 작게 나눔)
+        BATCH_SIZE = 15 
+        
+        def process_chunk(chunk_texts, chunk_keys, src_lang, target_lang):
+             try:
+                t_texts, provider = TranslationService.call_fastapi_translate_batch(chunk_texts, src_lang, target_lang)
+                return t_texts, provider, chunk_keys, chunk_texts
+             except Exception as e:
+                logger.error(f"Chunk Batch Error: {e}")
+                return chunk_texts, "error_fallback", chunk_keys, chunk_texts
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_chunk = {}
             
-            try:
-                translations, provider = TranslationService.call_fastapi_translate_batch(texts, src_lang, target_lang)
-            except Exception as e:
-                logger.error(f"Batch Error: {e}")
-                translations = texts
-                provider = "error_fallback"
-
-            for i, t_text in enumerate(translations):
-                if i >= len(keys): break
-                key = keys[i]
-                original_text = texts[i]
+            for src_lang, batch_data in batches_by_lang.items():
+                all_texts = batch_data['texts']
+                all_keys = batch_data['keys']
                 
-                for (it, field_name) in requests_map[key]['consumers']:
-                    it[field_name] = t_text
+                # Split into chunks
+                for i in range(0, len(all_texts), BATCH_SIZE):
+                    chunk_texts = all_texts[i:i + BATCH_SIZE]
+                    chunk_keys = all_keys[i:i + BATCH_SIZE]
+                    
+                    future = executor.submit(process_chunk, chunk_texts, chunk_keys, src_lang, target_lang)
+                    future_to_chunk[future] = src_lang
+
+            # Collect results
+            for future in concurrent.futures.as_completed(future_to_chunk):
+                translations, provider, chunk_keys, chunk_original_texts = future.result()
                 
-                if provider == "error_fallback": continue
+                for i, t_text in enumerate(translations):
+                    if i >= len(chunk_keys): break
+                    key = chunk_keys[i]
+                    original_text = chunk_original_texts[i]
 
-                (etype, eid, fld, tlang) = key
-                new_entries.append(TranslationEntry(
-                    entity_type=etype, entity_id=eid, field=fld,
-                    source_lang=src_lang, target_lang=tlang,
-                    source_hash=hashlib.sha256(original_text.encode("utf-8")).hexdigest(),
-                    translated_text=t_text, provider=provider,
+                    for (it, field_name) in requests_map[key]['consumers']:
+                        it[field_name] = t_text
 
-                    model=TranslationService._get_current_model_name(),
-                    last_used_at=timezone.now(),
-                ))
+                    if provider == "error_fallback": continue
+
+                    (etype, eid, fld, tlang) = key
+                    new_entries.append(TranslationEntry(
+                        entity_type=etype, entity_id=eid, field=fld,
+                        source_lang=future_to_chunk[future], target_lang=tlang,
+                        source_hash=hashlib.sha256(original_text.encode("utf-8")).hexdigest(),
+                        translated_text=t_text, provider=provider,
+
+                        model=TranslationService._get_current_model_name(),
+                        last_used_at=timezone.now(),
+                    ))
         
         if new_entries:
             TranslationEntry.objects.bulk_create(new_entries, ignore_conflicts=True)

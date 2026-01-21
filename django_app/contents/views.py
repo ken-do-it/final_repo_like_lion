@@ -1,6 +1,7 @@
 import os
 import logging
 import hashlib
+import re
 from django.db.models import F, Q
 from django.utils import timezone
 from rest_framework import exceptions, viewsets, status
@@ -482,6 +483,8 @@ class TranslationBatchView(APIView):
         items = request.data.get("items", [])
         source_lang = request.data.get("source_lang") or "kor_Hang"
         target_lang = request.data.get("target_lang") or "eng_Latn"
+        
+        print(f"DEBUG: Batch Request Items: {len(items)}, Src: {source_lang}, Tgt: {target_lang}", flush=True)
 
         if not items: return Response({"results": {}})
         
@@ -497,7 +500,25 @@ class TranslationBatchView(APIView):
             if not text:
                 results[idx] = ""
                 continue
-            if source_lang == target_lang:
+                
+            # [수정] "고정된" 언어 문제 해결
+            # source_lang이 기본값(kor_Hang)이지만 텍스트가 실제로는 영어/일본어인 경우,
+            # source == target 체크로 인해 번역을 건너뛰고 잘못된 언어를 반환하게 됩니다.
+            # 해결: 언어를 감지하거나 확신할 수 없는 경우 불일치로 가정합니다.
+            # 이상적으로는 허용되는 경우 TranslationService가 자동 감지를 처리하도록 합니다.
+            # 여기서는 실제 소스 언어가 다른 것 같으면 감지를 시도합니다.
+            
+            real_source_lang = source_lang
+            if source_lang == "kor_Hang": # 기본/하드코딩된 소스를 사용하는 경우에만
+                try:
+                    detected = TranslationService.detect_language(text)
+                    if detected and detected != "und":
+                        real_source_lang = detected
+                except:
+                    pass
+            
+            # 최적화 확인
+            if real_source_lang == target_lang:
                 results[idx] = text
                 continue
             
@@ -528,35 +549,88 @@ class TranslationBatchView(APIView):
                 to_translate_texts.append(text)
         
         if to_translate_texts:
-            try:
-                # API 호출을 위해 서비스 사용
-                translated_list, provider = TranslationService.call_fastapi_translate_batch(to_translate_texts, source_lang, target_lang)
-                
-                # 모델명 결정 로직 (Batch)
-                model_name = os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
-                if os.getenv("AI_ENGINE") == "gemma-cpu":
-                    model_name = "google/gemma-2-2b-it-cpu"
-                elif os.getenv("GGUF_MODEL_PATH"):
-                        model_name = os.path.basename(os.getenv("GGUF_MODEL_PATH"))
+            print(f"DEBUG: Calling API for {len(to_translate_texts)} texts via Parallel Chunks", flush=True)
+            
+            import concurrent.futures
+            
+            # Helper for parallel processing
+            def process_view_chunk(chunk_texts, indices):
+                try:
+                    t_list, provider = TranslationService.call_fastapi_translate_batch(chunk_texts, source_lang, target_lang)
+                    return t_list, indices, provider
+                except Exception as e:
+                    logger.error(f"View Chunk Error: {e}")
+                    # 실패 시 원본 그대로 리턴
+                    return chunk_texts, indices, "error_fallback"
 
-                for internal_idx, translated_text in enumerate(translated_list):
-                    original_idx = to_translate_indices[internal_idx]
-                    results[original_idx] = translated_text
+            BATCH_SIZE = 15
+            
+            # Chunking
+            futures = []
+            results_map = {} # buffer
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                for i in range(0, len(to_translate_texts), BATCH_SIZE):
+                    chunk_texts = to_translate_texts[i:i + BATCH_SIZE]
+                    # Pass internal indices [i, i+1, ...] to map back result
+                    chunk_internal_indices = list(range(i, min(i + BATCH_SIZE, len(to_translate_texts))))
                     
-                    original_item = items[original_idx]
+                    futures.append(executor.submit(process_view_chunk, chunk_texts, chunk_internal_indices))
+                
+                for future in concurrent.futures.as_completed(futures):
+                    t_list, internal_indices, provider = future.result()
                     
-                    # 캐시 저장
-                    TranslationEntry.objects.create(
-                        entity_type=original_item.get("entity_type", "raw"),
-                        entity_id=original_item.get("entity_id", 0),
-                        field=original_item.get("field", "text"),
-                        source_lang=source_lang, target_lang=target_lang,
-                        source_hash=hashlib.sha256(to_translate_texts[internal_idx].encode("utf-8")).hexdigest(),
-                        translated_text=translated_text, provider=provider,
-                        model=model_name,
-                        last_used_at=timezone.now(),
-                    )
-            except Exception as e:
-                logger.error(f"Batch proxy failed: {e}")
-        
+                    # 모델명 결정 (한 번만 하면 되지만 loop 안에서 안전하게)
+                    model_name = os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
+                    if os.getenv("AI_ENGINE") == "gemma-cpu":
+                        model_name = "google/gemma-2-2b-it-cpu"
+                    elif os.getenv("GGUF_MODEL_PATH"):
+                        model_name = os.path.basename(os.getenv("GGUF_MODEL_PATH"))
+                    
+                    # 결과 처리
+                    for k, t_text in enumerate(t_list):
+                        if k >= len(internal_indices): break
+                        internal_idx = internal_indices[k]
+                        
+                        # Set to results dict
+                        original_idx = to_translate_indices[internal_idx]
+                        results[original_idx] = t_text
+                        
+                        # Cache Saving Validations
+                        is_bad_translation = False
+                        source_text = to_translate_texts[internal_idx]
+
+                        # Rule 1: Identity Match
+                        if t_text.strip() == source_text.strip():
+                             is_bad_translation = True
+
+                        # Rule 2: Hangul in Target (for non-Korean targets)
+                        if target_lang in ['eng_Latn', 'jpn_Jpan', 'zho_Hans', 'zho_Hant']:
+                             if re.search(r'[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f]', t_text):
+                                 is_bad_translation = True
+
+                        # Rule 3: CJK/Kana in English (Chinese/Japanese characters in English translation)
+                        if target_lang == 'eng_Latn':
+                             # CJK Unified Ideographs + Hiragana/Katakana
+                             if re.search(r'[\u4e00-\u9fff\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff]', t_text):
+                                 is_bad_translation = True
+
+                        if provider != "error_fallback" and not is_bad_translation:
+                            original_item = items[original_idx]
+                            try:
+                                TranslationEntry.objects.create(
+                                    entity_type=original_item.get("entity_type", "raw"),
+                                    entity_id=original_item.get("entity_id", 0),
+                                    field=original_item.get("field", "text"),
+                                    source_lang=source_lang, target_lang=target_lang,
+                                    source_hash=hashlib.sha256(to_translate_texts[internal_idx].encode("utf-8")).hexdigest(),
+                                    translated_text=t_text, provider=provider,
+                                    model=model_name,
+                                    last_used_at=timezone.now(),
+                                )
+                            except Exception as e:
+                                logger.error(f"Cache Save Error: {e}") # 중복 등으로 인한 실패 무시
+                        elif is_bad_translation:
+                            logger.warning(f"Skipping Cache for Bad Translation: '{t_text}' (Target: {target_lang})")
+
         return Response({"results": results})
