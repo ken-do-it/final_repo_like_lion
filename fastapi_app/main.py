@@ -295,16 +295,27 @@ def search_grouped(request: SearchRequest):
         ),
         ranked AS (
             SELECT *,
+                   -- [3] 중복 제거 및 순위 선정
+                   -- 동일한 내용(content)이 여러 개 있으면 1개만 남김
                    ROW_NUMBER() OVER(
-                       PARTITION BY category 
+                       PARTITION BY category, content 
                        ORDER BY match_priority ASC, distance ASC
-                   ) as group_rank
+                   ) as dedup_rank
             FROM combined
             -- ★ 조건: 거리 0.5 미만(유사함) 이거나 키워드가 포함된 경우만 노출
             WHERE distance < 0.5 OR match_priority = 0
+        ),
+        final_list AS (
+             SELECT *,
+                   ROW_NUMBER() OVER(
+                       PARTITION BY category
+                       ORDER BY match_priority ASC, distance ASC
+                   ) as group_rank
+             FROM ranked
+             WHERE dedup_rank = 1 -- 중복 제거된 것만 선택
         )
         SELECT target_id, category, content, distance, match_priority
-        FROM ranked
+        FROM final_list
         WHERE group_rank <= 15  -- ★ 각 카테고리별 최대 15개씩 결과 보장
         ORDER BY match_priority ASC, distance ASC;
         """
