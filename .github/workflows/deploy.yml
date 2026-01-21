@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ "main", "develop", "choi/test" ]
+    branches: ["develop"]
 
 # 환경변수 설정 (이미지 이름)
 env:
