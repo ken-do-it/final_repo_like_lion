@@ -42,7 +42,6 @@ class UserSerializer(serializers.ModelSerializer):
     """사용자 기본 정보 Serializer"""
     preferences = UserPreferenceSerializer(read_only=True)
     local_badges = LocalBadgeSerializer(many=True, read_only=True)
-    nickname = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -59,9 +58,13 @@ class UserSerializer(serializers.ModelSerializer):
             'provider_type', 'date_joined', 'last_login'
         ]
 
-    def get_nickname(self, obj):
-        """닉네임이 없으면 username 반환"""
-        return obj.nickname if obj.nickname else obj.username
+    def to_representation(self, instance):
+        """닉네임이 없으면 username을 표시"""
+        representation = super().to_representation(instance)
+        # 닉네임이 비어있으면 username으로 대체
+        if not representation.get('nickname'):
+            representation['nickname'] = instance.username
+        return representation
 
 
 class RegisterSerializer(serializers.ModelSerializer):
