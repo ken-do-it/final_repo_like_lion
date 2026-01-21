@@ -5,7 +5,7 @@ Places API Router
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 import uuid
 import json
@@ -406,6 +406,21 @@ def get_badge_status(
     """
     현지인 뱃지 상태 조회
     """
+    # [TEMPORARY TEST MODE] 모든 사용자에게 Level 5 권한 부여 (테스트용)
+    # 번역 기능 테스트 종료 후 반드시 삭제/원복 필요
+    return LocalBadgeStatusResponse(
+        level=5,
+        city="테스트 권한",
+        is_active=True,
+        first_authenticated_at=date.today(),
+        last_authenticated_at=date.today(),
+        next_authentication_due=date.today() + timedelta(days=365),
+        maintenance_months=12,
+        authentication_count=999
+    )
+
+    # [ORIGINAL CODE - COMMENTED OUT FOR TESTING]
+    """
     badge = db.query(LocalBadge).filter(LocalBadge.user_id == user_id).first()
 
     if not badge:
@@ -428,14 +443,15 @@ def get_badge_status(
         last_authenticated_at=badge.last_authenticated_at,
         next_authentication_due=badge.next_authentication_due,
         maintenance_months=badge.maintenance_months,
-        authentication_count=0  # 추후 구현
+        authentication_count=0
     )
+    """
 
 
 # ==================== 현지인 칼럼 ====================
 
 @router.get("/local-columns", response_model=List[LocalColumnListResponse])
-def get_local_columns(
+async def get_local_columns(
     city: Optional[str] = Query(None, description="도시 필터"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
@@ -486,7 +502,7 @@ def get_local_columns(
         if lang:
              items_to_translate.append({
                 "text": column.title,
-                "entity_type": "local_column_title",
+                "entity_type": "local_column",
                 "entity_id": column.id,
                 "field": "title"
             })
@@ -585,7 +601,9 @@ async def get_local_column_detail(
                 items_to_translate.append({"text": sec.content, "entity_type": "local_column_section", "entity_id": sec.id, "field": "content"})
             
             # 3. Translate
+            print(f"[DEBUG] items_to_translate ({len(items_to_translate)}): {items_to_translate}")
             translated_map = await translate_batch_proxy(items_to_translate, lang)
+            print(f"[DEBUG] translated_map: {translated_map}")
             
             # 4. Apply Translations
             # Main Info
@@ -604,6 +622,8 @@ async def get_local_column_detail(
                 current_idx += 1
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             print(f"Local column detail translation failed: {e}")
 
     return LocalColumnResponse(

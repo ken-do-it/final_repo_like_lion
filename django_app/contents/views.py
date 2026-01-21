@@ -436,7 +436,8 @@ class TranslationProxyView(APIView):
         # [Security] Whitelist Validation
         ALLOWED_ENTITY_TYPES = [
             'shortform', 'shortform_comment', 'review', 'raw',
-            'place', 'place_name', 'place_address', 'place_category', 'place_opening_hours', 'place_desc'
+            'place', 'place_name', 'place_address', 'place_category', 'place_opening_hours', 'place_desc',
+            'local_column', 'local_column_section'
         ]
         if entity_type not in ALLOWED_ENTITY_TYPES:
             return Response(
@@ -530,7 +531,8 @@ class TranslationBatchView(APIView):
             # [Security] Whitelist Validation (Skip invalid items or error out? Let's skip safely)
             ALLOWED_ENTITY_TYPES = [
                 'shortform', 'shortform_comment', 'review', 'raw',
-                'place', 'place_name', 'place_address', 'place_category', 'place_opening_hours', 'place_desc'
+                'place', 'place_name', 'place_address', 'place_category', 'place_opening_hours', 'place_desc',
+                'local_column', 'local_column_section'
             ]
             if entity_type not in ALLOWED_ENTITY_TYPES:
                 logger.warning(f"Skipping invalid entity_type in batch: {entity_type}")

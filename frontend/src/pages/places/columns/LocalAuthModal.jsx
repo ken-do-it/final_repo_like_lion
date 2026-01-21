@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../context/LanguageContext'; // Added
 import { placesAxios as api } from '../../../api/axios';
 import Button from '../../../components/ui/Button';
 
 const LocalAuthModal = ({ isOpen, onClose }) => {
     const { user } = useAuth();
+    const { t } = useLanguage(); // Added
     const [status, setStatus] = useState('idle'); // idle, loading, success, error
     const [message, setMessage] = useState('');
     const [badgeData, setBadgeData] = useState(null);
@@ -22,11 +24,11 @@ const LocalAuthModal = ({ isOpen, onClose }) => {
 
     const handleAuthenticate = () => {
         setStatus('loading');
-        setMessage('위치 정보를 가져오는 중입니다...');
+        setMessage(t('msg_loc_fetching'));
 
         if (!navigator.geolocation) {
             setStatus('error');
-            setMessage('브라우저가 위치 정보를 지원하지 않습니다.');
+            setMessage(t('msg_loc_not_support'));
             return;
         }
 
@@ -34,7 +36,7 @@ const LocalAuthModal = ({ isOpen, onClose }) => {
             async (position) => {
                 try {
                     const { latitude, longitude } = position.coords;
-                    setMessage('인증 서버와 통신 중입니다...');
+                    setMessage(t('msg_auth_checking'));
 
                     const response = await api.post('/places/local-badge/authenticate', {
                         latitude,
@@ -43,14 +45,14 @@ const LocalAuthModal = ({ isOpen, onClose }) => {
 
                     setBadgeData(response.data);
                     setStatus('success');
-                    setMessage(response.data.message || '인증에 성공했습니다!');
+                    setMessage(response.data.message || t('msg_auth_success'));
                 } catch (error) {
                     console.error('Authentication failed:', error);
                     setStatus('error');
                     if (error.response?.data?.detail) {
                         setMessage(error.response.data.detail);
                     } else {
-                        setMessage('인증 중 오류가 발생했습니다.');
+                        setMessage(t('msg_auth_fail'));
                     }
                 }
             },
@@ -59,16 +61,16 @@ const LocalAuthModal = ({ isOpen, onClose }) => {
                 setStatus('error');
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        setMessage('위치 정보 제공을 허용해주세요.');
+                        setMessage(t('msg_loc_perm_denied'));
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        setMessage('위치 정보를 사용할 수 없습니다.');
+                        setMessage(t('msg_loc_unavailable'));
                         break;
                     case error.TIMEOUT:
-                        setMessage('위치 정보 요청 시간이 초과되었습니다.');
+                        setMessage(t('msg_loc_timeout'));
                         break;
                     default:
-                        setMessage('위치 정보를 가져오는데 실패했습니다.');
+                        setMessage(t('msg_loc_fail'));
                 }
             }
         );
@@ -97,11 +99,11 @@ const LocalAuthModal = ({ isOpen, onClose }) => {
                     </div>
 
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        현지인 인증
+                        {t('auth_modal_title')}
                     </h3>
 
                     <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-                        {status === 'idle' && '현재 위치를 기반으로 현지인 뱃지를 획득하세요!'}
+                        {status === 'idle' && t('auth_modal_desc')}
                         {status === 'loading' && message}
                         {status === 'error' && <span className="text-red-500">{message}</span>}
                         {status === 'success' && (
@@ -122,7 +124,7 @@ const LocalAuthModal = ({ isOpen, onClose }) => {
                                 isLoading={status === 'loading'}
                                 className="w-full bg-[#1392ec] hover:bg-blue-600 text-white"
                             >
-                                내 위치로 인증하기
+                                {t('btn_auth_my_loc')}
                             </Button>
                         )}
                         {status === 'success' && (
@@ -130,7 +132,7 @@ const LocalAuthModal = ({ isOpen, onClose }) => {
                                 onClick={onClose}
                                 className="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
                             >
-                                닫기
+                                {t('btn_close')}
                             </Button>
                         )}
                     </div>

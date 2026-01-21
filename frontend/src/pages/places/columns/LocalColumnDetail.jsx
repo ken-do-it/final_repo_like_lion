@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getLocalColumnDetail, deleteLocalColumn } from '../../../api/columns';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../context/LanguageContext'; // Added
+import { API_LANG_CODES } from '../../../constants/translations';
 import Button from '../../../components/ui/Button';
 
 const LocalColumnDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { language } = useLanguage();
+    const { language, t } = useLanguage(); // Added t
     const [column, setColumn] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -24,22 +26,22 @@ const LocalColumnDetail = () => {
             setColumn(data);
         } catch (err) {
             console.error('Failed to fetch column detail:', err);
-            setError('칼럼을 불러오는데 실패했습니다.');
+            setError(t('col_fetch_error')); // Translated (using list key)
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!window.confirm('정말로 이 칼럼을 삭제하시겠습니까?')) return;
+        if (!window.confirm(t('confirm_delete_col'))) return;
 
         try {
             await deleteLocalColumn(id);
-            alert('칼럼이 삭제되었습니다.');
+            alert(t('msg_col_deleted'));
             navigate('/local-columns');
         } catch (err) {
             console.error('Failed to delete column:', err);
-            alert('삭제에 실패했습니다. 다시 시도해주세요.');
+            alert(t('msg_del_fail'));
         }
     };
 
@@ -58,9 +60,9 @@ const LocalColumnDetail = () => {
     if (error || !column) {
         return (
             <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex flex-col items-center justify-center px-4">
-                <p className="text-red-500 mb-4">{error || '칼럼을 찾을 수 없습니다.'}</p>
+                <p className="text-red-500 mb-4">{error || t('error_plan_not_found')}</p>
                 <Button onClick={() => navigate('/local-columns')} variant="secondary">
-                    목록으로 돌아가기
+                    {t('btn_back_list')}
                 </Button>
             </div>
         );
@@ -93,7 +95,7 @@ const LocalColumnDetail = () => {
                                 )}
                             </span>
                             <span>{new Date(column.created_at).toLocaleDateString()}</span>
-                            <span>조회 {column.view_count}</span>
+                            <span>{t('col_views')} {column.view_count}</span>
                         </div>
                     </div>
                 </div>
@@ -149,7 +151,7 @@ const LocalColumnDetail = () => {
                                     onClick={() => navigate(`/places/${section.place_id}`)}
                                 >
                                     <span>📍</span>
-                                    <span className="text-[#1392ec] font-medium text-sm">장소 정보 보기</span>
+                                    <span className="text-[#1392ec] font-medium text-sm">{t('col_view_place')}</span>
                                 </div>
                             )}
                         </section>
@@ -164,13 +166,13 @@ const LocalColumnDetail = () => {
                             onClick={handleEdit}
                             className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300"
                         >
-                            수정하기
+                            {t('btn_edit')}
                         </Button>
                         <Button
                             onClick={handleDelete}
                             className="bg-red-500 hover:bg-red-600 text-white"
                         >
-                            삭제하기
+                            {t('btn_delete')}
                         </Button>
                     </div>
                 )}
@@ -182,7 +184,7 @@ const LocalColumnDetail = () => {
                     variant="ghost"
                     className="flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
                 >
-                    <span>←</span> 목록으로 돌아가기
+                    <span>←</span> {t('btn_back_list')}
                 </Button>
             </div>
         </div>

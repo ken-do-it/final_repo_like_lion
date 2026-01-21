@@ -4,7 +4,10 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-DJANGO_URL = "http://django:8000"
+import os
+
+# Docker uses "http://django:8000", Local uses "http://localhost:8000"
+DJANGO_URL = os.getenv("DJANGO_API_URL", "http://django:8000")
 
 async def translate_batch_proxy(items: List[Dict[str, Any]], target_lang: str) -> Dict[int, str]:
     """
@@ -29,7 +32,7 @@ async def translate_batch_proxy(items: List[Dict[str, Any]], target_lang: str) -
             }
             
             response = await client.post(
-                f"{DJANGO_URL}/translations/batch/",
+                f"{DJANGO_URL}/api/translations/batch/",
                 json=payload
             )
             

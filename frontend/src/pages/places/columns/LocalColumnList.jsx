@@ -45,7 +45,12 @@ const LocalColumnList = () => {
 
         const permission = await checkColumnPermission();
         if (!permission.allowed) {
-            alert(permission.message);
+            let msg = permission.message;
+            if (permission.reason === 'badge_inactive') msg = t('msg_auth_inactive');
+            else if (permission.reason === 'level_low') msg = t('msg_auth_level_low');
+            else if (permission.reason === 'error') msg = t('msg_auth_error');
+
+            alert(msg);
             return;
         }
 
