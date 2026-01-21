@@ -315,6 +315,7 @@ if USE_S3:
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-northeast-2')
     AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_DEFAULT_ACL = 'public-read'
     
     # S3버킷이 public access가 허용되어 있다면 False, 아니면 True
     # 여기서는 이미지 파일이므로 Public Read가 가능하다고 가정 (또는 Presigned URL 사용)

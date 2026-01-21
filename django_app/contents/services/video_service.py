@@ -57,7 +57,8 @@ class VideoService:
             # 4-1. 비디오 업로드
             ext = os.path.splitext(uploaded_file.name)[1] or '.mp4'
             video_filename = f"{uuid.uuid4()}{ext}"
-            video_s3_path = os.path.join('shortforms', 'videos', video_filename)
+            # [Fix] Force forward slashes for S3 (Windows creates backslashes with os.path.join)
+            video_s3_path = f"shortforms/videos/{video_filename}"
             
             # 파일을 다시 열어서 업로드
             with open(temp_video_path, 'rb') as f:
@@ -67,7 +68,7 @@ class VideoService:
             # 4-2. 썸네일 업로드
             if temp_thumb_path and os.path.exists(temp_thumb_path):
                 thumb_filename = f"{uuid.uuid4()}.jpg"
-                thumb_s3_path = os.path.join('shortforms', 'thumbnails', thumb_filename)
+                thumb_s3_path = f"shortforms/thumbnails/{thumb_filename}"
                 
                 with open(temp_thumb_path, 'rb') as f:
                     saved_thumb_path = default_storage.save(thumb_s3_path, File(f))
