@@ -17,6 +17,7 @@ export default {
     nav_column: "Local Column",
     nav_ticket: "Flight Booking",
     nav_city: "City Search",
+    nav_local_auth: "Local Authentication",
     nav_likes: "Liked Places",
     nav_settings: "Settings",
     nav_support: "Support",
@@ -720,5 +721,21 @@ export default {
     msg_auth_level_low: "Level 3 or higher is required to write.",
     msg_auth_error: "Cannot verify permission info.",
     col_upload_thumb: "Click to upload image",
-    col_intro_img_add: "Add Image"
+    col_intro_img_add: "Add Image",
+
+    // City Pages
+    city_search_title: "Where are you flying to? ✈️",
+    city_search_desc: "Search for a city and find integrated travel info.",
+    city_search_ph: "Search city (e.g. Seoul, Busan)",
+    city_popular_title: "Popular Destinations 🔥",
+    city_header_desc: "We've gathered all travel info for this city.",
+    city_sec_plan: "{city} Itineraries",
+    city_sec_place: "Recommended Places in {city}",
+    city_empty_plan: "No itineraries for {city} yet.",
+    city_empty_place: "No places registered in {city} yet.",
+    city_empty_shorts: "No related short videos.",
+    city_empty_column: "No local columns for {city} yet.",
+    city_error_title: "An error occurred",
+    city_btn_retry_search: "Search Another City",
+    city_load_error: "Failed to load content."
 };

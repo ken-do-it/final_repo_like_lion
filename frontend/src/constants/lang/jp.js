@@ -1,4 +1,15 @@
 export default {
+    // Sidebar
+    title_benefits: "Tripkoの特典",
+    benefit_support: "24時間年中無休サポート",
+    benefit_guarantee: "最安値保証",
+    benefit_secure: "安全な決済",
+    benefit_cancel: "キャンセル・変更無料",
+    title_popular_dest: "人気の旅行先",
+    unit_from: "〜",
+    title_need_help: "お困りですか？",
+    desc_need_help: "いつでもお問い合わせください。",
+    btn_contact_support: "サポートに連絡",
     // Navbar
     nav_home: "ホーム",
     nav_shorts: "ショート",
@@ -16,6 +27,7 @@ export default {
     nav_ai_plan: "AI日程作成",
     nav_column: "ローカルコラム",
     nav_ticket: "航空券予約",
+    nav_local_auth: "現地人認証",
     nav_settings: "設定",
 
     // Review Banner
@@ -505,5 +517,21 @@ export default {
     msg_auth_level_low: "現地人レベル3から作成可能です。",
     msg_auth_error: "権限情報を確認できません。",
     col_upload_thumb: "クリックして画像をアップロード",
-    col_intro_img_add: "画像追加"
+    col_intro_img_add: "画像追加",
+
+    // City Pages
+    city_search_title: "どこへ行きますか？ ✈️",
+    city_search_desc: "都市名を検索して、総合的な旅行情報を見つけましょう。",
+    city_search_ph: "都市検索 (例: ソウル, 釜山)",
+    city_popular_title: "人気の旅行先 🔥",
+    city_header_desc: "この都市のすべての旅行情報を集めました。",
+    city_sec_plan: "{city} 旅行日程",
+    city_sec_place: "{city} おすすめスポット",
+    city_empty_plan: "まだ{city}の旅行日程がありません。",
+    city_empty_place: "まだ{city}に登録された場所がありません。",
+    city_empty_shorts: "関連するショート動画がありません。",
+    city_empty_column: "まだ{city}に関するローカルコラムがありません。",
+    city_error_title: "エラーが発生しました",
+    city_btn_retry_search: "別の都市を検索",
+    city_load_error: "コンテンツの読み込みに失敗しました。"
 };

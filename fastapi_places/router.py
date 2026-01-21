@@ -34,7 +34,7 @@ from service import (
 )
 from database import get_db
 from auth import get_current_user, require_auth
-from translation_client import translate_batch_proxy
+from translation_client import translate_batch_proxy, translate_texts
 
 router = APIRouter(prefix="/places", tags=["Places"])
 
@@ -1155,30 +1155,122 @@ def delete_local_column(
 
 # ==================== 도시별 콘텐츠 ====================
 
+# City Name Mapping
+CITY_NAMES = {
+    "서울": {"en": "Seoul", "jp": "ソウル", "zh": "首尔"},
+    "부산": {"en": "Busan", "jp": "釜山", "zh": "釜山"},
+    "제주": {"en": "Jeju", "jp": "済州", "zh": "济州"},
+    "대전": {"en": "Daejeon", "jp": "大田", "zh": "大田"},
+    "대구": {"en": "Daegu", "jp": "大邱", "zh": "大邱"},
+    "인천": {"en": "Incheon", "jp": "仁川", "zh": "仁川"},
+    "광주": {"en": "Gwangju", "jp": "光州", "zh": "光州"},
+    "수원": {"en": "Suwon", "jp": "水原", "zh": "水原"},
+    "전주": {"en": "Jeonju", "jp": "全州", "zh": "全州"},
+    "경주": {"en": "Gyeongju", "jp": "慶州", "zh": "庆州"},
+}
+
 @router.get("/destinations/popular", response_model=List[PopularCityResponse])
-def get_popular_cities():
+def get_popular_cities(target_lang: str = Query("ko", description="Target language code (ko, en, jp, zh)")):
     """
     인기 도시 목록
+    - target_lang에 따라 도시 설명을 번역된 텍스트로 반환
     """
-    popular_cities = [
-        {"city_name": "서울", "description": "대한민국의 수도, 현대와 전통이 공존하는 도시"},
-        {"city_name": "부산", "description": "해운대와 광안리로 유명한 항구 도시"},
-        {"city_name": "제주", "description": "아름다운 자연과 독특한 문화를 가진 섬"},
-        {"city_name": "대전", "description": "과학과 교육의 도시"},
-        {"city_name": "대구", "description": "섬유와 패션의 도시"},
-        {"city_name": "인천", "description": "국제공항과 차이나타운이 있는 관문 도시"},
-        {"city_name": "광주", "description": "예술과 문화의 도시"},
-        {"city_name": "수원", "description": "화성과 전통시장으로 유명한 역사 도시"},
-        {"city_name": "전주", "description": "한옥마을과 비빔밥의 고장"},
-        {"city_name": "경주", "description": "신라 천년의 역사가 살아있는 도시"}
+    
+    # Normalize language code
+    lang_map = {'ja': 'jp', 'zh-CN': 'zh', 'zh-TW': 'zh'}
+    search_lang = lang_map.get(target_lang, target_lang)
+    
+    # 다국어 설명 데이터
+    descriptions = {
+        "서울": {
+            "ko": "대한민국의 수도, 현대와 전통이 공존하는 도시",
+            "en": "Capital of South Korea, where modernity meets tradition",
+            "jp": "現代と伝統が共存する韓国の首都",
+            "zh": "韩国首都，传统与现代共存的城市"
+        },
+        "부산": {
+            "ko": "해운대와 광안리로 유명한 항구 도시",
+            "en": "Port city famous for Haeundae and Gwangalli beaches",
+            "jp": "海雲台と広安里で有名な港町",
+            "zh": "以海云台和广安里闻名的港口城市"
+        },
+        "제주": {
+            "ko": "아름다운 자연과 독특한 문화를 가진 섬",
+            "en": "Island with beautiful nature and unique culture",
+            "jp": "美しい自然と独自の文化を持つ島",
+            "zh": "拥有美丽自然和独特文化的岛屿"
+        },
+        "대전": {
+            "ko": "과학과 교육의 도시",
+            "en": "City of science and education",
+            "jp": "科学と教育の都市",
+            "zh": "科学与教育之城"
+        },
+        "대구": {
+            "ko": "섬유와 패션의 도시",
+            "en": "City of textile and fashion",
+            "jp": "繊維とファッションの都市",
+            "zh": "纺织与时尚之城"
+        },
+        "인천": {
+            "ko": "국제공항과 차이나타운이 있는 관문 도시",
+            "en": "Gateway city with International Airport and Chinatown",
+            "jp": "国際空港とチャイナタウンがある玄関口の都市",
+            "zh": "拥有国际机场和唐人街的门户城市"
+        },
+        "광주": {
+            "ko": "예술과 문화의 도시",
+            "en": "City of art and culture",
+            "jp": "芸術と文化の都市",
+            "zh": "艺术与文化之城"
+        },
+        "수원": {
+            "ko": "화성과 전통시장으로 유명한 역사 도시",
+            "en": "Historical city famous for Hwaseong Fortress",
+            "jp": "華城と伝統市場で有名な歴史都市",
+            "zh": "以华城和传统市场闻名的历史名城"
+        },
+        "전주": {
+            "ko": "한옥마을과 비빔밥의 고장",
+            "en": "Home of Hanok Village and Bibimbap",
+            "jp": "韓屋村とビビンバの本場",
+            "zh": "韩屋村和拌饭的故乡"
+        },
+        "경주": {
+            "ko": "신라 천년의 역사가 살아있는 도시",
+            "en": "City where 1,000 years of Silla history lives",
+            "jp": "新羅千年の歴史が息づく都市",
+            "zh": "拥有新罗千年历史的城市"
+        }
+    }
+
+    # 기본 리스트 (메타데이터용)
+    city_list = [
+        "서울", "부산", "제주", "대전", "대구", "인천", "광주", "수원", "전주", "경주"
     ]
 
-    return [PopularCityResponse(**city) for city in popular_cities]
+    result = []
+    for city_name in city_list:
+        desc_dict = descriptions.get(city_name, {})
+        # 요청된 언어가 없으면 영어 -> 한국어 순으로 폴백
+        desc = desc_dict.get(search_lang) or desc_dict.get("en") or desc_dict.get("ko")
+        
+        # 도시 이름 번역
+        display_name = CITY_NAMES.get(city_name, {}).get(search_lang, city_name)
+
+        result.append(PopularCityResponse(
+            city_name=city_name,
+            display_name=display_name,
+            description=desc
+        ))
+
+    return result
 
 
 @router.get("/destinations/{city_name}", response_model=CityContentResponse)
 async def get_city_content(
     city_name: str,
+    target_lang: str = Query("ko", description="Target language code (ko, en, jp, zh)"),
     db: Session = Depends(get_db)
 ):
     """
@@ -1371,11 +1463,101 @@ async def get_city_content(
                 opening_hours=p.opening_hours
             ))
 
+    # ==================== Batch Translation (Deep Translation) ====================
+    # 번역된 도시 이름
+    lang_map = {'ja': 'jp', 'zh-CN': 'zh', 'zh-TW': 'zh'}
+    lookup_lang = lang_map.get(target_lang, target_lang)
+    display_name = CITY_NAMES.get(city_name, {}).get(lookup_lang, city_name)
+
+    # 한국어가 아닐 경우에만 일괄 번역 수행
+    if target_lang != "ko":
+        texts_to_translate = []
+        # Index tracking
+        tp_indices = [] # (plan_index, field ('title'|'desc'))
+        pl_indices = [] # (place_index, field ('name'|'addr'|'cat'))
+        sf_indices = [] # (sf_index, field ('title'))
+        col_indices = [] # (col_index, field ('title'))
+        
+        current_text_idx = 0
+
+        # 1. Travel Plans (title, description)
+        for i, plan in enumerate(travel_plan_data):
+            if plan.title: 
+                texts_to_translate.append(plan.title)
+                tp_indices.append((i, 'title'))
+            if plan.description:
+                texts_to_translate.append(plan.description)
+                tp_indices.append((i, 'desc'))
+            
+        # 2. Places (name, address, category)
+        for i, place in enumerate(place_responses):
+            if place.name:
+                texts_to_translate.append(place.name)
+                pl_indices.append((i, 'name'))
+            if place.address:
+                texts_to_translate.append(place.address)
+                pl_indices.append((i, 'addr'))
+            if place.category_main:
+                texts_to_translate.append(place.category_main)
+                pl_indices.append((i, 'cat'))
+            
+        # 3. Shortforms (title)
+        for i, sf in enumerate(shortform_data):
+            if sf.title:
+                texts_to_translate.append(sf.title)
+                sf_indices.append((i, 'title'))
+            if sf.content:
+                texts_to_translate.append(sf.content)
+                sf_indices.append((i, 'content'))
+            
+        # 4. Local Columns (title)
+        for i, col in enumerate(column_data):
+            if col.title:
+                texts_to_translate.append(col.title)
+                col_indices.append((i, 'title'))
+
+        if texts_to_translate:
+            # 배치 번역 요청
+            try:
+                translated_texts = await translate_texts(texts_to_translate, target_lang)
+                
+                # 결과 적용
+                result_idx = 0
+                
+                # 1. Travel Plans
+                for idx, field in tp_indices:
+                    if field == 'title': travel_plan_data[idx].title = translated_texts[result_idx]
+                    elif field == 'desc': travel_plan_data[idx].description = translated_texts[result_idx]
+                    result_idx += 1
+                    
+                # 2. Places
+                for idx, field in pl_indices:
+                    if field == 'name': place_responses[idx].name = translated_texts[result_idx]
+                    elif field == 'addr': place_responses[idx].address = translated_texts[result_idx]
+                    elif field == 'cat': place_responses[idx].category_main = translated_texts[result_idx]
+                    result_idx += 1
+                    
+                # 3. Shortforms
+                for idx, field in sf_indices:
+                    if field == 'title': shortform_data[idx].title = translated_texts[result_idx]
+                    elif field == 'content': shortform_data[idx].content = translated_texts[result_idx]
+                    result_idx += 1
+                    
+                # 4. Local Columns
+                for idx, field in col_indices:
+                    if field == 'title': column_data[idx].title = translated_texts[result_idx]
+                    result_idx += 1
+                    
+            except Exception as e:
+                print(f"Deep translation failed: {str(e)}")
+                # 번역 실패 시 원본 그대로 리턴 (Silent Fallback)
+
     return CityContentResponse(
         places=place_responses,
         local_columns=column_data,
         shortforms=shortform_data,
-        travel_plans=travel_plan_data
+        travel_plans=travel_plan_data,
+        display_name=display_name
     )
 
 

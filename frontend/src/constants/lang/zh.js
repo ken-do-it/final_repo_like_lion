@@ -1,4 +1,15 @@
 export default {
+    // Sidebar
+    title_benefits: "Tripko 会员权益",
+    benefit_support: "24/7 全天候支持",
+    benefit_guarantee: "最优价格保证",
+    benefit_secure: "安全支付",
+    benefit_cancel: "免费取消/更改",
+    title_popular_dest: "热门目的地",
+    unit_from: "起",
+    title_need_help: "需要帮助？",
+    desc_need_help: "随时联系我们。",
+    btn_contact_support: "联系客服",
     // Navbar
     nav_home: "首页",
     nav_shorts: "短视频",
@@ -16,6 +27,7 @@ export default {
     nav_ai_plan: "AI行程生成",
     nav_column: "本地专栏",
     nav_ticket: "机票预订",
+    nav_local_auth: "当地人认证",
     nav_likes: "收藏地点",
 
     // Review Banner
@@ -505,5 +517,21 @@ export default {
     msg_auth_level_low: "当地人等级3以上可撰写。",
     msg_auth_error: "无法确认权限信息。",
     col_upload_thumb: "点击上传图片",
-    col_intro_img_add: "添加图片"
+    col_intro_img_add: "添加图片",
+
+    // City Pages
+    city_search_title: "你要去哪里？ ✈️",
+    city_search_desc: "搜索城市名称，查看综合旅游信息。",
+    city_search_ph: "搜索城市 (例如: 首尔, 釜山)",
+    city_popular_title: "热门目的地 🔥",
+    city_header_desc: "我们收集了这个城市的所有旅游信息。",
+    city_sec_plan: "{city} 旅行行程",
+    city_sec_place: "{city} 推荐地点",
+    city_empty_plan: "暂时没有{city}的旅行行程。",
+    city_empty_place: "暂时没有{city}的注册地点。",
+    city_empty_shorts: "没有相关的短视频。",
+    city_empty_column: "暂时没有{city}的本地专栏。",
+    city_error_title: "发生错误",
+    city_btn_retry_search: "搜索其他城市",
+    city_load_error: "加载内容失败。"
 };
