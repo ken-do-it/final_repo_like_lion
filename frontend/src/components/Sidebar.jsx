@@ -20,6 +20,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: `🥘 ${t('nav_column')}`, path: '/local-columns' },
         { label: `🔥 ${t('nav_shorts')}`, path: '/shorts' },
         { label: `✈️ ${t('title_transport')}`, path: '/reservations/flights' },
+        { label: `🏙️ ${t('nav_city') || '도시 검색'}`, path: '/places/city' },
     ];
 
     const bottomItems = [

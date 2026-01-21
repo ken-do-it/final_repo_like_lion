@@ -16,6 +16,7 @@ export default {
     nav_ai_plan: "AI Itinerary",
     nav_column: "Local Column",
     nav_ticket: "Flight Booking",
+    nav_city: "City Search",
     nav_likes: "Liked Places",
     nav_settings: "Settings",
     nav_support: "Support",

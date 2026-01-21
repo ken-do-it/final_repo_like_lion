@@ -16,6 +16,7 @@ export default {
     nav_ai_plan: "AI 일정 만들기",
     nav_column: "로컬 칼럼",
     nav_ticket: "항공권 예약",
+    nav_city: "도시 검색",
     nav_likes: "찜한 장소",
     nav_settings: "설정",
     nav_support: "고객센터",
