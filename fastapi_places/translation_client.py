@@ -36,6 +36,7 @@ async def translate_batch_proxy(items: List[Dict[str, Any]], target_lang: str) -
         return {}
 
     try:
+        print(f"DEBUG: Proxying to Django: {DJANGO_URL}/api/translations/batch/", flush=True)
         async with httpx.AsyncClient(timeout=10.0) as client:
             payload = {
                 "items": items,
@@ -50,18 +51,15 @@ async def translate_batch_proxy(items: List[Dict[str, Any]], target_lang: str) -
             
             if response.status_code == 200:
                 data = response.json()
-                # Django View returns {"results": {"0": "text", "1": "text"}}
-                # Keys are strings in JSON, need to convert to int if needed, but we can just return as is
+                print(f"DEBUG: Proxy Success: {len(data.get('results', {}))} items", flush=True)
                 results = data.get("results", {})
                 return {int(k): v for k, v in results.items()}
             else:
-                logger.error(f"Translation API Error: {response.status_code} {response.text}")
+                print(f"DEBUG: Proxy Status Error: {response.status_code} {response.text}", flush=True)
                 return {}
-                
-                return {}
-                
+
     except Exception as e:
-        logger.error(f"Translation Proxy Failed: {e}")
+        print(f"DEBUG: Proxy Exception: {e}", flush=True)
         return {}
 
 

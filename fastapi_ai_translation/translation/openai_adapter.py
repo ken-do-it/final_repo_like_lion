@@ -18,7 +18,6 @@ class OpenAIAdapter:
     def translate(self, text: str, source_lang: str, target_lang: str) -> str:
         """
         Translates a single text using OpenAI.
-        Uses a creative prompt for titles.
         """
         try:
             system_prompt = self._get_system_prompt(target_lang)
@@ -30,7 +29,7 @@ class OpenAIAdapter:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7, # Slightly creative
+                temperature=0.3, # Lower temperature for accuracy
                 max_tokens=256
             )
             return response.choices[0].message.content.strip()
@@ -41,7 +40,6 @@ class OpenAIAdapter:
     def translate_batch(self, texts: list[str], source_lang: str, target_lang: str) -> list[str]:
         """
         Translates a batch of texts.
-        To save tokens/requests, we send them as a list in one prompt.
         """
         try:
             system_prompt = self._get_system_prompt(target_lang)
@@ -50,6 +48,8 @@ class OpenAIAdapter:
             # Join texts with a separator or just send as JSON string
             import json
             user_prompt = f"Source: {source_lang}\nTranslate these items:\n{json.dumps(texts, ensure_ascii=False)}"
+            
+            print(f"DEBUG: OpenAI Prompt: {user_prompt}", flush=True)
 
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -57,14 +57,12 @@ class OpenAIAdapter:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7,
+                temperature=0.1, # Lower temperature for accuracy
                 response_format={"type": "json_object"}
             )
             
             result_json = response.choices[0].message.content
-            # Expecting explicit JSON object with a key 'translations' or just a list?
-            # Let's force a structured output in prompt if possible, or parse carefully.
-            # 4o-mini supports json_object. Let's ask for {"translations": ["..."]}
+            print(f"DEBUG: OpenAI Response: {result_json}", flush=True)
             
             parsed = json.loads(result_json)
             if "translations" in parsed and isinstance(parsed["translations"], list):
@@ -72,33 +70,33 @@ class OpenAIAdapter:
             elif isinstance(parsed, list):
                 return parsed
             else:
-                # Fallback: maybe just try line by line split if JSON fails?
-                # But json_object mode enforces JSON.
                 logger.error(f"Unexpected JSON format: {result_json}")
                 return texts # Fallback to original
                 
         except Exception as e:
             logger.error(f"OpenAI Batch Translation Error: {e}")
-            # Fallback to single loop if batch fails? Or just return originals
             return texts
 
-    def _get_system_prompt(self, target_lang: str) -> str:
-        return (
+    def _map_lang_code(self, code: str) -> str:
+        mapping = {
+            "kor_Hang": "Korean",
+            "eng_Latn": "English",
+            "jpn_Jpan": "Japanese",
+            "zho_Hans": "Simplified Chinese",
+            "zho_Hant": "Traditional Chinese",
+        }
+        return mapping.get(code, code)
 
-             f"You are a professional YouTube Global Creator.\n"
-            f"Translate the given text into {target_lang}.\n"
-            f"1. If the text looks like a Title, make it CATCHY, CLICKBAITY, and NATURAL for YouTube.\n"
-            f"   (e.g., 'Make Kimchi' -> 'How to Make Authentic Kimchi at Home! 🌶️')\n"
-            f"2. If it is description/content, translate it naturally.\n"
-            f"3. Do not add explanations, just return the translation.\n"
-            f"4. For batch requests, return JSON object: {{ \"translations\": [ ... ] }}"
-            # f"You are a professional translator specializing in Korean Travel Content.\n"
-            # f"Translate the given text into {target_lang}.\n\n"
-            # f"Rules:\n"
-            # f"1. **Accuracy is paramount.** Do not hallucinate city names or places. 'Daejeon' is 'Daejeon', not 'Daegu' or 'Jeonju'.\n"
-            # f"2. **Proper Nouns:** Preserve specific brand names (e.g., 'Seongsimdang') and place names phonetically if no standard English definition exists.\n"
-            # f"3. **Titles:** Make them natural and engaging for social media, but DO NOT alter the meaning.\n"
-            # f"   (e.g., '대전 성심당' -> 'Daejeon Seongsimdang Bakery', NOT 'Great War Sacred Heart')\n"
-            # f"4. **No Explanations:** Return ONLY the translated text.\n"
-            # f"5. **Batch Requests:** Return a strictly valid JSON object: {{ \"translations\": [ \"string1\", \"string2\" ] }}"
+    def _get_system_prompt(self, target_lang: str) -> str:
+        target_lang_name = self._map_lang_code(target_lang)
+        return (
+             f"You are a professional translator specializing in Korean Travel Content.\n"
+             f"Translate the given text into {target_lang_name}.\n\n"
+             f"Rules:\n"
+             f"1. **Accuracy is paramount.** Do not hallucinate city names or places.\n"
+             f"2. **Proper Nouns:** **Transliterate** specific brand names (e.g., 'Seongsimdang') and place names into the target language's script. **DO NOT** keep Korean characters if the target is English/Alphabet.\n"
+             f"3. **Titles:** Make them natural and engaging, but DO NOT alter the meaning.\n"
+             f"   (e.g., '대전 성심당' -> 'Daejeon Seongsimdang Bakery')\n"
+             f"4. **No Explanations:** Return ONLY the translated text.\n"
+             f"5. **Batch Requests:** Return a strictly valid JSON object: {{ \"translations\": [ \"string1\", \"string2\" ] }}"
         )

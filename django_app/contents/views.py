@@ -482,6 +482,8 @@ class TranslationBatchView(APIView):
         items = request.data.get("items", [])
         source_lang = request.data.get("source_lang") or "kor_Hang"
         target_lang = request.data.get("target_lang") or "eng_Latn"
+        
+        print(f"DEBUG: Batch Request Items: {len(items)}, Src: {source_lang}, Tgt: {target_lang}", flush=True)
 
         if not items: return Response({"results": {}})
         
@@ -497,7 +499,25 @@ class TranslationBatchView(APIView):
             if not text:
                 results[idx] = ""
                 continue
-            if source_lang == target_lang:
+                
+            # [수정] "고정된" 언어 문제 해결
+            # source_lang이 기본값(kor_Hang)이지만 텍스트가 실제로는 영어/일본어인 경우,
+            # source == target 체크로 인해 번역을 건너뛰고 잘못된 언어를 반환하게 됩니다.
+            # 해결: 언어를 감지하거나 확신할 수 없는 경우 불일치로 가정합니다.
+            # 이상적으로는 허용되는 경우 TranslationService가 자동 감지를 처리하도록 합니다.
+            # 여기서는 실제 소스 언어가 다른 것 같으면 감지를 시도합니다.
+            
+            real_source_lang = source_lang
+            if source_lang == "kor_Hang": # 기본/하드코딩된 소스를 사용하는 경우에만
+                try:
+                    detected = TranslationService.detect_language(text)
+                    if detected and detected != "und":
+                        real_source_lang = detected
+                except:
+                    pass
+            
+            # 최적화 확인
+            if real_source_lang == target_lang:
                 results[idx] = text
                 continue
             
@@ -528,9 +548,11 @@ class TranslationBatchView(APIView):
                 to_translate_texts.append(text)
         
         if to_translate_texts:
+            print(f"DEBUG: Calling API for {len(to_translate_texts)} texts: {to_translate_texts}", flush=True)
             try:
                 # API 호출을 위해 서비스 사용
                 translated_list, provider = TranslationService.call_fastapi_translate_batch(to_translate_texts, source_lang, target_lang)
+                print(f"DEBUG: API returned: {translated_list}", flush=True)
                 
                 # 모델명 결정 로직 (Batch)
                 model_name = os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
