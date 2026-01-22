@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { startTransition } from 'react';
 import { getPopularCities } from '../../../api/destinations';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const CitySearchPage = () => {
     const navigate = useNavigate();
+    const { t, language } = useLanguage();
     const [popularCities, setPopularCities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchInput, setSearchInput] = useState('');
 
     useEffect(() => {
         fetchPopularCities();
-    }, []);
+    }, [language]);
 
     const fetchPopularCities = async () => {
         try {
-            const data = await getPopularCities();
+            const data = await getPopularCities(language);
             setPopularCities(data);
         } catch (error) {
             console.error('Failed to fetch popular cities:', error);
@@ -59,9 +62,9 @@ const CitySearchPage = () => {
 
                 {/* Header & Search */}
                 <div className="text-center mb-12">
-                    <h1 className="text-3xl md:text-4xl font-bold mb-6">어디로 떠나시나요? ✈️</h1>
+                    <h1 className="text-3xl md:text-4xl font-bold mb-6">{t('city_search_title')}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
-                        도시 이름을 검색하고 통합된 여행 정보를 만나보세요.
+                        {t('city_search_desc')}
                     </p>
 
                     <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto relative group">
@@ -72,7 +75,7 @@ const CitySearchPage = () => {
                             </div>
                             <input
                                 className="w-full h-full bg-transparent border-none text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-0 text-lg"
-                                placeholder="도시 이름 검색 (예: 서울, 부산, 대전)"
+                                placeholder={t('city_search_ph')}
                                 type="text"
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
@@ -81,7 +84,7 @@ const CitySearchPage = () => {
                                 type="submit"
                                 className="mr-2 px-6 py-2 bg-[#1392ec] hover:bg-blue-600 text-white font-bold rounded-xl whitespace-nowrap transition-colors"
                             >
-                                검색
+                                {t('search_btn')}
                             </button>
                         </div>
                     </form>
@@ -89,7 +92,7 @@ const CitySearchPage = () => {
 
                 {/* Popular Cities */}
                 <div>
-                    <h2 className="text-2xl font-bold mb-6 px-2">인기 여행지 🔥</h2>
+                    <h2 className="text-2xl font-bold mb-6 px-2">{t('city_popular_title')}</h2>
 
                     {loading ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -111,7 +114,7 @@ const CitySearchPage = () => {
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4 flex flex-col justify-end">
-                                        <h3 className="text-white font-bold text-xl mb-1">{city.city_name}</h3>
+                                        <h3 className="text-white font-bold text-xl mb-1">{city.display_name || city.city_name}</h3>
                                         <p className="text-white/80 text-xs line-clamp-1">{city.description}</p>
                                     </div>
                                 </div>

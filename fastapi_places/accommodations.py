@@ -6,6 +6,8 @@ import httpx
 from fastapi import APIRouter, Query
 from typing import Optional, List
 import asyncio
+import zlib
+from translation_client import translate_batch_proxy
 
 from service import search_kakao_places, search_google_places, remove_duplicate_places, KAKAO_REST_API_KEY
 
@@ -64,7 +66,8 @@ async def search_accommodations(
     city: str = Query(..., min_length=1, description="도시명 (필수)"),
     type: Optional[str] = Query(None, description="숙소 유형: 호텔, 모텔, 펜션, 게스트하우스, 리조트"),
     page: int = Query(1, ge=1, description="페이지 번호"),
-    limit: int = Query(15, ge=1, le=50, description="페이지당 개수")
+    limit: int = Query(15, ge=1, le=50, description="페이지당 개수"),
+    lang: Optional[str] = Query(None, description="타겟 언어")
 ):
     """
     숙소 검색 API
@@ -93,6 +96,41 @@ async def search_accommodations(
     # 페이지네이션
     offset = (page - 1) * limit
     paginated_results = all_results[offset:offset + limit]
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = []
+            for res in paginated_results:
+                # ID가 없으면 텍스트 해시를 ID로 사용
+                entity_id_name = res.get("place_api_id") or (zlib.adler32(res.get("name", "").encode('utf-8')) & 0xffffffff)
+                
+                items_to_translate.append({
+                    "text": res.get("name", ""),
+                    "entity_type": "place_name",
+                    "entity_id": entity_id_name,
+                    "field": "name"
+                })
+                items_to_translate.append({
+                    "text": res.get("address", ""),
+                    "entity_type": "place_address",
+                    "entity_id": entity_id_name,
+                    "field": "address"
+                })
+
+            if items_to_translate:
+                translated_map = await translate_batch_proxy(items_to_translate, lang)
+                
+                current_idx = 0
+                for res in paginated_results:
+                    if current_idx in translated_map:
+                        res["name"] = translated_map[current_idx]
+                    current_idx += 1
+                    if current_idx in translated_map:
+                        res["address"] = translated_map[current_idx]
+                    current_idx += 1
+        except Exception as e:
+            print(f"Translation failed: {e}")
     
     return {
         "city": city,
@@ -135,7 +173,8 @@ async def search_nearby_accommodations(
     lng: float = Query(..., description="경도"),
     radius: int = Query(5000, ge=100, le=20000, description="검색 반경 (미터)"),
     type: Optional[str] = Query(None, description="숙소 유형: 호텔, 모텔, 펜션, 게스트하우스, 리조트, 민박"),
-    limit: int = Query(15, ge=1, le=50, description="결과 개수")
+    limit: int = Query(15, ge=1, le=50, description="결과 개수"),
+    lang: Optional[str] = Query(None, description="타겟 언어")
 ):
     """
     좌표 기반 숙소 검색 (거리순 정렬)
@@ -205,6 +244,65 @@ async def search_nearby_accommodations(
                         "thumbnail_url": None
                     })
             
+            # [AI 번역 적용]
+            if lang:
+                try:
+                    items_to_translate = []
+                    # results 리스트 사용 (limit 적용 전 전체 결과 혹은 일부)
+                    # 여기서는 results 전체를 대상으로 번역하지 않고 limit만큼 자른 후 번역하는 것이 효율적일 수 있으나
+                    # 로직상 results 전체가 많지 않으므로(15개) 그냥 진행하거나 slicing 후 처리.
+                    # 코드가 results[:limit]를 반환하므로, 슬라이싱된 리스트를 변수에 담고 번역.
+                    
+                    final_results = results[:limit]
+                    
+                    for res in final_results:
+                        entity_id_name = res.get("place_api_id") or (zlib.adler32(res.get("name", "").encode('utf-8')) & 0xffffffff)
+                        
+                        items_to_translate.append({
+                            "text": res.get("name", ""),
+                            "entity_type": "place_name",
+                            "entity_id": entity_id_name,
+                            "field": "name"
+                        })
+                        items_to_translate.append({
+                            "text": res.get("address", ""),
+                            "entity_type": "place_address",
+                            "entity_id": entity_id_name,
+                            "field": "address"
+                        })
+
+                    if items_to_translate:
+                        translated_map = await translate_batch_proxy(items_to_translate, lang)
+                        
+                        current_idx = 0
+                        for res in final_results:
+                            if current_idx in translated_map:
+                                res["name"] = translated_map[current_idx]
+                            current_idx += 1
+                            if current_idx in translated_map:
+                                res["address"] = translated_map[current_idx]
+                            current_idx += 1
+                            
+                    return {
+                        "lat": lat,
+                        "lng": lng,
+                        "radius": radius,
+                        "type": type,
+                        "total": len(results),
+                        "results": final_results
+                    }
+                except Exception as e:
+                    print(f"Translation failed: {e}")
+                    # 실패 시 원본 반환
+                    return {
+                        "lat": lat,
+                        "lng": lng,
+                        "radius": radius,
+                        "type": type,
+                        "total": len(results),
+                        "results": results[:limit]
+                    }
+
             return {
                 "lat": lat,
                 "lng": lng,

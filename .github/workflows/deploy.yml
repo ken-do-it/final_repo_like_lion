@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["develop"]
 
 # 환경변수 설정 (이미지 이름)
 env:
@@ -51,10 +51,34 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: ${{ env.DOCKER_USERNAME }}/${{ env.FRONTEND_IMAGE }}:latest
+          build-args: |
+            VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            VITE_SEARCH_API_URL=${{ secrets.VITE_SEARCH_API_URL }}
+            VITE_PLACES_API_URL=${{ secrets.VITE_PLACES_API_URL }}
+            VITE_KAKAO_JS_KEY=${{ secrets.VITE_KAKAO_JS_KEY }}
+            VITE_TOSS_CLIENT_KEY=${{ secrets.VITE_TOSS_CLIENT_KEY }}
+      
+      - name: Build & Push FastAPI Places
+        uses: docker/build-push-action@v4
+        with:
+          context: ./fastapi_places
+          file: ./fastapi_places/Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_USERNAME }}/korea-trip-places:latest
+
+      - name: Build & Push FastAPI Translation
+        uses: docker/build-push-action@v4
+        with:
+          context: ./fastapi_ai_translation
+          file: ./fastapi_ai_translation/Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_USERNAME }}/korea-trip-translation:latest
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
     steps:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.6
@@ -64,16 +88,15 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            # 1. k3s에 배포된 파드 재시작 (이미지 다시 받아옴)
-            # 주의: k3s yaml 파일에 imagePullPolicy: Always가 있어야 함!
+            cd ~/final_repo
             
-            echo "Deploying Django..."
-            kubectl rollout restart deployment/django-deployment -n dev
+            # 최신 이미지 pull
+            sudo docker compose pull
             
-            echo "Deploying FastAPI..."
-            kubectl rollout restart deployment/fastapi-deployment -n dev
+            # 컨테이너 재시작
+            sudo docker compose up -d
             
-            echo "Deploying Frontend..."
-            kubectl rollout restart deployment/frontend-deployment -n dev
+            # 안 쓰는 이미지 정리 (선택)
+            sudo docker image prune -f
             
             echo "Deployment Finished! 🚀"
