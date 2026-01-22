@@ -7,6 +7,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "./CityResultPage.css"; // Custom overrides
+import { SectionHeader } from "./CityResultPageSectionHeader";
 
 // Icons for section headers
 const Icons = {
@@ -58,13 +59,6 @@ const CityResultPage = () => {
             { breakpoint: 480, settings: { slidesToShow: 1.2 } }
         ]
     };
-
-    const SectionHeader = ({ title, icon }) => (
-        <div className="flex items-center space-x-2 mb-4 px-2">
-            <span className="text-2xl">{icon}</span>
-            <h2 className="text-xl md:text-2xl font-bold dark:text-white text-slate-900">{title}</h2>
-        </div>
-    );
 
     // Helper to prevent click when dragging
     const handleMouseDown = (e) => {
@@ -145,7 +139,12 @@ const CityResultPage = () => {
 
                 {/* 1. Travel Plans */}
                 <section>
-                    <SectionHeader title={t('city_sec_plan', { city: content ? (content.display_name || cityName) : cityName })} icon={Icons.plan} />
+                    <SectionHeader
+                        title={t('city_sec_plan', { city: content ? (content.display_name || cityName) : cityName })}
+                        icon={Icons.plan}
+                        onSeeMore={() => navigate(`/plans?city=${encodeURIComponent(cityName)}`)}
+                        moreText={t('btn_see_more') || "더보기"}
+                    />
                     {hasPlans ? (
                         <Slider {...sliderSettings} className="px-2 -mx-2">
                             {content.travel_plans.map(plan => (
@@ -178,7 +177,12 @@ const CityResultPage = () => {
 
                 {/* 2. Recommended Places */}
                 <section>
-                    <SectionHeader title={t('city_sec_place', { city: content ? (content.display_name || cityName) : cityName })} icon={Icons.place} />
+                    <SectionHeader
+                        title={t('city_sec_place', { city: content ? (content.display_name || cityName) : cityName })}
+                        icon={Icons.place}
+                        onSeeMore={() => navigate(`/places/search?query=${encodeURIComponent(cityName)}`)}
+                        moreText={t('btn_see_more') || "더보기"}
+                    />
                     {hasPlaces ? (
                         <Slider {...sliderSettings} className="px-2 -mx-2">
                             {content.places.map((place, idx) => (
@@ -224,7 +228,12 @@ const CityResultPage = () => {
 
                 {/* 3. Shortforms */}
                 <section>
-                    <SectionHeader title={t('nav_shorts')} icon={Icons.shortform} />
+                    <SectionHeader
+                        title={t('nav_shorts')}
+                        icon={Icons.shortform}
+                        onSeeMore={() => navigate(`/shorts?q=${encodeURIComponent(cityName)}`)}
+                        moreText={t('btn_see_more') || "더보기"}
+                    />
                     {hasShortforms ? (
                         <Slider {...{ ...sliderSettings, slidesToShow: 5.5, responsive: [{ breakpoint: 1024, settings: { slidesToShow: 4.5 } }, { breakpoint: 768, settings: { slidesToShow: 3.5 } }] }} className="px-2 -mx-2">
                             {content.shortforms.map(short => (
@@ -260,7 +269,12 @@ const CityResultPage = () => {
 
                 {/* 4. Local Columns */}
                 <section>
-                    <SectionHeader title={t('nav_column')} icon={Icons.column} />
+                    <SectionHeader
+                        title={t('nav_column')}
+                        icon={Icons.column}
+                        onSeeMore={() => navigate(`/local-columns?city=${encodeURIComponent(cityName)}`)}
+                        moreText={t('btn_see_more') || "더보기"}
+                    />
                     {hasColumns ? (
                         <Slider {...sliderSettings} className="px-2 -mx-2">
                             {content.local_columns.map(column => (
