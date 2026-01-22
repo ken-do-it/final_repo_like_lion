@@ -12,7 +12,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
  */
 const TrainSearch = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   /**
    * 폼 데이터 상태
@@ -36,26 +36,47 @@ const TrainSearch = () => {
   /**
    * 주요 기차역 목록
    * nodeId - TAGO API의 역 ID
-   * nodeName - 역 이름
+   * nodeName - 역 이름 (한국어)
+   * nameEn - 영어 이름
+   * nameJa - 일본어 이름
+   * nameZh - 중국어 이름
    * region - 지역 (그룹핑용)
    */
   const stations = [
-    { nodeId: 'NAT010000', nodeName: '서울', region: t('region_capital') },
-    { nodeId: 'NAT010032', nodeName: '용산', region: t('region_capital') },
-    { nodeId: 'NAT010107', nodeName: '영등포', region: t('region_capital') },
-    { nodeId: 'NAT010415', nodeName: '수원', region: t('region_capital') },
-    { nodeId: 'NAT010856', nodeName: '천안아산', region: t('region_chungcheong') },
-    { nodeId: 'NAT011668', nodeName: '대전', region: t('region_chungcheong') },
-    { nodeId: 'NAT013417', nodeName: '동대구', region: t('region_gyeongsang') },
-    { nodeId: 'NAT013726', nodeName: '신경주', region: t('region_gyeongsang') },
-    { nodeId: 'NAT013854', nodeName: '울산(통도사)', region: t('region_gyeongsang') },
-    { nodeId: 'NAT014445', nodeName: '부산', region: t('region_gyeongsang') },
-    { nodeId: 'NAT040407', nodeName: '광주송정', region: t('region_jeolla') },
-    { nodeId: 'NAT030951', nodeName: '전주', region: t('region_jeolla') },
-    { nodeId: 'NAT040883', nodeName: '목포', region: t('region_jeolla') },
-    { nodeId: 'NAT041147', nodeName: '여수엑스포', region: t('region_jeolla') },
-    { nodeId: 'NAT020393', nodeName: '강릉', region: t('region_gangwon') },
+    { nodeId: 'NAT010000', nodeName: '서울', nameEn: 'Seoul', nameJa: 'ソウル', nameZh: '首尔', region: t('region_capital') },
+    { nodeId: 'NAT010032', nodeName: '용산', nameEn: 'Yongsan', nameJa: '龍山', nameZh: '龙山', region: t('region_capital') },
+    { nodeId: 'NAT010107', nodeName: '영등포', nameEn: 'Yeongdeungpo', nameJa: '永登浦', nameZh: '永登浦', region: t('region_capital') },
+    { nodeId: 'NAT010415', nodeName: '수원', nameEn: 'Suwon', nameJa: '水原', nameZh: '水原', region: t('region_capital') },
+    { nodeId: 'NAT010856', nodeName: '천안아산', nameEn: 'Cheonan-Asan', nameJa: '天安牙山', nameZh: '天安牙山', region: t('region_chungcheong') },
+    { nodeId: 'NAT011668', nodeName: '대전', nameEn: 'Daejeon', nameJa: '大田', nameZh: '大田', region: t('region_chungcheong') },
+    { nodeId: 'NAT013417', nodeName: '동대구', nameEn: 'Dongdaegu', nameJa: '東大邱', nameZh: '东大邱', region: t('region_gyeongsang') },
+    { nodeId: 'NAT013726', nodeName: '신경주', nameEn: 'Singyeongju', nameJa: '新慶州', nameZh: '新庆州', region: t('region_gyeongsang') },
+    { nodeId: 'NAT013854', nodeName: '울산(통도사)', nameEn: 'Ulsan (Tongdosa)', nameJa: '蔚山（通度寺）', nameZh: '蔚山（通度寺）', region: t('region_gyeongsang') },
+    { nodeId: 'NAT014445', nodeName: '부산', nameEn: 'Busan', nameJa: '釜山', nameZh: '釜山', region: t('region_gyeongsang') },
+    { nodeId: 'NAT040407', nodeName: '광주송정', nameEn: 'Gwangju-Songjeong', nameJa: '光州松汀', nameZh: '光州松汀', region: t('region_jeolla') },
+    { nodeId: 'NAT030951', nodeName: '전주', nameEn: 'Jeonju', nameJa: '全州', nameZh: '全州', region: t('region_jeolla') },
+    { nodeId: 'NAT040883', nodeName: '목포', nameEn: 'Mokpo', nameJa: '木浦', nameZh: '木浦', region: t('region_jeolla') },
+    { nodeId: 'NAT041147', nodeName: '여수엑스포', nameEn: 'Yeosu-Expo', nameJa: '麗水エキスポ', nameZh: '丽水世博', region: t('region_jeolla') },
+    { nodeId: 'NAT020393', nodeName: '강릉', nameEn: 'Gangneung', nameJa: '江陵', nameZh: '江陵', region: t('region_gangwon') },
   ];
+
+  /**
+   * 언어에 따라 역 이름 선택
+   */
+  const getStationName = (station) => {
+    switch (language) {
+      case 'English':
+        return station.nameEn || station.nodeName;
+      case '日本語':
+        return station.nameJa || station.nodeName;
+      case '中文':
+        return station.nameZh || station.nodeName;
+      case '한국어':
+        return station.nodeName;
+      default:
+        return station.nodeName;
+    }
+  };
 
   /**
    * 열차종류 목록
@@ -188,7 +209,7 @@ const TrainSearch = () => {
                       <option value="">{t('placeholder_select_dep_station')}</option>
                       {stations.map((station) => (
                         <option key={station.nodeId} value={station.nodeId}>
-                          {station.nodeName}
+                          {getStationName(station)}
                         </option>
                       ))}
                     </select>
@@ -221,7 +242,7 @@ const TrainSearch = () => {
                       <option value="">{t('placeholder_select_arr_station')}</option>
                       {stations.map((station) => (
                         <option key={station.nodeId} value={station.nodeId}>
-                          {station.nodeName}
+                          {getStationName(station)}
                         </option>
                       ))}
                     </select>
