@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',  # API 문서 자동 생성
     'corsheaders',
+    'storages',  # django-storages (S3)
 
     # Social Authentication
     'django.contrib.sites',
@@ -349,3 +350,47 @@ TOSS_PAYMENTS = {
 
 # ODsay API Settings (지하철 경로 검색)
 ODSAY_API_KEY = os.getenv('ODSAY_API_KEY', '')
+
+# ==================== AWS S3 Storage Settings ====================
+# S3를 사용하려면 환경변수에 AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME 을 설정하세요.
+# 설정되지 않으면 로컬 파일시스템을 사용합니다.
+
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', '')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-northeast-2')  # 서울 리전 기본값
+
+# S3 설정이 있으면 S3 스토리지 사용
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
+    # django-storages S3 설정
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+    # S3 상세 설정
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',  # 1일 캐시
+    }
+    AWS_DEFAULT_ACL = None  # ACL 비활성화 (버킷 정책으로 관리)
+    AWS_S3_FILE_OVERWRITE = False  # 같은 이름 파일 덮어쓰기 방지
+    AWS_QUERYSTRING_AUTH = False  # URL에 인증 쿼리스트링 제거 (공개 버킷용)
+
+    # 미디어 파일 경로
+    AWS_LOCATION = 'media'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+else:
+    # S3 설정이 없으면 로컬 파일시스템 사용 (개발 환경)
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
