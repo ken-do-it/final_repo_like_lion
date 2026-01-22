@@ -252,36 +252,56 @@ class MSAirportListView(APIView):
                 "iataCode": "GMP",
                 "nameEn": "Gimpo International Airport",
                 "nameKo": "김포국제공항",
+                "nameJa": "金浦国際空港",
+                "nameZh": "金浦国际机场",
                 "cityEn": "Seoul",
-                "cityKo": "서울"
+                "cityKo": "서울",
+                "cityJa": "ソウル",
+                "cityZh": "首尔"
             },
             {
                 "iataCode": "CJU",
                 "nameEn": "Jeju International Airport",
                 "nameKo": "제주국제공항",
+                "nameJa": "済州国際空港",
+                "nameZh": "济州国际机场",
                 "cityEn": "Jeju",
-                "cityKo": "제주"
+                "cityKo": "제주",
+                "cityJa": "済州",
+                "cityZh": "济州"
             },
             {
                 "iataCode": "PUS",
                 "nameEn": "Gimhae International Airport",
                 "nameKo": "김해국제공항",
+                "nameJa": "金海国際空港",
+                "nameZh": "金海国际机场",
                 "cityEn": "Busan",
-                "cityKo": "부산"
+                "cityKo": "부산",
+                "cityJa": "釜山",
+                "cityZh": "釜山"
             },
             {
                 "iataCode": "TAE",
                 "nameEn": "Daegu International Airport",
                 "nameKo": "대구국제공항",
+                "nameJa": "大邱国際空港",
+                "nameZh": "大邱国际机场",
                 "cityEn": "Daegu",
-                "cityKo": "대구"
+                "cityKo": "대구",
+                "cityJa": "大邱",
+                "cityZh": "大邱"
             },
             {
                 "iataCode": "KWJ",
                 "nameEn": "Gwangju Airport",
                 "nameKo": "광주공항",
+                "nameJa": "光州空港",
+                "nameZh": "光州机场",
                 "cityEn": "Gwangju",
-                "cityKo": "광주"
+                "cityKo": "광주",
+                "cityJa": "光州",
+                "cityZh": "光州"
             },
         ]
 
