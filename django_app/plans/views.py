@@ -169,7 +169,8 @@ def plan_retrieve_update_delete(request, plan_id):
                         entity_type="plan_detail",
                         fields={
                             'description': 'description',
-                            'place_name': 'place_name'
+                            'place_name': 'place_name',
+                            'place_address': 'place_address'
                         }
                     )
             except Exception as e:
@@ -556,25 +557,49 @@ def image_retrieve_update_delete(request, image_id):
     if request.method == 'GET':
         serializer = PlanDetailImageSerializer(image)
         return Response(serializer.data)
-    
+
     elif request.method in ['PUT', 'PATCH']:
+        # 로그인 및 권한 체크: 일정 소유자만 수정 가능
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        if image.detail.plan.user != request.user:
+            return Response(
+                {'error': '본인만 수정할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         partial = request.method == 'PATCH'
         serializer = PlanDetailImageCreateSerializer(
             image,
             data=request.data,
             partial=partial
         )
-        
+
         if serializer.is_valid():
             serializer.save(detail=image.detail)
             return Response(serializer.data)
-        
+
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     elif request.method == 'DELETE':
+        # 로그인 및 권한 체크: 일정 소유자만 삭제 가능
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        if image.detail.plan.user != request.user:
+            return Response(
+                {'error': '본인만 삭제할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         image.delete()
         return Response(
             {'message': '이미지가 삭제되었습니다.'},

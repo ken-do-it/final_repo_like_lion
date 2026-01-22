@@ -28,6 +28,16 @@ const PlanDetail = () => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingContent, setEditingContent] = useState('');
 
+  // 이미지 업로드 상태
+  const [uploadingImageFor, setUploadingImageFor] = useState(null); // detailId
+  const [imageUploading, setImageUploading] = useState(false);
+  const fileInputRefs = useRef({});
+
+  // 이미지 모달 상태
+  const [modalImages, setModalImages] = useState([]); // 현재 장소의 이미지 배열
+  const [modalImageIndex, setModalImageIndex] = useState(0); // 현재 보고 있는 이미지 인덱스
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // 본인 일정인지 확인
   const isOwner = isAuthenticated && plan && user && plan.user === user.id;
 
@@ -270,6 +280,109 @@ const PlanDetail = () => {
     }
   };
 
+  // 이미지 업로드 핸들러
+  const handleImageUpload = async (detailId, event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      alert(t('alert_image_only') || '이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+
+    // 파일 크기 제한 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert(t('alert_image_size') || '이미지 크기는 10MB 이하여야 합니다.');
+      return;
+    }
+
+    try {
+      setImageUploading(true);
+      setUploadingImageFor(detailId);
+
+      const formData = new FormData();
+      formData.append('image_file', file);
+      formData.append('order_index', 0);
+
+      await plansService.images.uploadImage(detailId, formData);
+
+      // 업로드 성공 후 새로고침
+      fetchPlanDetail();
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      alert(t('alert_image_upload_fail') || '이미지 업로드에 실패했습니다.');
+    } finally {
+      setImageUploading(false);
+      setUploadingImageFor(null);
+      // 파일 입력 초기화
+      if (fileInputRefs.current[detailId]) {
+        fileInputRefs.current[detailId].value = '';
+      }
+    }
+  };
+
+  // 이미지 삭제 핸들러
+  const handleImageDelete = async (imageId, event) => {
+    event.stopPropagation();
+
+    if (!window.confirm(t('confirm_image_delete') || '이미지를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      await plansService.images.deleteImage(imageId);
+      fetchPlanDetail();
+    } catch (err) {
+      console.error('Error deleting image:', err);
+      alert(t('alert_image_delete_fail') || '이미지 삭제에 실패했습니다.');
+    }
+  };
+
+  // 이미지 모달 열기
+  const openImageModal = (images, index) => {
+    setModalImages(images);
+    setModalImageIndex(index);
+    setIsModalOpen(true);
+  };
+
+  // 이미지 모달 닫기
+  const closeImageModal = () => {
+    setIsModalOpen(false);
+    setModalImages([]);
+    setModalImageIndex(0);
+  };
+
+  // 이전 이미지
+  const showPrevImage = (e) => {
+    e.stopPropagation();
+    setModalImageIndex((prev) => (prev > 0 ? prev - 1 : modalImages.length - 1));
+  };
+
+  // 다음 이미지
+  const showNextImage = (e) => {
+    e.stopPropagation();
+    setModalImageIndex((prev) => (prev < modalImages.length - 1 ? prev + 1 : 0));
+  };
+
+  // 키보드 이벤트 핸들러
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isModalOpen) return;
+
+      if (e.key === 'Escape') {
+        closeImageModal();
+      } else if (e.key === 'ArrowLeft') {
+        setModalImageIndex((prev) => (prev > 0 ? prev - 1 : modalImages.length - 1));
+      } else if (e.key === 'ArrowRight') {
+        setModalImageIndex((prev) => (prev < modalImages.length - 1 ? prev + 1 : 0));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, modalImages.length]);
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 max-w-screen-xl py-12">
@@ -315,6 +428,66 @@ const PlanDetail = () => {
 
   return (
     <div className="container mx-auto px-4 max-w-screen-xl py-12">
+      {/* 이미지 모달 */}
+      {isModalOpen && modalImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          onClick={closeImageModal}
+        >
+          {/* 닫기 버튼 */}
+          <button
+            onClick={closeImageModal}
+            className="absolute top-4 right-4 p-2 text-white hover:text-gray-300 transition-colors z-10"
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* 이전 버튼 */}
+          {modalImages.length > 1 && (
+            <button
+              onClick={showPrevImage}
+              className="absolute left-4 p-3 text-white hover:text-gray-300 hover:bg-white/10 rounded-full transition-colors z-10"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* 이미지 */}
+          <div
+            className="max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={modalImages[modalImageIndex]?.image_url || modalImages[modalImageIndex]?.image}
+              alt={`이미지 ${modalImageIndex + 1}`}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+          </div>
+
+          {/* 다음 버튼 */}
+          {modalImages.length > 1 && (
+            <button
+              onClick={showNextImage}
+              className="absolute right-4 p-3 text-white hover:text-gray-300 hover:bg-white/10 rounded-full transition-colors z-10"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+
+          {/* 이미지 카운터 */}
+          {modalImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 text-white rounded-full text-sm">
+              {modalImageIndex + 1} / {modalImages.length}
+            </div>
+          )}
+        </div>
+      )}
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
@@ -498,18 +671,60 @@ const PlanDetail = () => {
                           )}
 
                           {/* Images */}
-                          {detail.images && detail.images.length > 0 && (
-                            <div className="mt-4 flex gap-2 overflow-x-auto">
-                              {detail.images.map((image) => (
-                                <img
-                                  key={image.id}
-                                  src={image.image}
-                                  alt={t('alt_place_image').replace('{index}', image.order_index)}
-                                  className="w-32 h-32 object-cover rounded-lg"
-                                />
+                          <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex gap-2 overflow-x-auto items-center">
+                              {detail.images && detail.images.map((image, imgIndex) => (
+                                <div key={image.id} className="relative group flex-shrink-0">
+                                  <img
+                                    src={image.image_url || image.image}
+                                    alt={t('alt_place_image')?.replace('{index}', image.order_index) || `이미지 ${image.order_index}`}
+                                    className="w-32 h-32 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => openImageModal(detail.images, imgIndex)}
+                                  />
+                                  {/* 삭제 버튼 - 본인 일정일 때만 */}
+                                  {isOwner && (
+                                    <button
+                                      onClick={(e) => handleImageDelete(image.id, e)}
+                                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                      title={t('btn_delete') || '삭제'}
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
                               ))}
+
+                              {/* 이미지 추가 버튼 - 본인 일정일 때만 */}
+                              {isOwner && (
+                                <label
+                                  className={`flex-shrink-0 w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#1392ec] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                                    imageUploading && uploadingImageFor === detail.id ? 'opacity-50 cursor-not-allowed' : ''
+                                  }`}
+                                >
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    ref={(el) => { fileInputRefs.current[detail.id] = el; }}
+                                    onChange={(e) => handleImageUpload(detail.id, e)}
+                                    disabled={imageUploading}
+                                  />
+                                  {imageUploading && uploadingImageFor === detail.id ? (
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1392ec]"></div>
+                                  ) : (
+                                    <>
+                                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                      </svg>
+                                      <span className="text-xs text-gray-400 mt-1">{t('btn_add_image') || '사진 추가'}</span>
+                                    </>
+                                  )}
+                                </label>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       </div>
 

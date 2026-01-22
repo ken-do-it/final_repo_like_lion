@@ -107,7 +107,7 @@ const MyPage = () => {
             setShowDetailModal(true);
         } catch (err) {
             console.error("Failed to fetch reservation detail", err);
-            alert('예약 상세 정보를 불러오는데 실패했습니다.');
+            alert(t('reservation_detail_error'));
         } finally {
             setDetailLoading(false);
         }
@@ -388,9 +388,9 @@ const MyPage = () => {
                                 </div>
                                 <div className="text-right">
                                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${reservation.status === 'CONFIRMED_TEST' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                            reservation.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                reservation.status === 'CANCELLED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                    'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                        reservation.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                            reservation.status === 'CANCELLED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                                'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                                         }`}>
                                         {reservation.status === 'CONFIRMED_TEST' ? '✓ Confirmed' :
                                             reservation.status === 'PENDING' ? '⏳ Pending' :
@@ -402,7 +402,7 @@ const MyPage = () => {
                                 </div>
                             </div>
                             <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                                <span>Order: {reservation.testOrderNo}</span>
+                                <span>{t('label_order')}: {reservation.testOrderNo}</span>
                                 <span>{new Date(reservation.createdAt).toLocaleDateString()}</span>
                             </div>
                         </div>
@@ -493,7 +493,7 @@ const MyPage = () => {
                     >
                         {/* Modal Header */}
                         <div className="sticky top-0 bg-white dark:bg-[#1e2b36] border-b border-slate-200 dark:border-slate-700 p-6 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">예약 상세</h2>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('reservation_detail_title')}</h2>
                             <button
                                 onClick={closeDetailModal}
                                 className="text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 text-2xl"
@@ -507,7 +507,7 @@ const MyPage = () => {
                             {detailLoading ? (
                                 <div className="text-center py-12">
                                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1392ec] mx-auto mb-4"></div>
-                                    <p className="text-slate-500">불러오는 중...</p>
+                                    <p className="text-slate-500">{t('reservation_loading')}</p>
                                 </div>
                             ) : reservationDetail ? (
                                 <div className="space-y-6">
@@ -522,31 +522,31 @@ const MyPage = () => {
                                                     {reservationDetail.reservation?.title}
                                                 </h3>
                                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                                    주문번호: {reservationDetail.reservation?.testOrderNo}
+                                                    {t('label_order_number')}: {reservationDetail.reservation?.testOrderNo}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4 text-sm">
                                             <div>
-                                                <span className="text-slate-500 dark:text-slate-400">상태</span>
+                                                <span className="text-slate-500 dark:text-slate-400">{t('label_status')}</span>
                                                 <p className="font-semibold text-green-600 dark:text-green-400">
-                                                    {reservationDetail.reservation?.status === 'CONFIRMED_TEST' ? '확정됨' : reservationDetail.reservation?.status}
+                                                    {reservationDetail.reservation?.status === 'CONFIRMED_TEST' ? t('status_confirmed') : reservationDetail.reservation?.status}
                                                 </p>
                                             </div>
                                             <div>
-                                                <span className="text-slate-500 dark:text-slate-400">결제 금액</span>
+                                                <span className="text-slate-500 dark:text-slate-400">{t('label_payment_amount')}</span>
                                                 <p className="font-bold text-[#1392ec]">
                                                     {Number(reservationDetail.reservation?.totalAmount).toLocaleString()} {reservationDetail.reservation?.currency}
                                                 </p>
                                             </div>
                                             <div>
-                                                <span className="text-slate-500 dark:text-slate-400">출발 일시</span>
+                                                <span className="text-slate-500 dark:text-slate-400">{t('label_departure_time')}</span>
                                                 <p className="font-medium text-slate-900 dark:text-white">
                                                     {reservationDetail.reservation?.startAt && new Date(reservationDetail.reservation.startAt).toLocaleString('ko-KR')}
                                                 </p>
                                             </div>
                                             <div>
-                                                <span className="text-slate-500 dark:text-slate-400">예약 일시</span>
+                                                <span className="text-slate-500 dark:text-slate-400">{t('label_reservation_time')}</span>
                                                 <p className="font-medium text-slate-900 dark:text-white">
                                                     {reservationDetail.reservation?.createdAt && new Date(reservationDetail.reservation.createdAt).toLocaleString('ko-KR')}
                                                 </p>
@@ -557,21 +557,21 @@ const MyPage = () => {
                                     {/* 항공편 상세 */}
                                     {reservationDetail.flightDetail && (
                                         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5">
-                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">항공편 정보</h4>
+                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">{t('title_flight_detail')}</h4>
                                             <div className="grid grid-cols-3 gap-4 text-sm">
                                                 <div>
-                                                    <span className="text-slate-500 dark:text-slate-400">여정</span>
-                                                    <p className="font-medium">{reservationDetail.flightDetail.tripType === 'ONEWAY' ? '편도' : '왕복'}</p>
+                                                    <span className="text-slate-500 dark:text-slate-400">{t('label_trip_type')}</span>
+                                                    <p className="font-medium">{reservationDetail.flightDetail.tripType === 'ONEWAY' ? t('trip_oneway') : t('trip_roundtrip')}</p>
                                                 </div>
                                                 <div>
-                                                    <span className="text-slate-500 dark:text-slate-400">좌석 등급</span>
+                                                    <span className="text-slate-500 dark:text-slate-400">{t('label_cabin_class')}</span>
                                                     <p className="font-medium">{reservationDetail.flightDetail.cabinClass}</p>
                                                 </div>
                                                 <div>
-                                                    <span className="text-slate-500 dark:text-slate-400">인원</span>
+                                                    <span className="text-slate-500 dark:text-slate-400">{t('label_passengers_count')}</span>
                                                     <p className="font-medium">
-                                                        성인 {reservationDetail.flightDetail.adults}명
-                                                        {reservationDetail.flightDetail.children > 0 && `, 아동 ${reservationDetail.flightDetail.children}명`}
+                                                        {t('passenger_adult')} {reservationDetail.flightDetail.adults}{t('unit_people')}
+                                                        {reservationDetail.flightDetail.children > 0 && `, ${t('passenger_child')} ${reservationDetail.flightDetail.children}${t('unit_people')}`}
                                                     </p>
                                                 </div>
                                             </div>
@@ -581,7 +581,7 @@ const MyPage = () => {
                                     {/* 구간 정보 */}
                                     {reservationDetail.segments && reservationDetail.segments.length > 0 && (
                                         <div>
-                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">비행 구간</h4>
+                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">{t('title_flight_segments')}</h4>
                                             <div className="space-y-3">
                                                 {reservationDetail.segments.map((seg, idx) => (
                                                     <div key={seg.id || idx} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
@@ -595,7 +595,7 @@ const MyPage = () => {
                                                             <div className="flex-1 px-4">
                                                                 <div className="flex items-center justify-center gap-2 text-slate-400">
                                                                     <div className="flex-1 h-px bg-slate-300 dark:bg-slate-600"></div>
-                                                                    <span className="text-xs">{seg.durationMin}분</span>
+                                                                    <span className="text-xs">{seg.durationMin}{t('unit_minutes')}</span>
                                                                     <div className="flex-1 h-px bg-slate-300 dark:bg-slate-600"></div>
                                                                 </div>
                                                                 <p className="text-center text-xs text-slate-500 mt-1">
@@ -618,7 +618,7 @@ const MyPage = () => {
                                     {/* 승객 정보 */}
                                     {reservationDetail.passengers && reservationDetail.passengers.length > 0 && (
                                         <div>
-                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">승객 정보</h4>
+                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">{t('title_passenger_info')}</h4>
                                             <div className="space-y-2">
                                                 {reservationDetail.passengers.map((pax, idx) => (
                                                     <div key={pax.id || idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
@@ -627,7 +627,7 @@ const MyPage = () => {
                                                             <div>
                                                                 <p className="font-medium text-slate-900 dark:text-white">{pax.fullName}</p>
                                                                 <p className="text-xs text-slate-500">
-                                                                    {pax.passengerType === 'ADT' ? '성인' : pax.passengerType === 'CHD' ? '아동' : '유아'}
+                                                                    {pax.passengerType === 'ADT' ? t('passenger_adult') : pax.passengerType === 'CHD' ? t('passenger_child') : t('passenger_infant')}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -643,11 +643,11 @@ const MyPage = () => {
                                     {/* 좌석 정보 */}
                                     {reservationDetail.seats && reservationDetail.seats.length > 0 && (
                                         <div>
-                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">좌석 정보</h4>
+                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">{t('title_seat_info')}</h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {reservationDetail.seats.map((seat, idx) => (
                                                     <span key={seat.id || idx} className="px-3 py-1 bg-[#1392ec]/10 text-[#1392ec] rounded-lg text-sm font-medium">
-                                                        {seat.seatNo || '미지정'}
+                                                        {seat.seatNo || t('seat_unassigned')}
                                                     </span>
                                                 ))}
                                             </div>
@@ -656,7 +656,7 @@ const MyPage = () => {
                                 </div>
                             ) : (
                                 <div className="text-center py-12 text-slate-500">
-                                    정보를 불러올 수 없습니다.
+                                    {t('reservation_load_error')}
                                 </div>
                             )}
                         </div>
@@ -667,7 +667,7 @@ const MyPage = () => {
                                 onClick={closeDetailModal}
                                 className="w-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg"
                             >
-                                닫기
+                                {t('btn_close')}
                             </Button>
                         </div>
                     </div>

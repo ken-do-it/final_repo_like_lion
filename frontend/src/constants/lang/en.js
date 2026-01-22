@@ -459,6 +459,7 @@ export default {
     flight_price_info_suffix: "flights found, price for 1 adult",
     msg_no_flights_found: "No flights found matching your criteria.",
     flight_direct: "Direct",
+    flight_provider_check_required: "Check with provider",
 
     // RoadviewGame
     game_title: "Street View",
@@ -560,6 +561,58 @@ export default {
     btn_book_another: "Book Another Flight",
     payment_method_card: "Card",
 
+    // Date/Time Format
+    datetime_format_ymdhm: "{month}/{day}/{year} {hours}:{minutes}",
+
+    // Payment Confirming
+    payment_confirming_title: "Processing Payment",
+    payment_confirming_desc: "Securely processing your payment.",
+    payment_confirming_wait: "Please wait a moment.",
+
+    // Payment Success
+    payment_success_title: "Payment Completed",
+    payment_success_desc: "Your reservation has been processed successfully.",
+    payment_order_number: "Order Number",
+    payment_amount_label: "Payment Amount",
+    payment_redirecting: "Redirecting to confirmation page...",
+
+    // Payment Error
+    payment_error_title: "Payment Failed",
+    payment_error_invalid_params: "Invalid payment information.",
+    payment_error_refund_info: "If your card was charged despite the failed approval, it will be automatically cancelled. Refund will be processed within 3-5 business days.",
+
+    // Buttons
+    btn_restart: "Start Over",
+    btn_processing: "Processing...",
+
+    // Reservation Detail Modal
+    reservation_detail_title: "Reservation Details",
+    reservation_loading: "Loading...",
+    reservation_load_error: "Unable to load information.",
+    reservation_detail_error: "Failed to load reservation details.",
+    label_order_number: "Order Number",
+    label_status: "Status",
+    status_confirmed: "Confirmed",
+    label_payment_amount: "Payment Amount",
+    label_departure_time: "Departure Time",
+    label_reservation_time: "Reservation Time",
+    title_flight_detail: "Flight Information",
+    label_trip_type: "Trip Type",
+    trip_oneway: "One-way",
+    trip_roundtrip: "Round-trip",
+    label_cabin_class: "Cabin Class",
+    label_passengers_count: "Passengers",
+    passenger_adult: "Adult",
+    passenger_child: "Child",
+    passenger_infant: "Infant",
+    title_flight_segments: "Flight Segments",
+    unit_minutes: "min",
+    title_passenger_info: "Passenger Information",
+    title_seat_info: "Seat Information",
+    seat_unassigned: "Unassigned",
+    btn_close: "Close",
+    label_order: "Order",
+
     // Train
     title_transport: "Transport",
     title_train_search: "Train Search",
@@ -632,7 +685,9 @@ export default {
     unit_hour: "hr",
     unit_min: "min",
     unit_times: "times",
-    unit_krw: "",
+    unit_krw: "won",
+    date_format_ymd: "{month}/{day}/{year}",
+    unit_people: " people",
     desc_route_step: "{stations} stations · approx {duration} min",
     msg_no_route_found: "No route found.",
     msg_no_route_found_detail: "No route found. Please check station names.",

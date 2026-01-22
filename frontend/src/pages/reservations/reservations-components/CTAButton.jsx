@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../../../context/LanguageContext';
 
 /**
  * 공통 CTA 버튼 컴포넌트
@@ -26,13 +27,14 @@ const CTAButton = ({
   fullWidth = true,
   className = '',
 }) => {
+  const { t } = useLanguage();
   const isDisabled = disabled || loading;
   const content = (
     <>
       {loading ? (
         <>
           <span className="material-symbols-rounded animate-spin">progress_activity</span>
-          <span>처리 중...</span>
+          <span>{t('btn_processing')}</span>
         </>
       ) : (
         <>

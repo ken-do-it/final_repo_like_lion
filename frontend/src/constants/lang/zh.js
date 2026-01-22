@@ -533,5 +533,63 @@ export default {
     city_empty_column: "暂时没有{city}的本地专栏。",
     city_error_title: "发生错误",
     city_btn_retry_search: "搜索其他城市",
-    city_load_error: "加载内容失败。"
+    city_load_error: "加载内容失败。",
+    flight_provider_check_required: "需要确认供应商",
+
+    // Currency
+    unit_krw: "韩元",
+    date_format_ymd: "{year}年{month}月{day}日",
+    unit_people: "人",
+
+    // 日期/时间格式
+    datetime_format_ymdhm: "{year}年{month}月{day}日 {hours}:{minutes}",
+
+    // 正在处理付款
+    payment_confirming_title: "正在处理付款",
+    payment_confirming_desc: "正在安全处理您的付款。",
+    payment_confirming_wait: "请稍候。",
+
+    // 付款成功
+    payment_success_title: "付款完成",
+    payment_success_desc: "您的预订已成功处理。",
+    payment_order_number: "订单号",
+    payment_amount_label: "付款金额",
+    payment_redirecting: "即将跳转到确认页面...",
+
+    // 付款失败
+    payment_error_title: "付款失败",
+    payment_error_invalid_params: "付款信息无效。",
+    payment_error_refund_info: "如果付款批准失败但已扣款，将自动取消。退款将在3-5个工作日内处理。",
+
+    // 按钮
+    btn_restart: "重新开始",
+    btn_processing: "处理中...",
+
+    // 预订详情模态框
+    reservation_detail_title: "预订详情",
+    reservation_loading: "加载中...",
+    reservation_load_error: "无法加载信息。",
+    reservation_detail_error: "加载预订详情失败。",
+    label_order_number: "订单号",
+    label_status: "状态",
+    status_confirmed: "已确认",
+    label_payment_amount: "支付金额",
+    label_departure_time: "出发时间",
+    label_reservation_time: "预订时间",
+    title_flight_detail: "航班信息",
+    label_trip_type: "行程类型",
+    trip_oneway: "单程",
+    trip_roundtrip: "往返",
+    label_cabin_class: "座位等级",
+    label_passengers_count: "乘客人数",
+    passenger_adult: "成人",
+    passenger_child: "儿童",
+    passenger_infant: "婴儿",
+    title_flight_segments: "航班航段",
+    unit_minutes: "分钟",
+    title_passenger_info: "乘客信息",
+    title_seat_info: "座位信息",
+    seat_unassigned: "未分配",
+    btn_close: "关闭",
+    label_order: "订单",
 };

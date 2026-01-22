@@ -9,6 +9,7 @@ from datetime import date, datetime, timedelta
 import os
 import uuid
 import json
+import zlib
 from pathlib import Path
 
 from models import (
@@ -35,6 +36,8 @@ from service import (
 from database import get_db
 from auth import get_current_user, require_auth
 from translation_client import translate_batch_proxy, translate_texts
+
+
 
 router = APIRouter(prefix="/places", tags=["Places"])
 
@@ -134,11 +137,8 @@ async def search_places(
     lang: Optional[str] = Query(None, description="타겟 언어 (예: eng_Latn)"),
     db: Session = Depends(get_db)
 ):
-    """
-    장소 검색 (카카오맵 + 구글맵 통합)
 
-    참고: API 특성상 총 결과 수는 제한적일 수 있음 (카카오+구글 합쳐서 최대 ~45개)
-    """
+    
     all_results = await search_places_hybrid(query, category, city, db=db)
 
     # [AI 번역 적용]
@@ -148,30 +148,40 @@ async def search_places(
             
             # 각 결과에서 번역할 필드 수집
             for res in all_results:
+                # ID가 없으면(검색 결과 등) 텍스트 해시를 ID로 사용
+                entity_id_name = res.get("id") or (zlib.adler32(res.get("name", "").encode('utf-8')) & 0xffffffff)
+                
                 # Name
                 items_to_translate.append({
                     "text": res.get("name", ""),
-                    "entity_type": "place_name",
-                    "entity_id": res.get("id") or 0,
+                    "entity_type": "place_name" if res.get("id") else "raw",
+                    "entity_id": entity_id_name,
                     "field": "name"
                 })
                 # Address
                 items_to_translate.append({
                     "text": res.get("address", ""),
-                    "entity_type": "place_address",
-                    "entity_id": res.get("id") or 0,
+                    "entity_type": "place_address" if res.get("id") else "raw",
+                    "entity_id": entity_id_name, # 같은 엔티티 ID 공유 (필드가 다름)
                     "field": "address"
                 })
                 # Category
                 items_to_translate.append({
                     "text": res.get("category_main", ""),
-                    "entity_type": "place_category",
-                    "entity_id": res.get("id") or 0,
+                    "entity_type": "place_category" if res.get("id") else "raw",
+                    "entity_id": entity_id_name,
                     "field": "category_main"
                 })
 
+            # [FIX] Transient Cache Collision Issue
+            # DB에 없는 장소는 ID가 없어서 entity_id=0으로 중복되어 캐시 충돌 발생
+            # 해결: 텍스트의 해시값을 임시 ID로 사용
+            
+            print(f"DEBUG: Lang={lang}, Items to translate: {len(items_to_translate)}", flush=True)
+            
             if items_to_translate:
                 translated_map = await translate_batch_proxy(items_to_translate, lang)
+                print(f"DEBUG: Translated Map Size: {len(translated_map)}", flush=True)
                 
                 # 결과에 적용 (순서대로 3개씩 매칭)
                 current_idx = 0
@@ -190,6 +200,8 @@ async def search_places(
                     
         except Exception as e:
             print(f"Translation failed: {e}")
+            import traceback
+            traceback.print_exc()
 
     return {
         "query": query,
@@ -455,6 +467,7 @@ def get_badge_status(
 @router.get("/local-columns", response_model=List[LocalColumnListResponse])
 async def get_local_columns(
     city: Optional[str] = Query(None, description="도시 필터"),
+    query: Optional[str] = Query(None, description="검색어 (제목/내용)"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     lang: Optional[str] = Query(None, description="타겟 언어"),
@@ -463,18 +476,39 @@ async def get_local_columns(
     """
     현지인 칼럼 목록 조회
     """
-    offset = (page - 1) * limit
+    # 기본 쿼리: 최신순 정렬
+    q = db.query(LocalColumn).order_by(LocalColumn.created_at.desc())
 
-    query = db.query(LocalColumn)
-
-    # 도시 필터링 (representative_place를 통해)
+    # 1. 도시 필터 (기존 로직) -> JOIN 필요
+    # (섹션 장소의 도시가 일치하거나 OR 제목에 도시명 포함 - 단순화하여 제목/내용 검색은 별도 query로 처리)
+    # 기획상 "도시별 보기"는 보통 별도 진입점이므로, 여기서는 단순 칼럼 목록에서의 필터링으로 가정
     if city:
-        query = query.join(Place, LocalColumn.representative_place_id == Place.id, isouter=True).filter(
-            Place.city == city
+        # 도시 필터가 있으면 해당 도시와 관련된 칼럼만 (단순화를 위해 제목/내용/장소 연관보다는 명시적 필터링 권장되나,
+        # 기존 로직이 없다면 제목 매칭 정도가 가벼움. 여기서는 확장성을 위해 JOIN 사용)
+        
+        # 섹션에 연결된 장소가 해당 도시인 경우
+        subquery = db.query(LocalColumnSection.column_id).join(
+            Place, LocalColumnSection.place_id == Place.id
+        ).filter(Place.city == city).subquery()
+
+        q = q.filter(
+            or_(
+                LocalColumn.title.ilike(f'%{city}%'),
+                LocalColumn.id.in_(subquery)
+            )
         )
 
-    columns = query.order_by(LocalColumn.created_at.desc()).offset(offset).limit(limit).all()
+    # 2. 검색어 필터 (신규 추가) - Title or Content
+    if query:
+        search_filter = or_(
+            LocalColumn.title.ilike(f"%{query}%"),
+            LocalColumn.content.ilike(f"%{query}%")
+        )
+        q = q.filter(search_filter)
 
+    # 페이징 적용
+    offset = (page - 1) * limit
+    columns = q.offset(offset).limit(limit).all()
     # 사용자 닉네임 및 뱃지 레벨 조회
     result = []
     
@@ -1568,6 +1602,7 @@ async def get_city_content(
 @router.get("/{place_id}")
 async def get_place_detail_by_db_id(
     place_id: int,
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db),
     user_id: Optional[int] = Depends(get_current_user)
 ):
@@ -1642,7 +1677,7 @@ async def get_place_detail_by_db_id(
         is_bookmarked = bookmark is not None
 
     # 4. DB 데이터 + 동적 정보 합치기
-    return {
+    result_data = {
         # DB 정보
         "id": place.id,
         "provider": place.provider,
@@ -1666,6 +1701,44 @@ async def get_place_detail_by_db_id(
         # 사용자별 정보
         "is_bookmarked": is_bookmarked
     }
+
+    # [AI 번역 적용]
+    if lang:
+        try:
+            items_to_translate = [
+                {"text": result_data["name"], "entity_type": "place_name", "entity_id": place.id, "field": "name"},
+                {"text": result_data["address"], "entity_type": "place_address", "entity_id": place.id, "field": "address"},
+                {"text": result_data["category_main"], "entity_type": "place_category", "entity_id": place.id, "field": "category_main"},
+            ]
+            
+            # opening_hours (list of strings) 번역 추가
+            opening_idx_start = len(items_to_translate)
+            for oh in opening_hours:
+                items_to_translate.append({"text": oh, "entity_type": "place_hours", "entity_id": place.id, "field": "opening_hours"})
+
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            
+            # 기본 필드 적용
+            if 0 in translated_map: result_data["name"] = translated_map[0]
+            if 1 in translated_map: result_data["address"] = translated_map[1]
+            if 2 in translated_map: result_data["category_main"] = translated_map[2]
+            
+            # 영업시간 적용
+            new_opening_hours = []
+            for i in range(len(opening_hours)):
+                idx = opening_idx_start + i
+                if idx in translated_map:
+                    new_opening_hours.append(translated_map[idx])
+                else:
+                    new_opening_hours.append(opening_hours[i])
+            
+            if new_opening_hours:
+                result_data["opening_hours"] = new_opening_hours
+
+        except Exception as e:
+            print(f"Detail translation failed: {e}")
+
+    return result_data
 
 
 # ==================== 장소 등록 (사용자) ====================
@@ -1883,10 +1956,6 @@ async def create_review(
 ):
     """
     리뷰 작성 (이미지 파일 업로드 포함)
-
-    - rating: 별점 (1~5)
-    - content: 리뷰 내용
-    - image: 이미지 파일 (선택, jpg/jpeg/png/gif, 최대 10MB)
     """
     # 장소 존재 확인
     place = db.query(Place).filter(Place.id == place_id).first()
@@ -1961,11 +2030,6 @@ async def update_review(
 ):
     """
     리뷰 수정 (이미지 파일 업로드 포함)
-
-    - rating: 별점 (1~5)
-    - content: 리뷰 내용
-    - image: 이미지 파일 (선택, jpg/jpeg/png/gif, 최대 10MB)
-    - remove_image: true면 기존 이미지 삭제 (새 이미지 없이 삭제만 할 때)
     """
     # 리뷰 존재 확인
     review = db.query(PlaceReview).filter(

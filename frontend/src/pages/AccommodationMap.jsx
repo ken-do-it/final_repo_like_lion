@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { placesAxios } from '../api/axios';
 import { useLanguage } from '../context/LanguageContext';
+import { API_LANG_CODES } from '../constants/translations';
 
 const containerStyle = {
   width: '100%',
@@ -31,7 +32,7 @@ const mapOptions = {
 
 const AccommodationMap = () => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -71,7 +72,8 @@ const AccommodationMap = () => {
         lng,
         radius: 5000,
         limit: 20, // Increased limit for better list view
-        type: selectedType || undefined
+        type: selectedType || undefined,
+        lang: API_LANG_CODES[language] || 'eng_Latn'
       };
 
       const response = await placesAxios.get('/accommodations/nearby', { params });
@@ -107,7 +109,7 @@ const AccommodationMap = () => {
     setClickedPosition({ lat, lng });
     setSelectedAccommodation(null);
     await fetchAccommodations(lat, lng);
-  }, [selectedType]);
+  }, [selectedType, language]);
 
   // [2] Handle Keyword Search (Geocoding)
   const handleKeywordSearch = async () => {
@@ -141,7 +143,7 @@ const AccommodationMap = () => {
     if (clickedPosition) {
       fetchAccommodations(clickedPosition.lat, clickedPosition.lng);
     }
-  }, [selectedType]);
+  }, [selectedType, language]);
 
   const handleMarkerClick = (accommodation) => {
     setSelectedAccommodation(accommodation);

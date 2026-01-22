@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import PlaceReviewSection from './PlaceReviewSection';
 import { useLanguage } from '../../context/LanguageContext';
 import { API_LANG_CODES } from '../../constants/translations';
+import AddToPlanModal from './AddToPlanModal'; // [NEW] Import Modal
 
 const PlaceDetailPage = () => {
     const { id } = useParams();
@@ -18,6 +19,7 @@ const PlaceDetailPage = () => {
     const [error, setError] = useState(null);
 
     const [isBookmarked, setIsBookmarked] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false); // [NEW] Modal State
 
     // Params for API mode
     const apiId = searchParams.get('api_id');
@@ -164,6 +166,11 @@ const PlaceDetailPage = () => {
 
         if (action === "review" || action === "리뷰 작성") {
             reviewSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+
+        if (action === "plan") {
+            setIsModalOpen(true); // Open Modal
             return;
         }
 
@@ -356,6 +363,14 @@ const PlaceDetailPage = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Add to Plan Modal */}
+            {isModalOpen && (
+                <AddToPlanModal
+                    place={place}
+                    onClose={() => setIsModalOpen(false)}
+                />
+            )}
         </div>
     );
 };
