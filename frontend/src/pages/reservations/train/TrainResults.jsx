@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../../context/LanguageContext';
 import axios from '../../../api/axios';
 import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-components';
+import { API_LANG_CODES } from '../../../constants/translations';
 
 /**
  * 기차 검색 결과 페이지
@@ -18,7 +19,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
 const TrainResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   /**
    * 이전 페이지(TrainSearch)에서 전달받은 검색 조건
@@ -32,6 +33,7 @@ const TrainResults = () => {
    * 검색 결과 데이터
    */
   const [trains, setTrains] = useState([]);
+  const [translatedStations, setTranslatedStations] = useState(null);
 
   /**
    * 로딩 상태
@@ -56,12 +58,83 @@ const TrainResults = () => {
     }
 
     fetchTrains();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, language]);
 
   /**
    * 백엔드 API로 기차편 검색
    * GET /api/v1/transport/trains/search
    */
+  const translateTrainsIfNeeded = async (trainList) => {
+    const targetLang = API_LANG_CODES[language] || 'eng_Latn';
+    if (targetLang === 'kor_Hang') {
+      setTranslatedStations(null);
+      return trainList;
+    }
+
+    const getEntityId = (value) => {
+      let hash = 0;
+      for (let i = 0; i < value.length; i += 1) {
+        hash = (hash << 5) - hash + value.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    };
+
+    const texts = [];
+    const textToIndex = new Map();
+    const addText = (text) => {
+      if (!text || textToIndex.has(text)) return;
+      textToIndex.set(text, texts.length);
+      texts.push(text);
+    };
+
+    addText(depStationName);
+    addText(arrStationName);
+    trainList.forEach((train) => {
+      addText(train.departureStation);
+      addText(train.arrivalStation);
+    });
+
+    if (texts.length === 0) {
+      setTranslatedStations(null);
+      return trainList;
+    }
+
+    const payload = {
+      source_lang: 'kor_Hang',
+      target_lang: targetLang,
+      items: texts.map((text) => ({
+        text,
+        entity_type: 'raw',
+        entity_id: getEntityId(text),
+        field: 'text'
+      }))
+    };
+
+    try {
+      const response = await axios.post('/translations/batch/', payload);
+      const results = response.data?.results || {};
+      const translatedMap = new Map(
+        texts.map((text, idx) => [text, results[idx] || text])
+      );
+
+      setTranslatedStations({
+        dep: translatedMap.get(depStationName) || depStationName,
+        arr: translatedMap.get(arrStationName) || arrStationName
+      });
+
+      return trainList.map((train) => ({
+        ...train,
+        departureStation_translated: translatedMap.get(train.departureStation) || train.departureStation,
+        arrivalStation_translated: translatedMap.get(train.arrivalStation) || train.arrivalStation
+      }));
+    } catch (err) {
+      console.warn('Train translation failed, using original:', err);
+      setTranslatedStations(null);
+      return trainList;
+    }
+  };
+
   const fetchTrains = async () => {
     setLoading(true);
     setError(null);
@@ -87,7 +160,9 @@ const TrainResults = () => {
        * 검색 결과 저장
        * 백엔드 응답: { results: [...], totalCount: n }
        */
-      setTrains(response.data.results || []);
+      const baseTrains = response.data.results || [];
+      const translatedTrains = await translateTrainsIfNeeded(baseTrains);
+      setTrains(translatedTrains);
 
       /**
        * 결과가 없으면 안내 메시지 표시
@@ -170,9 +245,13 @@ const TrainResults = () => {
             <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-4 mb-6">
               {/* 상단: 출발역 → 도착역 */}
               <div className="flex items-center justify-center gap-4 mb-2">
-                <span className="text-lg font-semibold text-gray-900 dark:text-white">{depStationName}</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {translatedStations?.dep || depStationName}
+                </span>
                 <span className="material-symbols-outlined text-primary">arrow_forward</span>
-                <span className="text-lg font-semibold text-gray-900 dark:text-white">{arrStationName}</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {translatedStations?.arr || arrStationName}
+                </span>
               </div>
               {/* 하단: 날짜 + 조건변경 버튼 */}
               <div className="flex items-center justify-between">
@@ -243,7 +322,9 @@ const TrainResults = () => {
                     {/* 출발 */}
                     <div className="text-center">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">{train.departureTime}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{train.departureStation}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {train.departureStation_translated || train.departureStation}
+                      </p>
                     </div>
                     {/* 화살표 및 소요시간 */}
                     <div className="flex flex-col items-center">
@@ -255,7 +336,9 @@ const TrainResults = () => {
                     {/* 도착 */}
                     <div className="text-center">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">{train.arrivalTime}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{train.arrivalStation}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {train.arrivalStation_translated || train.arrivalStation}
+                      </p>
                     </div>
                   </div>
 
