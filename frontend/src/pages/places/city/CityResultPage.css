@@ -1,0 +1,15 @@
+/* CityResultPage.css */
+
+/* Force the slick track to align items to the left, regardless of count */
+.slick-track {
+    margin-left: 0 !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+}
+
+/* Ensure slides have consistent width and don't collapse */
+.slick-slide {
+    height: auto; /* Allow slides to match content height */
+}
+
+/* Optional: Add some spacing between slides if needed, though 'px-2' in Component handles this */

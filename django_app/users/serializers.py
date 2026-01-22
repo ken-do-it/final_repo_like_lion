@@ -58,6 +58,14 @@ class UserSerializer(serializers.ModelSerializer):
             'provider_type', 'date_joined', 'last_login'
         ]
 
+    def to_representation(self, instance):
+        """닉네임이 없으면 username을 표시"""
+        representation = super().to_representation(instance)
+        # 닉네임이 비어있으면 username으로 대체
+        if not representation.get('nickname'):
+            representation['nickname'] = instance.username
+        return representation
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     """회원가입 Serializer"""

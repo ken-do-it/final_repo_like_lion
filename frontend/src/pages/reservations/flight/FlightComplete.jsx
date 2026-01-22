@@ -14,7 +14,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 const FlightComplete = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   /**
    * 이전 페이지(FlightPaymentSuccess)에서 전달받은 데이터
@@ -50,7 +50,12 @@ const FlightComplete = () => {
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}년 ${month}월 ${day}일 ${hours}:${minutes}`;
+    return t('datetime_format_ymdhm')
+      .replace('{year}', year)
+      .replace('{month}', month)
+      .replace('{day}', day)
+      .replace('{hours}', hours)
+      .replace('{minutes}', minutes);
   };
 
   /**
@@ -100,7 +105,7 @@ const FlightComplete = () => {
                   {t('title_payment_amount')}
                 </p>
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {getPaymentAmount().toLocaleString()}원
+                  {getPaymentAmount().toLocaleString()}{t('unit_krw')}
                 </p>
               </div>
               <div>

@@ -1,4 +1,15 @@
 export default {
+    // Sidebar
+    title_benefits: "Tripko 会员权益",
+    benefit_support: "24/7 全天候支持",
+    benefit_guarantee: "最优价格保证",
+    benefit_secure: "安全支付",
+    benefit_cancel: "免费取消/更改",
+    title_popular_dest: "热门目的地",
+    unit_from: "起",
+    title_need_help: "需要帮助？",
+    desc_need_help: "随时联系我们。",
+    btn_contact_support: "联系客服",
     // Navbar
     nav_home: "首页",
     nav_shorts: "短视频",
@@ -16,6 +27,7 @@ export default {
     nav_ai_plan: "AI行程生成",
     nav_column: "本地专栏",
     nav_ticket: "机票预订",
+    nav_local_auth: "当地人认证",
     nav_likes: "收藏地点",
 
     // Review Banner
@@ -450,4 +462,134 @@ export default {
     game_warn_distance: "附近没有街景，显示约{d}米外的视图。",
     game_no_pano_title: "未找到街景",
     game_no_pano_desc: "附近没有道路数据，或者是该地点在室内。",
+
+    // Local Columns
+    col_write_title: "撰写新专栏",
+    col_edit_title: "编辑专栏",
+    col_input_title: "标题",
+    col_input_title_ph: "请取一个有吸引力的标题",
+    col_input_thumb: "缩略图 (代表图片)",
+    col_input_intro: "序言 (Intro)",
+    col_input_intro_ph: "请撰写专栏的开篇。",
+    col_input_intro_img: "序言图片 (可选)",
+    btn_add_img: "添加图片",
+    btn_delete: "删除",
+    col_section_n: "章节",
+    btn_del_section: "删除章节",
+    col_input_subtitle_ph: "请输入小标题",
+    col_input_content_ph: "请撰写内容",
+    col_related_place: "相关地点",
+    col_place_ph: "搜索地点名称 (例如:南山塔)",
+    btn_add_section: "添加章节",
+    btn_cancel: "取消",
+    btn_submit_create: "撰写完成",
+    btn_submit_edit: "修改完成",
+    err_title_req: "请输入标题。",
+    err_thumb_req: "缩略图是必需的。",
+    err_section_min: "至少需要一个章节。",
+    msg_col_created: "专栏已创建。",
+    msg_col_updated: "专栏已修改。",
+    msg_save_fail: "保存失败。",
+
+    // Auth Modal
+    auth_modal_title: "当地人认证",
+    auth_modal_desc: "根据当前位置获取当地人徽章！",
+    btn_auth_my_loc: "使用我的位置认证",
+    msg_loc_fetching: "正在获取位置信息...",
+    msg_loc_not_support: "浏览器不支持位置信息。",
+    msg_auth_checking: "正在与认证服务器通信...",
+    msg_auth_success: "认证成功！",
+    msg_auth_fail: "认证过程中发生错误。",
+    msg_loc_perm_denied: "请允许提供位置信息。",
+    msg_loc_unavailable: "无法使用位置信息。",
+    msg_loc_timeout: "位置信息请求超时。",
+    msg_loc_fail: "获取位置信息失败。",
+
+    // Detail & List
+    col_view_place: "查看地点信息",
+    btn_edit: "修改",
+    btn_back_list: "返回列表",
+    confirm_delete_col: "确定要删除此专栏吗？",
+    msg_col_deleted: "专栏已删除。",
+    msg_del_fail: "删除失败，请重试。",
+    col_views: "浏览",
+    msg_auth_inactive: "当地人徽章未激活。",
+    msg_auth_level_low: "当地人等级3以上可撰写。",
+    msg_auth_error: "无法确认权限信息。",
+    col_upload_thumb: "点击上传图片",
+    col_intro_img_add: "添加图片",
+
+    // City Pages
+    city_search_title: "你要去哪里？ ✈️",
+    city_search_desc: "搜索城市名称，查看综合旅游信息。",
+    city_search_ph: "搜索城市 (例如: 首尔, 釜山)",
+    city_popular_title: "热门目的地 🔥",
+    city_header_desc: "我们收集了这个城市的所有旅游信息。",
+    city_sec_plan: "{city} 旅行行程",
+    city_sec_place: "{city} 推荐地点",
+    city_empty_plan: "暂时没有{city}的旅行行程。",
+    city_empty_place: "暂时没有{city}的注册地点。",
+    city_empty_shorts: "没有相关的短视频。",
+    city_empty_column: "暂时没有{city}的本地专栏。",
+    city_error_title: "发生错误",
+    city_btn_retry_search: "搜索其他城市",
+    city_load_error: "加载内容失败。",
+    flight_provider_check_required: "需要确认供应商",
+
+    // Currency
+    unit_krw: "韩元",
+    date_format_ymd: "{year}年{month}月{day}日",
+    unit_people: "人",
+
+    // 日期/时间格式
+    datetime_format_ymdhm: "{year}年{month}月{day}日 {hours}:{minutes}",
+
+    // 正在处理付款
+    payment_confirming_title: "正在处理付款",
+    payment_confirming_desc: "正在安全处理您的付款。",
+    payment_confirming_wait: "请稍候。",
+
+    // 付款成功
+    payment_success_title: "付款完成",
+    payment_success_desc: "您的预订已成功处理。",
+    payment_order_number: "订单号",
+    payment_amount_label: "付款金额",
+    payment_redirecting: "即将跳转到确认页面...",
+
+    // 付款失败
+    payment_error_title: "付款失败",
+    payment_error_invalid_params: "付款信息无效。",
+    payment_error_refund_info: "如果付款批准失败但已扣款，将自动取消。退款将在3-5个工作日内处理。",
+
+    // 按钮
+    btn_restart: "重新开始",
+    btn_processing: "处理中...",
+
+    // 预订详情模态框
+    reservation_detail_title: "预订详情",
+    reservation_loading: "加载中...",
+    reservation_load_error: "无法加载信息。",
+    reservation_detail_error: "加载预订详情失败。",
+    label_order_number: "订单号",
+    label_status: "状态",
+    status_confirmed: "已确认",
+    label_payment_amount: "支付金额",
+    label_departure_time: "出发时间",
+    label_reservation_time: "预订时间",
+    title_flight_detail: "航班信息",
+    label_trip_type: "行程类型",
+    trip_oneway: "单程",
+    trip_roundtrip: "往返",
+    label_cabin_class: "座位等级",
+    label_passengers_count: "乘客人数",
+    passenger_adult: "成人",
+    passenger_child: "儿童",
+    passenger_infant: "婴儿",
+    title_flight_segments: "航班航段",
+    unit_minutes: "分钟",
+    title_passenger_info: "乘客信息",
+    title_seat_info: "座位信息",
+    seat_unassigned: "未分配",
+    btn_close: "关闭",
+    label_order: "订单",
 };

@@ -1,4 +1,15 @@
 export default {
+    // Sidebar
+    title_benefits: "Tripkoの特典",
+    benefit_support: "24時間年中無休サポート",
+    benefit_guarantee: "最安値保証",
+    benefit_secure: "安全な決済",
+    benefit_cancel: "キャンセル・変更無料",
+    title_popular_dest: "人気の旅行先",
+    unit_from: "〜",
+    title_need_help: "お困りですか？",
+    desc_need_help: "いつでもお問い合わせください。",
+    btn_contact_support: "サポートに連絡",
     // Navbar
     nav_home: "ホーム",
     nav_shorts: "ショート",
@@ -16,6 +27,7 @@ export default {
     nav_ai_plan: "AI日程作成",
     nav_column: "ローカルコラム",
     nav_ticket: "航空券予約",
+    nav_local_auth: "現地人認証",
     nav_settings: "設定",
 
     // Review Banner
@@ -450,4 +462,134 @@ export default {
     game_warn_distance: "近くにストリートビューがないため、約{d}m離れた位置を表示します。",
     game_no_pano_title: "ストリートビューが見つかりません",
     game_no_pano_desc: "周辺の道路データがないか、屋内である可能性があります。",
+
+    // Local Columns
+    col_write_title: "新しいコラムを書く",
+    col_edit_title: "コラム編集",
+    col_input_title: "タイトル",
+    col_input_title_ph: "魅力的なタイトルをつけてください",
+    col_input_thumb: "サムネイル (代表画像)",
+    col_input_intro: "序論 (Intro)",
+    col_input_intro_ph: "コラムの始まりを書いてください。",
+    col_input_intro_img: "序論画像 (任意)",
+    btn_add_img: "画像追加",
+    btn_delete: "削除",
+    col_section_n: "セクション",
+    btn_del_section: "セクション削除",
+    col_input_subtitle_ph: "小見出しを入力してください",
+    col_input_content_ph: "内容を作成してください",
+    col_related_place: "関連スポット",
+    col_place_ph: "場所の名前を検索 (例: 富士山)",
+    btn_add_section: "セクション追加",
+    btn_cancel: "キャンセル",
+    btn_submit_create: "作成完了",
+    btn_submit_edit: "修正完了",
+    err_title_req: "タイトルを入力してください。",
+    err_thumb_req: "サムネイル画像は必須です。",
+    err_section_min: "少なくとも一つのセクションが必要です。",
+    msg_col_created: "コラムが作成されました。",
+    msg_col_updated: "コラムが修正されました。",
+    msg_save_fail: "保存に失敗しました。",
+
+    // Auth Modal
+    auth_modal_title: "現地人認証",
+    auth_modal_desc: "現在地に基づいて現地人バッジを獲得しましょう！",
+    btn_auth_my_loc: "現在地で認証する",
+    msg_loc_fetching: "位置情報を取得中...",
+    msg_loc_not_support: "ブラウザが位置情報をサポートしていません。",
+    msg_auth_checking: "認証サーバーと通信中...",
+    msg_auth_success: "認証に成功しました！",
+    msg_auth_fail: "認証中にエラーが発生しました。",
+    msg_loc_perm_denied: "位置情報の提供を許可してください。",
+    msg_loc_unavailable: "位置情報を使用できません。",
+    msg_loc_timeout: "位置情報の要求がタイムアウトしました。",
+    msg_loc_fail: "位置情報の取得に失敗しました。",
+
+    // Detail & List
+    col_view_place: "スポット情報を見る",
+    btn_edit: "修正する",
+    btn_back_list: "リストに戻る",
+    confirm_delete_col: "本当にこのコラムを削除しますか？",
+    msg_col_deleted: "コラムが削除されました。",
+    msg_del_fail: "削除に失敗しました。もう一度お試しください。",
+    col_views: "照会",
+    msg_auth_inactive: "現地人バッジが有効ではありません。",
+    msg_auth_level_low: "現地人レベル3から作成可能です。",
+    msg_auth_error: "権限情報を確認できません。",
+    col_upload_thumb: "クリックして画像をアップロード",
+    col_intro_img_add: "画像追加",
+
+    // City Pages
+    city_search_title: "どこへ行きますか？ ✈️",
+    city_search_desc: "都市名を検索して、総合的な旅行情報を見つけましょう。",
+    city_search_ph: "都市検索 (例: ソウル, 釜山)",
+    city_popular_title: "人気の旅行先 🔥",
+    city_header_desc: "この都市のすべての旅行情報を集めました。",
+    city_sec_plan: "{city} 旅行日程",
+    city_sec_place: "{city} おすすめスポット",
+    city_empty_plan: "まだ{city}の旅行日程がありません。",
+    city_empty_place: "まだ{city}に登録された場所がありません。",
+    city_empty_shorts: "関連するショート動画がありません。",
+    city_empty_column: "まだ{city}に関するローカルコラムがありません。",
+    city_error_title: "エラーが発生しました",
+    city_btn_retry_search: "別の都市を検索",
+    city_load_error: "コンテンツの読み込みに失敗しました。",
+    flight_provider_check_required: "提供元に確認が必要",
+
+    // Currency
+    unit_krw: "ウォン",
+    date_format_ymd: "{year}年{month}月{day}日",
+    unit_people: "名",
+
+    // 日付/時刻フォーマット
+    datetime_format_ymdhm: "{year}年{month}月{day}日 {hours}:{minutes}",
+
+    // 決済承認中
+    payment_confirming_title: "決済承認処理中",
+    payment_confirming_desc: "安全に決済を処理しています。",
+    payment_confirming_wait: "しばらくお待ちください。",
+
+    // 決済成功
+    payment_success_title: "決済が完了しました",
+    payment_success_desc: "予約が正常に処理されました。",
+    payment_order_number: "注文番号",
+    payment_amount_label: "決済金額",
+    payment_redirecting: "まもなく予約完了ページに移動します...",
+
+    // 決済失敗
+    payment_error_title: "決済承認失敗",
+    payment_error_invalid_params: "決済情報が正しくありません。",
+    payment_error_refund_info: "決済承認が失敗しましたが、カード承認が行われた場合は自動的にキャンセル処理されます。営業日基準3-5日以内に返金されます。",
+
+    // ボタン
+    btn_restart: "最初からやり直す",
+    btn_processing: "処理中...",
+
+    // 予約詳細モーダル
+    reservation_detail_title: "予約詳細",
+    reservation_loading: "読み込み中...",
+    reservation_load_error: "情報を読み込めません。",
+    reservation_detail_error: "予約詳細情報の読み込みに失敗しました。",
+    label_order_number: "注文番号",
+    label_status: "ステータス",
+    status_confirmed: "確定済み",
+    label_payment_amount: "支払金額",
+    label_departure_time: "出発時刻",
+    label_reservation_time: "予約時刻",
+    title_flight_detail: "フライト情報",
+    label_trip_type: "旅程タイプ",
+    trip_oneway: "片道",
+    trip_roundtrip: "往復",
+    label_cabin_class: "座席クラス",
+    label_passengers_count: "乗客数",
+    passenger_adult: "大人",
+    passenger_child: "子供",
+    passenger_infant: "幼児",
+    title_flight_segments: "フライト区間",
+    unit_minutes: "分",
+    title_passenger_info: "乗客情報",
+    title_seat_info: "座席情報",
+    seat_unassigned: "未指定",
+    btn_close: "閉じる",
+    label_order: "注文",
 };

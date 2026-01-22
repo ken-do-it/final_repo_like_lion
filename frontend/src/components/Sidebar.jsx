@@ -20,11 +20,12 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: `🥘 ${t('nav_column')}`, path: '/local-columns' },
         { label: `🔥 ${t('nav_shorts')}`, path: '/shorts' },
         { label: `✈️ ${t('title_transport')}`, path: '/reservations/flights' },
+        { label: `🏙️ ${t('nav_city') || '도시 검색'}`, path: '/places/city' },
     ];
 
     const bottomItems = [
         { label: `❤️ ${t('nav_likes')}`, path: null },
-        { label: `📍 ${t('nav_local_auth') || '현지인 인증'}`, action: 'local_auth' },
+        { label: `📍 ${t('nav_local_auth')}`, action: 'local_auth' },
         { label: `${t('nav_version')} v1.0`, path: null },
     ];
 
@@ -32,7 +33,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         if (item.action === 'local_auth') {
             onClose(); // Close sidebar first
             if (!isAuthenticated) {
-                if (window.confirm('이 기능은 로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                if (window.confirm(t('msg_login_required'))) {
                     navigate('/login-page');
                 }
                 return;

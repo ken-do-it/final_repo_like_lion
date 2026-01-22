@@ -17,7 +17,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
  */
 const SubwaySearch = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   /**
    * 폼 데이터 상태
@@ -50,17 +50,63 @@ const SubwaySearch = () => {
 
   /**
    * 주요 지하철역 목록 (자동완성용)
-   * 서울 지하철 주요역
+   * 서울 지하철 주요역 + 다국어 지원
    */
   const popularStations = [
-    '강남', '신논현', '역삼', '선릉', '삼성',
-    '서울역', '시청', '종각', '종로3가', '을지로입구',
-    '동대문', '동대문역사문화공원', '신당', '상왕십리', '왕십리',
-    '건대입구', '구의', '강변', '잠실', '잠실새내',
-    '홍대입구', '신촌', '이대', '아현', '충정로',
-    '사당', '교대', '서초', '방배', '이수',
-    '수원', '인천', '부평', '부천', '안양',
+    { nameKo: '강남', nameEn: 'Gangnam', nameJa: '江南', nameZh: '江南' },
+    { nameKo: '신논현', nameEn: 'Sinnonhyeon', nameJa: '新論嶽', nameZh: '新论峙' },
+    { nameKo: '역삼', nameEn: 'Yeoksam', nameJa: '役三', nameZh: '役三' },
+    { nameKo: '선릉', nameEn: 'Seolleung', nameJa: '宣陵', nameZh: '宣陵' },
+    { nameKo: '삼성', nameEn: 'Samsung', nameJa: '三成', nameZh: '三成' },
+    { nameKo: '서울역', nameEn: 'Seoul Station', nameJa: 'ソウル駅', nameZh: '首尔站' },
+    { nameKo: '시청', nameEn: 'City Hall', nameJa: '市庁', nameZh: '市厅' },
+    { nameKo: '종각', nameEn: 'Jonggak', nameJa: '鐘閣', nameZh: '钟阁' },
+    { nameKo: '종로3가', nameEn: 'Jongno 3-ga', nameJa: '鐘路3街', nameZh: '钟路3街' },
+    { nameKo: '을지로입구', nameEn: 'Euljiro 1-ga', nameJa: '乙支路入口', nameZh: '乙支路入口' },
+    { nameKo: '동대문', nameEn: 'Dongdaemun', nameJa: '東大門', nameZh: '东大门' },
+    { nameKo: '동대문역사문화공원', nameEn: 'DDP', nameJa: '東大門歴史文化公園', nameZh: '东大门历史文化公园' },
+    { nameKo: '신당', nameEn: 'Sindang', nameJa: '新堂', nameZh: '新堂' },
+    { nameKo: '상왕십리', nameEn: 'Sangwangsimni', nameJa: '往十里', nameZh: '往十里' },
+    { nameKo: '왕십리', nameEn: 'Wangsimni', nameJa: '往十里', nameZh: '往十里' },
+    { nameKo: '건대입구', nameEn: 'Konkuk Univ.', nameJa: '建大入口', nameZh: '建大入口' },
+    { nameKo: '구의', nameEn: 'Guui', nameJa: '九义', nameZh: '九义' },
+    { nameKo: '강변', nameEn: 'Gangbyeon', nameJa: '江辺', nameZh: '江边' },
+    { nameKo: '잠실', nameEn: 'Jamsil', nameJa: '蚕室', nameZh: '蚕室' },
+    { nameKo: '잠실새내', nameEn: 'Jamsil Saenae', nameJa: '蚕室セネ', nameZh: '蚕室新内' },
+    { nameKo: '홍대입구', nameEn: 'Hongik Univ.', nameJa: '弘大入口', nameZh: '弘大入口' },
+    { nameKo: '신촌', nameEn: 'Sinchon', nameJa: '新村', nameZh: '新村' },
+    { nameKo: '이대', nameEn: 'Ewha Womans Univ.', nameJa: '梨大', nameZh: '梨大' },
+    { nameKo: '아현', nameEn: 'Ahyeon', nameJa: '阿現', nameZh: '阿现' },
+    { nameKo: '충정로', nameEn: 'Chungjeongno', nameJa: '忠正路', nameZh: '忠正路' },
+    { nameKo: '사당', nameEn: 'Sadang', nameJa: '舎堂', nameZh: '舍堂' },
+    { nameKo: '교대', nameEn: 'Gyodae', nameJa: '教大', nameZh: '教大' },
+    { nameKo: '서초', nameEn: 'Seocho', nameJa: '瑞草', nameZh: '瑞草' },
+    { nameKo: '방배', nameEn: 'Bangbae', nameJa: '方背', nameZh: '方背' },
+    { nameKo: '이수', nameEn: 'Isu', nameJa: '二水', nameZh: '二水' },
+    { nameKo: '수원', nameEn: 'Suwon', nameJa: '水原', nameZh: '水原' },
+    { nameKo: '인천', nameEn: 'Incheon', nameJa: '仁川', nameZh: '仁川' },
+    { nameKo: '부평', nameEn: 'Bupyeong', nameJa: '富平', nameZh: '富平' },
+    { nameKo: '부천', nameEn: 'Bucheon', nameJa: '富川', nameZh: '富川' },
+    { nameKo: '안양', nameEn: 'Anyang', nameJa: '安養', nameZh: '安养' },
   ];
+
+  /**
+   * 언어에 따라 역 이름 선택
+   */
+  const getStationName = (station) => {
+    switch (language) {
+      case 'English':
+        return station.nameEn || station.nameKo;
+      case '日本語':
+        return station.nameJa || station.nameKo;
+      case '中文':
+        return station.nameZh || station.nameKo;
+      case '한국어':
+        return station.nameKo;
+      default:
+        return station.nameKo;
+    }
+  };
 
   /**
    * 입력 필드 변경 핸들러
@@ -163,7 +209,7 @@ const SubwaySearch = () => {
                     />
                     <datalist id="from-stations">
                       {popularStations.map((station) => (
-                        <option key={station} value={station} />
+                        <option key={station.nameKo} value={getStationName(station)} />
                       ))}
                     </datalist>
                   </div>
@@ -197,7 +243,7 @@ const SubwaySearch = () => {
                     />
                     <datalist id="to-stations">
                       {popularStations.map((station) => (
-                        <option key={station} value={station} />
+                        <option key={station.nameKo} value={getStationName(station)} />
                       ))}
                     </datalist>
                   </div>

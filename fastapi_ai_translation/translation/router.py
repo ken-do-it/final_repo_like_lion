@@ -115,8 +115,11 @@ def translate_batch(req: TranslateBatchRequest):
     # but client.translate_batch might error on empty. 
     # Let's simple pass-through. The client handles empty lists, but maybe not empty in list for some tokenizers.
     
+    print(f"DEBUG: translate_batch called with {len(req.texts)} texts. Client Type: {type(client)}", flush=True)
+
     try:
         translated_list = client.translate_batch(req.texts, req.source_lang, req.target_lang)
+        print(f"DEBUG: Client returned: {translated_list}", flush=True)
         return {"translations": translated_list, "provider": "local-transformers-batch"}
     except ValueError as e:
         logger.warning("Batch translation validation error: %s", e)

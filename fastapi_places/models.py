@@ -229,3 +229,82 @@ class RoadviewGameHistory(Base):
     __table_args__ = (
         UniqueConstraint('user_id', 'game_image_id', name='unique_user_game_play'),
     )
+
+
+# ==================== 숏폼 (Django contents 앱) ====================
+
+class Shortform(Base):
+    """숏폼 영상 (Django contents 앱의 shortforms 테이블)"""
+    __tablename__ = 'shortforms'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+    video_url = Column(String(255), nullable=False)
+    thumbnail_url = Column(String(255), nullable=True)
+    location = Column(String(100), nullable=True)
+
+    title = Column(Text, nullable=False)
+    content = Column(Text, nullable=True)
+
+    visibility = Column(String(20), default='PUBLIC')
+    source_lang = Column(String(10), default='ko')
+
+    total_likes = Column(Integer, default=0)
+    total_comments = Column(Integer, default=0)
+    total_views = Column(Integer, default=0)
+
+    duration = Column(Integer, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    user = relationship("User")
+
+
+# ==================== 여행 일정 (Django plans 앱) ====================
+
+class TravelPlan(Base):
+    """여행 일정 (Django plans 앱의 travel_plans 테이블)"""
+    __tablename__ = 'travel_plans'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    plan_type = Column(String(20), default='personal')
+    ai_prompt = Column(Text, nullable=True)
+
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+
+    is_public = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+    details = relationship("PlanDetail", back_populates="plan")
+
+
+class PlanDetail(Base):
+    """일정 상세 (Django plans 앱의 plan_details 테이블)"""
+    __tablename__ = 'plan_details'
+
+    id = Column(Integer, primary_key=True)
+    plan_id = Column(Integer, ForeignKey('travel_plans.id'), nullable=False)
+    place_id = Column(Integer, ForeignKey('places.id'), nullable=True)
+
+    date = Column(Date, nullable=False)
+    description = Column(Text, nullable=True)
+    order_index = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    plan = relationship("TravelPlan", back_populates="details")
+    place = relationship("Place")

@@ -20,7 +20,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
 const FlightPayment = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   /**
    * 이전 페이지(FlightSeat)에서 전달받은 데이터 또는 localStorage에서 복원
@@ -304,7 +304,10 @@ const FlightPayment = () => {
     const year = dateString.substring(0, 4);
     const month = dateString.substring(4, 6);
     const day = dateString.substring(6, 8);
-    return `${year}년 ${month}월 ${day}일`;
+    return t('date_format_ymd')
+      .replace('{year}', year)
+      .replace('{month}', month)
+      .replace('{day}', day);
   };
 
   /**
@@ -418,7 +421,7 @@ const FlightPayment = () => {
                     {t('label_ticket_count').replace('{count}', searchConditions.passengers)}
                   </span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {totalPrice.toLocaleString()}원
+                    {totalPrice.toLocaleString()}{t('unit_krw')}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -432,7 +435,7 @@ const FlightPayment = () => {
                     {t('label_total_payment')}
                   </span>
                   <span className="text-2xl font-bold text-primary">
-                    {totalPrice.toLocaleString()}원
+                    {totalPrice.toLocaleString()}{t('unit_krw')}
                   </span>
                 </div>
               </div>
