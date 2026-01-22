@@ -17,7 +17,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 
 const FlightSearch = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   /**
    * 검색 폼 상태 관리
@@ -60,6 +60,22 @@ const FlightSearch = () => {
     '김포', '제주', '김해', '인천', '대구', '청주', '광주', '울산', '여수', '포항',
     '군산', '양양', '무안', '원주', '사천', '진주', '부산'
   ];
+
+  /**
+   * 언어에 따라 공항 이름 선택
+   */
+  const getAirportName = (airport) => {
+    switch (language) {
+      case 'English':
+        return airport.nameEn || airport.nameKo;
+      case 'Japanese':
+        return airport.nameJa || airport.nameKo;
+      case 'Chinese':
+        return airport.nameZh || airport.nameKo;
+      default:
+        return airport.nameKo;
+    }
+  };
 
   const getDomesticAirportsQuick = () => {
     const list = airports.filter(a =>
@@ -289,7 +305,7 @@ const FlightSearch = () => {
                             className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${formData.depAirportId === airport.iataCode ? 'bg-mint text-white border-mint' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
                             title={airport.iataCode}
                           >
-                            {airport.nameKo}
+                            {getAirportName(airport)}
                           </button>
                         ))}
                       </div>
@@ -328,7 +344,7 @@ const FlightSearch = () => {
                             className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                           >
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {airport.nameKo}
+                              {getAirportName(airport)}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {airport.iataCode}
@@ -371,7 +387,7 @@ const FlightSearch = () => {
                             className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${formData.arrAirportId === airport.iataCode ? 'bg-mint text-white border-mint' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}
                             title={airport.iataCode}
                           >
-                            {airport.nameKo}
+                            {getAirportName(airport)}
                           </button>
                         ))}
                       </div>
@@ -410,7 +426,7 @@ const FlightSearch = () => {
                             className="w-full text-left px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                           >
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {airport.nameKo}
+                              {getAirportName(airport)}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {airport.iataCode}
