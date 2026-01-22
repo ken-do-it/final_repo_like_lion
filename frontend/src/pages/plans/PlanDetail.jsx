@@ -28,6 +28,15 @@ const PlanDetail = () => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingContent, setEditingContent] = useState('');
 
+  const apiLangCode = API_LANG_CODES[language];
+  const localeByApiLang = {
+    eng_Latn: 'en-US',
+    kor_Hang: 'ko-KR',
+    jpn_Jpan: 'ja-JP',
+    zho_Hans: 'zh-CN'
+  };
+  const dateLocale = localeByApiLang[apiLangCode] || 'en-US';
+
   // 이미지 업로드 상태
   const [uploadingImageFor, setUploadingImageFor] = useState(null); // detailId
   const [imageUploading, setImageUploading] = useState(false);
@@ -583,7 +592,7 @@ const PlanDetail = () => {
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
               >
-                {t('day_label').replace('{day}', index + 1)} ({new Date(date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })})
+                {t('day_label').replace('{day}', index + 1)} ({new Intl.DateTimeFormat(dateLocale, { month: 'short', day: 'numeric' }).format(new Date(date))})
               </button>
             ))}
           </div>
