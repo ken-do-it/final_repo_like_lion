@@ -9,6 +9,13 @@ import AddToPlanModal from './AddToPlanModal'; // [NEW] Import Modal
 
 // 영업시간의 한국어 요일명을 현재 언어로 번역하는 헬퍼 함수
 const translateOpeningHours = (hoursText, language) => {
+    const languageMap = {
+        English: 'en',
+        '한국어': 'ko',
+        '日本語': 'jp',
+        '中文': 'zh'
+    };
+    const langKey = languageMap[language] || language;
     const dayTranslations = {
         en: {
             '월요일': 'Monday',
@@ -40,12 +47,12 @@ const translateOpeningHours = (hoursText, language) => {
     };
 
     // 한국어이거나 번역이 필요없는 경우 원본 반환
-    if (language === 'ko' || !dayTranslations[language]) {
+    if (langKey === 'ko' || !dayTranslations[langKey]) {
         return hoursText;
     }
 
     let translated = hoursText;
-    const translations = dayTranslations[language];
+    const translations = dayTranslations[langKey];
 
     // 한국어 요일명을 해당 언어로 치환
     Object.entries(translations).forEach(([korean, translation]) => {

@@ -1,6 +1,17 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from places.models import Place  # places 앱의 Place 모델 참조
+
+
+def plan_image_upload_path(_instance, filename):
+    """
+    이미지 파일을 고유한 이름으로 저장
+    S3 또는 로컬: plan_images/{uuid}.{확장자}
+    """
+    ext = filename.split('.')[-1] if '.' in filename else 'jpg'
+    new_filename = f"{uuid.uuid4()}.{ext}"
+    return f"plan_images/{new_filename}"
 
 
 class TravelPlan(models.Model):
@@ -63,7 +74,7 @@ class PlanDetailImage(models.Model):
     """
     detail = models.ForeignKey(PlanDetail, on_delete=models.CASCADE, related_name='images')
     image_file = models.ImageField(
-        upload_to='plan_images/',  # media/plan_images/
+        upload_to=plan_image_upload_path,  # S3 또는 로컬: plan_images/{uuid}.{ext}
         blank=True,
         null=True
     )

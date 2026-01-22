@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated , AllowAny
 from rest_framework.response import Response
 from .models import TravelPlan , PlanDetail, PlanDetailImage
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from django.db.models import Q
 from .services import get_or_create_place_from_search
 from .serializers import (
     TravelPlanCreateSerializer,
@@ -61,6 +62,15 @@ def plan_list_create(request):
         user_id = request.query_params.get('user')
         if user_id:
             plans = plans.filter(user_id=user_id)
+
+        # [필터] 도시 (city)
+        city_param = request.query_params.get('city')
+        if city_param:
+             plans = plans.filter(
+                Q(details__place__city__icontains=city_param) | 
+                Q(details__place__address__icontains=city_param) |
+                Q(title__icontains=city_param)
+            ).distinct()
         
         serializer = TravelPlanListSerializer(plans, many=True)
         data = serializer.data
@@ -557,25 +567,49 @@ def image_retrieve_update_delete(request, image_id):
     if request.method == 'GET':
         serializer = PlanDetailImageSerializer(image)
         return Response(serializer.data)
-    
+
     elif request.method in ['PUT', 'PATCH']:
+        # 로그인 및 권한 체크: 일정 소유자만 수정 가능
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        if image.detail.plan.user != request.user:
+            return Response(
+                {'error': '본인만 수정할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         partial = request.method == 'PATCH'
         serializer = PlanDetailImageCreateSerializer(
             image,
             data=request.data,
             partial=partial
         )
-        
+
         if serializer.is_valid():
             serializer.save(detail=image.detail)
             return Response(serializer.data)
-        
+
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     elif request.method == 'DELETE':
+        # 로그인 및 권한 체크: 일정 소유자만 삭제 가능
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': '로그인 후 이용해주세요.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        if image.detail.plan.user != request.user:
+            return Response(
+                {'error': '본인만 삭제할 수 있습니다.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         image.delete()
         return Response(
             {'message': '이미지가 삭제되었습니다.'},

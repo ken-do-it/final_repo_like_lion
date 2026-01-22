@@ -279,6 +279,8 @@ class MSSubwayAPIService:
         - transfers: 환승 횟수
         - fare: {card, cash}
         - steps: [{ line, lineColor, from, to, stations, duration, stops?[] }]
+
+        주의: 도보 구간이 포함된 경로는 제외합니다 (순수 지하철 경로만 반환)
         """
         result = data.get("result", {})
         path_list = result.get("path", [])
@@ -287,6 +289,18 @@ class MSSubwayAPIService:
         for path in path_list:
             info = path.get("info", {})
             sub_path_list = path.get("subPath", [])
+
+            # 도보 구간이 있는지 확인 (100m 이상의 도보는 제외)
+            has_significant_walk = False
+            for sub_path in sub_path_list:
+                if sub_path.get("trafficType") == 3:  # 도보
+                    distance = sub_path.get("distance", 0)
+                    if distance >= 100:  # 100m 이상 도보 필요 시 제외
+                        has_significant_walk = True
+                        break
+
+            if has_significant_walk:
+                continue  # 이 경로는 건너뜀
 
             total_time = info.get("totalTime", 0)  # 분
             transfer_count = info.get("busTransitCount", 0) + info.get("subwayTransitCount", 0) - 1

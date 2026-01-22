@@ -835,6 +835,7 @@ export default {
     city_empty_column: "아직 {city} 관련 현지인 칼럼이 없습니다.",
     city_error_title: "오류가 발생했습니다",
     city_btn_retry_search: "다른 도시 검색하기",
+    btn_see_more: "더보기",
     city_load_error: "콘텐츠를 불러오는 중 오류가 발생했습니다.",
 
     // Review Section
