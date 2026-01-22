@@ -89,6 +89,9 @@ jobs:
           port: 22
           script: |
             cd ~/final_repo
+
+            # [추가] 1. 깃허브의 최신 코드를 서버로 내려받기
+            git pull origin develop
             
             # 최신 이미지 pull
             sudo docker compose pull
