@@ -9,7 +9,9 @@ import asyncio
 import zlib
 from translation_client import translate_batch_proxy
 
-from service import search_kakao_places, search_google_places, remove_duplicate_places, KAKAO_REST_API_KEY
+from services.config import KAKAO_REST_API_KEY
+from services.external_places import search_google_places, search_kakao_places
+from services.places_search import remove_duplicate_places
 
 router = APIRouter(prefix="/accommodations", tags=["Accommodations"])
 

@@ -373,7 +373,7 @@ const MainPage = () => {
             <div className="w-12 h-12 rounded-full bg-teal-50 dark:bg-teal-900/20 text-teal-500 flex items-center justify-center group-hover:scale-110 transition-transform text-2xl">
               📰
             </div>
-            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('col_title')}</span>
+            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{t('col_title_main')}</span>
           </div>
         </section>
 

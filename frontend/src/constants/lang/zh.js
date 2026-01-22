@@ -153,7 +153,6 @@ export default {
     video_format: "MP4, WebM, Ogg (最大 50MB)",
     video_change: "更改视频",
     video_selected: "已选择",
-    btn_cancel: "取消",
     btn_uploading: "上传中...",
     btn_updating: "更新中...",
     btn_save_changes: "保存更改",
@@ -167,7 +166,7 @@ export default {
     search_result_count: "找到 {count} 个地点。",
     search_initial_msg: "搜索你想去的目的地。",
     no_results_title: "未找到结果",
-    no_results_desc: "尝试使用不同的关键词搜索。",
+    no_results_desc_try: "尝试使用不同的关键词搜索。",
     searching: "搜索中...",
 
     // Place Detail
@@ -311,7 +310,6 @@ export default {
     no_desc: "无描述。",
     trip_days: "{days} 天行程",
     btn_edit: "编辑",
-    btn_delete: "删除",
     msg_confirm_delete: "确定要删除此行程吗？",
     msg_delete_fail: "删除失败。",
 
@@ -390,7 +388,7 @@ export default {
     geo_back_home: "← 返回主页",
 
     // LocalColumnList
-    col_title: "本地专栏",
+    col_title_main: "本地专栏",
     col_desc_1: "发现真正的当地人推荐的隐藏景点和美食故事。",
     col_desc_2: "充满只有经过验证的当地人才能提供的特别信息。",
     col_write_btn: "写专栏",
@@ -482,7 +480,7 @@ export default {
     col_place_ph: "搜索地点名称 (例如:南山塔)",
     btn_add_section: "添加章节",
     btn_cancel: "取消",
-    btn_submit_create: "撰写完成",
+    btn_submit_create_column: "撰写完成",
     btn_submit_edit: "修改完成",
     err_title_req: "请输入标题。",
     err_thumb_req: "缩略图是必需的。",
@@ -507,7 +505,6 @@ export default {
 
     // Detail & List
     col_view_place: "查看地点信息",
-    btn_edit: "修改",
     btn_back_list: "返回列表",
     confirm_delete_col: "确定要删除此专栏吗？",
     msg_col_deleted: "专栏已删除。",
@@ -605,34 +602,13 @@ export default {
 
     // PlaceDetailPage
     error_load_place: "无法加载地点信息。",
-    btn_go_back: "返回",
-    msg_login_required: "请先登录。",
-    msg_feature_coming_soon: "{action} 功能即将推出。",
-    msg_bookmark_error: "更新收藏失败。",
-    msg_no_image: "暂无图片",
-    place_basic_info: "基本信息",
-    place_opening_hours: "营业时间",
-    place_location: "位置",
-    place_rating: "评分",
-    place_reviews: "{count} 条评论",
-    btn_add_to_plan: "添加到行程",
-    btn_write_review: "写评论",
+    
 
     // LocalColumnList
     col_title: "本地专栏",
-    col_desc_1: "本地人私藏的旅行信息，",
-    col_desc_2: "探索真实的本地故事。",
-    col_fetch_error: "加载专栏失败。",
-    msg_auth_inactive: "活动不足，暂时无法编写专栏。",
-    msg_auth_level_low: "等级不足，暂时无法编写专栏。",
-    msg_auth_error: "权限验证错误。",
-    place_search_placeholder: "输入搜索内容...",
-    col_write_btn: "写专栏",
-    col_retry: "重试",
-    col_no_cols: "暂无专栏",
-    col_be_first: "成为第一个写专栏的人！",
+    place_search_placeholder_column: "输入搜索内容...",
     no_results_desc: "没有找到结果：",
-    btn_reset_filter: "查看全部",
+    btn_view_all_columns: "查看全部",
     label_place: "地点",
 
     // Review Section
