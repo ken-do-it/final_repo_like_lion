@@ -4,6 +4,7 @@ Places API Router
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import Optional, List
 from datetime import date, datetime, timedelta
 import os
