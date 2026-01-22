@@ -326,16 +326,19 @@ const PlaceDetailPage = () => {
                                         </a>
                                     </div>
                                 )}
-                                {place.category_detail && place.category_detail.length > 0 && (
-                                    <div className="flex items-start gap-3">
-                                        <span className="w-6 text-center">🏷️</span>
-                                        <div className="flex flex-wrap gap-2">
-                                            {place.category_detail.map((cat, idx) => (
+                        {((place.category_detail_translated && place.category_detail_translated.length > 0) || (place.category_detail && place.category_detail.length > 0)) && (
+                            <div className="flex items-start gap-3">
+                                <span className="w-6 text-center">🏷️</span>
+                                <div className="flex flex-wrap gap-2">
+                                            {(place.category_detail_translated && place.category_detail_translated.length > 0
+                                                ? place.category_detail_translated
+                                                : place.category_detail
+                                            ).map((cat, idx) => (
                                                 <span key={idx} className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md text-xs text-gray-600 dark:text-gray-300">
                                                     {cat}
                                                 </span>
                                             ))}
-                                        </div>
+                                </div>
                                     </div>
                                 )}
                             </div>

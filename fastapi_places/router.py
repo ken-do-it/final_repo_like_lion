@@ -425,6 +425,13 @@ async def get_place_detail_by_api_id(
             ]
             
             # opening_hours (list of strings) 처리
+            category_detail = result_data.get("category_detail") or []
+            category_detail_start = len(items_to_translate)
+            for idx, cat in enumerate(category_detail):
+                items_to_translate.append(
+                    {"text": cat, "entity_type": "place_category", "entity_id": place.id, "field": f"category_detail_{idx}"}
+                )
+
             opening_base_idx = len(items_to_translate)
             for oh in opening_hours:
                 items_to_translate.append({"text": oh, "entity_type": "place_opening_hours", "entity_id": place.id, "field": "opening_hours"})
@@ -436,6 +443,13 @@ async def get_place_detail_by_api_id(
             if 1 in translated_map: result_data["address"] = translated_map[1]
             if 2 in translated_map: result_data["category_main"] = translated_map[2]
             if 3 in translated_map: result_data["city"] = translated_map[3]
+            if category_detail:
+                translated_details = []
+                for i in range(len(category_detail)):
+                    idx = category_detail_start + i
+                    translated_details.append(translated_map.get(idx, category_detail[i]))
+                result_data["category_detail_translated"] = translated_details
+
             
             # 영업시간 적용
             new_opening_hours = []
@@ -1779,6 +1793,13 @@ async def get_place_detail_by_db_id(
             ]
             
             # opening_hours (list of strings) 번역 추가
+            category_detail = result_data.get("category_detail") or []
+            category_detail_start = len(items_to_translate)
+            for idx, cat in enumerate(category_detail):
+                items_to_translate.append(
+                    {"text": cat, "entity_type": "place_category", "entity_id": place.id, "field": f"category_detail_{idx}"}
+                )
+
             opening_idx_start = len(items_to_translate)
             for oh in opening_hours:
                 items_to_translate.append({"text": oh, "entity_type": "place_hours", "entity_id": place.id, "field": "opening_hours"})
@@ -1789,6 +1810,13 @@ async def get_place_detail_by_db_id(
             if 0 in translated_map: result_data["name"] = translated_map[0]
             if 1 in translated_map: result_data["address"] = translated_map[1]
             if 2 in translated_map: result_data["category_main"] = translated_map[2]
+            if category_detail:
+                translated_details = []
+                for i in range(len(category_detail)):
+                    idx = category_detail_start + i
+                    translated_details.append(translated_map.get(idx, category_detail[i]))
+                result_data["category_detail_translated"] = translated_details
+
             
             # 영업시간 적용
             new_opening_hours = []
