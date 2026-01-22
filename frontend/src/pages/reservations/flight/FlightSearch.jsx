@@ -68,10 +68,12 @@ const FlightSearch = () => {
     switch (language) {
       case 'English':
         return airport.nameEn || airport.nameKo;
-      case 'Japanese':
+      case '日本語':  // 일본어
         return airport.nameJa || airport.nameKo;
-      case 'Chinese':
+      case '中文':    // 중국어
         return airport.nameZh || airport.nameKo;
+      case '한국어':  // 한국어
+        return airport.nameKo;
       default:
         return airport.nameKo;
     }
