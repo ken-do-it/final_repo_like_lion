@@ -444,29 +444,28 @@ const FlightResults = () => {
                   currentFlights.map((flight, index) => (
                     <div
                       key={flight.offerId || index}
-                      className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-md p-5 hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-primary"
+                      className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-md p-4 hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-primary"
                       onClick={() => isRoundTrip && selectedOutbound ? handleSelectInbound(flight) : handleSelectOutbound(flight)}
                     >
-                      <div className="flex items-center justify-between">
+                      {/* 모바일: 세로 레이아웃 / 데스크톱: 가로 레이아웃 */}
+                      <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr_auto] gap-3 sm:gap-4 items-center">
                         {/* 항공사 로고 & 정보 */}
-                        <div className="flex items-center gap-3 min-w-[120px]">
-                          <div className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center flex-shrink-0">
                             <span className="material-symbols-outlined text-primary text-sm">airlines</span>
                           </div>
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{flight.airlineName}</p>
-                          </div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{flight.airlineName}</p>
                         </div>
 
                         {/* 시간 정보 */}
-                        <div className="flex items-center gap-4 flex-1 justify-center">
+                        <div className="flex items-center justify-center gap-3">
                           <div className="text-center">
                             <p className="text-lg font-bold dark:text-white">{formatTime(flight.depAt)}</p>
                             <p className="text-xs text-gray-500">{flight.departureAirport}</p>
                           </div>
-                          <div className="flex flex-col items-center px-4">
+                          <div className="flex flex-col items-center px-2">
                             <p className="text-xs text-gray-400 mb-1">{formatDuration(flight.durationMin)}</p>
-                            <div className="w-20 h-px bg-slate-300 dark:bg-slate-600 relative">
+                            <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
                               <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-xs">flight</span>
                             </div>
                             <p className="text-xs text-gray-400 mt-1">{t('flight_direct')}</p>
@@ -478,7 +477,7 @@ const FlightResults = () => {
                         </div>
 
                         {/* 가격 */}
-                        <div className="text-right min-w-[100px]">
+                        <div className="text-right sm:text-right">
                           <p className="text-xl font-bold text-primary">{(flight.pricePerPerson || flight.totalPrice || 0).toLocaleString()}{t('unit_krw')}</p>
                           {flight.seatAvailabilityNote && (
                             <p className="text-xs text-mint mt-1">{flight.seatAvailabilityNote}</p>

@@ -382,86 +382,96 @@ const FlightSeat = () => {
               <div className="space-y-4">
                 {/* 가는편 */}
                 <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-3">
+                  {/* 헤더: Outbound 라벨 */}
+                  <div className="flex items-center gap-2 mb-4">
                     <span className="material-symbols-outlined text-primary">flight_takeoff</span>
                     <span className="font-semibold text-primary">{t('label_outbound')}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                        <span className="material-symbols-outlined text-primary">airlines</span>
-                      </div>
-                      <div>
-                        <p className="font-medium dark:text-white">{outboundFlight?.airlineName}</p>
-                        <p className="text-xs text-slate-500">{outboundFlight?.flightNumber}</p>
+
+                  {/* 항공사 정보 - 첫 번째 줄 */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="material-symbols-outlined text-primary">airlines</span>
+                    </div>
+                    <div>
+                      <p className="font-medium dark:text-white">{outboundFlight?.airlineName}</p>
+                      <p className="text-xs text-slate-500">{outboundFlight?.flightNumber}</p>
+                    </div>
+                  </div>
+
+                  {/* 시간 정보 - 두 번째 줄 */}
+                  <div className="flex items-center justify-center gap-6 mb-3">
+                    <div className="text-center">
+                      <p className="text-xl font-bold dark:text-white">{formatTime(outboundFlight?.depAt)}</p>
+                      <p className="text-sm text-slate-500">{outboundFlight?.departureAirport}</p>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
+                        <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-sm">flight</span>
                       </div>
                     </div>
-                    <div className="text-center flex-1 px-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="text-right">
-                          <p className="text-lg font-bold dark:text-white">{formatTime(outboundFlight?.depAt)}</p>
-                          <p className="text-xs text-slate-500">{outboundFlight?.departureAirport}</p>
-                        </div>
-                        <div className="flex flex-col items-center px-3">
-                          <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
-                            <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-xs">flight</span>
-                          </div>
-                        </div>
-                        <div className="text-left">
-                          <p className="text-lg font-bold dark:text-white">{formatTime(outboundFlight?.arrAt)}</p>
-                          <p className="text-xs text-slate-500">{outboundFlight?.arrivalAirport}</p>
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1">{formatDate(outboundFlight?.depAt)}</p>
+                    <div className="text-center">
+                      <p className="text-xl font-bold dark:text-white">{formatTime(outboundFlight?.arrAt)}</p>
+                      <p className="text-sm text-slate-500">{outboundFlight?.arrivalAirport}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-primary">
-                        {(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0).toLocaleString()}원
-                      </p>
-                    </div>
+                  </div>
+
+                  {/* 날짜 - 세 번째 줄 */}
+                  <p className="text-center text-sm text-slate-400 mb-3">{formatDate(outboundFlight?.depAt)}</p>
+
+                  {/* 가격 - 네 번째 줄 */}
+                  <div className="text-center pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <p className="text-xl font-bold text-primary">
+                      {(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0).toLocaleString()}원
+                    </p>
                   </div>
                 </div>
 
                 {/* 오는편 (왕복일 때만) */}
                 {isRoundTrip && inboundFlight && (
                   <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* 헤더: Inbound 라벨 */}
+                    <div className="flex items-center gap-2 mb-4">
                       <span className="material-symbols-outlined text-mint">flight_land</span>
                       <span className="font-semibold text-mint">{t('label_inbound')}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                          <span className="material-symbols-outlined text-mint">airlines</span>
-                        </div>
-                        <div>
-                          <p className="font-medium dark:text-white">{inboundFlight?.airlineName}</p>
-                          <p className="text-xs text-slate-500">{inboundFlight?.flightNumber}</p>
+
+                    {/* 항공사 정보 - 첫 번째 줄 */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="material-symbols-outlined text-mint">airlines</span>
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">{inboundFlight?.airlineName}</p>
+                        <p className="text-xs text-slate-500">{inboundFlight?.flightNumber}</p>
+                      </div>
+                    </div>
+
+                    {/* 시간 정보 - 두 번째 줄 */}
+                    <div className="flex items-center justify-center gap-6 mb-3">
+                      <div className="text-center">
+                        <p className="text-xl font-bold dark:text-white">{formatTime(inboundFlight?.depAt)}</p>
+                        <p className="text-sm text-slate-500">{inboundFlight?.departureAirport}</p>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
+                          <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-mint text-sm">flight</span>
                         </div>
                       </div>
-                      <div className="text-center flex-1 px-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="text-right">
-                            <p className="text-lg font-bold dark:text-white">{formatTime(inboundFlight?.depAt)}</p>
-                            <p className="text-xs text-slate-500">{inboundFlight?.departureAirport}</p>
-                          </div>
-                          <div className="flex flex-col items-center px-3">
-                            <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
-                              <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-mint text-xs">flight</span>
-                            </div>
-                          </div>
-                          <div className="text-left">
-                            <p className="text-lg font-bold dark:text-white">{formatTime(inboundFlight?.arrAt)}</p>
-                            <p className="text-xs text-slate-500">{inboundFlight?.arrivalAirport}</p>
-                          </div>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-1">{formatDate(inboundFlight?.depAt)}</p>
+                      <div className="text-center">
+                        <p className="text-xl font-bold dark:text-white">{formatTime(inboundFlight?.arrAt)}</p>
+                        <p className="text-sm text-slate-500">{inboundFlight?.arrivalAirport}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-mint">
-                          {(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0).toLocaleString()}원
-                        </p>
-                      </div>
+                    </div>
+
+                    {/* 날짜 - 세 번째 줄 */}
+                    <p className="text-center text-sm text-slate-400 mb-3">{formatDate(inboundFlight?.depAt)}</p>
+
+                    {/* 가격 - 네 번째 줄 */}
+                    <div className="text-center pt-3 border-t border-slate-200 dark:border-slate-700">
+                      <p className="text-xl font-bold text-mint">
+                        {(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0).toLocaleString()}원
+                      </p>
                     </div>
                   </div>
                 )}
