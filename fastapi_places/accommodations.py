@@ -270,6 +270,12 @@ async def search_nearby_accommodations(
                             "entity_id": entity_id_name,
                             "field": "address"
                         })
+                        items_to_translate.append({
+                            "text": res.get("category_main", ""),
+                            "entity_type": "place_category",
+                            "entity_id": entity_id_name,
+                            "field": "category_main"
+                        })
 
                     if items_to_translate:
                         translated_map = await translate_batch_proxy(items_to_translate, lang)
@@ -281,6 +287,9 @@ async def search_nearby_accommodations(
                             current_idx += 1
                             if current_idx in translated_map:
                                 res["address"] = translated_map[current_idx]
+                            current_idx += 1
+                            if current_idx in translated_map:
+                                res["category_main_translated"] = translated_map[current_idx]
                             current_idx += 1
                             
                     return {
