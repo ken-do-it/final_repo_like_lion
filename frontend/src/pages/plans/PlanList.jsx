@@ -1,6 +1,6 @@
 // src/pages/plans/PlanList.jsx
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import plansService from '../../api/plansApi';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -12,6 +12,8 @@ const PlanList = () => {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // 'all', 'public', 'mine'
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const cityFromUrl = searchParams.get('city');
   const { isAuthenticated, user } = useAuth();
   const { language, t } = useLanguage();
 
@@ -23,7 +25,8 @@ const PlanList = () => {
     try {
       setLoading(true);
       const response = await plansService.plans.getPlans({
-        lang: API_LANG_CODES[language] || 'eng_Latn'
+        lang: API_LANG_CODES[language] || 'eng_Latn',
+        city: cityFromUrl
       });
       setPlans(response.data);
     } catch {
@@ -80,6 +83,11 @@ const PlanList = () => {
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             {t('plan_list_subtitle')}
+            {cityFromUrl && (
+              <span className="ml-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/40 text-[#1392ec] rounded-full text-sm font-bold border border-blue-100 dark:border-blue-800">
+                📍 {cityFromUrl}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-4">

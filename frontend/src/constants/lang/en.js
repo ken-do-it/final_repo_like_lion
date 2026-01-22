@@ -792,5 +792,6 @@ export default {
     city_empty_column: "No local columns for {city} yet.",
     city_error_title: "An error occurred",
     city_btn_retry_search: "Search Another City",
+    btn_see_more: "See More",
     city_load_error: "Failed to load content."
 };
