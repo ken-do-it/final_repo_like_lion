@@ -459,6 +459,7 @@ export default {
     flight_price_info_suffix: "개, 성인1인 편도요금",
     msg_no_flights_found: "검색 조건에 맞는 항공편이 없습니다.",
     flight_direct: "직항",
+    flight_provider_check_required: "제공사 확인 필요",
 
     // RoadviewGame
     game_title: "로드뷰",
@@ -560,6 +561,58 @@ export default {
     btn_book_another: "다른 항공권 예약하기",
     payment_method_card: "카드",
 
+    // 날짜/시간 포맷
+    datetime_format_ymdhm: "{year}년 {month}월 {day}일 {hours}:{minutes}",
+
+    // 결제 승인 중
+    payment_confirming_title: "결제 승인 처리중",
+    payment_confirming_desc: "결제를 안전하게 처리하고 있습니다.",
+    payment_confirming_wait: "잠시만 기다려주세요.",
+
+    // 결제 성공
+    payment_success_title: "결제가 완료되었습니다",
+    payment_success_desc: "예약이 정상적으로 처리되었습니다.",
+    payment_order_number: "주문번호",
+    payment_amount_label: "결제금액",
+    payment_redirecting: "곳 예약 완료 페이지로 이동합니다...",
+
+    // 결제 실패
+    payment_error_title: "결제 승인 실패",
+    payment_error_invalid_params: "결제 정보가 올바르지 않습니다.",
+    payment_error_refund_info: "결제 승인이 실패했지만 카드 승인이 이루어진 경우, 자동으로 취소 처리됩니다. 영업일 기준 3-5일 내에 환불됩니다.",
+
+    // 버튼
+    btn_restart: "처음부터 다시 시작",
+    btn_processing: "처리 중...",
+
+    // 예약 상세 모달
+    reservation_detail_title: "예약 상세",
+    reservation_loading: "불러오는 중...",
+    reservation_load_error: "정보를 불러올 수 없습니다.",
+    reservation_detail_error: "예약 상세 정보를 불러오는데 실패했습니다.",
+    label_order_number: "주문번호",
+    label_status: "상태",
+    status_confirmed: "확정됨",
+    label_payment_amount: "결제 금액",
+    label_departure_time: "출발 일시",
+    label_reservation_time: "예약 일시",
+    title_flight_detail: "항공편 정보",
+    label_trip_type: "여정",
+    trip_oneway: "편도",
+    trip_roundtrip: "왕복",
+    label_cabin_class: "좌석 등급",
+    label_passengers_count: "인원",
+    passenger_adult: "성인",
+    passenger_child: "아동",
+    passenger_infant: "유아",
+    title_flight_segments: "비행 구간",
+    unit_minutes: "분",
+    title_passenger_info: "승객 정보",
+    title_seat_info: "좌석 정보",
+    seat_unassigned: "미지정",
+    btn_close: "닫기",
+    label_order: "주문",
+
     // Train
     title_transport: "교통",
     title_train_search: "기차 검색",
@@ -633,6 +686,8 @@ export default {
     unit_min: "분",
     unit_times: "회",
     unit_krw: "원",
+    date_format_ymd: "{year}년 {month}월 {day}일",
+    unit_people: "명",
     desc_route_step: "{stations}개 역 · 약 {duration}분",
     msg_no_route_found: "경로를 찾을 수 없습니다",
     msg_no_route_found_detail: "경로를 찾을 수 없습니다. 역 이름을 확인하고 다시 검색해주세요.",

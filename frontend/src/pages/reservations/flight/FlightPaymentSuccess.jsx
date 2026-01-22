@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 import axios from '../../../api/axios';
 
 /**
@@ -24,6 +25,7 @@ import axios from '../../../api/axios';
 const FlightPaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   /**
    * 결제 승인 상태
@@ -69,7 +71,7 @@ const FlightPaymentSuccess = () => {
        * 필수 파라미터 검증
        */
       if (!paymentKey || !orderId || !amount) {
-        setError('결제 정보가 올바르지 않습니다.');
+        setError(t('payment_error_invalid_params'));
         setStatus('error');
         return;
       }
@@ -111,7 +113,7 @@ const FlightPaymentSuccess = () => {
             });
           }, 3000);
         } else {
-          setError(response.data.error?.message || '결제 승인에 실패했습니다.');
+          setError(response.data.error?.message || t('payment_error_title'));
           setStatus('error');
         }
       } catch (err) {
@@ -121,8 +123,8 @@ const FlightPaymentSuccess = () => {
          * 백엔드 에러 메시지 추출
          */
         const errorMessage = err.response?.data?.error?.message ||
-                           err.response?.data?.message ||
-                           '결제 승인 중 오류가 발생했습니다.';
+          err.response?.data?.message ||
+          '결제 승인 중 오류가 발생했습니다.';
 
         setError(errorMessage);
         setStatus('error');
@@ -143,13 +145,13 @@ const FlightPaymentSuccess = () => {
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-6"></div>
 
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-            결제 승인 처리중
+            {t('payment_confirming_title')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            결제를 안전하게 처리하고 있습니다.
+            {t('payment_confirming_desc')}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-            잠시만 기다려주세요.
+            {t('payment_confirming_wait')}
           </p>
         </div>
       </div>
@@ -171,32 +173,32 @@ const FlightPaymentSuccess = () => {
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-            결제가 완료되었습니다
+            {t('payment_success_title')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            예약이 정상적으로 처리되었습니다.
+            {t('payment_success_desc')}
           </p>
 
           {/* 결제 정보 */}
           {result && (
             <div className="bg-slate-50 dark:bg-gray-800 rounded-lg p-4 mb-6 space-y-2 text-left">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">주문번호</span>
+                <span className="text-gray-600 dark:text-gray-400">{t('payment_order_number')}</span>
                 <span className="font-medium text-gray-900 dark:text-white">
                   {result.orderId}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">결제금액</span>
+                <span className="text-gray-600 dark:text-gray-400">{t('payment_amount_label')}</span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {result.totalAmount?.toLocaleString() || result.amount?.toLocaleString()}원
+                  {result.totalAmount?.toLocaleString() || result.amount?.toLocaleString()}{t('unit_krw')}
                 </span>
               </div>
             </div>
           )}
 
           <p className="text-sm text-gray-500 dark:text-gray-500">
-            곧 예약 완료 페이지로 이동합니다...
+            {t('payment_redirecting')}
           </p>
         </div>
       </div>
@@ -218,7 +220,7 @@ const FlightPaymentSuccess = () => {
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-            결제 승인 실패
+            {t('payment_error_title')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             {error}
@@ -230,21 +232,20 @@ const FlightPaymentSuccess = () => {
               onClick={() => navigate('/reservations/flights')}
               className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
             >
-              처음부터 다시 시작
+              {t('btn_restart')}
             </button>
             <button
               onClick={() => navigate('/support')}
               className="w-full bg-white dark:bg-[#1e2b36] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              고객센터 문의
+              {t('btn_contact_support')}
             </button>
           </div>
 
           {/* 안내 메시지 */}
           <div className="mt-6 text-left bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              결제 승인이 실패했지만 카드 승인이 이루어진 경우, 자동으로 취소 처리됩니다.
-              영업일 기준 3-5일 내에 환불됩니다.
+              {t('payment_error_refund_info')}
             </p>
           </div>
         </div>
