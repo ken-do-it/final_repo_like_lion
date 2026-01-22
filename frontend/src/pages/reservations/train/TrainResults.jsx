@@ -168,21 +168,15 @@ const TrainResults = () => {
           <div className="lg:col-span-8">
             {/* 검색 조건 표시 */}
             <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-4 mb-6">
+              {/* 상단: 출발역 → 도착역 */}
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">{depStationName}</span>
+                <span className="material-symbols-outlined text-primary">arrow_forward</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">{arrStationName}</span>
+              </div>
+              {/* 하단: 날짜 + 조건변경 버튼 */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {depStationName}
-                  </div>
-                  <span className="material-symbols-outlined text-gray-400">
-                    arrow_forward
-                  </span>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {arrStationName}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {formatDate(searchParams.depDate)}
-                  </div>
-                </div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{formatDate(searchParams.depDate)}</span>
                 <button
                   onClick={() => navigate(-1)}
                   className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
@@ -218,81 +212,61 @@ const TrainResults = () => {
               {trains.map((train, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm hover:shadow-md transition-shadow p-6"
+                  className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm hover:shadow-md transition-shadow p-5"
                 >
-                  <div className="flex items-center justify-between">
-                    {/* 왼쪽: 열차 정보 */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-4">
-                        {/* 열차 종류 배지 */}
-                        <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${train.trainType && train.trainType.includes('KTX')
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                            : train.trainType && train.trainType.includes('SRT')
-                              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                          }`}>
-                          {train.trainType}
-                        </span>
-
-                        {/* 열차 번호 */}
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {train.trainNo}
-                        </span>
-                      </div>
-
-                      {/* 출발/도착 정보 */}
-                      <div className="grid grid-cols-3 gap-4 items-center">
-                        {/* 출발 */}
-                        <div>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {train.departureTime}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {train.departureStation}
-                          </p>
-                        </div>
-
-                        {/* 화살표 및 소요시간 */}
-                        <div className="text-center">
-                          <span className="material-symbols-outlined text-gray-400">
-                            arrow_forward
-                          </span>
-                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                            {train.duration}
-                          </p>
-                        </div>
-
-                        {/* 도착 */}
-                        <div>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {train.arrivalTime}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {train.arrivalStation}
-                          </p>
-                        </div>
-                      </div>
+                  {/* 열차 종류 및 번호 - 첫 번째 줄 */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      {/* 열차 종류 배지 */}
+                      <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${train.trainType && train.trainType.includes('KTX')
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                          : train.trainType && train.trainType.includes('SRT')
+                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                        }`}>
+                        {train.trainType}
+                      </span>
+                      {/* 열차 번호 */}
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {train.trainNo}
+                      </span>
                     </div>
-
-                    {/* 오른쪽: 요금 및 예매 버튼 */}
-                    <div className="ml-6 text-right">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        {t('label_adult_fare')}
-                      </p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        {train.adultFare?.toLocaleString()}원
-                      </p>
-                      <button
-                        onClick={() => handleBooking(train)}
-                        className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
-                      >
-                        <span>{t('btn_book_ticket')}</span>
-                        <span className="material-symbols-outlined text-sm">
-                          open_in_new
-                        </span>
-                      </button>
+                    {/* 요금 표시 */}
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('label_adult_fare')}</p>
+                      <p className="text-xl font-bold text-primary">{train.adultFare?.toLocaleString()}원</p>
                     </div>
                   </div>
+
+                  {/* 시간 정보 - 두 번째 줄 (중앙 정렬) */}
+                  <div className="flex items-center justify-center gap-6 mb-3">
+                    {/* 출발 */}
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{train.departureTime}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{train.departureStation}</p>
+                    </div>
+                    {/* 화살표 및 소요시간 */}
+                    <div className="flex flex-col items-center">
+                      <p className="text-xs text-gray-400 mb-1">{train.duration}</p>
+                      <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
+                        <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-sm">train</span>
+                      </div>
+                    </div>
+                    {/* 도착 */}
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{train.arrivalTime}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{train.arrivalStation}</p>
+                    </div>
+                  </div>
+
+                  {/* 예매 버튼 - 세 번째 줄 */}
+                  <button
+                    onClick={() => handleBooking(train)}
+                    className="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-2"
+                  >
+                    <span>{t('btn_book_ticket')}</span>
+                    <span className="material-symbols-outlined text-sm">open_in_new</span>
+                  </button>
                 </div>
               ))}
             </div>

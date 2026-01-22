@@ -15,7 +15,7 @@ import { TransportTabs, ReservationSidebar } from '../reservations-components';
  */
 const FlightSeat = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const location = useLocation();
 
   /**
@@ -245,6 +245,42 @@ const FlightSeat = () => {
   };
 
   /**
+   * 항공사 이름 다국어 매핑 (FlightResults.jsx와 동일)
+   */
+  const airlineNames = {
+    '이스타항공': { en: 'Eastar Jet', ja: 'イースター航空', zh: '易斯达航空' },
+    '제주항공': { en: 'Jeju Air', ja: 'チェジュ航空', zh: '济州航空' },
+    '진에어': { en: 'Jin Air', ja: 'ジンエアー', zh: '真航空' },
+    '에어서울': { en: 'Air Seoul', ja: 'エアソウル', zh: '首尔航空' },
+    '티웨이항공': { en: 'T\'way Air', ja: 'ティーウェイ航空', zh: 'T\'way航空' },
+    '대한항공': { en: 'Korean Air', ja: '大韓航空', zh: '大韩航空' },
+    '아시아나항공': { en: 'Asiana Airlines', ja: 'アシアナ航空', zh: '韩亚航空' },
+  };
+
+  /**
+   * 언어에 따라 항공사 이름 선택
+   */
+  const getAirlineName = (koreanName) => {
+    if (!koreanName) return '';
+
+    const airline = airlineNames[koreanName];
+    if (!airline) return koreanName; // 매핑 없으면 원문 반환
+
+    switch (language) {
+      case 'English':
+        return airline.en;
+      case '日本語':
+        return airline.ja;
+      case '中文':
+        return airline.zh;
+      case '한국어':
+        return koreanName;
+      default:
+        return koreanName;
+    }
+  };
+
+  /**
    * 날짜 포맷팅 함수
    * ISO 형식 또는 기존 형식 지원
    */
@@ -254,7 +290,10 @@ const FlightSeat = () => {
     if (dateString.includes('T') || dateString.includes('-')) {
       try {
         const date = new Date(dateString);
-        return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+        return t('date_format_ymd')
+          .replace('{year}', date.getFullYear())
+          .replace('{month}', date.getMonth() + 1)
+          .replace('{day}', date.getDate());
       } catch {
         return dateString;
       }
@@ -264,7 +303,10 @@ const FlightSeat = () => {
       const year = dateString.substring(0, 4);
       const month = dateString.substring(4, 6);
       const day = dateString.substring(6, 8);
-      return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
+      return t('date_format_ymd')
+        .replace('{year}', year)
+        .replace('{month}', parseInt(month))
+        .replace('{day}', parseInt(day));
     }
     return dateString;
   };
@@ -382,17 +424,44 @@ const FlightSeat = () => {
               <div className="space-y-4">
                 {/* 가는편 */}
                 <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-3">
+                  {/* 헤더: Outbound 라벨 */}
+                  <div className="flex items-center gap-2 mb-4">
                     <span className="material-symbols-outlined text-primary">flight_takeoff</span>
                     <span className="font-semibold text-primary">{t('label_outbound')}</span>
                   </div>
+
+                  {/* 항공사 정보 - 첫 번째 줄 */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="material-symbols-outlined text-primary">airlines</span>
+                    </div>
+                    <div>
+                      <p className="font-medium dark:text-white">{outboundFlight?.airlineName}</p>
+                      <p className="text-xs text-slate-500">{outboundFlight?.flightNumber}</p>
+                    </div>
+                  </div>
+
+                  {/* 시간 정보 - 두 번째 줄 */}
+                  <div className="flex items-center justify-center gap-6 mb-3">
+                    <div className="text-center">
+                      <p className="text-xl font-bold dark:text-white">{formatTime(outboundFlight?.depAt)}</p>
+                      <p className="text-sm text-slate-500">{outboundFlight?.departureAirport}</p>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
+                        <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-sm">flight</span>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xl font-bold dark:text-white">{formatTime(outboundFlight?.arrAt)}</p>
+                      <p className="text-sm text-slate-500">{outboundFlight?.arrivalAirport}</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
                         <span className="material-symbols-outlined text-primary">airlines</span>
                       </div>
                       <div>
-                        <p className="font-medium dark:text-white">{outboundFlight?.airlineName}</p>
+                        <p className="font-medium dark:text-white">{getAirlineName(outboundFlight?.airlineName)}</p>
                         <p className="text-xs text-slate-500">{outboundFlight?.flightNumber}</p>
                       </div>
                     </div>
@@ -416,26 +485,63 @@ const FlightSeat = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-primary">
-                        {(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0).toLocaleString()}원
+                        {(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0).toLocaleString()}{t('unit_krw')}
                       </p>
                     </div>
+                  </div>
+
+                  {/* 날짜 - 세 번째 줄 */}
+                  <p className="text-center text-sm text-slate-400 mb-3">{formatDate(outboundFlight?.depAt)}</p>
+
+                  {/* 가격 - 네 번째 줄 */}
+                  <div className="text-center pt-3 border-t border-slate-200 dark:border-slate-700">
+                    <p className="text-xl font-bold text-primary">
+                      {(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0).toLocaleString()}원
+                    </p>
                   </div>
                 </div>
 
                 {/* 오는편 (왕복일 때만) */}
                 {isRoundTrip && inboundFlight && (
                   <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* 헤더: Inbound 라벨 */}
+                    <div className="flex items-center gap-2 mb-4">
                       <span className="material-symbols-outlined text-mint">flight_land</span>
                       <span className="font-semibold text-mint">{t('label_inbound')}</span>
                     </div>
+
+                    {/* 항공사 정보 - 첫 번째 줄 */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="material-symbols-outlined text-mint">airlines</span>
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">{inboundFlight?.airlineName}</p>
+                        <p className="text-xs text-slate-500">{inboundFlight?.flightNumber}</p>
+                      </div>
+                    </div>
+
+                    {/* 시간 정보 - 두 번째 줄 */}
+                    <div className="flex items-center justify-center gap-6 mb-3">
+                      <div className="text-center">
+                        <p className="text-xl font-bold dark:text-white">{formatTime(inboundFlight?.depAt)}</p>
+                        <p className="text-sm text-slate-500">{inboundFlight?.departureAirport}</p>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
+                          <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-mint text-sm">flight</span>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xl font-bold dark:text-white">{formatTime(inboundFlight?.arrAt)}</p>
+                        <p className="text-sm text-slate-500">{inboundFlight?.arrivalAirport}</p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
                           <span className="material-symbols-outlined text-mint">airlines</span>
                         </div>
                         <div>
-                          <p className="font-medium dark:text-white">{inboundFlight?.airlineName}</p>
+                          <p className="font-medium dark:text-white">{getAirlineName(inboundFlight?.airlineName)}</p>
                           <p className="text-xs text-slate-500">{inboundFlight?.flightNumber}</p>
                         </div>
                       </div>
@@ -459,9 +565,19 @@ const FlightSeat = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-mint">
-                          {(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0).toLocaleString()}원
+                          {(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0).toLocaleString()}{t('unit_krw')}
                         </p>
                       </div>
+                    </div>
+
+                    {/* 날짜 - 세 번째 줄 */}
+                    <p className="text-center text-sm text-slate-400 mb-3">{formatDate(inboundFlight?.depAt)}</p>
+
+                    {/* 가격 - 네 번째 줄 */}
+                    <div className="text-center pt-3 border-t border-slate-200 dark:border-slate-700">
+                      <p className="text-xl font-bold text-mint">
+                        {(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0).toLocaleString()}원
+                      </p>
                     </div>
                   </div>
                 )}
@@ -493,7 +609,7 @@ const FlightSeat = () => {
                       {(
                         calculateDiscountedTotal(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
                         (isRoundTrip && inboundFlight ? calculateDiscountedTotal(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
-                      ).toLocaleString()}원
+                      ).toLocaleString()}{t('unit_krw')}
                     </p>
                     {(children > 0 || infants > 0) && (
                       <p className="text-xs text-slate-400 mt-1">{t('discount_applied_desc')}</p>
@@ -535,7 +651,7 @@ const FlightSeat = () => {
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">{option.description}</p>
                       <p className={`text-lg font-bold ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>
-                        {optionPrice.toLocaleString()}원
+                        {optionPrice.toLocaleString()}{t('unit_krw')}
                         <span className="text-xs font-normal text-slate-400 ml-1">{t('per_person')}</span>
                       </p>
                       {option.multiplier > 1 && (
@@ -677,13 +793,13 @@ const FlightSeat = () => {
                     {(
                       calculateDiscountedTotal(outboundFlight?.pricePerPerson || outboundFlight?.totalPrice || 0) +
                       (isRoundTrip && inboundFlight ? calculateDiscountedTotal(inboundFlight?.pricePerPerson || inboundFlight?.totalPrice || 0) : 0)
-                    ).toLocaleString()}원
+                    ).toLocaleString()}{t('unit_krw')}
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     {selectedClass === 'ECONOMY' && t('class_economy')}
                     {selectedClass === 'PREMIUM' && t('class_premium')}
                     {selectedClass === 'BUSINESS' && t('class_business')}
-                    {' · '}{totalPassengers}명{isRoundTrip && ` · ${t('flight_roundtrip_badge')}`}
+                    {' · '}{totalPassengers}{t('unit_people')}{isRoundTrip && ` · ${t('flight_roundtrip_badge')}`}
                   </p>
                   {(children > 0 || infants > 0) && (
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">

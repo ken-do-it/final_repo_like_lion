@@ -533,5 +533,63 @@ export default {
     city_empty_column: "まだ{city}に関するローカルコラムがありません。",
     city_error_title: "エラーが発生しました",
     city_btn_retry_search: "別の都市を検索",
-    city_load_error: "コンテンツの読み込みに失敗しました。"
+    city_load_error: "コンテンツの読み込みに失敗しました。",
+    flight_provider_check_required: "提供元に確認が必要",
+
+    // Currency
+    unit_krw: "ウォン",
+    date_format_ymd: "{year}年{month}月{day}日",
+    unit_people: "名",
+
+    // 日付/時刻フォーマット
+    datetime_format_ymdhm: "{year}年{month}月{day}日 {hours}:{minutes}",
+
+    // 決済承認中
+    payment_confirming_title: "決済承認処理中",
+    payment_confirming_desc: "安全に決済を処理しています。",
+    payment_confirming_wait: "しばらくお待ちください。",
+
+    // 決済成功
+    payment_success_title: "決済が完了しました",
+    payment_success_desc: "予約が正常に処理されました。",
+    payment_order_number: "注文番号",
+    payment_amount_label: "決済金額",
+    payment_redirecting: "まもなく予約完了ページに移動します...",
+
+    // 決済失敗
+    payment_error_title: "決済承認失敗",
+    payment_error_invalid_params: "決済情報が正しくありません。",
+    payment_error_refund_info: "決済承認が失敗しましたが、カード承認が行われた場合は自動的にキャンセル処理されます。営業日基準3-5日以内に返金されます。",
+
+    // ボタン
+    btn_restart: "最初からやり直す",
+    btn_processing: "処理中...",
+
+    // 予約詳細モーダル
+    reservation_detail_title: "予約詳細",
+    reservation_loading: "読み込み中...",
+    reservation_load_error: "情報を読み込めません。",
+    reservation_detail_error: "予約詳細情報の読み込みに失敗しました。",
+    label_order_number: "注文番号",
+    label_status: "ステータス",
+    status_confirmed: "確定済み",
+    label_payment_amount: "支払金額",
+    label_departure_time: "出発時刻",
+    label_reservation_time: "予約時刻",
+    title_flight_detail: "フライト情報",
+    label_trip_type: "旅程タイプ",
+    trip_oneway: "片道",
+    trip_roundtrip: "往復",
+    label_cabin_class: "座席クラス",
+    label_passengers_count: "乗客数",
+    passenger_adult: "大人",
+    passenger_child: "子供",
+    passenger_infant: "幼児",
+    title_flight_segments: "フライト区間",
+    unit_minutes: "分",
+    title_passenger_info: "乗客情報",
+    title_seat_info: "座席情報",
+    seat_unassigned: "未指定",
+    btn_close: "閉じる",
+    label_order: "注文",
 };

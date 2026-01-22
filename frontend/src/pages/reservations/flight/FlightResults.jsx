@@ -13,7 +13,7 @@ import { TransportTabs, ReservationSidebar } from '../reservations-components';
  */
 const FlightResults = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchParams] = useSearchParams();
 
   /**
@@ -190,6 +190,42 @@ const FlightResults = () => {
   const getUniqueAirlines = (flights) => {
     const airlines = flights.map(f => f.airlineName).filter(Boolean);
     return [...new Set(airlines)];
+  };
+
+  /**
+   * 항공사 이름 다국어 매핑
+   */
+  const airlineNames = {
+    '이스타항공': { en: 'Eastar Jet', ja: 'イースター航空', zh: '易斯达航空' },
+    '제주항공': { en: 'Jeju Air', ja: 'チェジュ航空', zh: '济州航空' },
+    '진에어': { en: 'Jin Air', ja: 'ジンエアー', zh: '真航空' },
+    '에어서울': { en: 'Air Seoul', ja: 'エアソウル', zh: '首尔航空' },
+    '티웨이항공': { en: 'T\'way Air', ja: 'ティーウェイ航空', zh: 'T\'way航空' },
+    '대한항공': { en: 'Korean Air', ja: '大韓航空', zh: '大韩航空' },
+    '아시아나항공': { en: 'Asiana Airlines', ja: 'アシアナ航空', zh: '韩亚航空' },
+  };
+
+  /**
+   * 언어에 따라 항공사 이름 선택
+   */
+  const getAirlineName = (koreanName) => {
+    if (!koreanName) return '';
+
+    const airline = airlineNames[koreanName];
+    if (!airline) return koreanName; // 매핑 없으면 원문 반환
+
+    switch (language) {
+      case 'English':
+        return airline.en;
+      case '日本語':
+        return airline.ja;
+      case '中文':
+        return airline.zh;
+      case '한국어':
+        return koreanName;
+      default:
+        return koreanName;
+    }
   };
 
   /**
@@ -375,7 +411,7 @@ const FlightResults = () => {
                 <select value={selectedAirline} onChange={(e) => setSelectedAirline(e.target.value)} className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg">
                   <option value="">{t('filter_all')}</option>
                   {allAirlines.map((airline) => (
-                    <option key={airline} value={airline}>{airline}</option>
+                    <option key={airline} value={airline}>{getAirlineName(airline)}</option>
                   ))}
                 </select>
               </div>
@@ -401,7 +437,7 @@ const FlightResults = () => {
                           <span className="material-symbols-outlined text-primary">airlines</span>
                         </div>
                         <div>
-                          <p className="font-medium dark:text-white">{selectedOutbound.airlineName} {selectedOutbound.flightNumber}</p>
+                          <p className="font-medium dark:text-white">{getAirlineName(selectedOutbound.airlineName)} {selectedOutbound.flightNumber}</p>
                           <p className="text-sm text-gray-500">{formatDate(selectedOutbound.depAt)}</p>
                         </div>
                       </div>
@@ -444,29 +480,31 @@ const FlightResults = () => {
                   currentFlights.map((flight, index) => (
                     <div
                       key={flight.offerId || index}
-                      className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-md p-5 hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-primary"
+                      className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-md p-4 hover:shadow-lg transition-all cursor-pointer border border-transparent hover:border-primary"
                       onClick={() => isRoundTrip && selectedOutbound ? handleSelectInbound(flight) : handleSelectOutbound(flight)}
                     >
-                      <div className="flex items-center justify-between">
+                      {/* 모바일: 세로 레이아웃 / 데스크톱: 가로 레이아웃 */}
+                      <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr_auto] gap-3 sm:gap-4 items-center">
                         {/* 항공사 로고 & 정보 */}
-                        <div className="flex items-center gap-3 min-w-[120px]">
-                          <div className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center flex-shrink-0">
                             <span className="material-symbols-outlined text-primary text-sm">airlines</span>
                           </div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{flight.airlineName}</p>
                           <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{flight.airlineName}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{getAirlineName(flight.airlineName)}</p>
                           </div>
                         </div>
 
                         {/* 시간 정보 */}
-                        <div className="flex items-center gap-4 flex-1 justify-center">
+                        <div className="flex items-center justify-center gap-3">
                           <div className="text-center">
                             <p className="text-lg font-bold dark:text-white">{formatTime(flight.depAt)}</p>
                             <p className="text-xs text-gray-500">{flight.departureAirport}</p>
                           </div>
-                          <div className="flex flex-col items-center px-4">
+                          <div className="flex flex-col items-center px-2">
                             <p className="text-xs text-gray-400 mb-1">{formatDuration(flight.durationMin)}</p>
-                            <div className="w-20 h-px bg-slate-300 dark:bg-slate-600 relative">
+                            <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 relative">
                               <span className="material-symbols-outlined absolute left-1/2 -translate-x-1/2 -top-2 text-primary text-xs">flight</span>
                             </div>
                             <p className="text-xs text-gray-400 mt-1">{t('flight_direct')}</p>
@@ -478,10 +516,10 @@ const FlightResults = () => {
                         </div>
 
                         {/* 가격 */}
-                        <div className="text-right min-w-[100px]">
+                        <div className="text-right sm:text-right">
                           <p className="text-xl font-bold text-primary">{(flight.pricePerPerson || flight.totalPrice || 0).toLocaleString()}{t('unit_krw')}</p>
                           {flight.seatAvailabilityNote && (
-                            <p className="text-xs text-mint mt-1">{flight.seatAvailabilityNote}</p>
+                            <p className="text-xs text-mint mt-1">{t('flight_provider_check_required')}</p>
                           )}
                         </div>
                       </div>
