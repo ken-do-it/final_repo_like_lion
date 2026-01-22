@@ -161,7 +161,7 @@ function ShortsPage({ onShortClick, embed = false }) {
                                         <span className="shorts-lang-tag">{s.lang}</span>
                                         <h3 className="shorts-title">{s.title}</h3>
                                         <p className="shorts-desc">{s.desc}</p>
-                                        <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
+                                        <div className="flex items-center text-xs text-blue-400 mt-2 font-medium">
                                             <span className="mr-1 align-middle font-bold text-sm text-blue-500">#</span>
                                             {s.location_translated || s.location || '#Seoul'}
                                         </div>
@@ -179,7 +179,7 @@ function ShortsPage({ onShortClick, embed = false }) {
                                         <span className="shorts-lang-tag">{s.lang}</span>
                                         <h3 className="shorts-title">{s.title}</h3>
                                         <p className="shorts-desc">{s.desc}</p>
-                                        <div className="flex items-center text-xs text-rose-500 mt-2 font-medium">
+                                        <div className="flex items-center text-xs text-blue-400 mt-2 font-medium">
                                             <span className="mr-1 align-middle font-bold text-sm text-blue-500">#</span>
                                             {s.location_translated || s.location || '#Seoul'}
                                         </div>
