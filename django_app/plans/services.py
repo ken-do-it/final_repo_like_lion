@@ -101,7 +101,7 @@ def get_or_create_place_from_search(place_name: str):
             'city': kakao_data.get('city'),  # FastAPI가 이미 제공함
             'latitude': kakao_data.get('latitude'),
             'longitude': kakao_data.get('longitude'),
-            'provider': 'KAKAO',  # 대문자로 (Django 모델의 choices와 일치)
+            'provider': kakao_data.get('provider', 'KAKAO'),  # API 응답의 provider 사용 (KAKAO 또는 GOOGLE)
             'category_main': category_main,  # 추론된 값 사용
             'category_detail': kakao_data.get('category_detail', []),  # 추가
             'thumbnail_urls': [kakao_data.get('thumbnail_url')] if kakao_data.get('thumbnail_url') else []  # 추가

@@ -467,6 +467,7 @@ def get_badge_status(
 @router.get("/local-columns", response_model=List[LocalColumnListResponse])
 async def get_local_columns(
     city: Optional[str] = Query(None, description="도시 필터"),
+    query: Optional[str] = Query(None, description="검색어 (제목/내용)"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     lang: Optional[str] = Query(None, description="타겟 언어"),
@@ -475,18 +476,39 @@ async def get_local_columns(
     """
     현지인 칼럼 목록 조회
     """
-    offset = (page - 1) * limit
+    # 기본 쿼리: 최신순 정렬
+    q = db.query(LocalColumn).order_by(LocalColumn.created_at.desc())
 
-    query = db.query(LocalColumn)
-
-    # 도시 필터링 (representative_place를 통해)
+    # 1. 도시 필터 (기존 로직) -> JOIN 필요
+    # (섹션 장소의 도시가 일치하거나 OR 제목에 도시명 포함 - 단순화하여 제목/내용 검색은 별도 query로 처리)
+    # 기획상 "도시별 보기"는 보통 별도 진입점이므로, 여기서는 단순 칼럼 목록에서의 필터링으로 가정
     if city:
-        query = query.join(Place, LocalColumn.representative_place_id == Place.id, isouter=True).filter(
-            Place.city == city
+        # 도시 필터가 있으면 해당 도시와 관련된 칼럼만 (단순화를 위해 제목/내용/장소 연관보다는 명시적 필터링 권장되나,
+        # 기존 로직이 없다면 제목 매칭 정도가 가벼움. 여기서는 확장성을 위해 JOIN 사용)
+        
+        # 섹션에 연결된 장소가 해당 도시인 경우
+        subquery = db.query(LocalColumnSection.column_id).join(
+            Place, LocalColumnSection.place_id == Place.id
+        ).filter(Place.city == city).subquery()
+
+        q = q.filter(
+            or_(
+                LocalColumn.title.ilike(f'%{city}%'),
+                LocalColumn.id.in_(subquery)
+            )
         )
 
-    columns = query.order_by(LocalColumn.created_at.desc()).offset(offset).limit(limit).all()
+    # 2. 검색어 필터 (신규 추가) - Title or Content
+    if query:
+        search_filter = or_(
+            LocalColumn.title.ilike(f"%{query}%"),
+            LocalColumn.content.ilike(f"%{query}%")
+        )
+        q = q.filter(search_filter)
 
+    # 페이징 적용
+    offset = (page - 1) * limit
+    columns = q.offset(offset).limit(limit).all()
     # 사용자 닉네임 및 뱃지 레벨 조회
     result = []
     

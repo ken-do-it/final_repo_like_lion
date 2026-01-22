@@ -13,10 +13,20 @@ const LocalColumnList = () => {
     const [columns, setColumns] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState(''); // Search State
+    const [debouncedQuery, setDebouncedQuery] = useState(''); // Debounced State
+
+    // Debounce Logic
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedQuery(searchQuery);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
 
     useEffect(() => {
         fetchColumns();
-    }, [language]);
+    }, [language, debouncedQuery]); // Re-fetch on query change
 
     const fetchColumns = async () => {
         try {
@@ -24,7 +34,8 @@ const LocalColumnList = () => {
             const data = await getLocalColumns({
                 page: 1,
                 limit: 20,
-                lang: API_LANG_CODES[language] || 'eng_Latn'
+                lang: API_LANG_CODES[language] || 'eng_Latn',
+                query: debouncedQuery // Pass query
             });
             setColumns(data);
         } catch (err) {
@@ -72,6 +83,20 @@ const LocalColumnList = () => {
                         {t('col_desc_2')}
                     </p>
 
+                    {/* Search Bar */}
+                    <div className="max-w-md mx-auto mt-8 relative">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={t('place_search_placeholder') || "검색어를 입력하세요..."}
+                            className="w-full px-5 py-3 pr-12 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e2b36] shadow-sm focus:ring-2 focus:ring-[#1392ec] outline-none transition-all dark:text-white"
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                            🔍
+                        </div>
+                    </div>
+
                     {/* Write Button */}
                     <div className="flex justify-end mt-6">
                         <Button
@@ -114,7 +139,16 @@ const LocalColumnList = () => {
                                 <div className="text-6xl mb-4">📝</div>
                                 <h3 className="text-xl font-bold mb-2">{t('col_no_cols')}</h3>
                                 <p className="text-gray-500 dark:text-gray-400">
-                                    {t('col_be_first')}
+                                    {debouncedQuery ? (
+                                        <>
+                                            <p className="mb-2">"{debouncedQuery}" {t('no_results_desc')}</p>
+                                            <button onClick={() => setSearchQuery('')} className="text-[#1392ec] underline text-sm">
+                                                {t('btn_reset_filter') || "전체 목록 보기"}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        t('col_be_first')
+                                    )}
                                 </p>
                             </div>
                         ) : (

@@ -3,9 +3,10 @@ import { placesAxios } from './axios';
 // ==================== 조회 API ====================
 
 // 현지인 칼럼 목록 조회
-export const getLocalColumns = async ({ city, page = 1, limit = 20, lang }) => {
+export const getLocalColumns = async ({ city, page = 1, limit = 20, lang, query }) => {
     const params = { page, limit };
     if (city) params.city = city;
+    if (query) params.query = query;
     if (lang) params.lang = lang;
 
     const response = await placesAxios.get('/places/local-columns', { params });
