@@ -10,7 +10,7 @@ class OpenAIAdapter:
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY environment variable is not set.")
         
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = OpenAI(api_key=self.api_key, timeout=30.0) # 30초 타임아웃 설정
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini") # Default to cost-effective 4o-mini
         
         logger.info(f"OpenAI Adapter initialized with model: {self.model}")
@@ -43,11 +43,10 @@ class OpenAIAdapter:
         """
         try:
             system_prompt = self._get_system_prompt(target_lang)
-            system_prompt += "\n\nIMPORTANT: Return ONLY a JSON list of translated strings. Example: [\"Trans1\", \"Trans2\"]"
+            system_prompt += "\n\nIMPORTANT: Return ONLY the translated texts, one per line. Do not include numbering or bullet points."
             
-            # Join texts with a separator or just send as JSON string
-            import json
-            user_prompt = f"Source: {source_lang}\nTranslate these items:\n{json.dumps(texts, ensure_ascii=False)}"
+            # Join texts with newlines
+            user_prompt = f"Source: {source_lang}\nTranslate these items (keep order):\n" + "\n".join(texts)
             
             print(f"DEBUG: OpenAI Prompt: {user_prompt}", flush=True)
 
@@ -58,23 +57,47 @@ class OpenAIAdapter:
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.1, # Lower temperature for accuracy
-                response_format={"type": "json_object"}
+                timeout=30.0
             )
             
-            result_json = response.choices[0].message.content
-            print(f"DEBUG: OpenAI Response: {result_json}", flush=True)
+            result_text = response.choices[0].message.content.strip()
+            print(f"DEBUG: OpenAI Response: {result_text}", flush=True)
             
-            parsed = json.loads(result_json)
-            if "translations" in parsed and isinstance(parsed["translations"], list):
-                return parsed["translations"]
-            elif isinstance(parsed, list):
-                return parsed
-            else:
-                logger.error(f"Unexpected JSON format: {result_json}")
-                return texts # Fallback to original
+            # Try to parse as JSON first (fallback if OpenAI ignores instructions)
+            translations = []
+            if result_text.startswith('{') or result_text.startswith('['):
+                try:
+                    import json
+                    parsed = json.loads(result_text)
+                    if isinstance(parsed, dict) and "translations" in parsed:
+                        translations = parsed["translations"]
+                    elif isinstance(parsed, list):
+                        translations = parsed
+                    else:
+                        logger.warning(f"Unexpected JSON format: {result_text}")
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse JSON response, falling back to line parsing")
+            
+            # If JSON parsing failed or wasn't JSON, parse line by line
+            if not translations:
+                translations = [line.strip() for line in result_text.split('\n') if line.strip()]
+            
+            # Validate count
+            if len(translations) != len(texts):
+                logger.warning(f"Translation count mismatch: Expected {len(texts)}, got {len(translations)}. Padding/Truncating.")
+                # Pad with original if too short
+                while len(translations) < len(texts):
+                    translations.append(texts[len(translations)])
+                # Truncate if too long
+                translations = translations[:len(texts)]
+            
+            # CRITICAL: Ensure all elements are strings
+            translations = [str(t) if t is not None else "" for t in translations]
+                
+            return translations
                 
         except Exception as e:
-            logger.error(f"OpenAI Batch Translation Error: {e}")
+            logger.error(f"OpenAI Batch Translation Error: {e}", exc_info=True)
             return texts
 
     def _map_lang_code(self, code: str) -> str:

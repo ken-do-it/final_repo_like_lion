@@ -7,6 +7,54 @@ import { useLanguage } from '../../context/LanguageContext';
 import { API_LANG_CODES } from '../../constants/translations';
 import AddToPlanModal from './AddToPlanModal'; // [NEW] Import Modal
 
+// 영업시간의 한국어 요일명을 현재 언어로 번역하는 헬퍼 함수
+const translateOpeningHours = (hoursText, language) => {
+    const dayTranslations = {
+        en: {
+            '월요일': 'Monday',
+            '화요일': 'Tuesday',
+            '수요일': 'Wednesday',
+            '목요일': 'Thursday',
+            '금요일': 'Friday',
+            '토요일': 'Saturday',
+            '일요일': 'Sunday'
+        },
+        jp: {
+            '월요일': '月曜日',
+            '화요일': '火曜日',
+            '수요일': '水曜日',
+            '목요일': '木曜日',
+            '금요일': '金曜日',
+            '토요일': '土曜日',
+            '일요일': '日曜日'
+        },
+        zh: {
+            '월요일': '星期一',
+            '화요일': '星期二',
+            '수요일': '星期三',
+            '목요일': '星期四',
+            '금요일': '星期五',
+            '토요일': '星期六',
+            '일요일': '星期日'
+        }
+    };
+
+    // 한국어이거나 번역이 필요없는 경우 원본 반환
+    if (language === 'ko' || !dayTranslations[language]) {
+        return hoursText;
+    }
+
+    let translated = hoursText;
+    const translations = dayTranslations[language];
+
+    // 한국어 요일명을 해당 언어로 치환
+    Object.entries(translations).forEach(([korean, translation]) => {
+        translated = translated.replace(korean, translation);
+    });
+
+    return translated;
+};
+
 const PlaceDetailPage = () => {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
@@ -139,7 +187,7 @@ const PlaceDetailPage = () => {
     if (loading) return (
         <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101a22] flex items-center justify-center">
             <div className="animate-pulse text-[#1392ec] font-bold text-xl">
-                {t('error_load_place')}
+                {t('loading_place')}
             </div>
         </div>
     );
@@ -294,7 +342,7 @@ const PlaceDetailPage = () => {
                                     {place.opening_hours.map((path, idx) => (
                                         <li key={idx} className="flex gap-2">
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#1392ec] mt-2 shrink-0"></span>
-                                            {path}
+                                            {translateOpeningHours(path, language)}
                                         </li>
                                     ))}
                                 </ul>

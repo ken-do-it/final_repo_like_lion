@@ -149,6 +149,7 @@ export default {
     label_title: "제목",
     label_desc: "설명",
     ph_title: "눈길을 끄는 제목을 입력하세요...",
+    ph_desc: "어떤 동영상인가요?",
     shorts_upload_desc_placeholder: "어떤 동영상인가요?",
     shorts_location_placeholder: "예: #서울 #한국",
     video_drag: "클릭하거나 동영상을 드래그하세요",
@@ -183,7 +184,7 @@ export default {
     msg_feature_coming_soon: "{action} 기능은 준비 중입니다.",
     msg_bookmark_error: "찜하기 처리에 실패했습니다. 잠시 후 다시 시도해주세요.",
     msg_no_image: "이미지가 없습니다",
-    error_load_place: "장소 정보를 불러오는 중입니다...",
+    loading_place: "장소 정보를 불러오는 중입니다...",
     btn_go_back: "뒤로 가기",
 
     // Plan List
@@ -613,6 +614,48 @@ export default {
     btn_close: "닫기",
     label_order: "주문",
 
+    // AddToPlanModal
+    title_add_schedule: "일정 등록",
+    btn_new_plan: "+ 새 일정",
+    msg_add_failed: "일정 추가에 실패했습니다.",
+    label_current_trip: "현재 여행",
+    label_upcoming_trips: "다가오는 여행",
+    msg_no_upcoming_plans: "예정된 여행이 없습니다.",
+    msg_adding: "추가 중...",
+    btn_add_to_selected_schedule: "일정에 추가",
+
+    // PlaceDetailPage
+    error_load_place: "장소 정보를 불러오는데 실패했습니다.",
+    btn_go_back: "뒤로 가기",
+    msg_login_required: "로그인이 필요한 서비스입니다.",
+    msg_feature_coming_soon: "{action} 기능은 준비 중입니다.",
+    msg_bookmark_error: "즐겨찾기 설정에 실패했습니다.",
+    msg_no_image: "이미지가 없습니다",
+    place_basic_info: "기본 정보",
+    place_opening_hours: "영업 시간",
+    place_location: "위치",
+    place_rating: "평점",
+    place_reviews: "리뷰 {count}개",
+    btn_add_to_plan: "일정에 추가",
+    btn_write_review: "리뷰 작성",
+
+    // LocalColumnList
+    col_title: "로컬 칼럼",
+    col_desc_1: "현지인들만 아는 진짜 여행 정보,",
+    col_desc_2: "생생한 로컬 칼럼을 만나보세요.",
+    col_fetch_error: "칼럼을 불러오는데 실패했습니다.",
+    msg_auth_inactive: "활동이 부족하여 아직 칼럼을 작성할 수 없습니다.",
+    msg_auth_level_low: "레벨이 부족하여 아직 칼럼을 작성할 수 없습니다.",
+    msg_auth_error: "권한 확인 중 오류가 발생했습니다.",
+    place_search_placeholder: "검색어를 입력하세요...",
+    col_write_btn: "칼럼 작성하기",
+    col_retry: "다시 시도",
+    col_no_cols: "등록된 칼럼이 없습니다",
+    col_be_first: "첫 번째 칼럼의 주인공이 되어보세요!",
+    no_results_desc: "검색 결과가 없습니다.",
+    btn_reset_filter: "전체 목록 보기",
+    label_place: "장소",
+
     // Train
     title_transport: "교통",
     title_train_search: "기차 검색",
@@ -792,5 +835,28 @@ export default {
     city_empty_column: "아직 {city} 관련 현지인 칼럼이 없습니다.",
     city_error_title: "오류가 발생했습니다",
     city_btn_retry_search: "다른 도시 검색하기",
-    city_load_error: "콘텐츠를 불러오는 중 오류가 발생했습니다."
+    city_load_error: "콘텐츠를 불러오는 중 오류가 발생했습니다.",
+
+    // Review Section
+    label_reviews: "리뷰",
+    msg_login_required_review: "리뷰를 작성하려면 로그인이 필요합니다.",
+    msg_editing_review: "리뷰 수정 중입니다",
+    label_rating: "별점",
+    placeholder_review_content: "이 장소에 대한 솔직한 리뷰를 남겨주세요.",
+    btn_add_photo: "사진 추가",
+    msg_saving: "저장 중...",
+    btn_update_complete: "수정 완료",
+    btn_submit_review: "리뷰 등록",
+    sort_latest: "최신순",
+    sort_rating_desc: "별점 높은순",
+    sort_rating_asc: "별점 낮은순",
+    msg_no_reviews: "아직 작성된 리뷰가 없습니다. 첫 리뷰를 남겨보세요!",
+    label_anonymous_user: "익명 사용자",
+    btn_load_more: "더 보기",
+    msg_review_updated: "리뷰가 수정되었습니다.",
+    msg_review_created: "리뷰가 등록되었습니다.",
+    msg_review_save_failed: "리뷰 저장에 실패했습니다.",
+    msg_confirm_delete_review: "정말로 이 리뷰를 삭제하시겠습니까?",
+    msg_review_deleted: "리뷰가 삭제되었습니다.",
+    msg_review_delete_failed: "리뷰 삭제에 실패했습니다."
 };

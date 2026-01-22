@@ -265,7 +265,7 @@ const PlaceSearch = () => {
                                     )}
                                     {/* Category Badge */}
                                     <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md">
-                                        {place.category_main || '장소'}
+                                        {place.category_main_translated || place.category_main || t('label_place')}
                                     </div>
                                 </div>
 
@@ -273,12 +273,12 @@ const PlaceSearch = () => {
                                 <div className="p-5 flex flex-col flex-1">
                                     <div className="flex justify-between items-start mb-2">
                                         <h3 className="font-bold text-lg line-clamp-1 group-hover:text-[#1392ec] transition-colors">
-                                            {place.name}
+                                            {place.name_translated || place.name}
                                         </h3>
                                     </div>
 
                                     <div className="text-sm text-[#1392ec] font-medium mb-1">
-                                        {place.category_main || '장소'}
+                                        {place.category_main_translated || place.category_main || t('label_place')}
                                         {place.category_detail && place.category_detail.length > 0 && (
                                             <span className="text-gray-400 font-normal ml-1">
                                                 | {place.category_detail.join(', ')}
@@ -287,7 +287,7 @@ const PlaceSearch = () => {
                                     </div>
 
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2 min-h-[40px]">
-                                        {place.address}
+                                        {place.address_translated || place.address}
                                     </p>
 
                                     <div className="mt-auto flex items-center justify-between text-sm">

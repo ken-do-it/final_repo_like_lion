@@ -541,7 +541,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="comment-text">{comment.content}</div>
+                                                <div className="comment-text">{comment.content_translated || comment.content}</div>
                                             )}
                                         </div>
                                     </div>

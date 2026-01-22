@@ -35,7 +35,7 @@ from service import (
 )
 from database import get_db
 from auth import get_current_user, require_auth
-from translation_client import translate_batch_proxy, translate_texts
+from translation_client import translate_batch_proxy, translate_texts, detect_source_language
 
 
 
@@ -183,19 +183,21 @@ async def search_places(
                 translated_map = await translate_batch_proxy(items_to_translate, lang)
                 print(f"DEBUG: Translated Map Size: {len(translated_map)}", flush=True)
                 
+
+                
                 # 결과에 적용 (순서대로 3개씩 매칭)
                 current_idx = 0
                 for res in all_results:
                     if current_idx in translated_map:
-                        res["name"] = translated_map[current_idx]
+                        res["name_translated"] = translated_map[current_idx]
                     current_idx += 1
                     
                     if current_idx in translated_map:
-                        res["address"] = translated_map[current_idx]
+                        res["address_translated"] = translated_map[current_idx]
                     current_idx += 1
                     
                     if current_idx in translated_map:
-                        res["category_main"] = translated_map[current_idx]
+                        res["category_main_translated"] = translated_map[current_idx]
                     current_idx += 1
                     
         except Exception as e:
@@ -1882,12 +1884,13 @@ async def create_user_place(
 # ==================== 리뷰 ====================
 
 @router.get("/{place_id}/reviews")
-def get_place_reviews(
+async def get_place_reviews(
     place_id: int,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 개수"),
     order_by: str = Query("latest", description="정렬: latest(최신순), rating_desc(별점높은순), rating_asc(별점낮은순)"),
     has_image: bool = Query(False, description="이미지 첨부 리뷰만 보기"),
+    lang: Optional[str] = Query(None, description="타겟 언어"),
     db: Session = Depends(get_db)
 ):
     """
@@ -1920,16 +1923,37 @@ def get_place_reviews(
     review_data = []
     for review in reviews:
         user = db.query(User).filter(User.id == review.user_id).first()
-        review_data.append(ReviewResponse(
-            id=review.id,
-            place_id=review.place_id,
-            user_id=review.user_id,
-            user_nickname=user.nickname if user else None,
-            rating=review.rating,
-            content=review.content,
-            image_url=review.image_url,
-            created_at=review.created_at
-        ))
+        review_dict = {
+            "id": review.id,
+            "place_id": review.place_id,
+            "user_id": review.user_id,
+            "user_nickname": user.nickname if user else None,
+            "rating": review.rating,
+            "content": review.content,
+            "image_url": review.image_url,
+            "created_at": review.created_at
+        }
+        review_data.append(review_dict)
+
+    # [AI 번역 적용]
+    if lang and review_data:
+        try:
+            items_to_translate = []
+            for idx, review in enumerate(review_data):
+                items_to_translate.append({
+                    "text": review["content"],
+                    "entity_type": "review",
+                    "entity_id": review["id"],
+                    "field": "content"
+                })
+            
+            translated_map = await translate_batch_proxy(items_to_translate, lang)
+            
+            for idx, review in enumerate(review_data):
+                if idx in translated_map:
+                    review["content_translated"] = translated_map[idx]
+        except Exception as e:
+            print(f"Review translation failed: {e}")
 
     # total도 같은 필터 적용
     total_query = db.query(PlaceReview).filter(PlaceReview.place_id == place_id)
@@ -1976,6 +2000,9 @@ async def create_review(
     if image:
         image_url = await save_image_file(image, "place_images")
 
+    # 리뷰 내용의 언어 감지
+    detected_lang = detect_source_language(content)
+
     # 리뷰 생성 (DB 실패 시 이미지 롤백)
     try:
         review = PlaceReview(
@@ -1983,6 +2010,7 @@ async def create_review(
             user_id=user_id,
             rating=rating,
             content=content,
+            source_lang=detected_lang,
             image_url=image_url
         )
 
@@ -2060,10 +2088,14 @@ async def update_review(
         image_url = None
         should_delete_old = bool(old_image_url)
 
+    # 리뷰 내용의 언어 감지
+    detected_lang = detect_source_language(content)
+
     # 리뷰 수정 (DB 실패 시 새 이미지 롤백)
     try:
         review.rating = rating
         review.content = content
+        review.source_lang = detected_lang
         review.image_url = image_url
         review.updated_at = datetime.utcnow()
 
