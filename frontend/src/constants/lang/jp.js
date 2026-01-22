@@ -153,7 +153,6 @@ export default {
     video_format: "MP4, WebM, Ogg (最大 50MB)",
     video_change: "動画を変更",
     video_selected: "選択済み",
-    btn_cancel: "キャンセル",
     btn_uploading: "アップロード中...",
     btn_updating: "更新中...",
     btn_save_changes: "変更を保存",
@@ -168,7 +167,7 @@ export default {
     search_result_count: "{count}件の場所が見つかりました。",
     search_initial_msg: "希望の旅行先を検索してみてください。",
     no_results_title: "検索結果がありません",
-    no_results_desc: "別のキーワードで検索してみてください。",
+    no_results_desc_try: "別のキーワードで検索してみてください。",
     searching: "検索中...",
 
     // Place Detail
@@ -312,7 +311,6 @@ export default {
     no_desc: "説明がありません。",
     trip_days: "{days}日間の旅行",
     btn_edit: "編集",
-    btn_delete: "削除",
     msg_confirm_delete: "本当にこの旅行計画を削除しますか？",
     msg_delete_fail: "削除に失敗しました。",
 
@@ -390,7 +388,7 @@ export default {
     geo_back_home: "← ホームに戻る",
 
     // LocalColumnList
-    col_title: "ローカルコラム",
+    col_title_main: "ローカルコラム",
     col_desc_1: "地元の人が教える隠れた名所やグルメストーリーを発見。",
     col_desc_2: "検証された地元の人だけが知る特別な情報が満載。",
     col_write_btn: "コラムを書く",
@@ -482,7 +480,7 @@ export default {
     col_place_ph: "場所の名前を検索 (例: 富士山)",
     btn_add_section: "セクション追加",
     btn_cancel: "キャンセル",
-    btn_submit_create: "作成完了",
+    btn_submit_create_column: "作成完了",
     btn_submit_edit: "修正完了",
     err_title_req: "タイトルを入力してください。",
     err_thumb_req: "サムネイル画像は必須です。",
@@ -507,7 +505,6 @@ export default {
 
     // Detail & List
     col_view_place: "スポット情報を見る",
-    btn_edit: "修正する",
     btn_back_list: "リストに戻る",
     confirm_delete_col: "本当にこのコラムを削除しますか？",
     msg_col_deleted: "コラムが削除されました。",
@@ -605,34 +602,13 @@ export default {
 
     // PlaceDetailPage
     error_load_place: "施設情報の読み込みに失敗しました。",
-    btn_go_back: "戻る",
-    msg_login_required: "ログインが必要です。",
-    msg_feature_coming_soon: "{action}機能は準備中です。",
-    msg_bookmark_error: "ブックマークの更新に失敗しました。",
-    msg_no_image: "画像がありません",
-    place_basic_info: "基本情報",
-    place_opening_hours: "営業時間",
-    place_location: "位置",
-    place_rating: "評価",
-    place_reviews: "レビュー {count}件",
-    btn_add_to_plan: "日程に追加",
-    btn_write_review: "レビューを書く",
+    
 
     // LocalColumnList
     col_title: "ローカルコラム",
-    col_desc_1: "地元の人だけが知る旅行情報、",
-    col_desc_2: "リアルなローカルコラムをご覧ください。",
-    col_fetch_error: "コラムの読み込みに失敗しました。",
-    msg_auth_inactive: "活動が不足しているため、まだコラムを作成できません。",
-    msg_auth_level_low: "レベルが不足しているため、まだコラムを作成できません。",
-    msg_auth_error: "権限確認中にエラーが発生しました。",
-    place_search_placeholder: "検索語を入力...",
-    col_write_btn: "コラム作成",
-    col_retry: "再試行",
-    col_no_cols: "コラムがありません",
-    col_be_first: "最初のコラムを書いてみましょう！",
+    place_search_placeholder_column: "検索語を入力...",
     no_results_desc: "検索結果がありません：",
-    btn_reset_filter: "すべて見る",
+    btn_view_all_columns: "すべて見る",
     label_place: "施設",
 
     // Review Section

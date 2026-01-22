@@ -311,7 +311,7 @@ const PlaceSearch = () => {
                     <div className="text-center py-20">
                         <div className="text-6xl mb-4">🏝️</div>
                         <h3 className="text-xl font-bold mb-2">{t('no_results_title')}</h3>
-                        <p className="text-gray-500">{t('no_results_desc')}</p>
+                        <p className="text-gray-500">{t('no_results_desc_try')}</p>
                     </div>
                 )}
             </main>

@@ -169,7 +169,7 @@ export default {
     search_result_count: "총 {count}개의 장소를 찾았습니다.",
     search_initial_msg: "원하는 여행지를 검색해보세요.",
     no_results_title: "검색 결과가 없습니다",
-    no_results_desc: "다른 검색어로 다시 시도해보세요.",
+    no_results_desc_try: "다른 검색어로 다시 시도해보세요.",
     searching: "검색 중입니다...",
 
     // Place Detail
@@ -391,7 +391,7 @@ export default {
     geo_back_home: "← 홈으로 돌아가기",
 
     // LocalColumnList
-    col_title: "현지인 칼럼",
+    col_title_main: "현지인 칼럼",
     col_desc_1: "진짜 현지인이 알려주는 숨은 명소와 맛집 이야기를 만나보세요.",
     col_desc_2: "검증된 현지인만이 들려줄 수 있는 특별한 정보가 가득합니다.",
     col_write_btn: "칼럼 쓰기",
@@ -503,7 +503,6 @@ export default {
     discount_applied_desc: "소아 25% · 유아 90% 할인 적용",
     title_select_class: "좌석 등급 선택",
     surcharge_desc: "기본가 대비 {percent}% 추가",
-    title_passenger_info: "탑승자 정보",
     passenger_n: "탑승자 {n}",
     label_lastname: "성 (영문)",
     label_firstname: "이름 (영문)",
@@ -626,34 +625,12 @@ export default {
 
     // PlaceDetailPage
     error_load_place: "장소 정보를 불러오는데 실패했습니다.",
-    btn_go_back: "뒤로 가기",
-    msg_login_required: "로그인이 필요한 서비스입니다.",
-    msg_feature_coming_soon: "{action} 기능은 준비 중입니다.",
-    msg_bookmark_error: "즐겨찾기 설정에 실패했습니다.",
-    msg_no_image: "이미지가 없습니다",
-    place_basic_info: "기본 정보",
-    place_opening_hours: "영업 시간",
-    place_location: "위치",
-    place_rating: "평점",
-    place_reviews: "리뷰 {count}개",
-    btn_add_to_plan: "일정에 추가",
-    btn_write_review: "리뷰 작성",
 
     // LocalColumnList
     col_title: "로컬 칼럼",
-    col_desc_1: "현지인들만 아는 진짜 여행 정보,",
-    col_desc_2: "생생한 로컬 칼럼을 만나보세요.",
-    col_fetch_error: "칼럼을 불러오는데 실패했습니다.",
-    msg_auth_inactive: "활동이 부족하여 아직 칼럼을 작성할 수 없습니다.",
-    msg_auth_level_low: "레벨이 부족하여 아직 칼럼을 작성할 수 없습니다.",
-    msg_auth_error: "권한 확인 중 오류가 발생했습니다.",
-    place_search_placeholder: "검색어를 입력하세요...",
-    col_write_btn: "칼럼 작성하기",
-    col_retry: "다시 시도",
-    col_no_cols: "등록된 칼럼이 없습니다",
-    col_be_first: "첫 번째 칼럼의 주인공이 되어보세요!",
+    place_search_placeholder_column: "검색어를 입력하세요...",
     no_results_desc: "검색 결과가 없습니다.",
-    btn_reset_filter: "전체 목록 보기",
+    btn_view_all_columns: "전체 목록 보기",
     label_place: "장소",
 
     // Train
@@ -775,7 +752,6 @@ export default {
     col_input_intro_ph: "칼럼의 시작을 여는 글을 작성해주세요.",
     col_input_intro_img: "서론 이미지 (선택)",
     btn_add_img: "이미지 추가",
-    btn_delete: "삭제",
     col_section_n: "섹션",
     btn_del_section: "섹션 삭제",
     col_input_subtitle_ph: "소제목을 입력하세요",
@@ -783,8 +759,7 @@ export default {
     col_related_place: "관련 장소",
     col_place_ph: "장소 이름을 검색하세요 (예: 남산타워)",
     btn_add_section: "섹션 추가하기",
-    btn_cancel: "취소",
-    btn_submit_create: "작성 완료",
+    btn_submit_create_column: "작성 완료",
     btn_submit_edit: "수정 완료",
     err_title_req: "제목을 입력해주세요.",
     err_thumb_req: "썸네일 이미지는 필수입니다.",
@@ -809,7 +784,6 @@ export default {
 
     // Detail & List
     col_view_place: "장소 정보 보기",
-    btn_edit: "수정하기",
     btn_back_list: "목록으로 돌아가기",
     confirm_delete_col: "정말로 이 칼럼을 삭제하시겠습니까?",
     msg_col_deleted: "칼럼이 삭제되었습니다.",

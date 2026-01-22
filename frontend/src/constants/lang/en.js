@@ -169,7 +169,7 @@ export default {
     search_result_count: "Found {count} places.",
     search_initial_msg: "Search for your desired destination.",
     no_results_title: "No results found",
-    no_results_desc: "Try searching with different keywords.",
+    no_results_desc_try: "Try searching with different keywords.",
     searching: "Searching...",
 
     // Place Detail
@@ -391,7 +391,7 @@ export default {
     geo_back_home: "← Back to Home",
 
     // LocalColumnList
-    col_title: "Local Column",
+    col_title_main: "Local Column",
     col_desc_1: "Discover hidden gems and food stories from real locals.",
     col_desc_2: "Full of special information only verified locals can tell you.",
     col_write_btn: "Write Column",
@@ -608,7 +608,6 @@ export default {
     passenger_infant: "Infant",
     title_flight_segments: "Flight Segments",
     unit_minutes: "min",
-    title_passenger_info: "Passenger Information",
     title_seat_info: "Seat Information",
     seat_unassigned: "Unassigned",
     btn_close: "Close",
@@ -626,34 +625,12 @@ export default {
 
     // PlaceDetailPage
     error_load_place: "Failed to load place information.",
-    btn_go_back: "Go Back",
-    msg_login_required: "Login required.",
-    msg_feature_coming_soon: "{action} feature is coming soon.",
-    msg_bookmark_error: "Failed to update bookmark.",
-    msg_no_image: "No image available",
-    place_basic_info: "Basic Info",
-    place_opening_hours: "Opening Hours",
-    place_location: "Location",
-    place_rating: "Rating",
-    place_reviews: "{count} Reviews",
-    btn_add_to_plan: "Add to Plan",
-    btn_write_review: "Write Review",
 
     // LocalColumnList
     col_title: "Local Columns",
-    col_desc_1: "Authentic travel tips from locals,",
-    col_desc_2: "Discover real local stories.",
-    col_fetch_error: "Failed to fetch columns.",
-    msg_auth_inactive: "Not enough activity to write columns yet.",
-    msg_auth_level_low: "Level too low to write columns.",
-    msg_auth_error: "Authentication error.",
-    place_search_placeholder: "Type to search...",
-    col_write_btn: "Write Column",
-    col_retry: "Retry",
-    col_no_cols: "No columns found",
-    col_be_first: "Be the first to write a column!",
+    place_search_placeholder_column: "Type to search...",
     no_results_desc: "No results found for",
-    btn_reset_filter: "View All",
+    btn_view_all_columns: "View All",
     label_place: "Place",
 
     // Train
@@ -775,7 +752,6 @@ export default {
     col_input_intro_ph: "Write the opening of your column.",
     col_input_intro_img: "Intro Image (Optional)",
     btn_add_img: "Add Image",
-    btn_delete: "Delete",
     col_section_n: "Section",
     btn_del_section: "Delete Section",
     col_input_subtitle_ph: "Enter subtitle",
@@ -783,8 +759,7 @@ export default {
     col_related_place: "Related Place",
     col_place_ph: "Search place name (e.g. Namsan Tower)",
     btn_add_section: "Add Section",
-    btn_cancel: "Cancel",
-    btn_submit_create: "Submit",
+    btn_submit_create_column: "Submit",
     btn_submit_edit: "Update",
     err_title_req: "Title is required.",
     err_thumb_req: "Thumbnail image is required.",
@@ -809,7 +784,6 @@ export default {
 
     // Detail & List
     col_view_place: "View Place Info",
-    btn_edit: "Edit",
     btn_back_list: "Back to List",
     confirm_delete_col: "Are you sure you want to delete this column?",
     msg_col_deleted: "Column deleted.",
