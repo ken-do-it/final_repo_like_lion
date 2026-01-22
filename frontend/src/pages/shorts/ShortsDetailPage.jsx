@@ -233,6 +233,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                 video: item.video_url,
                 lang: item.source_lang || 'N/A',
                 location: item.location || '', // Add location field
+                location_translated: item.location_translated || '',
                 ownerId: item.user,
                 // Add Creator Info
                 creatorName: item.nickname || item.username || `User ${item.user}`,
