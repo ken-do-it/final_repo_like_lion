@@ -89,7 +89,7 @@ async def get_local_columns(
         try:
             result = await translate_local_column_list(result, lang)
         except Exception:
-            logger.exception("Local columns translation failed")
+            logger.exception("로컬 칼럼 목록 번역 실패")
 
     return result
 
@@ -153,7 +153,7 @@ async def get_local_column_detail(
         except Exception:
             import traceback
             traceback.print_exc()
-            logger.exception("Local column detail translation failed")
+            logger.exception("로컬 칼럼 상세 번역 실패")
 
     return LocalColumnResponse(
         id=column.id,

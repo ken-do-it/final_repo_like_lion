@@ -29,7 +29,7 @@ async def search_places(
         try:
             all_results = await translate_place_search_results(all_results, lang)
         except Exception:
-            logger.exception("Translation failed")
+            logger.exception("번역 실패")
 
     return {"query": query, "total": len(all_results), "results": all_results}
 

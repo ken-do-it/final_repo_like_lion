@@ -159,9 +159,9 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                             className="appearance-none bg-transparent font-medium text-sm text-gray-600 dark:text-gray-300 hover:text-[#111111] dark:hover:text-white cursor-pointer outline-none pl-2 pr-6 py-1 focus:ring-0 border-none"
                         >
                             <option value="English">ENG</option>
-                            <option value="한국어">KOR</option>
-                            <option value="日本語">JPN</option>
-                            <option value="中文">CHN</option>
+                            <option value="\uD55C\uAD6D\uC5B4">KOR</option>
+                            <option value="\u65E5\u672C\u8A9E">JPN</option>
+                            <option value="\u4E2D\u6587">CHN</option>
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-500">
                             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
@@ -239,23 +239,23 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                                 </svg>
                             </div>
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                                {t('logout_confirm_title') || '로그아웃 하시겠습니까?'}
+                                {t('logout_confirm_title') || 'Are you sure you want to log out?'}
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                                {t('logout_confirm_desc') || '정말 로그아웃 하시겠습니까?'}
+                                {t('logout_confirm_desc') || 'Are you sure you want to log out?'}
                             </p>
                             <div className="flex gap-3 justify-center">
                                 <button
                                     onClick={cancelLogout}
                                     className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
                                 >
-                                    {t('no') || '아니요'}
+                                    {t('no') || 'No'}
                                 </button>
                                 <button
                                     onClick={confirmLogout}
                                     className="px-5 py-2.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-sm"
                                 >
-                                    {t('yes') || '예'}
+                                    {t('yes') || 'Yes'}
                                 </button>
                             </div>
                         </div>

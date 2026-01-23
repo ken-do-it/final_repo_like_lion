@@ -51,7 +51,7 @@ async def reverse_geocode(latitude: float, longitude: float) -> Optional[str]:
                 city = region.replace("특별시", "").replace("광역시", "").replace("도", "").strip()
                 return city
     except Exception as e:
-        print(f"Kakao reverse geocode failed: {e}")
+        print(f"카카오 역지오코딩 실패: {e}")
 
     return None
 
@@ -84,6 +84,6 @@ async def geocode_address(address: str) -> Optional[dict]:
                     "longitude": float(doc.get("x")),
                 }
     except Exception as e:
-        print(f"Kakao geocode failed: {e}")
+        print(f"카카오 지오코딩 실패: {e}")
 
     return None

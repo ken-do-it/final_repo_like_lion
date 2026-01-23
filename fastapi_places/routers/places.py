@@ -43,7 +43,7 @@ async def get_place_detail_by_api_id(
     )
 
     if not place:
-        raise HTTPException(status_code=404, detail="Place not found")
+        raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다.")
 
     phone = ""
     place_url = ""
@@ -68,7 +68,7 @@ async def get_place_detail_by_api_id(
                                 place_url = doc.get("place_url", "")
                                 break
             except Exception:
-                logger.exception("Kakao detail lookup failed")
+                logger.exception("카카오 상세 조회 실패")
 
         google_results = await search_google_places(f"{place.name} {place.address}", limit=3)
         if google_results:
@@ -128,7 +128,7 @@ async def get_place_detail_by_api_id(
                 lang,
             )
         except Exception:
-            logger.exception("Detail translation failed")
+            logger.exception("상세 번역 실패")
 
     return result_data
 
@@ -136,7 +136,7 @@ async def get_place_detail_by_api_id(
 @router.post("/create", response_model=PlaceDetailResponse)
 async def create_user_place(
     place_data: PlaceCreateRequest,
-    force: bool = Query(False, description="Force create even if similar place exists"),
+    force: bool = Query(False, description="유사 장소가 있어도 강제로 생성"),
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db),
 ):
@@ -144,7 +144,7 @@ async def create_user_place(
     if not geocode_result:
         raise HTTPException(
             status_code=400,
-            detail="Address could not be verified.",
+            detail="주소를 검증할 수 없습니다.",
         )
 
     verified_address = geocode_result["road_address"]
@@ -156,7 +156,7 @@ async def create_user_place(
     if lat_diff > 0.001 or lng_diff > 0.001:
         raise HTTPException(
             status_code=400,
-            detail="Address and coordinates do not match.",
+            detail="주소와 좌표가 일치하지 않습니다.",
         )
 
     city = await reverse_geocode(verified_lat, verified_lng)
@@ -166,14 +166,14 @@ async def create_user_place(
         if kakao_results:
             raise HTTPException(
                 status_code=400,
-                detail="Place already exists in Kakao.",
+                detail="카카오에 이미 등록된 장소입니다.",
             )
 
         google_results = await search_google_places(f"{place_data.name} {verified_address}")
         if google_results:
             raise HTTPException(
                 status_code=400,
-                detail="Place already exists in Google.",
+                detail="구글에 이미 등록된 장소입니다.",
             )
 
         if city:
@@ -202,7 +202,7 @@ async def create_user_place(
                 raise HTTPException(
                     status_code=409,
                     detail={
-                        "message": "Similar places exist. Use force to create.",
+                        "message": "유사한 장소가 있습니다. 강제 생성하려면 force를 사용하세요.",
                         "similar_places": similar_list,
                     },
                 )
@@ -259,7 +259,7 @@ async def get_place_detail_by_db_id(
     place = db.query(Place).filter(Place.id == place_id).first()
 
     if not place:
-        raise HTTPException(status_code=404, detail="Place not found")
+        raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다.")
 
     phone = ""
     place_url = ""
@@ -284,7 +284,7 @@ async def get_place_detail_by_db_id(
                                 place_url = doc.get("place_url", "")
                                 break
             except Exception:
-                logger.exception("Kakao detail lookup failed")
+                logger.exception("카카오 상세 조회 실패")
 
         google_results = await search_google_places(f"{place.name} {place.address}", limit=3)
         if google_results:
@@ -345,6 +345,6 @@ async def get_place_detail_by_db_id(
                 lang,
             )
         except Exception:
-            logger.exception("Detail translation failed")
+            logger.exception("상세 번역 실패")
 
     return result_data

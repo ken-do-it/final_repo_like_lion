@@ -180,7 +180,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
             return Response(resp_data)
 
         except Exception as e:
-            logger.exception("Unexpected error in ShortformViewSet.list")
+            logger.exception("ShortformViewSet.list에서 예기치 않은 오류")
             # 500 대신 읽기 가능한 에러 메시지 반환 (디버깅용)
             return Response(
                 {"detail": "Internal Server Error during shortform list fetch.", "error": str(e)}, 

@@ -433,6 +433,7 @@ export default {
     flight_alert_ret_req: "Please select a return date for round-trip.",
     flight_alert_ret_after: "Return date must be after departure.",
     flight_placeholder_dep: "Select departure airport",
+    flight_placeholder_arr: "Select arrival airport",
     tab_flight: "Flights",
     tab_train: "Trains",
     tab_subway: "Subway",

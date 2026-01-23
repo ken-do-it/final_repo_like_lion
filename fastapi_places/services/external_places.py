@@ -92,7 +92,7 @@ async def search_kakao_places(query: str, limit: int = 15) -> List[Dict]:
 
             return results
     except Exception as e:
-        print(f"Kakao place search failed: {e}")
+        print(f"카카오 장소 검색 실패: {e}")
         return []
 
 
@@ -151,7 +151,7 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
 
             return results
     except Exception as e:
-        print(f"Google place search failed: {e}")
+        print(f"구글 장소 검색 실패: {e}")
         return []
 
 
@@ -185,5 +185,5 @@ async def get_google_place_details(place_id: str) -> Optional[Dict]:
                 "website": result.get("website", ""),
             }
     except Exception as e:
-        print(f"Google place details failed: {e}")
+        print(f"구글 장소 상세 조회 실패: {e}")
         return None

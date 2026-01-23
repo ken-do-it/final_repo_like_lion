@@ -47,7 +47,7 @@ def delete_duplicates():
         
         cur.close()
         conn.close()
-        print("Done!")
+print("완료!")
         
     except Exception as e:
         print(f"Error: {e}")

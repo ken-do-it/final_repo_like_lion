@@ -68,7 +68,7 @@ async def get_place_reviews(
         try:
             review_data = await translate_reviews(review_data, lang)
         except Exception:
-            logger.exception("Review translation failed")
+            logger.exception("리뷰 번역 실패")
 
     total_query = db.query(PlaceReview).filter(PlaceReview.place_id == place_id)
     if has_image:
@@ -94,7 +94,7 @@ async def create_review(
 ):
     place = db.query(Place).filter(Place.id == place_id).first()
     if not place:
-        raise HTTPException(status_code=404, detail="Place not found")
+        raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다.")
 
     existing = (
         db.query(PlaceReview)
@@ -106,7 +106,7 @@ async def create_review(
     )
 
     if existing:
-        raise HTTPException(status_code=400, detail="Review already exists")
+        raise HTTPException(status_code=400, detail="이미 리뷰가 존재합니다.")
 
     image_url = None
     if image:
@@ -130,7 +130,7 @@ async def create_review(
     except Exception as e:
         if image_url:
             delete_image_file(image_url)
-        raise HTTPException(status_code=500, detail=f"Failed to create review: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"리뷰 생성 실패: {str(e)}")
 
     update_place_review_stats(db, place_id)
 
@@ -172,10 +172,10 @@ async def update_review(
     )
 
     if not review:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없습니다.")
 
     if review.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Permission denied")
+        raise HTTPException(status_code=403, detail="권한이 없습니다.")
 
     old_image_url = review.image_url
     new_image_url = None
@@ -204,7 +204,7 @@ async def update_review(
     except Exception as e:
         if new_image_url:
             delete_image_file(new_image_url)
-        raise HTTPException(status_code=500, detail=f"Failed to update review: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"리뷰 수정 실패: {str(e)}")
 
     if should_delete_old and old_image_url:
         delete_image_file(old_image_url)
@@ -246,10 +246,10 @@ def delete_review(
     )
 
     if not review:
-        raise HTTPException(status_code=404, detail="Review not found")
+        raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없습니다.")
 
     if review.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Permission denied")
+        raise HTTPException(status_code=403, detail="권한이 없습니다.")
 
     if review.image_url:
         delete_image_file(review.image_url)
@@ -260,4 +260,4 @@ def delete_review(
 
     update_place_review_stats(db, place_id)
 
-    return {"message": "Review deleted"}
+    return {"message": "리뷰가 삭제되었습니다."}

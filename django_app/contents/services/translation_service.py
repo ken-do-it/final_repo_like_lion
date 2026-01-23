@@ -341,10 +341,10 @@ class TranslationService:
         BATCH_SIZE = 15 
         
         def process_chunk(chunk_texts, chunk_keys, src_lang, target_lang):
-             try:
+            try:
                 t_texts, provider = TranslationService.call_fastapi_translate_batch(chunk_texts, src_lang, target_lang)
                 return t_texts, provider, chunk_keys, chunk_texts
-             except Exception as e:
+            except Exception as e:
                 logger.error(f"Chunk Batch Error: {e}")
                 return chunk_texts, "error_fallback", chunk_keys, chunk_texts
 

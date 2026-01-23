@@ -8,8 +8,7 @@ class OpenAIAdapter:
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is not set.")
-        
+            raise ValueError("OPENAI_API_KEY \uD658\uACBD \uBCC0\uC218\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.")
         self.client = OpenAI(api_key=self.api_key, timeout=30.0) # 30초 타임아웃 설정
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini") # Default to cost-effective 4o-mini
         
@@ -76,7 +75,7 @@ class OpenAIAdapter:
                     else:
                         logger.warning(f"Unexpected JSON format: {result_text}")
                 except json.JSONDecodeError:
-                    logger.warning("Failed to parse JSON response, falling back to line parsing")
+                    logger.warning("JSON 응답 파싱 실패, 라인 파싱으로 대체합니다.")
             
             # If JSON parsing failed or wasn't JSON, parse line by line
             if not translations:
