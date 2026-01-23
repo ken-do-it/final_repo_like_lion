@@ -490,6 +490,29 @@ const SubwaySearch = () => {
   };
 
   /**
+   * 입력된 역 이름을 한국어로 통일해요.
+   * 이유: 백엔드는 한국어 역명을 기준으로 ODsay에 물어보므로,
+   *       프론트에서 영어/일본어/중국어로 선택했어도 한국어로 바꿔 보내면 더 안전해요.
+   * 동작: popularStations에서 (한/영/일/중) 중 하나라도 일치하면 그 항목의 nameKo를 반환.
+   *       못 찾으면 원본을 그대로 반환하여 백엔드 매핑에 맡겨요.
+   */
+  const normalizeToKorean = (input) => {
+    if (!input) return input;
+    const v = String(input).trim().toLowerCase();
+
+    // popularStations 내부에서 한/영/일/중 어느 이름과도 일치하는 항목을 찾기
+    const hit = popularStations.find((s) => {
+      const candidates = [s.nameKo, s.nameEn, s.nameJa, s.nameZh]
+        .filter(Boolean)
+        .map((n) => String(n).toLowerCase());
+      return candidates.includes(v);
+    });
+
+    // 찾으면 한글 이름으로 통일, 없으면 원본 유지
+    return hit ? hit.nameKo : input;
+  };
+
+  /**
    * 입력 필드 변경 핸들러
    */
   const handleChange = (e) => {
@@ -544,13 +567,21 @@ const SubwaySearch = () => {
     }
 
     /**
-     * 검색 결과 페이지로 이동
-     * location.state로 검색 조건 전달
+     * 백엔드가 가장 잘 이해하는 한국어 역명으로 정규화하여 전달해요.
+     * - 사용자는 어떤 언어로 선택/입력해도 OK
+     * - 서버에는 한국어로 보내 정확도를 높여요
+     */
+    const safeParams = {
+      ...formData,
+      fromStation: normalizeToKorean(formData.fromStation),
+      toStation: normalizeToKorean(formData.toStation),
+    };
+
+    /**
+     * 검색 결과 페이지로 이동 (검색 조건 전달)
      */
     navigate('/reservations/subway/route', {
-      state: {
-        searchParams: formData
-      }
+      state: { searchParams: safeParams }
     });
   };
 
