@@ -239,23 +239,23 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                                 </svg>
                             </div>
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                                {t('logout_confirm_title') || '로그아웃 하시겠습니까?'}
+                                {t('logout_confirm_title') || 'Are you sure you want to log out?'}
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                                {t('logout_confirm_desc') || '정말 로그아웃 하시겠습니까?'}
+                                {t('logout_confirm_desc') || 'Are you sure you want to log out?'}
                             </p>
                             <div className="flex gap-3 justify-center">
                                 <button
                                     onClick={cancelLogout}
                                     className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
                                 >
-                                    {t('no') || '아니요'}
+                                    {t('no') || 'No'}
                                 </button>
                                 <button
                                     onClick={confirmLogout}
                                     className="px-5 py-2.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-sm"
                                 >
-                                    {t('yes') || '예'}
+                                    {t('yes') || 'Yes'}
                                 </button>
                             </div>
                         </div>

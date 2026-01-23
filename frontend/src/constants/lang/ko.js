@@ -432,7 +432,8 @@ export default {
     flight_alert_past_date: "과거 날짜는 선택할 수 없습니다.",
     flight_alert_ret_req: "왕복을 선택하셨습니다. 귀국일을 선택해주세요.",
     flight_alert_ret_after: "귀국일은 출발일 이후여야 합니다.",
-    flight_placeholder_dep: "출발 공항을 선택하세요",
+    flight_placeholder_dep: "\uCD9C\uBC1C\u0020\uACF5\uD56D\uC744\u0020\uC120\uD0DD\uD558\uC138\uC694",
+    flight_placeholder_arr: "\uB3C4\uCC29\u0020\uACF5\uD56D\uC744\u0020\uC120\uD0DD\uD558\uC138\uC694",
     tab_flight: "항공",
     tab_train: "기차",
     tab_subway: "지하철",
@@ -676,6 +677,14 @@ export default {
     region_gyeongsang: "경상",
     region_jeolla: "전라",
     region_gangwon: "강원",
+
+    // Train Types
+    train_type_ktx: "KTX",
+    train_type_srt: "SRT",
+    train_type_itx_saemaeul: "ITX-새마을",
+    train_type_itx_cheongchun: "ITX-청춘",
+    train_type_saemaeul: "새마을호",
+    train_type_mugunghwa: "무궁화호",
 
     // Subway
     title_subway_search: "지하철 경로 검색",

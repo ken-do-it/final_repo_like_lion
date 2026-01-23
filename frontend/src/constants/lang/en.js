@@ -433,6 +433,7 @@ export default {
     flight_alert_ret_req: "Please select a return date for round-trip.",
     flight_alert_ret_after: "Return date must be after departure.",
     flight_placeholder_dep: "Select departure airport",
+    flight_placeholder_arr: "Select arrival airport",
     tab_flight: "Flights",
     tab_train: "Trains",
     tab_subway: "Subway",
@@ -676,6 +677,14 @@ export default {
     region_gyeongsang: "Gyeongsang",
     region_jeolla: "Jeolla",
     region_gangwon: "Gangwon",
+
+    // Train Types
+    train_type_ktx: "KTX",
+    train_type_srt: "SRT",
+    train_type_itx_saemaeul: "ITX-Saemaeul",
+    train_type_itx_cheongchun: "ITX-Cheongchun",
+    train_type_saemaeul: "Saemaeul",
+    train_type_mugunghwa: "Mugunghwa",
 
     // Subway
     title_subway_search: "Subway Route Search",

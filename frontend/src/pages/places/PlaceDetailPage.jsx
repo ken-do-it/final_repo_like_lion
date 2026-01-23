@@ -308,7 +308,7 @@ const PlaceDetailPage = () => {
                             <div className="space-y-4">
                                 <div className="flex items-start gap-3">
                                     <span className="w-6 text-center">📍</span>
-                                    <span className="text-gray-600 dark:text-gray-300">{place.address}</span>
+                                    <span className="text-gray-600 dark:text-gray-300">{place.address_translated || place.address}</span>
                                 </div>
                                 {place.phone && (
                                     <div className="flex items-start gap-3">

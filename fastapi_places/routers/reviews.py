@@ -82,7 +82,7 @@ async def get_place_reviews(
         try:
             review_data = await translate_reviews(review_data, lang)
         except Exception:
-            logger.exception("Review translation failed")
+            logger.exception("리뷰 번역 실패")
 
     # total도 같은 필터 적용
     total_query = db.query(PlaceReview).filter(PlaceReview.place_id == place_id)
@@ -115,6 +115,7 @@ async def create_review(
     if not place:
         raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다")
 
+
     # 중복 리뷰 확인
     existing = (
         db.query(PlaceReview)
@@ -127,6 +128,7 @@ async def create_review(
 
     if existing:
         raise HTTPException(status_code=400, detail="이미 리뷰를 작성했습니다")
+
 
     # 이미지 저장 (있으면)
     image_url = None
@@ -154,6 +156,7 @@ async def create_review(
         if image_url:
             delete_image_file(image_url)
         raise HTTPException(status_code=500, detail=f"리뷰 저장 실패: {str(e)}")
+
 
     # 통계 업데이트
     update_place_review_stats(db, place_id)
@@ -206,6 +209,7 @@ async def update_review(
 
     if review.user_id != user_id:
         raise HTTPException(status_code=403, detail="본인의 리뷰만 수정할 수 있습니다")
+
 
     # 이미지 처리 (DB 성공 후 기존 이미지 삭제하는 안전한 방식)
     old_image_url = review.image_url # 기존 이미지 URL 저장
@@ -291,9 +295,11 @@ def delete_review(
     if not review:
         raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없습니다")
 
+
     # 본인 확인
     if review.user_id != user_id:
         raise HTTPException(status_code=403, detail="본인의 리뷰만 삭제할 수 있습니다")
+
 
     # 이미지 파일 삭제 및 썸네일에서 제거
     if review.image_url:
@@ -308,3 +314,4 @@ def delete_review(
     update_place_review_stats(db, place_id)
 
     return {"message": "리뷰가 삭제되었습니다"}
+

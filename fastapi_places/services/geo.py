@@ -70,6 +70,7 @@ async def reverse_geocode(latitude: float, longitude: float) -> Optional[str]:
     except Exception as e:
         print(f"❌ 역지오코딩 에러: {e}")
 
+
     return None
 
 
@@ -116,5 +117,6 @@ async def geocode_address(address: str) -> Optional[dict]:
 
     except Exception as e:
         print(f"❌ 주소 검색 에러: {e}")
+
 
     return None

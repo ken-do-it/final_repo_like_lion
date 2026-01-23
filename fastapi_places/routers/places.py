@@ -57,6 +57,7 @@ async def get_place_detail_by_api_id(
     if not place:
         raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다")
 
+
     # 2. 동적 정보 API 호출
     phone = ""
     place_url = ""
@@ -82,7 +83,7 @@ async def get_place_detail_by_api_id(
                                 place_url = doc.get("place_url", "")
                                 break
             except Exception:
-                logger.exception("Kakao detail lookup failed")
+                logger.exception("카카오 상세 조회 실패")
 
         # 구글에서 영업시간 가져오기 (장소명 + 주소로 검색)
         google_results = await search_google_places(f"{place.name} {place.address}", limit=3)
@@ -151,7 +152,7 @@ async def get_place_detail_by_api_id(
                 lang,
             )
         except Exception:
-            logger.exception("Detail translation failed")
+            logger.exception("상세 번역 실패")
 
     return result_data
 
@@ -162,6 +163,7 @@ async def get_place_detail_by_api_id(
 async def create_user_place(
     place_data: PlaceCreateRequest,
     force: bool = Query(False, description="중복 체크 무시하고 강제 등록"),
+
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db),
 ):
@@ -182,6 +184,7 @@ async def create_user_place(
         raise HTTPException(
             status_code=400,
             detail="유효하지 않은 주소입니다. 정확한 주소를 입력해주세요.",
+
         )
 
     # 도로명 주소와 정확한 좌표 사용
@@ -197,7 +200,7 @@ async def create_user_place(
     if lat_diff > 0.001 or lng_diff > 0.001:
         raise HTTPException(
             status_code=400,
-            detail="Address and coordinates do not match.",
+            detail="주소와 좌표가 일치하지 않습니다.",
         )
 
     # 도시명 추출
@@ -211,6 +214,7 @@ async def create_user_place(
             raise HTTPException(
                 status_code=400,
                 detail="카카오맵에 이미 있는 장소입니다. 검색 후 이용해주세요.",
+
             )
 
         # 3-2. 구글 장소 API 확인
@@ -219,6 +223,7 @@ async def create_user_place(
             raise HTTPException(
                 status_code=400,
                 detail="구글맵에 이미 있는 장소입니다. 검색 후 이용해주세요.",
+
             )
 
         # 3-3. DB에서 비슷한 장소 확인 (같은 도시 내 유사한 이름)
@@ -252,6 +257,7 @@ async def create_user_place(
                     status_code=409,
                     detail={
                         "message": "비슷한 장소가 이미 있습니다. 그래도 등록하시겠어요?",
+
                         "similar_places": similar_list,
                     },
                 )
@@ -323,6 +329,7 @@ async def get_place_detail_by_db_id(
     if not place:
         raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다")
 
+
     # 2. 동적 정보 API 호출
     phone = ""
     place_url = ""
@@ -348,7 +355,7 @@ async def get_place_detail_by_db_id(
                                 place_url = doc.get("place_url", "")
                                 break
             except Exception:
-                logger.exception("Kakao detail lookup failed")
+                logger.exception("카카오 상세 조회 실패")
 
         # 구글에서 영업시간 가져오기 (장소명 + 주소로 검색)
         google_results = await search_google_places(f"{place.name} {place.address}", limit=3)
@@ -417,6 +424,6 @@ async def get_place_detail_by_db_id(
                 lang,
             )
         except Exception:
-            logger.exception("Detail translation failed")
+            logger.exception("상세 번역 실패")
 
     return result_data

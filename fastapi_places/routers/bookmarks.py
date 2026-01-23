@@ -26,6 +26,7 @@ def add_bookmark(
     if not place:
         raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다")
 
+
     # 중복 확인
     existing = (
         db.query(PlaceBookmark)
@@ -78,6 +79,7 @@ def remove_bookmark(
 
     if not bookmark:
         raise HTTPException(status_code=404, detail="북마크를 찾을 수 없습니다")
+
 
     db.delete(bookmark)
     db.commit()

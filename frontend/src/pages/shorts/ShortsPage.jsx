@@ -3,16 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 // import Navbar from '../../components/Navbar'
 import './shortspage.css'
 import { useLanguage } from '../../context/LanguageContext'
+import { API_LANG_CODES } from '../../constants/translations'
 import { useAuth } from '../../context/AuthContext'
 import axiosInstance from '../../api/axios'
-
-// Language & Glossary Data
-const langToCode = {
-    English: 'eng_Latn',
-    한국어: 'kor_Hang',
-    日本語: 'jpn_Jpan',
-    中文: 'zho_Hans',
-}
 
 function ShortsPage({ onShortClick, embed = false }) {
     const navigate = useNavigate()
@@ -30,7 +23,7 @@ function ShortsPage({ onShortClick, embed = false }) {
     const [hasMore, setHasMore] = useState(true)
     const observer = useRef()
 
-    const langCode = langToCode[language] || 'eng_Latn'
+    const langCode = API_LANG_CODES[language] || 'eng_Latn'
 
     // Intersection Observer callback
     const lastShortElementRef = useCallback(node => {

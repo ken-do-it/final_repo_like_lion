@@ -109,6 +109,7 @@ async def search_kakao_places(query: str, limit: int = 15) -> List[Dict]:
 
     except Exception as e:
         print(f"❌ 카카오맵 API 에러: {e}")
+
         return []
 
 
@@ -170,6 +171,7 @@ async def search_google_places(query: str, limit: int = 15) -> List[Dict]:
 
     except Exception as e:
         print(f"❌ 구글맵 API 에러: {e}")
+
         return []
 
 
@@ -209,3 +211,4 @@ async def get_google_place_details(place_id: str) -> Optional[Dict]:
     except Exception as e:
         print(f"❌ 구글 Place Details API 에러: {e}")
         return None
+

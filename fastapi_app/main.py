@@ -137,7 +137,7 @@ class IndexRequest(BaseModel):
 @app.post("/index-data")
 def index_data(request: IndexRequest):
     if model is None:
-        raise HTTPException(status_code=500, detail="Model is loading...")
+        raise HTTPException(status_code=500, detail="모델 로딩 중입니다.")
 
     try:
         conn = get_db_connection()
@@ -189,7 +189,7 @@ class SearchRequest(BaseModel):
 #     logger.info(f"🔍 분류 검색 요청: {request.query}")
 
 #     if model is None:
-#         raise HTTPException(status_code=500, detail="Model is loading...")
+#         raise HTTPException(status_code=500, detail="모델 로딩 중입니다.")
 
 #     try:
 #         conn = get_db_connection()
@@ -254,7 +254,7 @@ def search_grouped(request: SearchRequest):
     logger.info(f"🔍 고도화된 하이브리드 검색 요청: {request.query}")
 
     if model is None:
-        raise HTTPException(status_code=500, detail="Model is loading...")
+            raise HTTPException(status_code=500, detail="모델 로딩 중입니다.")
 
     try:
         conn = get_db_connection()

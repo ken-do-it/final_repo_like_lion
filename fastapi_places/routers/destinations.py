@@ -405,7 +405,7 @@ async def get_city_content(
                 target_lang,
             )
         except Exception:
-            logger.exception("Deep translation failed")
+            logger.exception("심층 번역 실패")
 
     return CityContentResponse(
         places=place_responses,

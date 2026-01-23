@@ -85,12 +85,12 @@ const TrainSearch = () => {
    */
   const trainTypes = [
     { code: '', name: t('train_type_all') },
-    { code: '00', name: 'KTX' },
-    { code: '16', name: 'SRT' },
-    { code: '08', name: 'ITX-새마을' },
-    { code: '09', name: 'ITX-청춘' },
-    { code: '01', name: '새마을호' },
-    { code: '02', name: '무궁화호' },
+    { code: '00', name: t('train_type_ktx') },
+    { code: '16', name: t('train_type_srt') },
+    { code: '08', name: t('train_type_itx_saemaeul') },
+    { code: '09', name: t('train_type_itx_cheongchun') },
+    { code: '01', name: t('train_type_saemaeul') },
+    { code: '02', name: t('train_type_mugunghwa') },
   ];
 
   /**
