@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getLocalColumns, checkColumnPermission } from '../../../api/columns';
 import { useAuth } from '../../../context/AuthContext';
 import { useLanguage } from '../../../context/LanguageContext';
@@ -13,6 +13,8 @@ const LocalColumnList = () => {
     const [columns, setColumns] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchParams] = useSearchParams();
+    const cityFromUrl = searchParams.get('city');
     const [searchQuery, setSearchQuery] = useState(''); // Search State
     const [debouncedQuery, setDebouncedQuery] = useState(''); // Debounced State
 
@@ -26,7 +28,7 @@ const LocalColumnList = () => {
 
     useEffect(() => {
         fetchColumns();
-    }, [language, debouncedQuery]); // Re-fetch on query change
+    }, [language, debouncedQuery, cityFromUrl]); // Re-fetch on query change
 
     const fetchColumns = async () => {
         try {
@@ -35,7 +37,8 @@ const LocalColumnList = () => {
                 page: 1,
                 limit: 20,
                 lang: API_LANG_CODES[language] || 'eng_Latn',
-                query: debouncedQuery // Pass query
+                query: debouncedQuery, // Pass query
+                city: cityFromUrl // Pass city
             });
             setColumns(data);
         } catch (err) {
@@ -77,6 +80,11 @@ const LocalColumnList = () => {
                     <h1 className="text-3xl font-bold mb-10">
                         {t('col_title')}
                     </h1>
+                    {cityFromUrl && (
+                        <div className="mb-4 inline-block px-4 py-1 bg-blue-50 dark:bg-blue-900/30 text-[#1392ec] rounded-full text-sm font-bold border border-blue-100 dark:border-blue-800">
+                            📍 {cityFromUrl}
+                        </div>
+                    )}
                     <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
                         {t('col_desc_1')}
                         <br />
@@ -89,7 +97,7 @@ const LocalColumnList = () => {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder={t('place_search_placeholder') || "검색어를 입력하세요..."}
+                            placeholder={t('place_search_placeholder_column') || "검색어를 입력하세요..."}
                             className="w-full px-5 py-3 pr-12 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e2b36] shadow-sm focus:ring-2 focus:ring-[#1392ec] outline-none transition-all dark:text-white"
                         />
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -143,7 +151,7 @@ const LocalColumnList = () => {
                                         <>
                                             <p className="mb-2">"{debouncedQuery}" {t('no_results_desc')}</p>
                                             <button onClick={() => setSearchQuery('')} className="text-[#1392ec] underline text-sm">
-                                                {t('btn_reset_filter') || "전체 목록 보기"}
+                                                {t('btn_view_all_columns') || "전체 목록 보기"}
                                             </button>
                                         </>
                                     ) : (

@@ -233,9 +233,10 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                 video: item.video_url,
                 lang: item.source_lang || 'N/A',
                 location: item.location || '', // Add location field
+                location_translated: item.location_translated || '',
                 ownerId: item.user,
                 // Add Creator Info
-                creatorName: item.nickname || `User ${item.user}`,
+                creatorName: item.nickname || item.username || `User ${item.user}`,
                 creatorAvatar: item.profile_image_url,
                 totalComments: item.total_comments,
                 prevId: item.prev_id,
@@ -498,18 +499,18 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                                 comments.map((comment) => (
                                     <div className="comment-item" key={comment.id}>
                                         <img
-                                            src={comment.profile_image_url || `https://ui-avatars.com/api/?name=${comment.nickname || comment.user_id || 'User'}&background=random&size=32`}
+                                            src={comment.profile_image_url || `https://ui-avatars.com/api/?name=${comment.nickname || comment.username || comment.user_id || 'User'}&background=random&size=32`}
                                             alt="User"
                                             className="comment-avatar"
                                             onError={(e) => {
                                                 e.target.onerror = null;
-                                                e.target.src = `https://ui-avatars.com/api/?name=${comment.nickname || comment.user_id || 'User'}&background=random&size=32`;
+                                                e.target.src = `https://ui-avatars.com/api/?name=${comment.nickname || comment.username || comment.user_id || 'User'}&background=random&size=32`;
                                             }}
                                         />
                                         <div className="comment-content w-full">
                                             <div className="flex justify-between items-start">
                                                 <div className="comment-meta">
-                                                    <span className="comment-user">{comment.nickname || "User " + comment.user}</span>
+                                                    <span className="comment-user">{comment.nickname || comment.username || `User ${comment.user}`}</span>
                                                     <span className="comment-time">
                                                         {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
@@ -541,7 +542,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="comment-text">{comment.content}</div>
+                                                <div className="comment-text">{comment.content_translated || comment.content}</div>
                                             )}
                                         </div>
                                     </div>

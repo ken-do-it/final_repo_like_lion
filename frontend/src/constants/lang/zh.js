@@ -153,7 +153,6 @@ export default {
     video_format: "MP4, WebM, Ogg (最大 50MB)",
     video_change: "更改视频",
     video_selected: "已选择",
-    btn_cancel: "取消",
     btn_uploading: "上传中...",
     btn_updating: "更新中...",
     btn_save_changes: "保存更改",
@@ -167,7 +166,7 @@ export default {
     search_result_count: "找到 {count} 个地点。",
     search_initial_msg: "搜索你想去的目的地。",
     no_results_title: "未找到结果",
-    no_results_desc: "尝试使用不同的关键词搜索。",
+    no_results_desc_try: "尝试使用不同的关键词搜索。",
     searching: "搜索中...",
 
     // Place Detail
@@ -182,7 +181,7 @@ export default {
     msg_feature_coming_soon: "{action} 即将推出。",
     msg_bookmark_error: "书签更新失败。请重试。",
     msg_no_image: "暂无图片",
-    error_load_place: "正在加载地点详情...",
+    loading_place: "正在加载地点详情...",
     btn_go_back: "返回",
 
     // Plan List
@@ -311,7 +310,6 @@ export default {
     no_desc: "无描述。",
     trip_days: "{days} 天行程",
     btn_edit: "编辑",
-    btn_delete: "删除",
     msg_confirm_delete: "确定要删除此行程吗？",
     msg_delete_fail: "删除失败。",
 
@@ -390,7 +388,7 @@ export default {
     geo_back_home: "← 返回主页",
 
     // LocalColumnList
-    col_title: "本地专栏",
+    col_title_main: "本地专栏",
     col_desc_1: "发现真正的当地人推荐的隐藏景点和美食故事。",
     col_desc_2: "充满只有经过验证的当地人才能提供的特别信息。",
     col_write_btn: "写专栏",
@@ -482,7 +480,7 @@ export default {
     col_place_ph: "搜索地点名称 (例如:南山塔)",
     btn_add_section: "添加章节",
     btn_cancel: "取消",
-    btn_submit_create: "撰写完成",
+    btn_submit_create_column: "撰写完成",
     btn_submit_edit: "修改完成",
     err_title_req: "请输入标题。",
     err_thumb_req: "缩略图是必需的。",
@@ -507,7 +505,6 @@ export default {
 
     // Detail & List
     col_view_place: "查看地点信息",
-    btn_edit: "修改",
     btn_back_list: "返回列表",
     confirm_delete_col: "确定要删除此专栏吗？",
     msg_col_deleted: "专栏已删除。",
@@ -592,4 +589,48 @@ export default {
     seat_unassigned: "未分配",
     btn_close: "关闭",
     label_order: "订单",
+
+    // AddToPlanModal
+    title_add_schedule: "添加到日程",
+    btn_new_plan: "+ 新建行程",
+    msg_add_failed: "添加日程失败。",
+    label_current_trip: "当前行程",
+    label_upcoming_trips: "即将到来的行程",
+    msg_no_upcoming_plans: "没有即将到来的行程。",
+    msg_adding: "添加中...",
+    btn_add_to_selected_schedule: "添加到日程",
+
+    // PlaceDetailPage
+    error_load_place: "无法加载地点信息。",
+    
+
+    // LocalColumnList
+    col_title: "本地专栏",
+    place_search_placeholder_column: "输入搜索内容...",
+    no_results_desc: "没有找到结果：",
+    btn_view_all_columns: "查看全部",
+    label_place: "地点",
+
+    // Review Section
+    label_reviews: "评论",
+    msg_login_required_review: "请登录后撰写评论。",
+    msg_editing_review: "正在编辑评论",
+    label_rating: "评分",
+    placeholder_review_content: "请留下您对这个地方的真实评论。",
+    btn_add_photo: "添加照片",
+    msg_saving: "保存中...",
+    btn_update_complete: "修改完成",
+    btn_submit_review: "提交评论",
+    sort_latest: "最新",
+    sort_rating_desc: "评分最高",
+    sort_rating_asc: "评分最低",
+    msg_no_reviews: "还没有评论。成为第一个留下评论的人吧！",
+    label_anonymous_user: "匿名用户",
+    btn_load_more: "加载更多",
+    msg_review_updated: "评论已更新。",
+    msg_review_created: "评论已提交。",
+    msg_review_save_failed: "保存评论失败。",
+    msg_confirm_delete_review: "确定要删除此评论吗？",
+    msg_review_deleted: "评论已删除。",
+    msg_review_delete_failed: "删除评论失败。"
 };

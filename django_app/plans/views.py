@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated , AllowAny
 from rest_framework.response import Response
 from .models import TravelPlan , PlanDetail, PlanDetailImage
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from django.db.models import Q
 from .services import get_or_create_place_from_search
 from .serializers import (
     TravelPlanCreateSerializer,
@@ -61,6 +62,15 @@ def plan_list_create(request):
         user_id = request.query_params.get('user')
         if user_id:
             plans = plans.filter(user_id=user_id)
+
+        # [필터] 도시 (city)
+        city_param = request.query_params.get('city')
+        if city_param:
+             plans = plans.filter(
+                Q(details__place__city__icontains=city_param) | 
+                Q(details__place__address__icontains=city_param) |
+                Q(title__icontains=city_param)
+            ).distinct()
         
         serializer = TravelPlanListSerializer(plans, many=True)
         data = serializer.data

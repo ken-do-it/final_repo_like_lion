@@ -265,7 +265,7 @@ const AccommodationMap = () => {
 
                     <div className="flex items-center gap-2 mt-2">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                        {acc.category_main || 'Stay'}
+                        {acc.category_main_translated || acc.category_main || t('stays_type_all')}
                       </span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${acc.provider === 'KAKAO' ? 'bg-[#fee500]/20 text-[#3c1e1e] dark:text-[#fee500]' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'}`}>
                         {acc.provider}

@@ -385,7 +385,7 @@ const LocalColumnForm = () => {
                             isLoading={loading}
                             className="flex-1 bg-[#1392ec] hover:bg-blue-600 text-white"
                         >
-                            {isEditMode ? t('btn_submit_edit') : t('btn_submit_create')}
+                            {isEditMode ? t('btn_submit_edit') : t('btn_submit_create_column')}
                         </Button>
                     </div>
                 </div>
