@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { placesAxios as api } from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { API_LANG_CODES } from '../../constants/translations';
 
 const PlaceReviewSection = ({ placeId }) => {
     const { user, isAuthenticated } = useAuth();
+    const { language, t } = useLanguage();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
@@ -27,11 +30,13 @@ const PlaceReviewSection = ({ placeId }) => {
     const fetchReviews = async (pageNum = 1, reset = false) => {
         try {
             setLoading(true);
+            const langParam = API_LANG_CODES[language] || 'eng_Latn';
             const response = await api.get(`/places/${placeId}/reviews`, {
                 params: {
                     page: pageNum,
                     limit: 10,
-                    order_by: orderBy
+                    order_by: orderBy,
+                    lang: langParam
                 }
             });
 
@@ -53,7 +58,7 @@ const PlaceReviewSection = ({ placeId }) => {
             setPage(1);
             fetchReviews(1, true);
         }
-    }, [placeId, orderBy]);
+    }, [placeId, orderBy, language]);
 
     const handleLoadMore = () => {
         const nextPage = page + 1;
@@ -127,13 +132,13 @@ const PlaceReviewSection = ({ placeId }) => {
                 await api.put(`/places/${placeId}/reviews/${editingReviewId}`, formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                alert("리뷰가 수정되었습니다.");
+                alert(t('msg_review_updated'));
             } else {
                 // Create (POST)
                 await api.post(`/places/${placeId}/reviews`, formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                alert("리뷰가 등록되었습니다.");
+                alert(t('msg_review_created'));
             }
 
             // Reset form
@@ -145,51 +150,51 @@ const PlaceReviewSection = ({ placeId }) => {
 
         } catch (error) {
             console.error("Failed to save review:", error);
-            alert(error.response?.data?.detail || "리뷰 저장에 실패했습니다.");
+            alert(error.response?.data?.detail || t('msg_review_save_failed'));
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (reviewId) => {
-        if (!window.confirm("정말로 이 리뷰를 삭제하시겠습니까?")) return;
+        if (!window.confirm(t('msg_confirm_delete_review'))) return;
 
         try {
             await api.delete(`/places/${placeId}/reviews/${reviewId}`);
-            alert("리뷰가 삭제되었습니다.");
+            alert(t('msg_review_deleted'));
             // Refresh list
             setPage(1);
             fetchReviews(1, true);
         } catch (error) {
             console.error("Failed to delete review:", error);
-            alert("리뷰 삭제에 실패했습니다.");
+            alert(t('msg_review_delete_failed'));
         }
     };
 
     return (
         <div className="bg-white dark:bg-[#1e2b36] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                리뷰 <span className="text-[#1392ec]">{total}</span>
+                {t('label_reviews')} <span className="text-[#1392ec]">{total}</span>
             </h2>
 
             {/* Review Form */}
             <div className="mb-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 {!isAuthenticated ? (
                     <div className="text-center py-6">
-                        <p className="text-gray-500 dark:text-gray-400 mb-2">리뷰를 작성하려면 로그인이 필요합니다.</p>
-                        <a href="/login-page" className="text-[#1392ec] font-bold hover:underline">로그인하기</a>
+                        <p className="text-gray-500 dark:text-gray-400 mb-2">{t('msg_login_required_review')}</p>
+                        <a href="/login-page" className="text-[#1392ec] font-bold hover:underline">{t('btn_login')}</a>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit}>
                         {editingReviewId && (
                             <div className="mb-4 flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-sm text-blue-600 dark:text-blue-400">
-                                <span>✏️ 리뷰 수정 중입니다</span>
-                                <button type="button" onClick={handleCancelEdit} className="underline">취소</button>
+                                <span>✏️ {t('msg_editing_review')}</span>
+                                <button type="button" onClick={handleCancelEdit} className="underline">{t('btn_cancel')}</button>
                             </div>
                         )}
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium mb-1">별점</label>
+                            <label className="block text-sm font-medium mb-1">{t('label_rating')}</label>
                             <div className="flex gap-1">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button
@@ -208,7 +213,7 @@ const PlaceReviewSection = ({ placeId }) => {
                             <textarea
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
-                                placeholder="이 장소에 대한 솔직한 리뷰를 남겨주세요."
+                                placeholder={t('placeholder_review_content')}
                                 className="w-full p-3 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:outline-none focus:border-[#1392ec] min-h-[100px]"
                                 required
                             />
@@ -228,7 +233,7 @@ const PlaceReviewSection = ({ placeId }) => {
                                     htmlFor="review-image-input"
                                     className="cursor-pointer px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                                 >
-                                    📷 사진 추가
+                                    📷 {t('btn_add_photo')}
                                 </label>
                                 {imagePreview && (
                                     <div className="relative">
@@ -250,7 +255,7 @@ const PlaceReviewSection = ({ placeId }) => {
                                         onClick={handleCancelEdit}
                                         className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                                     >
-                                        취소
+                                        {t('btn_cancel')}
                                     </button>
                                 )}
                                 <button
@@ -258,7 +263,7 @@ const PlaceReviewSection = ({ placeId }) => {
                                     disabled={submitting || !content.trim()}
                                     className="px-6 py-2 bg-[#1392ec] text-white rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    {submitting ? '저장 중...' : (editingReviewId ? '수정 완료' : '리뷰 등록')}
+                                    {submitting ? t('msg_saving') : (editingReviewId ? t('btn_update_complete') : t('btn_submit_review'))}
                                 </button>
                             </div>
                         </div>
@@ -273,9 +278,9 @@ const PlaceReviewSection = ({ placeId }) => {
                     onChange={(e) => setOrderBy(e.target.value)}
                     className="p-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800"
                 >
-                    <option value="latest">최신순</option>
-                    <option value="rating_desc">별점 높은순</option>
-                    <option value="rating_asc">별점 낮은순</option>
+                    <option value="latest">{t('sort_latest')}</option>
+                    <option value="rating_desc">{t('sort_rating_desc')}</option>
+                    <option value="rating_asc">{t('sort_rating_asc')}</option>
                 </select>
             </div>
 
@@ -283,14 +288,14 @@ const PlaceReviewSection = ({ placeId }) => {
             <div className="space-y-6">
                 {reviews.length === 0 ? (
                     <div className="text-center py-10 text-gray-500">
-                        아직 작성된 리뷰가 없습니다. 첫 리뷰를 남겨보세요!
+                        {t('msg_no_reviews')}
                     </div>
                 ) : (
                     reviews.map((review) => (
                         <div key={review.id} className="border-b border-gray-100 dark:border-gray-700 pb-6 last:border-0">
                             <div className="flex justify-between items-start mb-2">
                                 <div className="flex items-center gap-2">
-                                    <div className="font-bold text-sm">{review.user_nickname || "익명 사용자"}</div>
+                                    <div className="font-bold text-sm">{review.user_nickname || t('label_anonymous_user')}</div>
                                     <span className="text-xs text-gray-400">
                                         {new Date(review.created_at).toLocaleDateString()}
                                     </span>
@@ -301,13 +306,13 @@ const PlaceReviewSection = ({ placeId }) => {
                                             onClick={() => handleEdit(review)}
                                             className="text-xs text-blue-500 hover:underline"
                                         >
-                                            수정
+                                            {t('btn_edit')}
                                         </button>
                                         <button
                                             onClick={() => handleDelete(review.id)}
                                             className="text-xs text-red-500 hover:underline"
                                         >
-                                            삭제
+                                            {t('btn_delete')}
                                         </button>
                                     </div>
                                 )}
@@ -318,7 +323,7 @@ const PlaceReviewSection = ({ placeId }) => {
                             </div>
 
                             <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-line mb-3">
-                                {review.content}
+                                {review.content_translated || review.content}
                             </p>
 
                             {review.image_url && (
@@ -343,7 +348,7 @@ const PlaceReviewSection = ({ placeId }) => {
                         disabled={loading}
                         className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
-                        {loading ? '로딩 중...' : '더 보기'}
+                        {loading ? t('msg_loading') : t('btn_load_more')}
                     </button>
                 </div>
             )}

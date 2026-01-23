@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../../context/LanguageContext';
 import axios from '../../../api/axios';
 import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-components';
+import { API_LANG_CODES } from '../../../constants/translations';
 
 /**
  * 지하철 경로 결과 페이지
@@ -19,7 +20,7 @@ import { TransportTabs, SearchCard, ReservationSidebar } from '../reservations-c
 const SubwayRoute = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   /**
    * 이전 페이지(SubwaySearch)에서 전달받은 검색 조건
@@ -55,12 +56,76 @@ const SubwayRoute = () => {
     }
 
     fetchRoutes();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, language]);
 
   /**
    * 백엔드 API로 지하철 경로 검색
    * GET /api/v1/transport/subway/route
    */
+  const translateRoutesIfNeeded = async (routes) => {
+    const targetLang = API_LANG_CODES[language] || 'eng_Latn';
+    if (targetLang === 'kor_Hang') return routes;
+
+    const getEntityId = (value) => {
+      let hash = 0;
+      for (let i = 0; i < value.length; i += 1) {
+        hash = (hash << 5) - hash + value.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    };
+
+    const texts = [];
+    const textToIndex = new Map();
+    const addText = (text) => {
+      if (!text || textToIndex.has(text)) return;
+      textToIndex.set(text, texts.length);
+      texts.push(text);
+    };
+
+    routes.forEach((route) => {
+      route.steps?.forEach((step) => {
+        addText(step.line);
+        addText(step.from);
+        addText(step.to);
+      });
+    });
+
+    if (texts.length === 0) return routes;
+
+    const payload = {
+      source_lang: 'kor_Hang',
+      target_lang: targetLang,
+      items: texts.map((text) => ({
+        text,
+        entity_type: 'raw',
+        entity_id: getEntityId(text),
+        field: 'text'
+      }))
+    };
+
+    try {
+      const response = await axios.post('/translations/batch/', payload);
+      const results = response.data?.results || {};
+      const translatedMap = new Map(
+        texts.map((text, idx) => [text, results[idx] || text])
+      );
+
+      return routes.map((route) => ({
+        ...route,
+        steps: route.steps?.map((step) => ({
+          ...step,
+          line_translated: translatedMap.get(step.line) || step.line,
+          from_translated: translatedMap.get(step.from) || step.from,
+          to_translated: translatedMap.get(step.to) || step.to
+        }))
+      }));
+    } catch (err) {
+      console.warn('Route translation failed, using original:', err);
+      return routes;
+    }
+  };
+
   const fetchRoutes = async () => {
     setLoading(true);
     setError(null);
@@ -83,7 +148,9 @@ const SubwayRoute = () => {
       /**
        * 검색 결과 저장
        */
-      setRoutes(response.data.routes || []);
+      const baseRoutes = response.data.routes || [];
+      const translatedRoutes = await translateRoutesIfNeeded(baseRoutes);
+      setRoutes(translatedRoutes);
 
       /**
        * 결과가 없으면 안내 메시지 표시
@@ -246,7 +313,7 @@ const SubwayRoute = () => {
                             className="px-3 py-1 rounded-lg text-white text-sm font-semibold text-center whitespace-nowrap"
                             style={{ backgroundColor: step.lineColor || '#666' }}
                           >
-                            {step.line}
+                            {step.line_translated || step.line}
                           </div>
                         </div>
 
@@ -254,13 +321,13 @@ const SubwayRoute = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-gray-900 dark:text-white">
-                              {step.from}
+                              {step.from_translated || step.from}
                             </span>
                             <span className="material-symbols-outlined text-gray-400 text-sm">
                               arrow_forward
                             </span>
                             <span className="font-semibold text-gray-900 dark:text-white">
-                              {step.to}
+                              {step.to_translated || step.to}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">

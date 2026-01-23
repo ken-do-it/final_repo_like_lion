@@ -15,6 +15,7 @@ const ShortsUploadPage = () => {
 
     // Form State
     const [title, setTitle] = useState('');
+    const [locationTags, setLocationTags] = useState([]);
     const [locationInput, setLocationInput] = useState('');
     const [description, setDescription] = useState('');
     const [videoFile, setVideoFile] = useState(null);
@@ -52,7 +53,12 @@ const ShortsUploadPage = () => {
             // checking user match roughly if possible, or relying on backend 403.
 
             setTitle(data.title || '');
-            setLocationInput(data.location || '');
+            const rawLocation = data.location || '';
+            const parsedTags = rawLocation
+                .split(/[\s,]+/)
+                .map((tag) => tag.replace(/^#+/, '').trim())
+                .filter(Boolean);
+            setLocationTags(parsedTags);
             setDescription(data.content || '');
             setPreviewUrl(data.video_url || '');
         } catch (err) {
@@ -73,6 +79,33 @@ const ShortsUploadPage = () => {
         }
     };
 
+    const addLocationTags = (rawValue) => {
+        const parts = rawValue
+            .split(/[\s,]+/)
+            .map((tag) => tag.replace(/^#+/, '').trim())
+            .filter(Boolean);
+        if (parts.length === 0) return;
+        setLocationTags((prev) => {
+            const next = [...prev];
+            parts.forEach((tag) => {
+                if (!next.includes(tag)) next.push(tag);
+            });
+            return next;
+        });
+        setLocationInput('');
+    };
+
+    const removeLocationTag = (tagToRemove) => {
+        setLocationTags((prev) => prev.filter((tag) => tag !== tagToRemove));
+    };
+
+    const handleLocationKeyDown = (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            addLocationTags(locationInput);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -81,7 +114,8 @@ const ShortsUploadPage = () => {
         try {
             const formData = new FormData();
             formData.append('title', title);
-            formData.append('location', locationInput);
+            const locationValue = locationTags.map((tag) => `#${tag}`).join(' ');
+            formData.append('location', locationValue);
             formData.append('content', description);
 
             // If creating, file is required. If editing, file is optional (update only if changed)
@@ -218,12 +252,32 @@ const ShortsUploadPage = () => {
                     </label>
                     <div className="relative">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">location_on</span>
-                        <input
-                            className="form-input w-full !pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-gray-800 dark:border-gray-600 outline-none transition-all"
-                            value={locationInput}
-                            onChange={(e) => setLocationInput(e.target.value)}
-                            placeholder={t('shorts_location_placeholder')}
-                        />
+                        <div className="form-input w-full !pl-12 pr-4 py-2.5 rounded-xl border border-gray-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 dark:bg-gray-800 dark:border-gray-600 outline-none transition-all flex flex-wrap items-center gap-2 min-h-[48px]">
+                            {locationTags.map((tag) => (
+                                <span
+                                    key={tag}
+                                    className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-200 px-2 py-0.5 text-xs font-medium"
+                                >
+                                    #{tag}
+                                    <button
+                                        type="button"
+                                        className="text-blue-400 hover:text-blue-600 dark:hover:text-blue-100"
+                                        onClick={() => removeLocationTag(tag)}
+                                        aria-label={`Remove ${tag}`}
+                                    >
+                                        x
+                                    </button>
+                                </span>
+                            ))}
+                            <input
+                                className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400"
+                                value={locationInput}
+                                onChange={(e) => setLocationInput(e.target.value)}
+                                onKeyDown={handleLocationKeyDown}
+                                onBlur={() => addLocationTags(locationInput)}
+                                placeholder={t('shorts_location_placeholder')}
+                            />
+                        </div>
                     </div>
                 </div>
 

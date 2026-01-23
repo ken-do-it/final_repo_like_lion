@@ -149,6 +149,7 @@ export default {
     label_title: "제목",
     label_desc: "설명",
     ph_title: "눈길을 끄는 제목을 입력하세요...",
+    ph_desc: "어떤 동영상인가요?",
     shorts_upload_desc_placeholder: "어떤 동영상인가요?",
     shorts_location_placeholder: "예: #서울 #한국",
     video_drag: "클릭하거나 동영상을 드래그하세요",
@@ -168,7 +169,7 @@ export default {
     search_result_count: "총 {count}개의 장소를 찾았습니다.",
     search_initial_msg: "원하는 여행지를 검색해보세요.",
     no_results_title: "검색 결과가 없습니다",
-    no_results_desc: "다른 검색어로 다시 시도해보세요.",
+    no_results_desc_try: "다른 검색어로 다시 시도해보세요.",
     searching: "검색 중입니다...",
 
     // Place Detail
@@ -183,7 +184,7 @@ export default {
     msg_feature_coming_soon: "{action} 기능은 준비 중입니다.",
     msg_bookmark_error: "찜하기 처리에 실패했습니다. 잠시 후 다시 시도해주세요.",
     msg_no_image: "이미지가 없습니다",
-    error_load_place: "장소 정보를 불러오는 중입니다...",
+    loading_place: "장소 정보를 불러오는 중입니다...",
     btn_go_back: "뒤로 가기",
 
     // Plan List
@@ -390,7 +391,7 @@ export default {
     geo_back_home: "← 홈으로 돌아가기",
 
     // LocalColumnList
-    col_title: "현지인 칼럼",
+    col_title_main: "현지인 칼럼",
     col_desc_1: "진짜 현지인이 알려주는 숨은 명소와 맛집 이야기를 만나보세요.",
     col_desc_2: "검증된 현지인만이 들려줄 수 있는 특별한 정보가 가득합니다.",
     col_write_btn: "칼럼 쓰기",
@@ -502,7 +503,6 @@ export default {
     discount_applied_desc: "소아 25% · 유아 90% 할인 적용",
     title_select_class: "좌석 등급 선택",
     surcharge_desc: "기본가 대비 {percent}% 추가",
-    title_passenger_info: "탑승자 정보",
     passenger_n: "탑승자 {n}",
     label_lastname: "성 (영문)",
     label_firstname: "이름 (영문)",
@@ -612,6 +612,26 @@ export default {
     seat_unassigned: "미지정",
     btn_close: "닫기",
     label_order: "주문",
+
+    // AddToPlanModal
+    title_add_schedule: "일정 등록",
+    btn_new_plan: "+ 새 일정",
+    msg_add_failed: "일정 추가에 실패했습니다.",
+    label_current_trip: "현재 여행",
+    label_upcoming_trips: "다가오는 여행",
+    msg_no_upcoming_plans: "예정된 여행이 없습니다.",
+    msg_adding: "추가 중...",
+    btn_add_to_selected_schedule: "일정에 추가",
+
+    // PlaceDetailPage
+    error_load_place: "장소 정보를 불러오는데 실패했습니다.",
+
+    // LocalColumnList
+    col_title: "로컬 칼럼",
+    place_search_placeholder_column: "검색어를 입력하세요...",
+    no_results_desc: "검색 결과가 없습니다.",
+    btn_view_all_columns: "전체 목록 보기",
+    label_place: "장소",
 
     // Train
     title_transport: "교통",
@@ -732,7 +752,6 @@ export default {
     col_input_intro_ph: "칼럼의 시작을 여는 글을 작성해주세요.",
     col_input_intro_img: "서론 이미지 (선택)",
     btn_add_img: "이미지 추가",
-    btn_delete: "삭제",
     col_section_n: "섹션",
     btn_del_section: "섹션 삭제",
     col_input_subtitle_ph: "소제목을 입력하세요",
@@ -740,8 +759,7 @@ export default {
     col_related_place: "관련 장소",
     col_place_ph: "장소 이름을 검색하세요 (예: 남산타워)",
     btn_add_section: "섹션 추가하기",
-    btn_cancel: "취소",
-    btn_submit_create: "작성 완료",
+    btn_submit_create_column: "작성 완료",
     btn_submit_edit: "수정 완료",
     err_title_req: "제목을 입력해주세요.",
     err_thumb_req: "썸네일 이미지는 필수입니다.",
@@ -766,7 +784,6 @@ export default {
 
     // Detail & List
     col_view_place: "장소 정보 보기",
-    btn_edit: "수정하기",
     btn_back_list: "목록으로 돌아가기",
     confirm_delete_col: "정말로 이 칼럼을 삭제하시겠습니까?",
     msg_col_deleted: "칼럼이 삭제되었습니다.",
@@ -793,5 +810,28 @@ export default {
     city_error_title: "오류가 발생했습니다",
     city_btn_retry_search: "다른 도시 검색하기",
     btn_see_more: "더보기",
-    city_load_error: "콘텐츠를 불러오는 중 오류가 발생했습니다."
+    city_load_error: "콘텐츠를 불러오는 중 오류가 발생했습니다.",
+
+    // Review Section
+    label_reviews: "리뷰",
+    msg_login_required_review: "리뷰를 작성하려면 로그인이 필요합니다.",
+    msg_editing_review: "리뷰 수정 중입니다",
+    label_rating: "별점",
+    placeholder_review_content: "이 장소에 대한 솔직한 리뷰를 남겨주세요.",
+    btn_add_photo: "사진 추가",
+    msg_saving: "저장 중...",
+    btn_update_complete: "수정 완료",
+    btn_submit_review: "리뷰 등록",
+    sort_latest: "최신순",
+    sort_rating_desc: "별점 높은순",
+    sort_rating_asc: "별점 낮은순",
+    msg_no_reviews: "아직 작성된 리뷰가 없습니다. 첫 리뷰를 남겨보세요!",
+    label_anonymous_user: "익명 사용자",
+    btn_load_more: "더 보기",
+    msg_review_updated: "리뷰가 수정되었습니다.",
+    msg_review_created: "리뷰가 등록되었습니다.",
+    msg_review_save_failed: "리뷰 저장에 실패했습니다.",
+    msg_confirm_delete_review: "정말로 이 리뷰를 삭제하시겠습니까?",
+    msg_review_deleted: "리뷰가 삭제되었습니다.",
+    msg_review_delete_failed: "리뷰 삭제에 실패했습니다."
 };

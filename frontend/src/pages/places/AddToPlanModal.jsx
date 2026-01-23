@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi'; // Adjust path as needed
 import { useLanguage } from '../../context/LanguageContext';
 
+import { API_LANG_CODES } from '../../constants/translations';
+
 const AddToPlanModal = ({ place, onClose }) => {
     const navigate = useNavigate();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedPlan, setSelectedPlan] = useState(null);
@@ -16,7 +18,8 @@ const AddToPlanModal = ({ place, onClose }) => {
         const fetchPlans = async () => {
             try {
                 // Fetch all plans. You might want to filter active ones in backend or here.
-                const response = await plansService.plans.getPlans();
+                const langParam = API_LANG_CODES[language] || 'eng_Latn';
+                const response = await plansService.plans.getPlans({ lang: langParam });
                 // Filter: end_date is in the future (or today)
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
@@ -28,6 +31,7 @@ const AddToPlanModal = ({ place, onClose }) => {
 
                 // Sort by start_date ascending
                 activePlans.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+                console.log("Fetched Plans:", activePlans); // Debugging
                 setPlans(activePlans);
             } catch (err) {
                 console.error("Failed to fetch plans", err);
@@ -36,7 +40,7 @@ const AddToPlanModal = ({ place, onClose }) => {
             }
         };
         fetchPlans();
-    }, []);
+    }, [language]);
 
     const handlePlanSelect = (plan) => {
         setSelectedPlan(plan);
@@ -141,7 +145,7 @@ const AddToPlanModal = ({ place, onClose }) => {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                                    {selectedPlan.title}
+                                                    {selectedPlan.title_translated || selectedPlan.title}
                                                     <span className="text-[#1392ec]">✔</span>
                                                 </div>
                                                 <div className="text-sm text-gray-500">
@@ -157,8 +161,8 @@ const AddToPlanModal = ({ place, onClose }) => {
                                                     key={day.date}
                                                     onClick={() => handleDateSelect(day.date)}
                                                     className={`flex flex-col items-center justify-center min-w-[70px] h-[70px] rounded-2xl border transition-all ${selectedDate === day.date
-                                                            ? "bg-[#1392ec] border-[#1392ec] text-white shadow-lg shadow-blue-500/30"
-                                                            : "bg-white dark:bg-[#1e2b36] border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-blue-300"
+                                                        ? "bg-[#1392ec] border-[#1392ec] text-white shadow-lg shadow-blue-500/30"
+                                                        : "bg-white dark:bg-[#1e2b36] border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-blue-300"
                                                         }`}
                                                 >
                                                     <span className={`text-sm font-bold ${selectedDate === day.date ? "text-white" : "text-[#1392ec]"}`}>
@@ -199,7 +203,7 @@ const AddToPlanModal = ({ place, onClose }) => {
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-gray-900 dark:text-white group-hover:text-[#1392ec] transition-colors">{plan.title}</div>
+                                                    <div className="font-bold text-gray-900 dark:text-white group-hover:text-[#1392ec] transition-colors">{plan.title_translated || plan.title}</div>
                                                     <div className="text-sm text-gray-500">
                                                         {plan.start_date.replace(/-/g, '.')} - {plan.end_date.replace(/-/g, '.')}
                                                     </div>

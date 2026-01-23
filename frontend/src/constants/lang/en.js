@@ -149,6 +149,7 @@ export default {
     label_title: "Title",
     label_desc: "Description",
     ph_title: "Enter a catchy title...",
+    ph_desc: "What is this video about?",
     shorts_upload_desc_placeholder: "What is this video about?",
     shorts_location_placeholder: "e.g. #Seoul #Korea",
     video_drag: "Click or Drag video here",
@@ -168,7 +169,7 @@ export default {
     search_result_count: "Found {count} places.",
     search_initial_msg: "Search for your desired destination.",
     no_results_title: "No results found",
-    no_results_desc: "Try searching with different keywords.",
+    no_results_desc_try: "Try searching with different keywords.",
     searching: "Searching...",
 
     // Place Detail
@@ -183,7 +184,7 @@ export default {
     msg_feature_coming_soon: "{action} is coming soon.",
     msg_bookmark_error: "Failed to update bookmark. Please try again.",
     msg_no_image: "No Image Available",
-    error_load_place: "Loading place details...",
+    loading_place: "Loading place details...",
     btn_go_back: "Go Back",
 
     // Plan List
@@ -390,7 +391,7 @@ export default {
     geo_back_home: "← Back to Home",
 
     // LocalColumnList
-    col_title: "Local Column",
+    col_title_main: "Local Column",
     col_desc_1: "Discover hidden gems and food stories from real locals.",
     col_desc_2: "Full of special information only verified locals can tell you.",
     col_write_btn: "Write Column",
@@ -607,11 +608,30 @@ export default {
     passenger_infant: "Infant",
     title_flight_segments: "Flight Segments",
     unit_minutes: "min",
-    title_passenger_info: "Passenger Information",
     title_seat_info: "Seat Information",
     seat_unassigned: "Unassigned",
     btn_close: "Close",
     label_order: "Order",
+
+    // AddToPlanModal
+    title_add_schedule: "Add to Schedule",
+    btn_new_plan: "+ New Trip",
+    msg_add_failed: "Failed to add to schedule.",
+    label_current_trip: "Current Trip",
+    label_upcoming_trips: "Upcoming Trips",
+    msg_no_upcoming_plans: "No upcoming trips found.",
+    msg_adding: "Adding...",
+    btn_add_to_selected_schedule: "Add to Schedule",
+
+    // PlaceDetailPage
+    error_load_place: "Failed to load place information.",
+
+    // LocalColumnList
+    col_title: "Local Columns",
+    place_search_placeholder_column: "Type to search...",
+    no_results_desc: "No results found for",
+    btn_view_all_columns: "View All",
+    label_place: "Place",
 
     // Train
     title_transport: "Transport",
@@ -732,7 +752,6 @@ export default {
     col_input_intro_ph: "Write the opening of your column.",
     col_input_intro_img: "Intro Image (Optional)",
     btn_add_img: "Add Image",
-    btn_delete: "Delete",
     col_section_n: "Section",
     btn_del_section: "Delete Section",
     col_input_subtitle_ph: "Enter subtitle",
@@ -740,8 +759,7 @@ export default {
     col_related_place: "Related Place",
     col_place_ph: "Search place name (e.g. Namsan Tower)",
     btn_add_section: "Add Section",
-    btn_cancel: "Cancel",
-    btn_submit_create: "Submit",
+    btn_submit_create_column: "Submit",
     btn_submit_edit: "Update",
     err_title_req: "Title is required.",
     err_thumb_req: "Thumbnail image is required.",
@@ -766,7 +784,6 @@ export default {
 
     // Detail & List
     col_view_place: "View Place Info",
-    btn_edit: "Edit",
     btn_back_list: "Back to List",
     confirm_delete_col: "Are you sure you want to delete this column?",
     msg_col_deleted: "Column deleted.",
@@ -793,5 +810,28 @@ export default {
     city_error_title: "An error occurred",
     city_btn_retry_search: "Search Another City",
     btn_see_more: "See More",
-    city_load_error: "Failed to load content."
+    city_load_error: "Failed to load content.",
+
+    // Review Section
+    label_reviews: "Reviews",
+    msg_login_required_review: "Please log in to write a review.",
+    msg_editing_review: "Editing review",
+    label_rating: "Rating",
+    placeholder_review_content: "Share your honest review about this place.",
+    btn_add_photo: "Add Photo",
+    msg_saving: "Saving...",
+    btn_update_complete: "Update Complete",
+    btn_submit_review: "Submit Review",
+    sort_latest: "Latest",
+    sort_rating_desc: "Highest Rating",
+    sort_rating_asc: "Lowest Rating",
+    msg_no_reviews: "No reviews yet. Be the first to leave a review!",
+    label_anonymous_user: "Anonymous User",
+    btn_load_more: "Load More",
+    msg_review_updated: "Review updated successfully.",
+    msg_review_created: "Review submitted successfully.",
+    msg_review_save_failed: "Failed to save review.",
+    msg_confirm_delete_review: "Are you sure you want to delete this review?",
+    msg_review_deleted: "Review deleted successfully.",
+    msg_review_delete_failed: "Failed to delete review."
 };

@@ -153,7 +153,6 @@ export default {
     video_format: "MP4, WebM, Ogg (最大 50MB)",
     video_change: "動画を変更",
     video_selected: "選択済み",
-    btn_cancel: "キャンセル",
     btn_uploading: "アップロード中...",
     btn_updating: "更新中...",
     btn_save_changes: "変更を保存",
@@ -168,7 +167,7 @@ export default {
     search_result_count: "{count}件の場所が見つかりました。",
     search_initial_msg: "希望の旅行先を検索してみてください。",
     no_results_title: "検索結果がありません",
-    no_results_desc: "別のキーワードで検索してみてください。",
+    no_results_desc_try: "別のキーワードで検索してみてください。",
     searching: "検索中...",
 
     // Place Detail
@@ -183,7 +182,7 @@ export default {
     msg_feature_coming_soon: "{action} 機能は準備中です。",
     msg_bookmark_error: "お気に入りの更新に失敗しました。後でもう一度お試しください。",
     msg_no_image: "画像がありません",
-    error_load_place: "場所情報を読み込み中...",
+    loading_place: "場所情報を読み込み中...",
     btn_go_back: "戻る",
 
     // Plan List
@@ -312,7 +311,6 @@ export default {
     no_desc: "説明がありません。",
     trip_days: "{days}日間の旅行",
     btn_edit: "編集",
-    btn_delete: "削除",
     msg_confirm_delete: "本当にこの旅行計画を削除しますか？",
     msg_delete_fail: "削除に失敗しました。",
 
@@ -390,7 +388,7 @@ export default {
     geo_back_home: "← ホームに戻る",
 
     // LocalColumnList
-    col_title: "ローカルコラム",
+    col_title_main: "ローカルコラム",
     col_desc_1: "地元の人が教える隠れた名所やグルメストーリーを発見。",
     col_desc_2: "検証された地元の人だけが知る特別な情報が満載。",
     col_write_btn: "コラムを書く",
@@ -482,7 +480,7 @@ export default {
     col_place_ph: "場所の名前を検索 (例: 富士山)",
     btn_add_section: "セクション追加",
     btn_cancel: "キャンセル",
-    btn_submit_create: "作成完了",
+    btn_submit_create_column: "作成完了",
     btn_submit_edit: "修正完了",
     err_title_req: "タイトルを入力してください。",
     err_thumb_req: "サムネイル画像は必須です。",
@@ -507,7 +505,6 @@ export default {
 
     // Detail & List
     col_view_place: "スポット情報を見る",
-    btn_edit: "修正する",
     btn_back_list: "リストに戻る",
     confirm_delete_col: "本当にこのコラムを削除しますか？",
     msg_col_deleted: "コラムが削除されました。",
@@ -592,4 +589,48 @@ export default {
     seat_unassigned: "未指定",
     btn_close: "閉じる",
     label_order: "注文",
+
+    // AddToPlanModal
+    title_add_schedule: "日程に追加",
+    btn_new_plan: "+ 新しい計画",
+    msg_add_failed: "日程の追加に失敗しました。",
+    label_current_trip: "現在の旅行",
+    label_upcoming_trips: "予定されている旅行",
+    msg_no_upcoming_plans: "予定されている旅行がありません。",
+    msg_adding: "追加中...",
+    btn_add_to_selected_schedule: "日程に追加",
+
+    // PlaceDetailPage
+    error_load_place: "施設情報の読み込みに失敗しました。",
+    
+
+    // LocalColumnList
+    col_title: "ローカルコラム",
+    place_search_placeholder_column: "検索語を入力...",
+    no_results_desc: "検索結果がありません：",
+    btn_view_all_columns: "すべて見る",
+    label_place: "施設",
+
+    // Review Section
+    label_reviews: "レビュー",
+    msg_login_required_review: "レビューを書くにはログインが必要です。",
+    msg_editing_review: "レビュー編集中",
+    label_rating: "評価",
+    placeholder_review_content: "この場所についての正直なレビューを残してください。",
+    btn_add_photo: "写真追加",
+    msg_saving: "保存中...",
+    btn_update_complete: "修正完了",
+    btn_submit_review: "レビュー投稿",
+    sort_latest: "最新順",
+    sort_rating_desc: "評価が高い順",
+    sort_rating_asc: "評価が低い順",
+    msg_no_reviews: "まだレビューがありません。最初のレビューを書いてみましょう！",
+    label_anonymous_user: "匿名ユーザー",
+    btn_load_more: "もっと見る",
+    msg_review_updated: "レビューが更新されました。",
+    msg_review_created: "レビューが投稿されました。",
+    msg_review_save_failed: "レビューの保存に失敗しました。",
+    msg_confirm_delete_review: "本当にこのレビューを削除しますか？",
+    msg_review_deleted: "レビューが削除されました。",
+    msg_review_delete_failed: "レビューの削除に失敗しました。"
 };

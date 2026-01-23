@@ -9,7 +9,9 @@ import asyncio
 import zlib
 from translation_client import translate_batch_proxy
 
-from service import search_kakao_places, search_google_places, remove_duplicate_places, KAKAO_REST_API_KEY
+from services.config import KAKAO_REST_API_KEY
+from services.external_places import search_google_places, search_kakao_places
+from services.places_search import remove_duplicate_places
 
 router = APIRouter(prefix="/accommodations", tags=["Accommodations"])
 
@@ -270,6 +272,12 @@ async def search_nearby_accommodations(
                             "entity_id": entity_id_name,
                             "field": "address"
                         })
+                        items_to_translate.append({
+                            "text": res.get("category_main", ""),
+                            "entity_type": "place_category",
+                            "entity_id": entity_id_name,
+                            "field": "category_main"
+                        })
 
                     if items_to_translate:
                         translated_map = await translate_batch_proxy(items_to_translate, lang)
@@ -281,6 +289,9 @@ async def search_nearby_accommodations(
                             current_idx += 1
                             if current_idx in translated_map:
                                 res["address"] = translated_map[current_idx]
+                            current_idx += 1
+                            if current_idx in translated_map:
+                                res["category_main_translated"] = translated_map[current_idx]
                             current_idx += 1
                             
                     return {

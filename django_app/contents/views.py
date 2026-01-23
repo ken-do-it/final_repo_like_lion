@@ -447,11 +447,7 @@ class TranslationProxyView(APIView):
             # 일단은 여기서 수동으로 명시적 저장을 함.
             
             # 모델명 결정 로직
-            model_name = os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
-            if os.getenv("AI_ENGINE") == "gemma-cpu":
-                model_name = "google/gemma-2-2b-it-cpu"
-            elif os.getenv("GGUF_MODEL_PATH"):
-                 model_name = os.path.basename(os.getenv("GGUF_MODEL_PATH"))
+            model_name = TranslationService._get_current_model_name()
 
             # 여기서 수동으로 저장
             TranslationEntry.objects.create(
@@ -581,11 +577,7 @@ class TranslationBatchView(APIView):
                     t_list, internal_indices, provider = future.result()
                     
                     # 모델명 결정 (한 번만 하면 되지만 loop 안에서 안전하게)
-                    model_name = os.getenv("HF_MODEL", "facebook/nllb-200-distilled-600M")
-                    if os.getenv("AI_ENGINE") == "gemma-cpu":
-                        model_name = "google/gemma-2-2b-it-cpu"
-                    elif os.getenv("GGUF_MODEL_PATH"):
-                        model_name = os.path.basename(os.getenv("GGUF_MODEL_PATH"))
+                    model_name = TranslationService._get_current_model_name()
                     
                     # 결과 처리
                     for k, t_text in enumerate(t_list):
