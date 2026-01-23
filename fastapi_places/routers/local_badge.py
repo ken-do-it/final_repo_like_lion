@@ -12,12 +12,17 @@ from services.badges import authenticate_local_badge
 router = APIRouter()
 
 
+# ==================== 현지인 인증 ====================
+
 @router.post("/local-badge/authenticate", response_model=LocalBadgeAuthResponse)
 async def authenticate_badge(
     auth_data: LocalBadgeAuthRequest,
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db),
 ):
+    """
+    현지인 인증 (위치 기반)
+    """
     badge, message = await authenticate_local_badge(
         db, user_id, auth_data.latitude, auth_data.longitude
     )
@@ -36,10 +41,14 @@ def get_badge_status(
     user_id: int = Depends(require_auth),
     db: Session = Depends(get_db),
 ):
-    # [TEMPORARY TEST MODE]
+    """
+    현지인 뱃지 상태 조회
+    """
+    # [TEMPORARY TEST MODE] 모든 사용자에게 Level 5 권한 부여 (테스트용)
+    # 번역 기능 테스트 종료 후 반드시 삭제/원복 필요
     return LocalBadgeStatusResponse(
         level=5,
-        city="강남/서초",
+        city="테스트 권한",
         is_active=True,
         first_authenticated_at=date.today(),
         last_authenticated_at=date.today(),
@@ -48,6 +57,7 @@ def get_badge_status(
         authentication_count=999,
     )
 
+    # [ORIGINAL CODE - COMMENTED OUT FOR TESTING]
     """
     badge = db.query(LocalBadge).filter(LocalBadge.user_id == user_id).first()
 

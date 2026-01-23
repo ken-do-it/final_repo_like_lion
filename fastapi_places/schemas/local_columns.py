@@ -4,12 +4,16 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
+# ==================== 현지인 칼럼 ====================
+
 class LocalColumnSectionImageCreate(BaseModel):
+    """칼럼 섹션 이미지 생성"""
     image_url: str
     order: int = Field(default=0, ge=0)
 
 
 class LocalColumnSectionCreate(BaseModel):
+    """칼럼 섹션 생성"""
     title: str = Field(..., min_length=1, max_length=200)
     content: str = Field(..., min_length=1)
     place_id: Optional[int] = None
@@ -18,8 +22,9 @@ class LocalColumnSectionCreate(BaseModel):
 
 
 class LocalColumnCreateRequest(BaseModel):
+    """현지인 칼럼 작성 요청"""
     title: str = Field(..., min_length=1, max_length=200)
-    content: str = Field(..., min_length=1)
+    content: str = Field(..., min_length=1, description="서론")
     thumbnail_url: str
     intro_image_url: Optional[str] = None
     representative_place_id: Optional[int] = None
@@ -27,6 +32,7 @@ class LocalColumnCreateRequest(BaseModel):
 
 
 class LocalColumnSectionImageResponse(BaseModel):
+    """칼럼 섹션 이미지 응답"""
     id: int
     image_url: str
     order: int
@@ -36,6 +42,7 @@ class LocalColumnSectionImageResponse(BaseModel):
 
 
 class LocalColumnSectionResponse(BaseModel):
+    """칼럼 섹션 응답"""
     id: int
     title: str
     content: str
@@ -49,6 +56,7 @@ class LocalColumnSectionResponse(BaseModel):
 
 
 class LocalColumnResponse(BaseModel):
+    """현지인 칼럼 응답"""
     id: int
     user_id: int
     user_nickname: Optional[str] = None
@@ -67,6 +75,7 @@ class LocalColumnResponse(BaseModel):
 
 
 class LocalColumnListResponse(BaseModel):
+    """칼럼 목록 응답"""
     id: int
     user_id: int
     user_nickname: Optional[str] = None
