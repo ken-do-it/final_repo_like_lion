@@ -217,24 +217,24 @@ const SubwayRoute = () => {
           <div className="lg:col-span-8">
             {/* 검색 조건 표시 */}
             <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">
                     {searchParams.fromStation}
                   </div>
-                  <span className="material-symbols-outlined text-gray-400">
+                  <span className="material-symbols-outlined text-gray-400 flex-shrink-0">
                     arrow_forward
                   </span>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">
                     {searchParams.toStation}
                   </div>
-                  <div className="text-sm px-3 py-1 bg-primary/10 text-primary rounded-full">
+                  <div className="text-sm px-3 py-1 bg-primary/10 text-primary rounded-full whitespace-nowrap flex-shrink-0">
                     {getOptionLabel(searchParams.option)}
                   </div>
                 </div>
                 <button
                   onClick={() => navigate(-1)}
-                  className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
+                  className="text-primary hover:text-primary/80 transition-colors text-sm font-medium whitespace-nowrap flex-shrink-0"
                 >
                   {t('btn_change_conditions')}
                 </button>
@@ -267,11 +267,11 @@ const SubwayRoute = () => {
               {routes.map((route, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-6"
+                  className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm p-6 break-words"
                 >
                   {/* 경로 헤더 */}
-                  <div className="flex items-center justify-between mb-6 pb-4 border-b dark:border-gray-700">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6 pb-4 border-b dark:border-gray-700">
+                    <div className="flex items-center gap-3 min-w-0">
                       <span className="text-2xl font-bold text-primary">
                         {t('label_route_n').replace('{n}', index + 1)}
                       </span>
@@ -281,7 +281,7 @@ const SubwayRoute = () => {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-6 text-sm">
+                    <div className="grid grid-cols-3 gap-4 w-full sm:w-auto text-sm">
                       <div className="text-center">
                         <p className="text-gray-600 dark:text-gray-400">{t('label_duration')}</p>
                         <p className="text-lg font-bold text-gray-900 dark:text-white">
@@ -306,11 +306,11 @@ const SubwayRoute = () => {
                   {/* 경로 상세 */}
                   <div className="space-y-4">
                     {route.steps?.map((step, stepIndex) => (
-                      <div key={stepIndex} className="flex items-start gap-4">
+                      <div key={stepIndex} className="flex items-start gap-3">
                         {/* 노선 표시 */}
-                        <div className="flex-shrink-0 w-32">
+                        <div className="flex-shrink-0 w-28 sm:w-32">
                           <div
-                            className="px-3 py-1 rounded-lg text-white text-sm font-semibold text-center whitespace-nowrap"
+                            className="px-2 py-1 rounded-lg text-white text-xs sm:text-sm font-semibold text-center leading-tight break-words"
                             style={{ backgroundColor: step.lineColor || '#666' }}
                           >
                             {step.line_translated || step.line}
@@ -318,19 +318,19 @@ const SubwayRoute = () => {
                         </div>
 
                         {/* 역 정보 */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-900 dark:text-white">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
+                            <span className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate max-w-[100px] sm:max-w-[150px]">
                               {step.from_translated || step.from}
                             </span>
-                            <span className="material-symbols-outlined text-gray-400 text-sm">
+                            <span className="material-symbols-outlined text-gray-400 text-sm flex-shrink-0">
                               arrow_forward
                             </span>
-                            <span className="font-semibold text-gray-900 dark:text-white">
+                            <span className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate max-w-[100px] sm:max-w-[150px]">
                               {step.to_translated || step.to}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             {t('desc_route_step').replace('{stations}', step.stations).replace('{duration}', step.duration)}
                           </p>
                         </div>
