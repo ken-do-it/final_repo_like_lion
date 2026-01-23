@@ -533,10 +533,12 @@ def get_badge_status(
 async def get_local_columns(
     city: Optional[str] = Query(None, description="도시 필터"),
     query: Optional[str] = Query(None, description="검색어 (제목/내용)"),
+    writer: Optional[str] = Query(None, description="작성자 필터 (예: me)"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     lang: Optional[str] = Query(None, description="타겟 언어"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id_from_token: Optional[int] = Depends(get_current_user)
 ):
     """
     현지인 칼럼 목록 조회
@@ -570,6 +572,14 @@ async def get_local_columns(
             LocalColumn.content.ilike(f"%{query}%")
         )
         q = q.filter(search_filter)
+
+    # 3. 작성자 필터 (신규 추가)
+    if writer == 'me':
+        print(f"DEBUG: writer={writer}, user_id={user_id_from_token}")
+        if not user_id_from_token:
+            # 인증되지 않은 사용자가 내 글 보기를 요청하면 401 에러
+            raise HTTPException(status_code=401, detail="로그인이 필요합니다.")
+        q = q.filter(LocalColumn.user_id == user_id_from_token)
 
     # 페이징 적용
     offset = (page - 1) * limit
@@ -1034,7 +1044,7 @@ async def update_local_column(
                 pass
 
         # 7. 썸네일 이미지 처리 (새 이미지 먼저 저장)
-        if thumbnail and isinstance(thumbnail, UploadFile):
+        if thumbnail and hasattr(thumbnail, 'file') and thumbnail.filename:
             new_thumbnail_url = await save_image_file(thumbnail, "place_images")
             saved_new_images.append(new_thumbnail_url)
             if column.thumbnail_url:
@@ -1045,7 +1055,7 @@ async def update_local_column(
             column.thumbnail_url = None
 
         # 8. 인트로 이미지 처리 (새 이미지 먼저 저장)
-        if intro_image and isinstance(intro_image, UploadFile):
+        if intro_image and hasattr(intro_image, 'file') and intro_image.filename:
             new_intro_url = await save_image_file(intro_image, "place_images")
             saved_new_images.append(new_intro_url)
             if column.intro_image_url:
