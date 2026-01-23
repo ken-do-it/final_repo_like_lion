@@ -50,8 +50,12 @@ const GeoImageUploader = () => {
         state: {
           lat,
           lng,
-          imageUrl: selectedReview.image_url, // 게임에서 보여줄 이미지
-          totalPhotos: 1 // 현재는 단일 라운드로 설정 (필요 시 reviews.length 전달)
+          imageUrl: selectedReview.image_url,
+          totalPhotos: 1,
+          placeId: selectedReview.place_id,
+          placeName: selectedReview.place_name,
+          reviewContent: selectedReview.content,
+          reviewerNickname: selectedReview.user_nickname // Assuming available in review object
         }
       });
     } catch (error) {

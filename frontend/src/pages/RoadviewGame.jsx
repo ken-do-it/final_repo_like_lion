@@ -131,9 +131,33 @@ const RoadviewGame = () => {
 
   // Initial Fetch / Load Session
   useEffect(() => {
-    // 1. If data passed via state (e.g. from upload), use it (Priority 1)
+    // 1. If data passed via state (e.g. from upload), Init Game Queue with it (Priority 1)
     if (locationState?.lat && locationState?.lng) {
+      // Construct a single-item queue from state
+      const singleGameItem = {
+        lat: locationState.lat,
+        lng: locationState.lng,
+        image_url: locationState.imageUrl,
+        place_name: locationState.placeName || '',
+        place_id: locationState.placeId || null,
+        review_content: locationState.reviewContent || '',
+        reviewer_nickname: locationState.reviewerNickname || ''
+      };
+
+      setGameQueue([singleGameItem]);
+      setCurrentQueueIndex(0);
+      setTargetData({
+        lat: locationState.lat,
+        lng: locationState.lng,
+        imageUrl: locationState.imageUrl,
+        totalPhotos: 1,
+        placeName: locationState.placeName || '',
+        placeId: locationState.placeId || null,
+        reviewContent: locationState.reviewContent || '',
+        reviewerNickname: locationState.reviewerNickname || ''
+      });
       setIsDataLoading(false);
+      // We don't return here because we want the session saving effect to run
       return;
     }
 
