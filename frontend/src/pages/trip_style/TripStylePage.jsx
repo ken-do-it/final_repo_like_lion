@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import './TripStylePage.css';
+import { useLanguage } from '../../context/LanguageContext';
 
 const TripStylePage = () => {
-    const [lang, setLang] = useState('en'); // 'en' or 'ko'
+    const { language, setLanguage } = useLanguage();
     const [activeCat, setActiveCat] = useState('All');
+    const localLang = language === '\uD55C\uAD6D\uC5B4' ? 'ko' : 'en';
 
     const texts = {
         en: {
@@ -38,7 +40,7 @@ const TripStylePage = () => {
         }
     };
 
-    const t = texts[lang];
+    const t = useMemo(() => texts[localLang], [localLang]);
 
     return (
         <div className="trip-container">
@@ -48,7 +50,7 @@ const TripStylePage = () => {
                 <div className="trip-nav-right">
                     <button
                         className="lang-selector"
-                        onClick={() => setLang(lang === 'en' ? 'ko' : 'en')}
+                        onClick={() => setLanguage(localLang === 'en' ? '\uD55C\uAD6D\uC5B4' : 'English')}
                     >
                         {lang === 'en' ? '🇰🇷 KO' : '🇺🇸 EN'}
                     </button>

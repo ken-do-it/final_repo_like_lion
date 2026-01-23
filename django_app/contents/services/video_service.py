@@ -45,7 +45,7 @@ class VideoService:
             )
             return s3, bucket_name
         except ImportError:
-            logger.error("boto3 library not found.")
+            logger.error("boto3 \uB77C\uC774\uBE0C\uB7EC\uB9AC\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.")
             return None, None
         except Exception as e:
             logger.error(f"Failed to create S3 client: {e}")
@@ -211,7 +211,7 @@ class VideoService:
         """
         ffprobe_bin = VideoService.resolve_bin("ffprobe", "FFPROBE_BIN")
         if not ffprobe_bin:
-            logger.warning("ffprobe not found (set FFPROBE_BIN env or add to PATH)")
+            logger.warning("ffprobe\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. (FFPROBE_BIN \uC124\uC815 \uB610\uB294 PATH\uC5D0 \uCD94\uAC00)")
             return {}
         try:
             cmd = [
@@ -234,7 +234,7 @@ class VideoService:
                 "height": int(height) if height is not None else None,
             }
         except Exception as e:
-            logger.warning("ffprobe metadata extraction failed for %s: %s", file_path, e)
+            logger.warning("ffprobe 메타데이터 추출 실패: %s (%s)", file_path, e)
             return {}
 
     @staticmethod

@@ -1,17 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContext'
+import { API_LANG_CODES } from '../../constants/translations';
 import axiosInstance from '../../api/axios';
 import './shortsDetailpage.css';
-
-// Language & Glossary Data
-const langToCode = {
-    English: 'eng_Latn',
-    한국어: 'kor_Hang',
-    日本語: 'jpn_Jpan',
-    中文: 'zho_Hans',
-}
 
 const uiGlossary = {
     play: { kor_Hang: '재생', jpn_Jpan: '再生', zho_Hans: '播放' },
@@ -107,7 +100,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     const id = propVideoId || paramId
     const { language } = useLanguage()
 
-    const langCode = langToCode[language] || 'eng_Latn'
+    const langCode = API_LANG_CODES[language] || 'eng_Latn'
     const t = useMemo(() => {
         const map = { ...baseTexts }
         if (langCode !== 'eng_Latn') {

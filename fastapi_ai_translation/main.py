@@ -53,7 +53,7 @@ app.include_router(translation_router, prefix="/api/ai", tags=["translation"])
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("🚀 AI Translation Service (Port 8003) Starting...")
+    logger.info("AI \uBC88\uC5ED \uC11C\uBE44\uC2A4(\uD3EC\uD2B8 8003) \uC2DC\uC791...")
     # Add any model warm-up logic here if needed
     # The client initializes the model lazily or on import, check client.py behavior
     warmup_model()

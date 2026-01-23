@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 # FastAPI 앱 생성
 app = FastAPI(
     title="Korea Trip - Places API",
-    description=("Places API for search, details, reviews, bookmarks, and local columns. "
-                "Use Bearer token for protected endpoints."),
+    description=("장소 검색, 상세, 리뷰, 북마크, 로컬 칼럼을 제공하는 API입니다. "
+                "보호된 엔드포인트는 Bearer 토큰이 필요합니다."),
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"

@@ -1,4 +1,27 @@
 import axios from 'axios';
+import { API_LANG_CODES } from '../constants/translations';
+
+// Helper function to get Accept-Language header value
+const getAcceptLanguageHeader = () => {
+    const userLanguage = localStorage.getItem('userLanguage') || 'English';
+
+    // Direct mapping for all possible language values
+    const langMap = {
+        'English': 'eng_Latn',
+        '한국어': 'kor_Hang',
+        '日本語': 'jpn_Jpan',
+        '中文': 'zho_Hans',
+        // Also support the display codes from Navbar
+        'ENG': 'eng_Latn',
+        'KOR': 'kor_Hang',
+        'JPN': 'jpn_Jpan',
+        'CHN': 'zho_Hans',
+    };
+
+    const langCode = langMap[userLanguage] || API_LANG_CODES[userLanguage] || 'eng_Latn';
+    console.log(`[Language] localStorage: "${userLanguage}" → API code: "${langCode}"`);
+    return langCode;
+};
 
 const axiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/api', // Relative path for Nginx proxy
@@ -16,18 +39,10 @@ export const searchAxios = axios.create({
     },
 });
 
-export const placesAxios = axios.create({
-    baseURL: import.meta.env.VITE_PLACES_API_URL || '/api/v1', // Relative path
-    // Content-Type은 interceptor에서 동적으로 설정 (FormData 지원을 위해)
-});
-
-// Request Interceptor: Attach Token
-axiosInstance.interceptors.request.use(
+// Add Accept-Language header for searchAxios
+searchAxios.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('access_token');
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
-        }
+        config.headers['Accept-Language'] = getAcceptLanguageHeader();
         return config;
     },
     (error) => {
@@ -35,13 +50,36 @@ axiosInstance.interceptors.request.use(
     }
 );
 
-// Also attach token for placesAxios
+export const placesAxios = axios.create({
+    baseURL: import.meta.env.VITE_PLACES_API_URL || '/api/v1', // Relative path
+    // Content-Type은 interceptor에서 동적으로 설정 (FormData 지원을 위해)
+});
+
+// Request Interceptor: Attach Token and Language
+axiosInstance.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        // Add Accept-Language header
+        config.headers['Accept-Language'] = getAcceptLanguageHeader();
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Also attach token and language for placesAxios
 placesAxios.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
+        // Add Accept-Language header
+        config.headers['Accept-Language'] = getAcceptLanguageHeader();
         // FormData 전송 시 Content-Type 헤더 제거 (axios가 boundary 포함하여 자동 설정)
         if (config.data instanceof FormData) {
             delete config.headers['Content-Type'];

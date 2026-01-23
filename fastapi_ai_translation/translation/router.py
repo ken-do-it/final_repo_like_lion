@@ -16,15 +16,15 @@ router = APIRouter()
 cache = TranslationCache(ttl_seconds=300)
 
 try:
-    engine = os.getenv("AI_ENGINE", "ollama") # Default to Ollama now
+    engine = os.getenv("AI_ENGINE", "ollama")  # Default to Ollama now
     if engine == "openai":
-         logger.info("Initializing OpenAI Adapter...")
-         client = OpenAIAdapter()
+        logger.info("OpenAI \uC5B4\uB311\uD130 \uCD08\uAE30\uD654 \uC911...")
+        client = OpenAIAdapter()
     elif engine == "ollama":
-        logger.info("Initializing Ollama Adapter...")
+        logger.info("Ollama \uC5B4\uB311\uD130 \uCD08\uAE30\uD654 \uC911...")
         client = OllamaAdapter()
     else:
-        logger.info("Initializing NLLB Client...")
+        logger.info("NLLB \uD074\uB77C\uC774\uC5B8\uD2B8 \uCD08\uAE30\uD654 \uC911...")
         client = TranslationClient()
 except Exception as e:
     logger.error(f"TranslationClient init failed (engine={os.getenv('AI_ENGINE')}): {e}", exc_info=True)
@@ -33,18 +33,18 @@ except Exception as e:
 
 def warmup_model():
     """
-    모델 가중치를 메모리에 로드하고 추론 엔진을 예열하기 위해 더미 번역을 수행합니다.
-    이 작업을 통해 첫 번째 사용자 요청이 느려지는 것을 방지할 수 있습니다.
+    \uBAA8\uB378 \uAC00\uC911\uCE58\uB97C \uBA54\uBAA8\uB9AC\uC5D0 \uB85C\uB4DC\uD558\uACE0 \uCD94\uB860 \uC5D4\uC9C4\uC744 \uC608\uC5F4\uD558\uAE30 \uC704\uD574 \uB354\uBBF8 \uBC88\uC5ED\uC744 \uC218\uD589\uD569\uB2C8\uB2E4.
+    \uC774 \uC791\uC5C5\uC744 \uD1B5\uD574 \uCCAB \uBC88\uC9F8 \uC0AC\uC6A9\uC790 \uC694\uCCAD\uC774 \uB290\uB824\uC9C0\uB294 \uAC83\uC744 \uBC29\uC9C0\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.
+    \uC601\uBB38\uB2F5\uC774 \uAC00\uB9CC\uD788 \uC138\uD305\uB418\uC5B4 \uC788\uC5B4 \uCD08\uAE30 \uC751\uB2F5 \uC9C0\uC5F0\uC744 \uC904\uC77C \uC218 \uC788\uC2B5\uB2C8\uB2E4.
     """
     if client:
         try:
-            logger.info("🔥 Warming up AI Translation Model...")
+            logger.info("AI \uBC88\uC5ED \uBAA8\uB378 \uC6CC\uC5C5 \uC911...")
             # Translate a simple "Hello" to force model loading
             client.translate("Hello", "eng_Latn", "kor_Hang")
-            logger.info("✅ Model Warm-up Completed!")
+            logger.info("\uBAA8\uB378 \uC6CC\uC5C5 \uC644\uB8CC!")
         except Exception as e:
-            logger.warning(f"⚠️ Model Warm-up Failed (Non-critical): {e}")
-
+            logger.warning(f"Model warm-up failed (non-critical): {e}")
 
 class TranslateRequest(BaseModel):
     text: str
@@ -64,11 +64,11 @@ def translate(req: TranslateRequest):
     }
     """
     if client is None:
-        raise HTTPException(status_code=500, detail="Translation client not initialized (check HF_MODEL).")
+        raise HTTPException(status_code=500, detail="번역 클라이언트가 초기화되지 않았습니다. (HF_MODEL 확인)")
 
     text = (req.text or "").strip()
     if not text:
-        raise HTTPException(status_code=400, detail="text is required")
+        raise HTTPException(status_code=400, detail="텍스트가 필요합니다.")
 
     cached = cache.get(text, req.source_lang, req.target_lang)
     if cached:
@@ -80,10 +80,10 @@ def translate(req: TranslateRequest):
         cache.set(text, req.source_lang, req.target_lang, translated, provider="local-transformers")
         return {"translated_text": translated, "cached": False, "provider": "local-transformers"}
     except ValueError as e:
-        logger.warning("Translation validation error: %s", e)
+        logger.warning("번역 검증 오류: %s", e)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error("Local translation failed: %s", e)
+        logger.error("로컬 번역 실패: %s", e)
         raise HTTPException(status_code=502, detail=f"Translation failed: {e}")
 
 
@@ -105,7 +105,7 @@ def translate_batch(req: TranslateBatchRequest):
     }
     """
     if client is None:
-        raise HTTPException(status_code=500, detail="Translation client not initialized.")
+        raise HTTPException(status_code=500, detail="번역 클라이언트가 초기화되지 않았습니다.")
     
     if not req.texts:
         return {"translations": [], "provider": "local-transformers"}
@@ -122,8 +122,8 @@ def translate_batch(req: TranslateBatchRequest):
         print(f"DEBUG: Client returned: {translated_list}", flush=True)
         return {"translations": translated_list, "provider": "local-transformers-batch"}
     except ValueError as e:
-        logger.warning("Batch translation validation error: %s", e)
+        logger.warning("배치 번역 검증 오류: %s", e)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error("Batch translation failed: %s", e)
+        logger.error("배치 번역 실패: %s", e)
         raise HTTPException(status_code=502, detail=f"Batch translation failed: {e}")

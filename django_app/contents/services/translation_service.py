@@ -50,6 +50,31 @@ class TranslationService:
         # 1. Regex Heuristics
         if re.search(r'[가-힣]', text):
             return 'kor_Hang'
+        
+        # 2. Korean Jamo Only (ㅋㅋㅋ, ㅇㄻㅇ etc.) - Cannot be translated
+        # Consonants: ㄱ-ㅎ, Vowels: ㅏ-ㅣ
+        if re.search(r'[ㄱ-ㅎㅏ-ㅣ]', text):
+            # Check if text contains only jamo and whitespace
+            text_without_jamo = re.sub(r'[ㄱ-ㅎㅏ-ㅣ\s]', '', text)
+            if not text_without_jamo:  # Only jamo and spaces
+                return 'unknown'  # Untranslatable text
+        
+        # 3. Mixed Jamo/Syllable Validation (e.g., "ㅇㄴㅁ러나ㅣㅁ리")
+        # Check if text has both jamo and syllables but is likely nonsense
+        has_complete_syllables = bool(re.search(r'[가-힣]', text))
+        has_jamo = bool(re.search(r'[ㄱ-ㅎㅏ-ㅣ]', text))
+        
+        if has_complete_syllables and has_jamo:
+            # Mixed text - check if it's mostly jamo (likely gibberish)
+            jamo_count = len(re.findall(r'[ㄱ-ㅎㅏ-ㅣ]', text))
+            syllable_count = len(re.findall(r'[가-힣]', text))
+            total_korean = jamo_count + syllable_count
+            
+            # If more than 30% is jamo, treat as untranslatable
+            if total_korean > 0 and (jamo_count / total_korean) > 0.3:
+                return 'unknown'
+        
+        
         if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', text): # Hiragana/Katakana
             return 'jpn_Jpan'
             
@@ -242,6 +267,27 @@ class TranslationService:
                 if src_field == 'location' or (entity_type == 'plan_comment' and src_field == 'content'):
                     current_src_lang = TranslationService.detect_language(original_text)
 
+                # Skip translation for unknown/invalid text (e.g., Korean jamo only: ㅋㅋㅋ, ㅇㄻㅇ)
+
+                # Skip translation for unknown/invalid text (e.g., Korean jamo only: ㅋㅋㅋ, ㅇㄻㅇ)
+                if current_src_lang == 'unknown':
+                    item[tgt_field] = original_text
+                    continue
+                
+                # Skip translation for very short text (≤3 chars, likely emoticons/slang)
+                if len(original_text.strip()) <= 3:
+                    item[tgt_field] = original_text
+                    continue
+
+                if current_src_lang == 'unknown':
+                    item[tgt_field] = original_text
+                    continue
+                
+                # Skip translation for very short text (3 chars, likely emoticons/slang)
+                if len(original_text.strip()) <= 3:
+                    item[tgt_field] = original_text
+                    continue
+
                 # If source == target, copy text
                 if current_src_lang == target_lang:
                     item[tgt_field] = original_text
@@ -341,10 +387,10 @@ class TranslationService:
         BATCH_SIZE = 15 
         
         def process_chunk(chunk_texts, chunk_keys, src_lang, target_lang):
-             try:
+            try:
                 t_texts, provider = TranslationService.call_fastapi_translate_batch(chunk_texts, src_lang, target_lang)
                 return t_texts, provider, chunk_keys, chunk_texts
-             except Exception as e:
+            except Exception as e:
                 logger.error(f"Chunk Batch Error: {e}")
                 return chunk_texts, "error_fallback", chunk_keys, chunk_texts
 

@@ -33,6 +33,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+# ==================== 도시별 콘텐츠 ====================
+
+# City Name Mapping
 CITY_NAMES = {
     "서울": {"en": "Seoul", "jp": "ソウル", "zh": "首尔"},
     "부산": {"en": "Busan", "jp": "プサン", "zh": "釜山"},
@@ -51,9 +54,16 @@ CITY_NAMES = {
 def get_popular_cities(
     target_lang: str = Query("ko", description="Target language code (ko, en, jp, zh)"),
 ):
+    """
+    인기 도시 목록
+    - target_lang에 따라 도시 설명을 번역된 텍스트로 반환
+    """
+    
+    # Normalize language code
     lang_map = {"ja": "jp", "zh-CN": "zh", "zh-TW": "zh"}
     search_lang = lang_map.get(target_lang, target_lang)
 
+    # 다국어 설명 데이터
     descriptions = {
         "서울": {
             "ko": "현대와 전통이 공존하는 대한민국의 수도",
@@ -117,6 +127,7 @@ def get_popular_cities(
         },
     }
 
+    # 기본 리스트 (메타데이터용)
     city_list = [
         "서울",
         "부산",
@@ -133,7 +144,10 @@ def get_popular_cities(
     result = []
     for city_name in city_list:
         desc_dict = descriptions.get(city_name, {})
+        # 요청된 언어가 없으면 영어 -> 한국어 순으로 폴백
         desc = desc_dict.get(search_lang) or desc_dict.get("en") or desc_dict.get("ko")
+        
+        # 도시 이름 번역
         display_name = CITY_NAMES.get(city_name, {}).get(search_lang, city_name)
 
         result.append(
@@ -153,22 +167,32 @@ async def get_city_content(
     target_lang: str = Query("ko", description="Target language code (ko, en, jp, zh)"),
     db: Session = Depends(get_db),
 ):
+    """
+    도시별 통합 콘텐츠 조회
+    - DB 우선 조회 후, 15개 미만이면 카카오 API로 보충
+    """
     from types import SimpleNamespace
     from datetime import datetime
 
+    # 1. DB에서 먼저 조회 (최대 15개)
     db_places = db.query(Place).filter(Place.city == city_name).limit(15).all()
 
+    # 2. 15개 미만이면 카카오 API로 보충 (카테고리별 병렬 검색)
     places = list(db_places)
     if len(places) < 15:
         remaining = 15 - len(places)
+        # 기존 place_api_id 목록 (중복 방지용)
         existing_api_ids = {p.place_api_id for p in places if p.place_api_id}
-        per_category = min(5, (remaining // 3) + 2)
+
+        # 카테고리별 병렬 검색 (맛집 5개 + 관광지 5개 + 카페 5개)
+        per_category = min(5, (remaining // 3) + 2) # 카테고리당 개수
         kakao_results_list = await asyncio.gather(
             search_kakao_places(f"{city_name} 맛집", limit=per_category),
             search_kakao_places(f"{city_name} 관광지", limit=per_category),
             search_kakao_places(f"{city_name} 카페", limit=per_category),
         )
 
+        # 결과 합치기
         all_kakao_results = []
         for results in kakao_results_list:
             all_kakao_results.extend(results)
@@ -176,9 +200,11 @@ async def get_city_content(
         for kakao_place in all_kakao_results:
             if len(places) >= 15:
                 break
+            # 중복 체크
             if kakao_place.get("place_api_id") in existing_api_ids:
                 continue
 
+            # 카카오 결과를 Place-like 객체로 변환
             place_obj = SimpleNamespace(
                 id=None,
                 provider=kakao_place.get("provider", "KAKAO"),
@@ -202,7 +228,11 @@ async def get_city_content(
             places.append(place_obj)
             existing_api_ids.add(kakao_place.get("place_api_id"))
 
+    # 현지인 칼럼 15개 (제목에 도시명 포함 OR 섹션의 장소가 해당 도시)
+    # 1. 제목에 도시명이 포함된 칼럼
     title_match = LocalColumn.title.ilike(f"%{city_name}%")
+
+    # 2. 섹션에 연결된 장소가 해당 도시인 칼럼
     section_place_subquery = (
         db.query(LocalColumnSection.column_id)
         .join(Place, LocalColumnSection.place_id == Place.id)
@@ -224,6 +254,7 @@ async def get_city_content(
         .all()
     )
 
+    # 칼럼 데이터 변환
     column_data = []
     for column in columns:
         user = db.query(User).filter(User.id == column.user_id).first()
@@ -244,6 +275,7 @@ async def get_city_content(
             )
         )
 
+    # 숏폼 10개 (제목 또는 location에 도시명 포함 + PUBLIC만)
     shortforms = (
         db.query(Shortform)
         .filter(
@@ -258,6 +290,7 @@ async def get_city_content(
         .all()
     )
 
+    # 숏폼 데이터 변환
     shortform_data = []
     for sf in shortforms:
         user = db.query(User).filter(User.id == sf.user_id).first()
@@ -279,8 +312,12 @@ async def get_city_content(
             )
         )
 
+    # 여행일정 15개 (is_public=True AND (title OR description OR plan_details->place->city))
+    # 1. 제목에 도시명 포함
     plan_title_match = TravelPlan.title.ilike(f"%{city_name}%")
+    # 2. 설명에 도시명 포함
     plan_desc_match = TravelPlan.description.ilike(f"%{city_name}%")
+    # 3. 일정 상세의 장소가 해당 도시인 경우
     plan_place_subquery = (
         db.query(PlanDetail.plan_id)
         .join(Place, PlanDetail.place_id == Place.id)
@@ -304,6 +341,7 @@ async def get_city_content(
         .all()
     )
 
+    # 여행일정 데이터 변환
     travel_plan_data = []
     for plan in travel_plans:
         user = db.query(User).filter(User.id == plan.user_id).first()
@@ -321,11 +359,12 @@ async def get_city_content(
             )
         )
 
+    # places 변환 (DB 객체 + 카카오 API 결과 혼합)
     place_responses = []
     for p in places:
-        if hasattr(p, "__table__"):
+        if hasattr(p, "__table__"): # SQLAlchemy 모델인 경우
             place_responses.append(PlaceDetailResponse.from_orm(p))
-        else:
+        else: # SimpleNamespace (카카오 API 결과)
             place_responses.append(
                 PlaceDetailResponse(
                     id=p.id or 0,
@@ -349,10 +388,13 @@ async def get_city_content(
                 )
             )
 
+    # ==================== Batch Translation (Deep Translation) ====================
+    # 번역된 도시 이름
     lang_map = {"ja": "jp", "zh-CN": "zh", "zh-TW": "zh"}
     lookup_lang = lang_map.get(target_lang, target_lang)
     display_name = CITY_NAMES.get(city_name, {}).get(lookup_lang, city_name)
 
+    # 한국어가 아닐 경우에만 일괄 번역 수행
     if target_lang != "ko":
         try:
             await translate_city_content(
@@ -363,7 +405,7 @@ async def get_city_content(
                 target_lang,
             )
         except Exception:
-            logger.exception("Deep translation failed")
+            logger.exception("심층 번역 실패")
 
     return CityContentResponse(
         places=place_responses,

@@ -82,8 +82,7 @@ class TranslationClient:
         Validates lang codes against tokenizer.lang_code_to_id.
         """
         if not text or not text.strip():
-            raise ValueError("Text is empty")
-
+            raise ValueError("\uD14D\uC2A4\uD2B8\uAC00 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.")
         source_lang = self._normalize_lang(source_lang)
         target_lang = self._normalize_lang(target_lang)
 

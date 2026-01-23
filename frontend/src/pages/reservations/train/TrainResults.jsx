@@ -61,6 +61,25 @@ const TrainResults = () => {
   }, [searchParams, navigate, language]);
 
   /**
+   * 열차 종류 번역 헬퍼 함수
+   */
+  const getTrainTypeName = (trainType) => {
+    if (!trainType) return '';
+
+    // 열차 종류 매핑
+    const typeMap = {
+      'KTX': t('train_type_ktx'),
+      'SRT': t('train_type_srt'),
+      'ITX-새마을': t('train_type_itx_saemaeul'),
+      'ITX-청춘': t('train_type_itx_cheongchun'),
+      '새마을호': t('train_type_saemaeul'),
+      '무궁화호': t('train_type_mugunghwa'),
+    };
+
+    return typeMap[trainType] || trainType;
+  };
+
+  /**
    * 백엔드 API로 기차편 검색
    * GET /api/v1/transport/trains/search
    */
@@ -298,12 +317,12 @@ const TrainResults = () => {
                     <div className="flex items-center gap-3">
                       {/* 열차 종류 배지 */}
                       <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${train.trainType && train.trainType.includes('KTX')
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                          : train.trainType && train.trainType.includes('SRT')
-                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : train.trainType && train.trainType.includes('SRT')
+                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                         }`}>
-                        {train.trainType}
+                        {getTrainTypeName(train.trainType)}
                       </span>
                       {/* 열차 번호 */}
                       <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -313,7 +332,7 @@ const TrainResults = () => {
                     {/* 요금 표시 */}
                     <div className="text-right">
                       <p className="text-xs text-gray-500 dark:text-gray-400">{t('label_adult_fare')}</p>
-                      <p className="text-xl font-bold text-primary">{train.adultFare?.toLocaleString()}원</p>
+                      <p className="text-xl font-bold text-primary">{train.adultFare?.toLocaleString()}{t('unit_krw')}</p>
                     </div>
                   </div>
 

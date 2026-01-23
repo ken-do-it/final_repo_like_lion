@@ -248,7 +248,7 @@ const GeoImageUploader = () => {
                   onClick={handleStartGame}
                   className="w-full py-4 bg-[#1392ec] hover:bg-blue-600 active:scale-[0.98] transition-all text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
                 >
-                  <span>�</span>
+                  <span>&gt;</span>
                   {t('geo_start_game')}
                 </button>
               </div>

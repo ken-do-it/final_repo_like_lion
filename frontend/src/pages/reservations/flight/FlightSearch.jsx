@@ -57,8 +57,7 @@ const FlightSearch = () => {
    * API 응답의 공항명과 매칭하여 안전하게 버튼을 구성합니다
    */
   const domesticNameKeywords = [
-    '김포', '제주', '김해', '인천', '대구', '청주', '광주', '울산', '여수', '포항',
-    '군산', '양양', '무안', '원주', '사천', '진주', '부산'
+    '\uAE40\uD3EC', '\uC81C\uC8FC', '\uAE40\uD574', '\uC778\uCC9C', '\uB300\uAD6C', '\uCCAD\uC8FC', '\uAD11\uC8FC', '\uC6B8\uC0B0', '\uC5EC\uC218', '\uD3EC\uD56D', '\uAD70\uC0B0', '\uC591\uC591', '\uBB34\uC548', '\uC6D0\uC8FC', '\uC0AC\uCC9C', '\uC9C4\uC8FC', '\uBD80\uC0B0'
   ];
 
   /**
@@ -68,11 +67,11 @@ const FlightSearch = () => {
     switch (language) {
       case 'English':
         return airport.nameEn || airport.nameKo;
-      case '日本語':  // 일본어
+      case '\u65E5\u672C\u8A9E':  // Japanese
         return airport.nameJa || airport.nameKo;
-      case '中文':    // 중국어
+      case '\u4E2D\u6587':    // Chinese
         return airport.nameZh || airport.nameKo;
-      case '한국어':  // 한국어
+      case '\uD55C\uAD6D\uC5B4':  // Korean
         return airport.nameKo;
       default:
         return airport.nameKo;
@@ -160,11 +159,11 @@ const FlightSearch = () => {
   const handleAirportSelect = (airport, type) => {
     if (type === 'departure') {
       setFormData(prev => ({ ...prev, depAirportId: airport.iataCode }));
-      setDepSearchTerm(airport.nameKo);
+      setDepSearchTerm(getAirportName(airport));
       setShowDepDropdown(false);
     } else {
       setFormData(prev => ({ ...prev, arrAirportId: airport.iataCode }));
-      setArrSearchTerm(airport.nameKo);
+      setArrSearchTerm(getAirportName(airport));
       setShowArrDropdown(false);
     }
   };

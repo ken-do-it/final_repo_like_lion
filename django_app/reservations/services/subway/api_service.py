@@ -133,7 +133,7 @@ class MSSubwayAPIService:
             data = resp.json()
 
             if "error" in data:
-                logger.error("ODsay searchStation 오류: %s", data["error"])
+                logger.error("ODsay 역검색 오류: %s", data["error"])
                 raise SubwayError(SubwayError.ODSAY_ERROR)
 
             stations = data.get("result", {}).get("station", [])
@@ -167,7 +167,7 @@ class MSSubwayAPIService:
             return coords
 
         except requests.RequestException as e:
-            logger.error("searchStation 네트워크 오류: %s", e)
+            logger.error("역검색 네트워크 오류: %s", e)
             raise SubwayError(SubwayError.ODSAY_ERROR)
 
     # =============== 공개 메서드 ===============
@@ -253,7 +253,7 @@ class MSSubwayAPIService:
             data = resp.json()
 
             if "error" in data:
-                logger.error("ODsay 경로검색 오류: %s", data["error"])
+                logger.error("ODsay 경로 검색 오류: %s", data["error"])
                 raise SubwayError(SubwayError.ODSAY_ERROR)
 
             # 3. 응답 변환 → 옵션 정렬 → 상위 3개
@@ -268,7 +268,7 @@ class MSSubwayAPIService:
             return result
 
         except requests.RequestException as e:
-            logger.error("경로검색 네트워크 오류: %s", e)
+            logger.error("경로 검색 네트워크 오류: %s", e)
             raise SubwayError(SubwayError.ODSAY_ERROR)
 
     # =============== 변환/정렬 ===============

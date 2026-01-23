@@ -17,13 +17,13 @@ def clean_orphaned_vectors():
         cur = conn.cursor()
         
         # 1. Get all valid shortform IDs
-        print("Fetching valid shortform IDs...")
+print("유효한 쇼츠 ID 조회 중...")
         cur.execute("SELECT id FROM shortforms")
         valid_ids = [row[0] for row in cur.fetchall()]
         print(f"Valid Shortform IDs ({len(valid_ids)}): {valid_ids}")
 
         # 2. Get all vector target_ids for shortforms
-        print("Fetching search vector target_ids...")
+print("검색 벡터 target_id 조회 중...")
         cur.execute("SELECT uid, target_id, content FROM search_vectors WHERE category = 'shortform'")
         vectors = cur.fetchall()
         print(f"Total Shortform Vectors: {len(vectors)}")
@@ -42,11 +42,11 @@ def clean_orphaned_vectors():
             conn.commit()
             print(f"Deleted {len(orphans)} orphaned vectors.")
         else:
-            print("No orphaned vectors found.")
+print("고아 벡터가 없습니다.")
 
         cur.close()
         conn.close()
-        print("Done!")
+print("완료!")
         
     except Exception as e:
         print(f"Error: {e}")
