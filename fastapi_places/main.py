@@ -6,6 +6,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # 환경 변수 로드
 load_dotenv()
@@ -23,6 +24,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Prometheus 계측 설정
+Instrumentator().instrument(app).expose(app)
 
 # CORS 설정 (모든 도메인 허용 - 개발용)
 app.add_middleware(
