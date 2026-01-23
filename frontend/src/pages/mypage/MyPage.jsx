@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import api from '../../api/axios';
+import api, { placesAxios } from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { API_LANG_CODES } from '../../constants/translations';
@@ -39,6 +39,18 @@ const MyPage = () => {
     const [detailLoading, setDetailLoading] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
+    // My Columns State
+    const [myColumns, setMyColumns] = useState([]);
+    const [columnsLoading, setColumnsLoading] = useState(false);
+
+    // My Saved Places State
+    const [savedPlaces, setSavedPlaces] = useState([]);
+    const [savedPlacesLoading, setSavedPlacesLoading] = useState(false);
+
+    // My Reviews State
+    const [myReviews, setMyReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+
     useEffect(() => {
         if (!isAuthenticated) {
             // handled by AuthProvider mostly, but safe guard
@@ -47,12 +59,11 @@ const MyPage = () => {
     }, [isAuthenticated]);
 
     useEffect(() => {
-        if (activeTab === 'shorts') {
-            fetchMyShorts();
-        }
-        if (activeTab === 'reservations') {
-            fetchReservations();
-        }
+        if (activeTab === 'shorts') fetchMyShorts();
+        if (activeTab === 'reservations') fetchReservations();
+        if (activeTab === 'columns') fetchMyColumns();
+        if (activeTab === 'saved') fetchSavedPlaces();
+        if (activeTab === 'reviews') fetchMyReviews();
     }, [activeTab, language]);
 
     const fetchProfile = async () => {
@@ -74,10 +85,8 @@ const MyPage = () => {
     const fetchMyShorts = async () => {
         setShortsLoading(true);
         try {
-            // Using the new filter 'writer=me' and language parameter
             const langCode = API_LANG_CODES[language] || 'eng_Latn';
             const response = await api.get(`/shortforms/?writer=me&lang=${langCode}`);
-            // Check if response.data is pagination object or list
             const data = response.data.results ? response.data.results : response.data;
             setMyShorts(data);
         } catch (err) {
@@ -96,6 +105,42 @@ const MyPage = () => {
             console.error("Failed to fetch reservations", err);
         } finally {
             setReservationsLoading(false);
+        }
+    };
+
+    const fetchMyColumns = async () => {
+        setColumnsLoading(true);
+        try {
+            const response = await placesAxios.get('/places/local-columns?writer=me');
+            setMyColumns(response.data);
+        } catch (err) {
+            console.error("Failed to fetch my columns", err);
+        } finally {
+            setColumnsLoading(false);
+        }
+    };
+
+    const fetchSavedPlaces = async () => {
+        setSavedPlacesLoading(true);
+        try {
+            const response = await api.get('/users/mypage/saved-places/');
+            setSavedPlaces(response.data.results || response.data);
+        } catch (err) {
+            console.error("Failed to fetch saved places", err);
+        } finally {
+            setSavedPlacesLoading(false);
+        }
+    };
+
+    const fetchMyReviews = async () => {
+        setReviewsLoading(true);
+        try {
+            const response = await api.get('/users/mypage/reviews/');
+            setMyReviews(response.data.results || response.data);
+        } catch (err) {
+            console.error("Failed to fetch my reviews", err);
+        } finally {
+            setReviewsLoading(false);
         }
     };
 
@@ -142,9 +187,36 @@ const MyPage = () => {
         }
     };
 
+    const handleRemoveBookmark = async (e, id) => {
+        e.stopPropagation();
+        if (!window.confirm("Remove this place from your bookmarks?")) return;
+        try {
+            await api.delete(`/users/mypage/saved-places/${id}/`);
+            setSavedPlaces(prev => prev.filter(p => p.id !== id));
+        } catch (err) {
+            console.error("Failed to remove bookmark", err);
+            alert("Failed to remove bookmark");
+        }
+    };
+
+    const handleDeleteReview = async (e, id) => {
+        e.stopPropagation();
+        if (!window.confirm("Delete this review?")) return;
+        try {
+            await api.delete(`/users/mypage/reviews/${id}/`);
+            setMyReviews(prev => prev.filter(r => r.id !== id));
+        } catch (err) {
+            console.error("Failed to delete review", err);
+            alert("Failed to delete review");
+        }
+    };
+
+
     if (loading) return <div className="flex justify-center py-20">{t('loading')}</div>;
 
     const displayUser = detailedUser || user;
+
+    /* Renders */
 
     const renderProfile = () => (
         <div className="max-w-3xl mx-auto">
@@ -218,7 +290,6 @@ const MyPage = () => {
                         </div>
                     </div>
 
-                    {/* Local Badge Section */}
                     <div className="mt-10 pt-8 border-t border-slate-100 dark:border-slate-700">
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                             🏅 {t('local_badge_title') || '현지인 인증 뱃지'}
@@ -412,6 +483,209 @@ const MyPage = () => {
         );
     };
 
+    const renderMyColumns = () => {
+        if (columnsLoading) return <div className="text-center py-20">{t('loading')}</div>;
+
+        if (!myColumns || myColumns.length === 0) return (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">✍️</div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Columns Yet</h3>
+                <p className="mb-6">Share your local insights with travelers!</p>
+                <Button
+                    onClick={() => navigate('/places/columns/new')}
+                    className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
+                >
+                    Write Column
+                </Button>
+            </div>
+        );
+
+        return (
+            <div className="space-y-4">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                        My Columns ({myColumns.length})
+                    </h3>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/places/columns/new')}
+                        className="rounded-lg"
+                    >
+                        + Write Column
+                    </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {myColumns.map(column => (
+                        <div
+                            key={column.id}
+                            onClick={() => navigate(`/local-columns/${column.id}`)}
+                            className="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all cursor-pointer flex flex-col h-full"
+                        >
+                            <div className="relative h-48 overflow-hidden">
+                                <img
+                                    src={column.thumbnail_url || 'https://via.placeholder.com/600x400?text=No+Thumbnail'}
+                                    alt={column.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                                <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
+                                    👁️ {column.view_count}
+                                </div>
+                            </div>
+                            <div className="p-5 flex flex-col flex-1">
+                                <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-[#1392ec] transition-colors line-clamp-2">
+                                    {column.title}
+                                </h4>
+                                <div className="mt-auto pt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700">
+                                    <span>{new Date(column.created_at).toLocaleDateString()}</span>
+                                    <span className="font-medium text-[#1392ec]">Read More →</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    const renderSavedPlaces = () => {
+        if (savedPlacesLoading) return <div className="text-center py-20">{t('loading')}</div>;
+
+        if (!savedPlaces || savedPlaces.length === 0) return (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">💾</div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Saved Places</h3>
+                <p className="mb-6">Bookmark your favorite spots to visit later!</p>
+                <Button
+                    onClick={() => navigate('/places/search')}
+                    className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
+                >
+                    Explore Places
+                </Button>
+            </div>
+        );
+
+        return (
+            <div className="space-y-4">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
+                    Saved Places ({savedPlaces.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {savedPlaces.map(item => {
+                        // item.place는 숫자 ID, 나머지 정보는 item에서 직접 접근
+                        const placeId = item.place;
+                        if (!placeId) return null;
+
+                        return (
+                            <div
+                                key={item.id}
+                                onClick={() => navigate(`/places/${placeId}`)}
+                                className="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all cursor-pointer relative"
+                            >
+                                <div className="relative h-40 overflow-hidden bg-slate-100 dark:bg-slate-700">
+                                    <div className="w-full h-full flex items-center justify-center text-4xl text-slate-400">
+                                        📍
+                                    </div>
+                                    <button
+                                        onClick={(e) => handleRemoveBookmark(e, item.id)}
+                                        className="absolute top-2 right-2 bg-white/80 dark:bg-black/50 p-1.5 rounded-full text-red-500 hover:bg-red-50 transition-colors"
+                                        title="Remove"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <div className="p-4">
+                                    <div className="text-xs text-[#1392ec] font-bold mb-1 uppercase tracking-wider">
+                                        {item.place_category || 'Place'}
+                                    </div>
+                                    <h4 className="font-bold text-slate-900 dark:text-white mb-1 truncate">
+                                        {item.place_name}
+                                    </h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                                        {item.place_address}
+                                    </p>
+                                    {item.place_rating && (
+                                        <div className="mt-2 text-sm text-yellow-500">
+                                            ⭐ {item.place_rating}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
+    const renderMyReviews = () => {
+        if (reviewsLoading) return <div className="text-center py-20">{t('loading')}</div>;
+
+        if (!myReviews || myReviews.length === 0) return (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">⭐</div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Reviews Yet</h3>
+                <p className="mb-6">Share your experiences with others!</p>
+                <Button
+                    onClick={() => navigate('/places/search')}
+                    className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
+                >
+                    Find Places to Review
+                </Button>
+            </div>
+        );
+
+        return (
+            <div className="space-y-4">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
+                    My Reviews ({myReviews.length})
+                </h3>
+                <div className="space-y-4">
+                    {myReviews.map(review => (
+                        <div
+                            key={review.id}
+                            onClick={() => navigate(`/places/${review.place}`)}
+                            className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 transition-colors cursor-pointer group"
+                        >
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 className="font-bold text-lg text-slate-900 dark:text-white group-hover:text-[#1392ec]">
+                                        {review.place_name || `Place #${review.place}`}
+                                    </h4>
+                                    <div className="flex items-center gap-1 text-yellow-500 text-sm mt-1">
+                                        {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                                        <span className="text-slate-400 ml-2 text-xs">
+                                            {new Date(review.created_at).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={(e) => handleDeleteReview(e, review.id)}
+                                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                                        title="Delete"
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                            <p className="text-slate-600 dark:text-slate-300 text-sm line-clamp-3">
+                                {review.content}
+                            </p>
+                            {review.image_url && (
+                                <img
+                                    src={review.image_url}
+                                    alt="Review attachment"
+                                    className="mt-3 w-24 h-24 object-cover rounded-lg"
+                                />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     const tabList = [
         { id: 'profile', label: t('tab_profile'), icon: '👤' },
         { id: 'shorts', label: t('tab_shorts'), icon: '🎬' },
@@ -470,9 +744,12 @@ const MyPage = () => {
                             {activeTab === 'preferences' && renderPreferences()}
                             {activeTab === 'shorts' && renderMyShorts()}
                             {activeTab === 'reservations' && renderReservations()}
+                            {activeTab === 'columns' && renderMyColumns()}
+                            {activeTab === 'saved' && renderSavedPlaces()}
+                            {activeTab === 'reviews' && renderMyReviews()}
 
                             {/* Placeholders for others */}
-                            {['schedules', 'columns', 'saved', 'reviews'].includes(activeTab) && (
+                            {['schedules'].includes(activeTab) && (
                                 <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                                     <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-3xl">🚧</div>
                                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Coming Soon</h3>

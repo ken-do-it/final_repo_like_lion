@@ -290,17 +290,90 @@ class MSSubwayAPIService:
             info = path.get("info", {})
             sub_path_list = path.get("subPath", [])
 
-            # 도보 구간이 있는지 확인 (100m 이상의 도보는 제외)
-            has_significant_walk = False
-            for sub_path in sub_path_list:
-                if sub_path.get("trafficType") == 3:  # 도보
-                    distance = sub_path.get("distance", 0)
-                    if distance >= 100:  # 100m 이상 도보 필요 시 제외
-                        has_significant_walk = True
-                        break
+            # ============================================================
+            # 1단계: 버스 포함 경로 필터링
+            # - trafficType: 1=지하철, 2=버스, 3=도보
+            # - 버스가 포함된 경로는 순수 지하철 경로가 아니므로 제외합니다.
+            # ============================================================
+            has_bus = any(
+                (sp or {}).get("trafficType") == 2
+                for sp in sub_path_list
+            )
+            if has_bus:
+                continue  # 버스 포함 경로 제외
 
-            if has_significant_walk:
-                continue  # 이 경로는 건너뜀
+            # ============================================================
+            # 2단계: 도보 구간 필터링 로직
+            # ============================================================
+            # - 목표: 지하철 내부 환승 통로에서 걷는 것은 허용하고, 역 밖을 걸어야 하는 경로는 막아요.
+            # - 방법: 도보 구간(trafficType == 3)이 '지하철-도보-지하철' 사이에 끼었으면 내부 환승 도보로 보고 허용합니다.
+            #        시작/끝 도보는 역 좌표 검색 시 발생하는 짧은 구간이므로 더 관대하게 처리합니다.
+            #        중간에 발생하는 외부 도보(버스 환승 등)는 엄격히 제한합니다.
+
+            # 도보 구간 분류 함수
+            def _classify_walk_segment(idx: int) -> str:
+                """
+                도보 구간을 분류합니다.
+                - 'start_end': 경로 시작/끝 도보 (역 입구까지 걷기)
+                - 'internal': 지하철-도보-지하철 환승 통로
+                - 'external': 그 외 외부 도보 (다른 교통수단 연결)
+                """
+                is_first = idx == 0
+                is_last = idx == len(sub_path_list) - 1
+
+                # 시작/끝 도보: 역 좌표 검색 시 발생하는 입구까지 걷기
+                if is_first or is_last:
+                    return 'start_end'
+
+                # 앞/뒤 구간이 모두 지하철이면 환승 통로
+                prev_is_subway = (sub_path_list[idx - 1] or {}).get("trafficType") == 1
+                next_is_subway = (sub_path_list[idx + 1] or {}).get("trafficType") == 1
+                if prev_is_subway and next_is_subway:
+                    return 'internal'
+
+                # 그 외는 외부 도보 (버스 환승 등)
+                return 'external'
+
+            total_start_end_walk = 0  # 시작/끝 도보 (역 입구까지, 관대하게 허용)
+            total_internal_walk = 0   # 환승 통로 도보 (넉넉히 허용)
+            total_external_walk = 0   # 중간 외부 도보 (엄격 제한)
+
+            for i, sp in enumerate(sub_path_list):
+                try:
+                    if (sp or {}).get("trafficType") == 3:  # 도보
+                        dist = float(sp.get("distance") or 0)
+                        walk_type = _classify_walk_segment(i)
+                        if walk_type == 'start_end':
+                            total_start_end_walk += dist
+                        elif walk_type == 'internal':
+                            total_internal_walk += dist
+                        else:
+                            total_external_walk += dist
+                except Exception:
+                    # 데이터 형식이 예외적이어도 전체 경로를 막지 않도록 합니다.
+                    continue
+
+            # 임계값 설정 (디버깅용: 모든 도보 허용)
+            # TODO: 테스트 후 적절한 값으로 조정 필요
+            # - 시작/끝 도보: 역 좌표 검색이므로 짧아야 함
+            # - 환승 통로: 환승통로가 길 수 있으니 넉넉히 허용
+            # - 중간 외부 도보: 다른 역/정류장으로 이동
+            START_END_WALK_MAX = 99999  # 디버깅: 임시로 무제한
+            INTERNAL_WALK_MAX = 99999   # 디버깅: 임시로 무제한
+            EXTERNAL_WALK_MAX = 99999   # 디버깅: 임시로 무제한
+
+            # 디버깅용 로그 출력
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"[도보필터] 시작/끝={total_start_end_walk}m, 환승={total_internal_walk}m, 외부={total_external_walk}m")
+
+            # 제외 규칙 적용: 기준을 넘으면 이 경로는 건너뜁니다.
+            if total_start_end_walk > START_END_WALK_MAX:
+                continue
+            if total_internal_walk > INTERNAL_WALK_MAX:
+                continue
+            if total_external_walk > EXTERNAL_WALK_MAX:
+                continue
 
             total_time = info.get("totalTime", 0)  # 분
             transfer_count = info.get("busTransitCount", 0) + info.get("subwayTransitCount", 0) - 1

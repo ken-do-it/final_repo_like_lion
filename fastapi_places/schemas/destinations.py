@@ -8,7 +8,10 @@ from schemas.places import PlaceDetailResponse
 from schemas.shortforms import ShortformListResponse
 
 
+# ==================== 도시별 콘텐츠 ====================
+
 class TravelPlanListResponse(BaseModel):
+    """여행 일정 목록 응답"""
     id: int
     user_id: int
     user_nickname: Optional[str] = None
@@ -24,6 +27,7 @@ class TravelPlanListResponse(BaseModel):
 
 
 class CityContentResponse(BaseModel):
+    """도시별 통합 콘텐츠 응답"""
     places: List[PlaceDetailResponse] = Field(default_factory=list)
     local_columns: List[LocalColumnListResponse] = Field(default_factory=list)
     shortforms: List[ShortformListResponse] = Field(default_factory=list)
@@ -32,6 +36,7 @@ class CityContentResponse(BaseModel):
 
 
 class PopularCityResponse(BaseModel):
+    """인기 도시 응답"""
     city_name: str
     display_name: Optional[str] = None
     country: str = "대한민국"
