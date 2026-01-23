@@ -678,6 +678,14 @@ export default {
     region_jeolla: "Jeolla",
     region_gangwon: "Gangwon",
 
+    // Train Types
+    train_type_ktx: "KTX",
+    train_type_srt: "SRT",
+    train_type_itx_saemaeul: "ITX-Saemaeul",
+    train_type_itx_cheongchun: "ITX-Cheongchun",
+    train_type_saemaeul: "Saemaeul",
+    train_type_mugunghwa: "Mugunghwa",
+
     // Subway
     title_subway_search: "Subway Route Search",
     label_search_option: "Search Options",
