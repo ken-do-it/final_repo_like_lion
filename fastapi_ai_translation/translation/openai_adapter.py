@@ -81,6 +81,11 @@ class OpenAIAdapter:
             if not translations:
                 translations = [line.strip() for line in result_text.split('\n') if line.strip()]
             
+            # Handle empty response (OpenAI couldn't translate)
+            if not translations or len(translations) == 0:
+                logger.warning(f"OpenAI returned empty translations. Using original texts as fallback.")
+                return texts
+            
             # Validate count
             if len(translations) != len(texts):
                 logger.warning(f"Translation count mismatch: Expected {len(texts)}, got {len(translations)}. Padding/Truncating.")
@@ -118,6 +123,7 @@ class OpenAIAdapter:
              f"1. **Accuracy is paramount.** Do not hallucinate city names or places.\n"
              f"2. **Script Enforcement (for CJK languages only):** If translating to Japanese/Chinese, use the appropriate script (Kanji/Kana for Japanese, Hanzi for Chinese). Do NOT use Romanization for these languages.\n"
              f"3. **For English:** Translate Korean text into natural English. Proper nouns can be transliterated (e.g., 'Jebidabang Cafe').\n"
-             f"4. **No Explanations:** Return ONLY the translated text.\n"
-             f"5. **Batch Requests:** Return a strictly valid JSON object: {{ \"translations\": [ \"string1\", \"string2\" ] }}"
+             f"4. **Untranslatable Text:** If the text is nonsense, random characters, or cannot be meaningfully translated, return the ORIGINAL text exactly as-is. Do NOT attempt to translate gibberish.\n"
+             f"5. **No Explanations:** Return ONLY the translated text (or original if untranslatable).\n"
+             f"6. **Batch Requests:** Return a strictly valid JSON object: {{ \"translations\": [ \"string1\", \"string2\" ] }}. Each element must be a non-empty string.\n"
         )
