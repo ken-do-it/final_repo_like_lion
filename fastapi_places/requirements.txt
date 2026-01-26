@@ -21,3 +21,5 @@ requests
 
 # AWS S3 (이미지 업로드)
 boto3
+
+prometheus_fastapi_instrumentator
