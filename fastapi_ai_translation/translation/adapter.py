@@ -15,7 +15,7 @@ class OllamaAdapter:
 
     def translate(self, text: str, source_lang: str, target_lang: str, timeout: int = 60) -> str:
         """
-        Translate a single text using Ollama.
+        Ollama를 사용하여 단일 텍스트를 번역합니다.
         """
         if not text or not text.strip():
             return ""
@@ -30,7 +30,7 @@ class OllamaAdapter:
                     "prompt": prompt,
                     "stream": False,
                     "options": {
-                        "temperature": 0.7, # Creativity
+                        "temperature": 0.7, # 창의성 (Creativity)
                         "num_predict": 100
                     }
                 },
@@ -40,7 +40,7 @@ class OllamaAdapter:
             result = response.json()
             translated_text = result.get("response", "").strip()
             
-            # Basic cleanup if model outputs quotes or explanation
+            # 모델이 따옴표나 설명을 출력하는 경우 기본 정리
             translated_text = self._clean_output(translated_text)
             return translated_text
 
@@ -53,9 +53,9 @@ class OllamaAdapter:
 
     def translate_batch(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
         """
-        Translate a list of texts. 
-        Note: LLMs are slow, so batch processing is done sequentially or in parallel threads.
-        Here we do sequential for simplicity and reliability.
+        텍스트 목록을 번역합니다.
+        참고: LLM은 느리므로 배치 처리는 순차적 또는 병렬 스레드로 수행됩니다.
+        여기서는 단순성과 안정성을 위해 순차적으로 처리합니다.
         """
         results = []
         for t in texts:
@@ -66,7 +66,7 @@ class OllamaAdapter:
         return results
 
     def _build_prompt(self, text: str, src: str, tgt: str) -> str:
-        # Simple mapping for better prompting
+        # 더 나은 프롬프팅을 위한 단순 매핑
         lang_names = {
             "kor_Hang": "Korean",
             "eng_Latn": "English",
@@ -80,7 +80,7 @@ class OllamaAdapter:
         src_name = lang_names.get(src, src)
         tgt_name = lang_names.get(tgt, tgt)
 
-        # Prompt Engineering for YouTube Shorts
+        # 유튜브 쇼츠를 위한 프롬프트 엔지니어링
         return (
             f"You are a professional multi-lingual YouTube content creator. "
             f"Your task is to translate the following short video title from {src_name} to {tgt_name}. "
@@ -91,7 +91,7 @@ class OllamaAdapter:
         )
 
     def _clean_output(self, text: str) -> str:
-        # Remove surrounding quotes if present
+        # 존재하는 경우 주변 따옴표 제거
         if text.startswith('"') and text.endswith('"'):
             text = text[1:-1]
         return text

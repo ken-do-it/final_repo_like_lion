@@ -81,7 +81,7 @@ class ShortformSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def get_is_liked(self, obj):
-        # [Performance] Use annotated value if available
+        # [성능] 주석 처리된(annotated) 값이 있으면 사용
         if hasattr(obj, 'is_liked_val'):
             return obj.is_liked_val
 
