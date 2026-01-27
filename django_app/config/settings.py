@@ -400,6 +400,9 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
+# 2. 모든 로그인 처리를 https로 하도록 강제
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
 # 추가 권장 설정 (세션 및 쿠키 보안)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
