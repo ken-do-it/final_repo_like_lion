@@ -249,3 +249,5 @@ docker-compose.override.yaml
 # AI Model Files
 *.gguf
 fastapi_ai_translation/models/
+
+django_app/staticfiles
