@@ -265,33 +265,40 @@ def search_grouped(request: SearchRequest):
         text_pattern = f"%{request.query}%"
         
         # 2. 통합 하이브리드 쿼리 실행
-        # - search_vectors: AI 벡터 검색 + 키워드 검색
-        # - places: 인덱싱되지 않은 최신 장소 데이터 키워드 검색 (Fallback)
-        # - ROW_NUMBER: 카테고리별 결과 보장
+        # [수정] places뿐만 아니라 shortforms 테이블도 실시간 조회(Fallback)하도록 CTE 추가
         
         query_sql = """
         WITH ai_results AS (
-            -- [1] 검색 엔진 인덱스 테이블 조회
+            -- [1] 검색 엔진 인덱스 테이블 조회 (벡터 검색)
             SELECT target_id, category, content, 
                    (embedding <=> %s::vector) as distance,
                    CASE WHEN content ILIKE %s THEN 0 ELSE 1 END as match_priority
             FROM search_vectors
         ),
-        direct_db_results AS (
-            -- [2] 원본 places 테이블 실시간 조회 (인덱싱 누락 방지)
-            -- SQLAlchemy로 직접 추가된 항목 등을 검색 대상에 즉시 포함
+        direct_places_results AS (
+            -- [2] 장소 테이블 실시간 조회 (인덱싱 누락 방지)
             SELECT id as target_id, 'place' as category, name || ' ' || address as content,
-                   0.45 as distance, -- 키워드 매칭은 중간 정도의 거리값 부여
+                   0.45 as distance,
                    0 as match_priority
             FROM places
             WHERE (name ILIKE %s OR address ILIKE %s)
-            -- 인덱스에 이미 있는 장소는 중복 제외
             AND id NOT IN (SELECT target_id FROM search_vectors WHERE category = 'place')
+        ),
+        direct_shorts_results AS (
+            -- [3] ★ 숏츠 테이블 실시간 조회 추가 (새로 추가됨!)
+            SELECT id as target_id, 'shortform' as category, title || ' ' || COALESCE(content, '') as content,
+                   0.45 as distance,
+                   0 as match_priority
+            FROM shortforms
+            WHERE (title ILIKE %s OR content ILIKE %s)
+            AND id NOT IN (SELECT target_id FROM search_vectors WHERE category = 'shortform')
         ),
         combined AS (
             SELECT * FROM ai_results
             UNION ALL
-            SELECT * FROM direct_db_results
+            SELECT * FROM direct_places_results
+            UNION ALL
+            SELECT * FROM direct_shorts_results
         ),
         ranked AS (
             SELECT *,
@@ -300,22 +307,28 @@ def search_grouped(request: SearchRequest):
                        ORDER BY match_priority ASC, distance ASC
                    ) as group_rank
             FROM combined
-            -- ★ 조건: 거리 0.5 미만(유사함) 이거나 키워드가 포함된 경우만 노출
             WHERE distance < 0.5 OR match_priority = 0
         )
         SELECT target_id, category, content, distance, match_priority
         FROM ranked
-        WHERE group_rank <= 15  -- ★ 각 카테고리별 최대 15개씩 결과 보장
+        WHERE group_rank <= 15
         ORDER BY match_priority ASC, distance ASC;
         """
         
-        # 파라미터: query_vector, text_pattern, text_pattern, text_pattern
-        cur.execute(query_sql, (query_vector, text_pattern, text_pattern, text_pattern))
+        # 파라미터 순서: 
+        # 1. 벡터(ai) 2. 패턴(ai) 
+        # 3. 장소이름(place) 4. 장소주소(place) 
+        # 5. 숏츠제목(short) 6. 숏츠내용(short)
+        cur.execute(query_sql, (
+            query_vector, text_pattern, 
+            text_pattern, text_pattern, 
+            text_pattern, text_pattern
+        ))
         
         rows = cur.fetchall()
         conn.close()
         
-        # 3. 결과 그룹화 (프론트엔드 반환 포맷)
+        # 3. 결과 그룹화
         grouped_results = {
             "places": [],
             "reviews": [],
@@ -349,19 +362,17 @@ def search_grouped(request: SearchRequest):
             else:
                 grouped_results["others"].append(item)
         
-        # 4. 추가 정보(썸네일, 평점, 리뷰사진 등) 조회 - Place
+        # 4. 장소 추가 정보 조회 (썸네일 등)
         if place_ids:
             try:
                 conn_places = get_db_connection()
                 cur_places = conn_places.cursor()
                 
-                # [1] Place 정보 (평점, 리뷰수, 기본 썸네일)
                 place_query_sql = "SELECT id, thumbnail_urls, average_rating, review_count FROM places WHERE id IN %s"
                 cur_places.execute(place_query_sql, (tuple(place_ids),))
                 place_rows = cur_places.fetchall()
                 
-                # [2] 리뷰 사진 (각 장소별 최신 1장)
-                # DISTINCT ON (place_id)를 사용하여 각 장소별 가장 최근 리뷰 이미지를 가져옴
+                # 리뷰 사진 가져오기
                 review_query_sql = """
                     SELECT DISTINCT ON (place_id) place_id, image_url 
                     FROM place_reviews 
@@ -375,8 +386,6 @@ def search_grouped(request: SearchRequest):
                 place_map = {}
                 for pid, urls, rating, count in place_rows:
                     thumb = None
-                    
-                    # 우선순위: 리뷰 사진 > 장소 대표 사진
                     if pid in review_map:
                         thumb = review_map[pid]
                     elif urls and isinstance(urls, list) and len(urls) > 0:
@@ -399,12 +408,12 @@ def search_grouped(request: SearchRequest):
             except Exception as e:
                 logger.error(f"Place 추가 정보 조회 실패: {e}")
 
-        # 5. 추가 정보(썸네일, 제목 등) 조회 - Shortform
+        # 5. 숏츠 추가 정보 조회 (썸네일, 제목)
         if short_ids:
             try:
                 conn_shorts = get_db_connection()
                 cur_shorts = conn_shorts.cursor()
-                # shortforms 테이블에서 thumbnail_url, title 가져오기
+                
                 short_query_sql = "SELECT id, thumbnail_url, title FROM shortforms WHERE id IN %s"
                 cur_shorts.execute(short_query_sql, (tuple(short_ids),))
                 short_rows = cur_shorts.fetchall()
