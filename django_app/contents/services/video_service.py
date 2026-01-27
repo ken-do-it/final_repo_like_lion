@@ -60,7 +60,7 @@ class VideoService:
         [NEW] 파일을 S3에 업로드합니다.
         """
         try:
-            extra_args = {}
+            extra_args = {'ACL': 'public-read'}
             if content_type:
                 extra_args['ContentType'] = content_type
                 

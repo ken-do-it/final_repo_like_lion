@@ -108,6 +108,7 @@ export default {
     no_account: "계정이 없으신가요?",
     have_account: "이미 계정이 있으신가요?",
     forgot_password: "비밀번호를 잊으셨나요?",
+    registration_success: "회원가입이 완료되었습니다! 로그인해주세요.",
 
     // 마이페이지
     mypage_title: "마이페이지",

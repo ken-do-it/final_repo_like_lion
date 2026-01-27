@@ -1,17 +1,23 @@
 export default {
-    // Navbar
+    // 네비게이션 바
     nav_home: "Home",
     nav_shorts: "Shorts",
     nav_game: "Roadview Game",
     nav_stays: "Stays",
     nav_places: "Places",
     nav_mytrips: "My Trips",
-    // Navbar Dropdown
+    // 네비게이션 드롭다운
     nav_mypage: "My Page",
     nav_logout: "Logout",
     nav_login: "Login",
     nav_signup: "Sign Up",
-    // Sidebar Specific
+
+    // 로그아웃 확인 모달
+    logout_confirm_title: "Are you sure you want to log out?",
+    logout_confirm_desc: "You will not be able to use some features after logging out.",
+    yes: "Yes",
+    no: "No",
+    // 사이드바 전용
     nav_geoquiz: "Geo Quiz Uploader",
     nav_ai_plan: "AI Itinerary",
     nav_column: "Local Column",
@@ -23,18 +29,18 @@ export default {
     nav_support: "Support",
     nav_version: "Version Info",
 
-    // Review Banner
+    // 리뷰 배너
     banner_review_title: "How was your trip to {dest}?",
     banner_review_desc: "Share your memories and help others!",
     banner_review_btn: "Write Review",
 
-    // MainPage Hero
+    // 메인 페이지 히어로
     hero_title_1: "Where to next?",
     hero_title_2: "Korea awaits.",
     search_placeholder: "Search destinations, flights, hotels...",
     search_btn: "Search",
 
-    // Hero Tabs & Plan
+    // 히어로 탭 & 일정
     hero_tab_search: "Search",
     hero_tab_plan: "Create Trip",
     plan_title_ph: "Trip Title (e.g. Summer Vacation)",
@@ -42,7 +48,7 @@ export default {
     plan_end: "End Date",
     plan_create_btn: "Start Planning",
 
-    // Filter Chips
+    // 필터 칩
     filter_all: "All",
     filter_public: "Shared Plans",
     filter_mine: "My Plans",
@@ -51,18 +57,18 @@ export default {
     filter_stays: "Stays",
     filter_flights: "Transport",
 
-    // Quick Actions
+    // 빠른 작업
     action_flight: "Book Flight",
     action_stays: "Find Stays",
     action_places: "Places",
     action_geoquiz: "GeoQuiz",
 
-    // Sections
+    // 섹션
     sec_upcoming: "Upcoming Adventure",
     btn_view_all: "View all trips",
     sec_trending: "Trending Shorts & Cities",
 
-    // Shorts Page & Detail
+    // 쇼츠 페이지 & 상세
     shorts_title: "Shorts", // [NEW]
     shorts_sub: "Watch the latest uploads with AI captions/translation.",
     btn_upload: "Upload",
@@ -73,7 +79,7 @@ export default {
     now_playing: "Now Playing", // [NEW]
     lang_label: "Lang", // [NEW]
 
-    // Common
+    // 공통
     play: "Play",
     close: "Close",
     follow: "Follow",
@@ -86,7 +92,7 @@ export default {
     btn_post: "Post",
     btn_posting: "Posting...",
 
-    // Auth Pages (Login / Signup)
+    // 인증 페이지
     login_title: "Login",
     login_subtitle: "Access your personalized travel experience.",
     signup_title: "Sign Up",
@@ -102,8 +108,9 @@ export default {
     no_account: "Don't have an account?",
     have_account: "Already have an account?",
     forgot_password: "Forgot password?",
+    registration_success: "Registration successful! Please log in.",
 
-    // MyPage
+    // 마이페이지
     mypage_title: "My Page",
     mypage_desc: "Manage your account and activities.",
     tab_profile: "Profile",
@@ -115,7 +122,7 @@ export default {
     tab_saved: "Saved",
     tab_reviews: "Reviews",
 
-    // Reservations
+    // 예약
     no_reservations: "No Reservations Yet",
     no_reservations_desc: "Book your first flight to explore Korea!",
     search_flights: "Search Flights",
@@ -132,7 +139,7 @@ export default {
     location_label: "Location",
     phone_label: "Phone Number",
 
-    // Shorts Upload
+    // 쇼츠 업로드
     upload_title_new: "Upload Short",
     upload_title_edit: "Edit Short",
     upload_sub_new: "Share your moment with the world",
@@ -162,7 +169,7 @@ export default {
     btn_save_changes: "Save Changes",
     btn_upload_short: "Upload Short",
 
-    // Place Search
+    // 장소 검색
     place_search_title: "Place Search",
     place_search_placeholder: "Where do you want to go?",
     search_results_title: "Results for '{query}'",
@@ -172,7 +179,7 @@ export default {
     no_results_desc_try: "Try searching with different keywords.",
     searching: "Searching...",
 
-    // Place Detail
+    // 장소 상세
     place_basic_info: "Basic Info",
     place_opening_hours: "Opening Hours",
     place_location: "Location",
@@ -187,7 +194,7 @@ export default {
     loading_place: "Loading place details...",
     btn_go_back: "Go Back",
 
-    // Plan List
+    // 계획 목록
     plan_list_title: "My Travel Plans",
     plan_list_subtitle: "Plan and manage your unique trips",
     btn_ai_recommend: "Get AI Recommendation",
@@ -195,7 +202,7 @@ export default {
     msg_no_plans: "No travel plans yet",
     btn_create_first: "Create Your First Plan",
 
-    // Plan Create Page
+    // 계획 생성 페이지
     plan_create_title: "Create New Travel Plan",
     plan_create_subtitle: "Plan your own special trip",
     label_trip_title: "Trip Title",
@@ -220,8 +227,8 @@ export default {
     msg_create_success: "Travel plan created!",
     msg_create_fail: "Failed to create travel plan.",
 
-    // Add/Edit Place / Plan Edit / AI Recommend
-    // Place Related
+    // 장소 추가/수정 / 계획 수정 / AI 추천
+    // 장소 관련
     title_add_place: "Add Place",
     subtitle_add_place: "Add a new place to {planTitle}",
     title_edit_place: "Edit Place",
@@ -253,7 +260,7 @@ export default {
     msg_loading: "Loading...",
     msg_plan_not_found: "Plan not found.",
 
-    // Plan Edit
+    // 계획 수정
     title_plan_edit: "Edit Travel Plan",
     subtitle_plan_edit: "Edit basic information of your travel plan",
     label_plan_type: "Plan Type",
@@ -262,7 +269,7 @@ export default {
     title_date_warning: "Warning when changing dates",
     desc_date_warning: "This plan already has {count} places. Changing dates may cause existing places to fall out of range.",
 
-    // AI Recommend
+    // AI 추천
     title_ai_recommend: "AI Travel Recommendation",
     subtitle_ai_recommend: "AI will create a perfect itinerary for you",
     q_destination: "Where are you going?",
@@ -283,7 +290,7 @@ export default {
     alert_ai_request_fail: "Failed to request AI recommendation.",
     alert_ai_polling_fail: "Failed to check AI status.",
 
-    // Destinations
+    // 여행지
     dest_gapyeong_yangpyeong: "Gapyeong/Yangpyeong",
     dest_gangneung_sokcho: "Gangneung/Sokcho",
     dest_gyeongju: "Gyeongju",
@@ -295,7 +302,7 @@ export default {
     dest_chuncheon_hongcheon: "Chuncheon/Hongcheon",
     dest_taean: "Taean",
 
-    // Travel Styles
+    // 여행 스타일
     style_healing: "Healing/Relaxation",
     style_healing_desc: "Quiet and comfortable trip",
     style_activity: "Activity",
@@ -317,7 +324,7 @@ export default {
     msg_confirm_delete: "Are you sure you want to delete this plan?",
     msg_delete_fail: "Failed to delete.",
 
-    // Common Alerts
+    // 공통 알림
     alert_login_required: "Login required to access this service.",
     alert_public_like_only: "Only public plans can be liked.",
     alert_like_fail: "Failed to update like status.",
@@ -328,7 +335,7 @@ export default {
     alert_comment_delete_fail: "Failed to delete comment.",
     msg_load_fail: "Failed to load travel plans.",
 
-    // Plan Detail
+    // 계획 상세
     error_invalid_access: "Invalid access.",
     error_plan_private: "This plan is private.",
     error_plan_not_found: "Plan not found.",
@@ -343,7 +350,7 @@ export default {
     default_place_name: "No Place Name",
     alt_place_image: "Place Image {index}",
     day_label: "Day {day}",
-    // MainPage New
+    // 메인 페이지 신규
     cta_start_journey: "Start your next journey!",
     cta_no_upcoming: "You have no upcoming trips. Why not plan one now?",
     btn_create_trip: "Create a Trip",
@@ -351,7 +358,7 @@ export default {
     label_group_trip: "Group Trip",
     link_view_itinerary: "View Itinerary →",
     category_travel: "Travel",
-    // AccommodationMap
+    // 숙소 지도
     stays_title: "Find Stays",
     stays_search_placeholder: "Search location (e.g. Gangnam)",
     stays_search_btn: "Search",
@@ -372,7 +379,7 @@ export default {
     stays_finding: "Finding places...",
     stays_view_details: "View Details ↗",
 
-    // GeoImageUploader
+    // 지오 이미지 업로더
     geo_title: "AI Location Analyzer",
     geo_desc: "Upload a travel photo to extract its GPS location and start a round of Roadview Game.",
     geo_drag_drop: "Click or Drag & Drop",
@@ -390,7 +397,7 @@ export default {
     geo_start_with: "Start with \"{name}\"",
     geo_back_home: "← Back to Home",
 
-    // LocalColumnList
+    // 로컬 칼럼 목록
     col_title_main: "Local Column",
     col_desc_1: "Discover hidden gems and food stories from real locals.",
     col_desc_2: "Full of special information only verified locals can tell you.",
@@ -400,10 +407,10 @@ export default {
     col_no_cols: "No columns written yet.",
     col_be_first: "Be the first to write a column!",
     col_anonymous: "Anonymous",
-    // Shorts
+    // 쇼츠
     shorts_load_error: "Failed to load shorts.",
 
-    // FlightSearch
+    // 항공권 검색
     flight_title: "Transport",
     flight_search_title: "Flight Search",
     flight_oneway: "One-way",
@@ -463,7 +470,7 @@ export default {
     flight_direct: "Direct",
     flight_provider_check_required: "Check with provider",
 
-    // RoadviewGame
+    // 거리뷰 게임
     game_title: "Street View",
     game_target_photo: "Target Photo",
     game_round: "Round",
@@ -487,7 +494,7 @@ export default {
     game_no_pano_title: "Street View Not Found",
     game_no_pano_desc: "No road data nearby or it might be indoors.",
 
-    // Flight Seat & Payment
+    // 항공권 좌석 & 결제
     class_economy: "Economy",
     class_premium: "Premium Economy",
     class_business: "Business",
@@ -519,7 +526,7 @@ export default {
     discount_applied: "Discount Applied",
     per_person: "/person",
 
-    // Flight Payment
+    // 항공권 결제
     alert_no_payment_info: "No payment information found. Please start over.",
     alert_payment_not_ready: "Payment is not ready.",
     alert_payment_create_fail: "Failed to create payment. Please try again.",
@@ -546,7 +553,7 @@ export default {
     info_payment_3: "It may take up to 5 minutes to confirm reservation.",
     info_payment_4: "Contact customer support if issues arise.",
 
-    // Flight Complete
+    // 항공권 완료
     title_reservation_complete: "Reservation Completed",
     msg_reservation_success: "Flight reservation has been successfully completed.",
     label_reservation_number: "Reservation Number",
@@ -563,31 +570,31 @@ export default {
     btn_book_another: "Book Another Flight",
     payment_method_card: "Card",
 
-    // Date/Time Format
+    // 날짜/시간 형식
     datetime_format_ymdhm: "{month}/{day}/{year} {hours}:{minutes}",
 
-    // Payment Confirming
+    // 결제 확인 중
     payment_confirming_title: "Processing Payment",
     payment_confirming_desc: "Securely processing your payment.",
     payment_confirming_wait: "Please wait a moment.",
 
-    // Payment Success
+    // 결제 성공
     payment_success_title: "Payment Completed",
     payment_success_desc: "Your reservation has been processed successfully.",
     payment_order_number: "Order Number",
     payment_amount_label: "Payment Amount",
     payment_redirecting: "Redirecting to confirmation page...",
 
-    // Payment Error
+    // 결제 실패
     payment_error_title: "Payment Failed",
     payment_error_invalid_params: "Invalid payment information.",
     payment_error_refund_info: "If your card was charged despite the failed approval, it will be automatically cancelled. Refund will be processed within 3-5 business days.",
 
-    // Buttons
+    // 버튼
     btn_restart: "Start Over",
     btn_processing: "Processing...",
 
-    // Reservation Detail Modal
+    // 예약 상세 모달
     reservation_detail_title: "Reservation Details",
     reservation_loading: "Loading...",
     reservation_load_error: "Unable to load information.",
@@ -614,7 +621,7 @@ export default {
     btn_close: "Close",
     label_order: "Order",
 
-    // AddToPlanModal
+    // 일정 추가 모달
     title_add_schedule: "Add to Schedule",
     btn_new_plan: "+ New Trip",
     msg_add_failed: "Failed to add to schedule.",
@@ -624,7 +631,7 @@ export default {
     msg_adding: "Adding...",
     btn_add_to_selected_schedule: "Add to Schedule",
 
-    // PlaceDetailPage
+    // 장소 상세 페이지
     error_load_place: "Failed to load place information.",
 
     // LocalColumnList
@@ -634,7 +641,7 @@ export default {
     btn_view_all_columns: "View All",
     label_place: "Place",
 
-    // Train
+    // 기차
     title_transport: "Transport",
     title_train_search: "Train Search",
     label_dep_station: "Departure Station",
@@ -655,7 +662,7 @@ export default {
     info_train_4: "KTX/ITX/Saemaeul: KORAIL booking.",
     info_train_5: "SRT: SRT website booking only.",
 
-    // Train Results
+    // 기차 검색 결과
     msg_searching_trains: "Searching for trains...",
     title_search_results_count: "Search Results ({count})",
     msg_no_trains_found: "No trains found. Please try different conditions.",
@@ -678,7 +685,7 @@ export default {
     region_jeolla: "Jeolla",
     region_gangwon: "Gangwon",
 
-    // Train Types
+    // 기차 종류
     train_type_ktx: "KTX",
     train_type_srt: "SRT",
     train_type_itx_saemaeul: "ITX-Saemaeul",
@@ -686,7 +693,7 @@ export default {
     train_type_saemaeul: "Saemaeul",
     train_type_mugunghwa: "Mugunghwa",
 
-    // Subway
+    // 지하철
     title_subway_search: "Subway Route Search",
     label_search_option: "Search Options",
     placeholder_input_dep_station: "Enter Departure Station",
@@ -703,7 +710,7 @@ export default {
     info_subway_4: "View detailed route on Kakao Map.",
     info_subway_5: "Check station boards for real-time arrival info.",
 
-    // Subway Route
+    // 지하철 경로
     msg_searching_route: "Searching optimal route...",
     title_recommend_routes: "Recommended Routes ({count})",
     label_route_n: "Route {n}",
@@ -729,7 +736,7 @@ export default {
     info_route_4: "Check station boards for real-time arrival info.",
     label_provider: "Provided by:",
 
-    // Sidebar
+    // 사이드바
     title_benefits: "Tripko Benefits",
     benefit_support: "24/7 Support",
     benefit_guarantee: "Best Price",
@@ -742,7 +749,7 @@ export default {
     btn_contact_support: "Contact Support",
 
 
-    // Date/Time
+    // 날짜/시간
     weekday_sun: "Sun",
     weekday_mon: "Mon",
     weekday_tue: "Tue",
@@ -751,7 +758,7 @@ export default {
     weekday_fri: "Fri",
     weekday_sat: "Sat",
 
-    // Local Columns
+    // 로컬 칼럼
     col_write_title: "Write New Column",
     col_edit_title: "Edit Column",
     col_input_title: "Title",
@@ -777,7 +784,7 @@ export default {
     msg_col_updated: "Column updated successfully.",
     msg_save_fail: "Failed to save.",
 
-    // Auth Modal
+    // 인증 모달
     auth_modal_title: "Local Authentication",
     auth_modal_desc: "Get your Local Badge based on your current location!",
     btn_auth_my_loc: "Authenticate with My Location",
@@ -791,7 +798,7 @@ export default {
     msg_loc_timeout: "Location request timed out.",
     msg_loc_fail: "Failed to fetch location info.",
 
-    // Detail & List
+    // 상세 & 목록
     col_view_place: "View Place Info",
     btn_back_list: "Back to List",
     confirm_delete_col: "Are you sure you want to delete this column?",
@@ -804,7 +811,7 @@ export default {
     col_upload_thumb: "Click to upload image",
     col_intro_img_add: "Add Image",
 
-    // City Pages
+    // 통화 Pages
     city_search_title: "Where are you flying to? ✈️",
     city_search_desc: "Search for a city and find integrated travel info.",
     city_search_ph: "Search city (e.g. Seoul, Busan)",
