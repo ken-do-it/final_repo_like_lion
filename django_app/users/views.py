@@ -1,3 +1,4 @@
+import logging
 from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,6 +9,8 @@ from django.shortcuts import render, redirect
 from urllib.parse import urlencode
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     UserPreference, LoginSession, LoginHistory,
@@ -835,6 +838,7 @@ def mypage_page(request):
 try:
     from places.models import PlaceBookmark, PlaceReview
     from .serializers import SavedPlaceSerializer, MyReviewSerializer
+    from contents.services.translation_service import TranslationService
 
     class SavedPlacesView(generics.ListCreateAPIView):
         """저장한 장소 목록 조회 및 저장"""
@@ -897,7 +901,30 @@ try:
             tags=['마이페이지']
         )
         def get(self, request, *args, **kwargs):
-            return super().get(request, *args, **kwargs)
+            return self.list(request, *args, **kwargs)
+
+        def list(self, request, *args, **kwargs):
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            data = serializer.data
+
+            # Apply translation
+            target_lang = request.query_params.get('lang')
+            if target_lang:
+                try:
+                    data = TranslationService.apply_translation_batch(
+                        data,
+                        target_lang,
+                        entity_type="review",
+                        fields={
+                            'place_name': 'place_name_translated',
+                            'content': 'content_translated'
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Review translation failed: {e}")
+
+            return Response(data)
 
         def get_queryset(self):
             return PlaceReview.objects.filter(user=self.request.user).select_related('place')

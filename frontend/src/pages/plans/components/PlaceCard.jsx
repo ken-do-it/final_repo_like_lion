@@ -1,6 +1,8 @@
 // src/pages/plans/components/PlaceCard.jsx
+import { useLanguage } from '../../../context/LanguageContext';
 
 const PlaceCard = ({ detail, index, onEdit, onDelete }) => {
+  const { t } = useLanguage();
   return (
     <div className="bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
       <div className="p-6">
@@ -14,7 +16,7 @@ const PlaceCard = ({ detail, index, onEdit, onDelete }) => {
             {/* Place Info */}
             <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                {detail.place?.place_name || '장소 이름 없음'}
+                {detail.place?.place_name || t('default_place_name')}
               </h3>
 
               {detail.place?.address && (

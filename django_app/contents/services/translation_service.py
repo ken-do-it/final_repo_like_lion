@@ -273,8 +273,8 @@ class TranslationService:
                     continue
 
                 # Skip translation for very short text (≤3 chars, likely emoticons/slang)
-                # But allow location field (city names can be short like "대전", "서울")
-                if len(original_text.strip()) <= 3 and src_field != 'location':
+                # But allow location and place_name fields (city/place names can be short like "대전", "서울", "불국사")
+                if len(original_text.strip()) <= 3 and src_field not in ('location', 'place_name'):
                     item[tgt_field] = original_text
                     continue
 

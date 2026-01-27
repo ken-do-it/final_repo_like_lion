@@ -130,8 +130,44 @@ export default {
     local_badge_title: "Local Badge",
     badge_since: "Since",
     badge_months: "Months Active",
+    badge_months_unit: "months",
+    badge_level: "Level",
+    badge_writer: "Writer",
+    badge_explorer: "Explorer",
     no_local_badge: "No Local Badge yet.",
     no_local_badge_desc: "Stay in a local area to earn your badge!",
+
+    // 마이페이지 추가 번역
+    profile_update_failed: "Failed to update profile.",
+    confirm_remove_bookmark: "Remove this place from your bookmarks?",
+    remove_bookmark_failed: "Failed to remove bookmark",
+    confirm_delete_review: "Delete this review?",
+    delete_review_failed: "Failed to delete review",
+    upload_first_short: "Upload your first short video!",
+    create_first_plan: "Create your first travel plan!",
+    unit_days: "Days",
+    view_details: "View Details →",
+    read_more: "Read More →",
+    preferences_desc: "Language and Currency settings.",
+    label_language: "Language",
+    label_currency: "Currency",
+    status_pending: "Pending",
+    status_cancelled: "Cancelled",
+    no_columns_yet: "No Columns Yet",
+    columns_empty_desc: "Share your local insights with travelers!",
+    write_column: "Write Column",
+    my_columns: "My Columns",
+    no_saved_places: "No Saved Places",
+    saved_places_empty_desc: "Bookmark your favorite spots to visit later!",
+    explore_places: "Explore Places",
+    saved_places: "Saved Places",
+    btn_remove: "Remove",
+    no_reviews_yet: "No Reviews Yet",
+    reviews_empty_desc: "Share your experiences with others!",
+    find_places_to_review: "Find Places to Review",
+    my_reviews: "My Reviews",
+    default_nickname: "Traveler",
+    na: "N/A",
 
     // 예약
     no_reservations: "No Reservations Yet",
@@ -881,5 +917,45 @@ export default {
     search_empty_title: "No results found for \"{tab}\"",
     search_empty_desc: "Try adjusting your search or filters.",
     msg_review_deleted: "Review deleted successfully.",
-    msg_review_delete_failed: "Failed to delete review."
+    msg_review_delete_failed: "Failed to delete review.",
+
+    // Footer
+    footer_desc: "Discover the best of Korea with AI-powered itineraries and local insights.",
+    footer_explore: "Explore",
+    footer_destinations: "Destinations",
+    footer_trending_shorts: "Trending Shorts",
+    footer_hotels: "Hotels",
+    footer_company: "Company",
+    footer_about: "About Us",
+    footer_contact: "Contact",
+    footer_privacy: "Privacy Policy",
+    footer_stay_updated: "Stay Updated",
+    footer_copyright: "Tripko Inc. All rights reserved.",
+
+    // Auth - Login
+    remember_me: "Remember me",
+    sns_login: "SNS Login",
+    login_failed: "Login failed. Please check your credentials.",
+
+    // Auth - Signup
+    passwords_not_match: "Passwords do not match",
+    password_min_length: "Password must be at least 8 characters",
+    registration_failed: "Registration failed. Please try again.",
+    network_error: "A network error occurred.",
+    email_placeholder: "name@example.com",
+    phone_placeholder: "+82 10-1234-5678",
+    year_placeholder: "YYYY",
+
+    // Sidebar
+    sidebar_title: "Korea Trip",
+    sidebar_copyright: "Tripko Platform",
+
+    // Plan Detail - Image
+    alert_image_only: "Only image files can be uploaded.",
+    alert_image_size: "Image size must be 10MB or less.",
+    alert_image_upload_fail: "Failed to upload image.",
+    confirm_image_delete: "Delete this image?",
+    alert_image_delete_fail: "Failed to delete image.",
+    btn_add_image: "Add Photo",
+    anonymous: "Anonymous"
 };

@@ -259,11 +259,14 @@ class MyReviewSerializer(serializers.ModelSerializer):
     """내 리뷰 Serializer"""
     place_name = serializers.CharField(source='place.name', read_only=True)
     place_address = serializers.CharField(source='place.address', read_only=True)
+    place_name_translated = serializers.CharField(read_only=True, required=False)
+    content_translated = serializers.CharField(read_only=True, required=False)
 
     class Meta:
         model = PlaceReview
         fields = [
             'id', 'place', 'place_name', 'place_address',
-            'rating', 'content', 'created_at', 'updated_at'
+            'place_name_translated', 'content_translated',
+            'rating', 'content', 'image_url', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']

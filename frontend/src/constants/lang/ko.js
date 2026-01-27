@@ -130,8 +130,44 @@ export default {
     local_badge_title: "현지인 인증 뱃지",
     badge_since: "인증 시작",
     badge_months: "유지 개월",
+    badge_months_unit: "개월",
+    badge_level: "레벨",
+    badge_writer: "작성자",
+    badge_explorer: "탐험가",
     no_local_badge: "아직 현지인 인증 뱃지가 없습니다.",
     no_local_badge_desc: "현지에서 일정 기간 거주하면 뱃지를 획득할 수 있어요!",
+
+    // 마이페이지 추가 번역
+    profile_update_failed: "프로필 업데이트에 실패했습니다.",
+    confirm_remove_bookmark: "이 장소를 북마크에서 삭제하시겠습니까?",
+    remove_bookmark_failed: "북마크 삭제에 실패했습니다",
+    confirm_delete_review: "이 리뷰를 삭제하시겠습니까?",
+    delete_review_failed: "리뷰 삭제에 실패했습니다",
+    upload_first_short: "첫 번째 쇼츠를 업로드해보세요!",
+    create_first_plan: "첫 번째 여행 계획을 만들어보세요!",
+    unit_days: "일",
+    view_details: "자세히 보기 →",
+    read_more: "더 보기 →",
+    preferences_desc: "언어 및 통화 설정입니다.",
+    label_language: "언어",
+    label_currency: "통화",
+    status_pending: "대기 중",
+    status_cancelled: "취소됨",
+    no_columns_yet: "작성한 칼럼이 없습니다",
+    columns_empty_desc: "여행자들에게 현지 정보를 공유해보세요!",
+    write_column: "칼럼 작성",
+    my_columns: "내 칼럼",
+    no_saved_places: "저장한 장소가 없습니다",
+    saved_places_empty_desc: "나중에 방문할 장소를 북마크해보세요!",
+    explore_places: "장소 탐색",
+    saved_places: "저장한 장소",
+    btn_remove: "삭제",
+    no_reviews_yet: "작성한 리뷰가 없습니다",
+    reviews_empty_desc: "다른 사람들과 경험을 공유해보세요!",
+    find_places_to_review: "리뷰할 장소 찾기",
+    my_reviews: "내 리뷰",
+    default_nickname: "여행자",
+    na: "N/A",
 
     // 예약
     no_reservations: "예약 내역이 없습니다",
@@ -881,5 +917,45 @@ export default {
     search_empty_title: "\"{tab}\"에 대한 결과가 없습니다.",
     search_empty_desc: "검색어나 필터를 조정해보세요.",
     msg_review_deleted: "리뷰가 삭제되었습니다.",
-    msg_review_delete_failed: "리뷰 삭제에 실패했습니다."
+    msg_review_delete_failed: "리뷰 삭제에 실패했습니다.",
+
+    // 푸터
+    footer_desc: "AI 기반 일정과 현지인 정보로 한국 최고의 여행지를 발견하세요.",
+    footer_explore: "탐색",
+    footer_destinations: "여행지",
+    footer_trending_shorts: "인기 쇼츠",
+    footer_hotels: "호텔",
+    footer_company: "회사",
+    footer_about: "회사 소개",
+    footer_contact: "문의하기",
+    footer_privacy: "개인정보 처리방침",
+    footer_stay_updated: "소식 받기",
+    footer_copyright: "Tripko Inc. All rights reserved.",
+
+    // 인증 - 로그인
+    remember_me: "로그인 상태 유지",
+    sns_login: "SNS 로그인",
+    login_failed: "로그인에 실패했습니다. 자격 증명을 확인해주세요.",
+
+    // 인증 - 회원가입
+    passwords_not_match: "비밀번호가 일치하지 않습니다",
+    password_min_length: "비밀번호는 최소 8자 이상이어야 합니다",
+    registration_failed: "회원가입에 실패했습니다. 다시 시도해주세요.",
+    network_error: "네트워크 오류가 발생했습니다.",
+    email_placeholder: "name@example.com",
+    phone_placeholder: "+82 10-1234-5678",
+    year_placeholder: "YYYY",
+
+    // 사이드바
+    sidebar_title: "한국 여행",
+    sidebar_copyright: "Tripko 플랫폼",
+
+    // 계획 상세 - 이미지
+    alert_image_only: "이미지 파일만 업로드할 수 있습니다.",
+    alert_image_size: "이미지 크기는 10MB 이하여야 합니다.",
+    alert_image_upload_fail: "이미지 업로드에 실패했습니다.",
+    confirm_image_delete: "이미지를 삭제하시겠습니까?",
+    alert_image_delete_fail: "이미지 삭제에 실패했습니다.",
+    btn_add_image: "사진 추가",
+    anonymous: "익명"
 };

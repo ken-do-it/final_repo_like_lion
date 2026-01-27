@@ -111,7 +111,7 @@ const PlanEdit = () => {
     return (
       <div className="container mx-auto px-4 max-w-screen-xl py-12">
         <div className="flex flex-col justify-center items-center min-h-[400px]">
-          <div className="text-red-600 dark:text-red-400 mb-4">{error || '계획을 찾을 수 없습니다.'}</div>
+          <div className="text-red-600 dark:text-red-400 mb-4">{error || t('msg_plan_not_found')}</div>
           <button
             onClick={() => navigate('/plans')}
             className="h-12 px-6 rounded-lg bg-[#1392ec] text-white font-semibold hover:bg-[#0f7bc2] transition-all"

@@ -54,7 +54,7 @@ const LoginPage = () => {
             if (err.response?.data?.error) {
                 setError(err.response.data.error);
             } else {
-                setError('Login failed. Please check your credentials.');
+                setError(t('login_failed'));
             }
         } finally {
             setIsLoading(false);
@@ -109,7 +109,7 @@ const LoginPage = () => {
                                 onChange={handleChange}
                                 className="rounded border-gray-300 text-primary focus:ring-primary"
                             />
-                            <span className="text-gray-600 dark:text-gray-400">Remember me</span>
+                            <span className="text-gray-600 dark:text-gray-400">{t('remember_me')}</span>
                         </label>
                         <Link to="/find-account" className="text-primary hover:text-primary-hover font-medium">
                             {t('forgot_password')}
@@ -132,7 +132,7 @@ const LoginPage = () => {
                             <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-surface-light dark:bg-surface-dark text-gray-500 transition-colors">SNS Login</span>
+                            <span className="px-2 bg-surface-light dark:bg-surface-dark text-gray-500 transition-colors">{t('sns_login')}</span>
                         </div>
                     </div>
 
