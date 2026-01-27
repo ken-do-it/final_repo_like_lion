@@ -19,7 +19,7 @@ const getAcceptLanguageHeader = () => {
     };
 
     const langCode = langMap[userLanguage] || API_LANG_CODES[userLanguage] || 'eng_Latn';
-    console.log(`[Language] localStorage: "${userLanguage}" → API code: "${langCode}"`);
+
     return langCode;
 };
 
