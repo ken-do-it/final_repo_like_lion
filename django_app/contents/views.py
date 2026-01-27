@@ -8,7 +8,7 @@ from rest_framework import exceptions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
 
 from .models import Shortform, ShortformLike, ShortformComment, ShortformView, TranslationEntry
 from .serializers import ShortformSerializer, ShortformCommentSerializer
@@ -239,12 +239,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
         request=None,
         responses={200: {'type': 'object', 'properties': {'liked': {'type': 'boolean'}, 'total_likes': {'type': 'integer'}}}}
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def like(self, request, pk=None):
         shortform = self.get_object()
         user = request.user
-        if not user.is_authenticated:
-            raise exceptions.NotAuthenticated("Authentication required to like.")
+        # 중복 체크 제거 (permission_classes가 처리)
 
         obj, created = ShortformLike.objects.get_or_create(shortform=shortform, user=user)
         if created:
@@ -257,12 +256,10 @@ class ShortformViewSet(viewsets.ModelViewSet):
         description="좋아요를 취소합니다.",
         responses={200: {'type': 'object', 'properties': {'liked': {'type': 'boolean'}, 'total_likes': {'type': 'integer'}}}}
     )
-    @action(detail=True, methods=['delete'])
+    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
     def unlike(self, request, pk=None):
         shortform = self.get_object()
         user = request.user
-        if not user.is_authenticated:
-            raise exceptions.NotAuthenticated("Authentication required to unlike.")
 
         deleted, _ = ShortformLike.objects.filter(shortform=shortform, user=user).delete()
         if deleted:
@@ -275,7 +272,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         description="GET: 댓글 목록 조회\nPOST: 새 댓글 작성",
         responses={200: ShortformCommentSerializer(many=True)}
     )
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get', 'post'], permission_classes=[IsAuthenticatedOrReadOnly])
     def comments(self, request, pk=None):
         shortform = self.get_object()
         if request.method.lower() == 'get':
