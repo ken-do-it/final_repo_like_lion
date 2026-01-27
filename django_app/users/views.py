@@ -774,7 +774,7 @@ def social_callback_page(request):
     }
     
     # 프론트엔드 URL로 리다이렉트 (토큰을 URL 파라미터로 전달)
-    frontend_url = f"http://localhost:5173/auth/social-callback?{urlencode(params)}"
+    frontend_url = f"https://tripko.p-e.kr/auth/social-callback?{urlencode(params)}"
     return redirect(frontend_url)
 
 
