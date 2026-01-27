@@ -11,27 +11,33 @@ const SocialCallback = () => {
     useEffect(() => {
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
-        const userJson = searchParams.get('user');
+        const userId = searchParams.get('user_id');
+        const username = searchParams.get('username');
+        const email = searchParams.get('email');
+        const nickname = searchParams.get('nickname');
+        const socialProvider = searchParams.get('social_provider');
 
         if (accessToken && refreshToken) {
             console.log("✅ [SocialCallback] Tokens received successfully");
             console.log("🔑 Access Token:", accessToken);
             console.log("🔄 Refresh Token:", refreshToken);
+            console.log("👤 User Info:", { userId, username, email, nickname, socialProvider });
 
-            // 토큰 저장 (AuthContext 형식이면 AuthContext 함수 사용 권장하지만, 
-            // 여기서는 localStorage에 직접 저장 후 새로고침/상태업데이트 유도)
+            // 토큰 저장
             localStorage.setItem('access_token', accessToken);
             localStorage.setItem('refresh_token', refreshToken);
 
-            if (userJson) {
-                try {
-                    // URL 디코딩이 필요할 수 있음
-                    const parsedUser = JSON.parse(userJson);
-                    console.log("👤 [SocialCallback] User Data parsed:", parsedUser);
-                    localStorage.setItem('user', JSON.stringify(parsedUser));
-                } catch (e) {
-                    console.error("Failed to parse user data", e);
-                }
+            // 사용자 정보 저장
+            if (userId && username) {
+                const userData = {
+                    id: userId,
+                    username: username,
+                    email: email,
+                    nickname: nickname || username,
+                    social_provider: socialProvider
+                };
+                console.log("👤 [SocialCallback] User Data saved:", userData);
+                localStorage.setItem('user', JSON.stringify(userData));
             }
 
             // 홈으로 이동 (새로고침하여 AuthContext가 토큰을 인식하게 함)
