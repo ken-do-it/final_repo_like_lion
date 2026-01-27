@@ -116,7 +116,7 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={handleSearch}
-                            placeholder={t('search_placeholder') || "Search trips..."}
+                            placeholder={t('search_placeholder')}
                             className="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-full leading-5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-[#1392ec] focus:border-transparent transition-all sm:text-sm"
                         />
                     </div>
@@ -239,23 +239,23 @@ const Navbar = ({ toggleSidebar, toggleTheme, isDarkMode }) => {
                                 </svg>
                             </div>
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                                {t('logout_confirm_title') || 'Are you sure you want to log out?'}
+                                {t('logout_confirm_title')}
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                                {t('logout_confirm_desc') || 'Are you sure you want to log out?'}
+                                {t('logout_confirm_desc')}
                             </p>
                             <div className="flex gap-3 justify-center">
                                 <button
                                     onClick={cancelLogout}
                                     className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
                                 >
-                                    {t('no') || 'No'}
+                                    {t('no')}
                                 </button>
                                 <button
                                     onClick={confirmLogout}
                                     className="px-5 py-2.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-sm"
                                 >
-                                    {t('yes') || 'Yes'}
+                                    {t('yes')}
                                 </button>
                             </div>
                         </div>

@@ -1,7 +1,9 @@
 // src/pages/plans/components/PlanCard.jsx
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../../context/LanguageContext';
 
 const PlanCard = ({ plan, onDelete, onEdit }) => {
+  const { t } = useLanguage();
   const calculateDays = () => {
     return Math.ceil(
       (new Date(plan.end_date) - new Date(plan.start_date)) / (1000 * 60 * 60 * 24)
@@ -39,7 +41,7 @@ const PlanCard = ({ plan, onDelete, onEdit }) => {
       {/* Plan Details */}
       <div className="p-4">
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-          {plan.description || '설명이 없습니다.'}
+          {plan.description || t('no_desc')}
         </p>
 
         <div className="space-y-2 text-sm">

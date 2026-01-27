@@ -107,7 +107,7 @@ const PlaceDetailPage = () => {
                         }
                     });
                 } else {
-                    throw new Error("잘못된 접근입니다. 장소 ID가 필요합니다.");
+                    throw new Error(t('error_invalid_access'));
                 }
 
                 setPlace(response.data);
@@ -116,7 +116,7 @@ const PlaceDetailPage = () => {
                 }
             } catch (err) {
                 console.error("Failed to fetch place detail:", err);
-                setError(err.response?.data?.detail || "장소 정보를 불러오는데 실패했습니다.");
+                setError(err.response?.data?.detail || t('error_load_place'));
             } finally {
                 setLoading(false);
             }
@@ -290,7 +290,7 @@ const PlaceDetailPage = () => {
                     </h1>
                     <div className="flex items-center text-white/90 gap-3 text-sm md:text-base">
                         <span className="bg-[#1392ec] px-2 py-1 rounded text-xs font-bold text-white">
-                            {place.category_main || '장소'}
+                            {place.category_main || t('label_place')}
                         </span>
                         <span>{place.city}</span>
                     </div>

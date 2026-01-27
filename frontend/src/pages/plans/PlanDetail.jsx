@@ -296,13 +296,13 @@ const PlanDetail = () => {
 
     // 파일 타입 검증
     if (!file.type.startsWith('image/')) {
-      alert(t('alert_image_only') || '이미지 파일만 업로드할 수 있습니다.');
+      alert(t('alert_image_only'));
       return;
     }
 
     // 파일 크기 제한 (10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert(t('alert_image_size') || '이미지 크기는 10MB 이하여야 합니다.');
+      alert(t('alert_image_size'));
       return;
     }
 
@@ -320,7 +320,7 @@ const PlanDetail = () => {
       fetchPlanDetail();
     } catch (err) {
       console.error('Error uploading image:', err);
-      alert(t('alert_image_upload_fail') || '이미지 업로드에 실패했습니다.');
+      alert(t('alert_image_upload_fail'));
     } finally {
       setImageUploading(false);
       setUploadingImageFor(null);
@@ -335,7 +335,7 @@ const PlanDetail = () => {
   const handleImageDelete = async (imageId, event) => {
     event.stopPropagation();
 
-    if (!window.confirm(t('confirm_image_delete') || '이미지를 삭제하시겠습니까?')) {
+    if (!window.confirm(t('confirm_image_delete'))) {
       return;
     }
 
@@ -344,7 +344,7 @@ const PlanDetail = () => {
       fetchPlanDetail();
     } catch (err) {
       console.error('Error deleting image:', err);
-      alert(t('alert_image_delete_fail') || '이미지 삭제에 실패했습니다.');
+      alert(t('alert_image_delete_fail'));
     }
   };
 
@@ -472,7 +472,7 @@ const PlanDetail = () => {
           >
             <img
               src={modalImages[modalImageIndex]?.image_url || modalImages[modalImageIndex]?.image}
-              alt={`이미지 ${modalImageIndex + 1}`}
+              alt={t('alt_place_image')?.replace('{index}', modalImageIndex + 1)}
               className="max-w-full max-h-[90vh] object-contain rounded-lg"
             />
           </div>
@@ -625,7 +625,7 @@ const PlanDetail = () => {
           {currentDateDetails.map((detail, index) => {
             // Generate Kakao Map URL using coordinates
             const kakaoMapUrl = detail.place_latitude && detail.place_longitude
-              ? `https://map.kakao.com/link/map/${encodeURIComponent(detail.place_name || '장소')},${detail.place_latitude},${detail.place_longitude}`
+              ? `https://map.kakao.com/link/map/${encodeURIComponent(detail.place_name || t('label_place'))},${detail.place_latitude},${detail.place_longitude}`
               : null;
 
             return (
@@ -686,7 +686,7 @@ const PlanDetail = () => {
                                 <div key={image.id} className="relative group flex-shrink-0">
                                   <img
                                     src={image.image_url || image.image}
-                                    alt={t('alt_place_image')?.replace('{index}', image.order_index) || `이미지 ${image.order_index}`}
+                                    alt={t('alt_place_image')?.replace('{index}', image.order_index)}
                                     className="w-32 h-32 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                     onClick={() => openImageModal(detail.images, imgIndex)}
                                   />
@@ -695,7 +695,7 @@ const PlanDetail = () => {
                                     <button
                                       onClick={(e) => handleImageDelete(image.id, e)}
                                       className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                      title={t('btn_delete') || '삭제'}
+                                      title={t('btn_delete')}
                                     >
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -727,7 +727,7 @@ const PlanDetail = () => {
                                       <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                       </svg>
-                                      <span className="text-xs text-gray-400 mt-1">{t('btn_add_image') || '사진 추가'}</span>
+                                      <span className="text-xs text-gray-400 mt-1">{t('btn_add_image')}</span>
                                     </>
                                   )}
                                 </label>
@@ -834,7 +834,7 @@ const PlanDetail = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-semibold text-gray-900 dark:text-gray-100">
-                          {comment.user_nickname || '익명'}
+                          {comment.user_nickname || t('anonymous')}
                         </span>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
                           {new Date(comment.created_at).toLocaleDateString(language === 'English' ? 'en-US' :
