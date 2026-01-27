@@ -126,6 +126,13 @@ export default {
     tab_saved: "저장한 장소",
     tab_reviews: "내 리뷰",
 
+    // 현지인 뱃지
+    local_badge_title: "현지인 인증 뱃지",
+    badge_since: "인증 시작",
+    badge_months: "유지 개월",
+    no_local_badge: "아직 현지인 인증 뱃지가 없습니다.",
+    no_local_badge_desc: "현지에서 일정 기간 거주하면 뱃지를 획득할 수 있어요!",
+
     // 예약
     no_reservations: "예약 내역이 없습니다",
     no_reservations_desc: "첫 항공권을 예약하고 한국을 탐험해보세요!",

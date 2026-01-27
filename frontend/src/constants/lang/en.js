@@ -126,6 +126,13 @@ export default {
     tab_saved: "Saved",
     tab_reviews: "Reviews",
 
+    // 현지인 뱃지
+    local_badge_title: "Local Badge",
+    badge_since: "Since",
+    badge_months: "Months Active",
+    no_local_badge: "No Local Badge yet.",
+    no_local_badge_desc: "Stay in a local area to earn your badge!",
+
     // 예약
     no_reservations: "No Reservations Yet",
     no_reservations_desc: "Book your first flight to explore Korea!",

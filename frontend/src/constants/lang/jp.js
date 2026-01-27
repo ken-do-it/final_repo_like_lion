@@ -132,6 +132,13 @@ export default {
     tab_saved: "保存済み",
     tab_reviews: "レビュー",
 
+    // 現地人バッジ
+    local_badge_title: "現地人バッジ",
+    badge_since: "認証開始",
+    badge_months: "継続月数",
+    no_local_badge: "まだ現地人バッジがありません。",
+    no_local_badge_desc: "現地に一定期間滞在するとバッジを獲得できます！",
+
     profile_basic: "基本情報",
     profile_basic_desc: "他のユーザーに公開されるプロフィール情報です。",
     edit_btn: "編集する",

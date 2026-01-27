@@ -132,6 +132,13 @@ export default {
     tab_saved: "收藏",
     tab_reviews: "评论",
 
+    // 当地人徽章
+    local_badge_title: "当地人徽章",
+    badge_since: "认证开始",
+    badge_months: "持续月数",
+    no_local_badge: "还没有当地人徽章。",
+    no_local_badge_desc: "在当地居住一段时间即可获得徽章！",
+
     profile_basic: "基本信息",
     profile_basic_desc: "向其他用户显示的个人资料信息。",
     edit_btn: "编辑",
