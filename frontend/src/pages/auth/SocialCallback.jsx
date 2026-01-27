@@ -45,11 +45,13 @@ const SocialCallback = () => {
 
             fetchSessionToken();
         } else if (success === 'false') {
+            setIsProcessing(true);
             console.error('❌ [SocialCallback] Social login failed');
             alert('Social login failed: No session found.');
             navigate('/login-page', { replace: true });
-        } else if (!isProcessing) {
+        } else {
             // success 파라미터가 없는 경우
+            setIsProcessing(true);
             console.error('❌ [SocialCallback] Invalid callback');
             alert('Social login failed: Invalid callback.');
             navigate('/login-page', { replace: true });
