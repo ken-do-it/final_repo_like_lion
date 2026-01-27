@@ -114,7 +114,7 @@ function App() {
           <Route path="/register-page" element={<SignupPage />} />
           <Route path="/find-account" element={<FindAccountPage />} />
           <Route path="/mypage" element={<MyPage />} />
-          <Route path="/social/callback" element={<SocialCallback />} />
+          <Route path="/auth/social-callback" element={<SocialCallback />} />
 
           {/* Features */}
           <Route path="/stays" element={
