@@ -1,59 +1,57 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axios';
 
 const SocialCallback = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { login } = useAuth(); // Assuming AuthContext has a login or we manually set token
+    const { login } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
         // 이미 처리 중이면 return
         if (isProcessing) return;
 
-        const accessToken = searchParams.get('access_token');
-        const refreshToken = searchParams.get('refresh_token');
-        const userId = searchParams.get('user_id');
-        const username = searchParams.get('username');
-        const email = searchParams.get('email');
-        const nickname = searchParams.get('nickname');
-        const socialProvider = searchParams.get('social_provider');
+        const success = searchParams.get('success');
 
-        if (accessToken && refreshToken) {
+        if (success === 'true') {
             setIsProcessing(true);
 
-            console.log("✅ [SocialCallback] Tokens received successfully");
-            console.log("🔑 Access Token:", accessToken);
-            console.log("🔄 Refresh Token:", refreshToken);
-            console.log("👤 User Info:", { userId, username, email, nickname, socialProvider });
+            // 세션에서 토큰 가져오기 (URL에 노출하지 않음)
+            const fetchSessionToken = async () => {
+                try {
+                    console.log("✅ [SocialCallback] Fetching tokens from session...");
+                    const response = await api.get('/users/session-token/');
 
-            // 사용자 정보 구성
-            if (userId && username) {
-                const userData = {
-                    id: userId,
-                    username: username,
-                    email: email,
-                    nickname: nickname || username,
-                    social_provider: socialProvider
-                };
-                console.log("👤 [SocialCallback] User Data saved:", userData);
+                    const { access_token, refresh_token, user } = response.data;
 
-                // AuthContext의 login 함수 호출하여 상태 즉시 업데이트
-                login(accessToken, refreshToken, userData);
+                    console.log("✅ [SocialCallback] Tokens received from session");
+                    console.log("👤 User Info:", user);
 
-                // 홈으로 이동 (replace: true로 히스토리 교체)
-                setTimeout(() => {
-                    navigate('/', { replace: true });
-                }, 100);
-            } else {
-                alert('Social login failed: Invalid user data received.');
-                navigate('/login-page', { replace: true });
-            }
+                    // AuthContext의 login 함수 호출하여 상태 즉시 업데이트
+                    login(access_token, refresh_token, user);
+
+                    // 홈으로 이동 (replace: true로 히스토리 교체)
+                    setTimeout(() => {
+                        navigate('/', { replace: true });
+                    }, 100);
+                } catch (error) {
+                    console.error('❌ [SocialCallback] Failed to fetch session token:', error);
+                    alert('Social login failed: Could not retrieve session token.');
+                    navigate('/login-page', { replace: true });
+                }
+            };
+
+            fetchSessionToken();
+        } else if (success === 'false') {
+            console.error('❌ [SocialCallback] Social login failed');
+            alert('Social login failed: No session found.');
+            navigate('/login-page', { replace: true });
         } else if (!isProcessing) {
-            // 토큰이 없고 아직 처리되지 않은 경우에만 에러 표시
-            console.error('❌ [SocialCallback] No tokens found in URL');
-            alert('Social login failed: No tokens received.');
+            // success 파라미터가 없는 경우
+            console.error('❌ [SocialCallback] Invalid callback');
+            alert('Social login failed: Invalid callback.');
             navigate('/login-page', { replace: true });
         }
     }, [searchParams, navigate, login, isProcessing]);

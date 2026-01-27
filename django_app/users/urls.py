@@ -3,7 +3,7 @@ from .views import (
     RegisterView, LoginView, LogoutView, TokenRefreshView,
     SendVerificationView, VerifyEmailView,
     PasswordResetRequestView, PasswordResetConfirmView, PasswordChangeView,
-    ProfileView, PreferencesView, MainPageView, SavedIdCheckView,
+    ProfileView, PreferencesView, MainPageView, SavedIdCheckView, SessionTokenView,
     login_page, register_page, main_page, api_test_page, social_callback_page, mypage_page,
     SavedPlacesView, SavedPlaceDetailView, MyReviewsView, MyReviewDetailView
 )
@@ -23,6 +23,7 @@ urlpatterns = [
     # API 엔드포인트
     path('main/', MainPageView.as_view(), name='main'),
     path('saved-ids/', SavedIdCheckView.as_view(), name='saved-ids'),
+    path('session-token/', SessionTokenView.as_view(), name='session-token'),
 
     # 인증 API
     path('register/', RegisterView.as_view(), name='register'),
