@@ -20,8 +20,8 @@ class TripUser(HttpUser):
 
         # 1. 로그인 요청 (Prefix: /api)
         response = self.client.post("/api/users/login/", json={
-            "username": "계정 ID",
-            "password": "계정 비밀번호"
+            "username": "admin",
+            "password": "1234"
         })
         
         if response.status_code == 200:
