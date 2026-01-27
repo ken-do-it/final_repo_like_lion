@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { searchAxios } from '../api/axios';
 import { useLanguage } from '../context/LanguageContext';
+import { API_LANG_CODES } from '../constants/translations';
 
 
 
 const SearchPage = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = searchParams.get('query');
@@ -15,13 +16,15 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
 
+  const langCode = API_LANG_CODES[language] || 'eng_Latn';
+
   useEffect(() => {
     const fetchSearchResults = async () => {
       if (!query) return;
 
       setLoading(true);
       try {
-        const response = await searchAxios.post('', { query });
+        const response = await searchAxios.post('', { query, lang: langCode });
         setResults(response.data);
       } catch (error) {
         console.error("Search error:", error);
@@ -34,7 +37,7 @@ const SearchPage = () => {
     if (query) {
       fetchSearchResults();
     }
-  }, [query]);
+  }, [query, langCode]);
 
 
   const hasResults = (type) => {
@@ -122,14 +125,14 @@ const SearchPage = () => {
                       </div>
                       <div className="flex flex-col gap-1 px-1 pb-1">
                         <div className="flex items-center justify-between">
-                          <h3 className="line-clamp-1 text-lg font-bold group-hover:text-[#1392ec]">{place.content?.split('\n')[0] || 'Unknown Place'}</h3>
+                          <h3 className="line-clamp-1 text-lg font-bold group-hover:text-[#1392ec]">{place.name_translated || place.name || place.content?.split('\n')[0] || 'Unknown Place'}</h3>
                           <div className="flex items-center gap-1 text-[#1392ec]">
                             <span>★</span>
                             <span className="text-sm font-bold">{place.average_rating ? place.average_rating.toFixed(1) : "0.0"}</span>
                             <span className="text-xs text-gray-500">({place.review_count || 0})</span>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-500 line-clamp-2">{place.content}</p>
+                        <p className="text-sm text-gray-500 line-clamp-2">{place.address_translated || place.address || place.content}</p>
                       </div>
                     </div>
                   ))}
@@ -165,7 +168,7 @@ const SearchPage = () => {
                       </div>
                       <div className="flex flex-col gap-1 px-1 pb-1">
                         <h3 className="line-clamp-1 text-lg font-bold group-hover:text-[#1392ec]">{(short.title_translated && short.title_translated !== 'Untitled') ? short.title_translated : (short.title || 'Untitled')}</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">{short.content || short.description}</p>
+                        <p className="text-sm text-gray-500 line-clamp-2">{short.content_translated || short.content || short.description}</p>
                       </div>
                     </div>
                   ))}
@@ -192,7 +195,7 @@ const SearchPage = () => {
                             <span className="text-xs font-medium text-gray-500">AI Suggestion</span>
                           </div>
                           <h3 className="mb-3 text-xl font-bold leading-tight group-hover:text-[#1392ec] line-clamp-2">
-                            {plan.content.substring(0, 50)}...
+                            {plan.title_translated || plan.title || (plan.content && plan.content.substring(0, 50)) || 'Untitled Plan'}
                           </h3>
                           {/* Timeline Visualization (Mock) */}
                           <div className="relative flex items-center gap-3 py-2">
@@ -287,11 +290,11 @@ const SearchPage = () => {
                           </div>
                         </div>
                         <div className="flex rounded-md bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5">
-                          <span className="text-xs font-bold text-green-700 dark:text-green-400">★ 5.0</span>
+                          <span className="text-xs font-bold text-green-700 dark:text-green-400">★ {review.rating || 5}.0</span>
                         </div>
                       </div>
                       <p className="mb-4 text-sm leading-relaxed text-gray-600 dark:text-gray-300 line-clamp-3">
-                        "{review.content}"
+                        "{review.content_translated || review.content}"
                       </p>
                       <div className="mt-4 flex items-center gap-1 text-xs font-medium text-gray-500">
                         {/* 점수 계산 로직 수정 */}

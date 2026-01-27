@@ -1,13 +1,139 @@
 import logging
 import os
+import hashlib
+import requests
+import json
 from fastapi import FastAPI, HTTPException
 # from translation.router import router as translation_router  # AI 번역 라우터 (Moved)
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from database import get_db_connection
 from prometheus_fastapi_instrumentator import Instrumentator
+
+# ---------------------------------------------------------
+# 번역 관련 설정
+# ---------------------------------------------------------
+FASTAPI_TRANSLATE_URL = os.getenv("FASTAPI_TRANSLATE_URL", "http://fastapi-ai-translation:8003/api/ai/translate")
+AI_SERVICE_API_KEY = os.getenv("AI_SERVICE_API_KEY", "secure-api-key-1234")
+
+def parse_cached_translation(cached_text: str) -> str:
+    """캐시된 번역 데이터 파싱 (JSON 형식인 경우 실제 텍스트 추출)"""
+    if not cached_text:
+        return cached_text
+
+    # JSON 형식인지 확인
+    if cached_text.strip().startswith('{'):
+        try:
+            data = json.loads(cached_text)
+            # { "translations": ["..."] } 형식
+            if "translations" in data and isinstance(data["translations"], list):
+                return data["translations"][0] if data["translations"] else cached_text
+            # { "translated_text": "..." } 형식
+            if "translated_text" in data:
+                return data["translated_text"]
+        except (json.JSONDecodeError, IndexError, KeyError):
+            pass
+
+    return cached_text
+
+def call_translate_api(text: str, source_lang: str, target_lang: str, timeout: int = 20):
+    """FastAPI 번역 서버 호출"""
+    if not text or not text.strip():
+        return text
+
+    payload = {
+        "text": text,
+        "source_lang": source_lang,
+        "target_lang": target_lang,
+    }
+
+    try:
+        headers = {"x-ai-api-key": AI_SERVICE_API_KEY}
+        resp = requests.post(FASTAPI_TRANSLATE_URL, json=payload, headers=headers, timeout=(3, timeout))
+        resp.raise_for_status()
+        data = resp.json()
+
+        # 응답 형식에 따라 처리
+        result = None
+        if "translated_text" in data:
+            result = data["translated_text"]
+        elif "translations" in data and isinstance(data["translations"], list):
+            result = data["translations"][0] if data["translations"] else text
+
+        # 이중 JSON 처리 (translated_text가 JSON 문자열인 경우)
+        if result:
+            result = parse_cached_translation(result)
+
+        return result if result else text
+    except Exception as e:
+        logger.error(f"Translation API error: {e}")
+        return text
+
+def translate_items(items: List[Dict], target_lang: str, entity_type: str, fields: List[str], conn):
+    """
+    검색 결과 아이템들에 대해 번역 처리
+    1. translation_entries 테이블에서 캐시 확인
+    2. 캐시 없으면 번역 API 호출 후 캐시 저장
+    """
+    if not target_lang or not items:
+        return
+
+    cur = conn.cursor()
+
+    for item in items:
+        entity_id = item.get("id")
+        if not entity_id:
+            continue
+
+        # 원본 언어 추정 (기본값: 한국어)
+        source_lang = item.get("source_lang", "kor_Hang")
+
+        # 원본 언어와 타겟 언어가 같으면 스킵
+        if source_lang == target_lang:
+            for field in fields:
+                item[f"{field}_translated"] = item.get(field, "")
+            continue
+
+        for field in fields:
+            original_text = item.get(field, "")
+            if not original_text:
+                item[f"{field}_translated"] = ""
+                continue
+
+            # 1. 캐시 확인
+            cur.execute("""
+                SELECT translated_text FROM translation_entries
+                WHERE entity_type = %s AND entity_id = %s AND field = %s AND target_lang = %s
+                LIMIT 1
+            """, (entity_type, entity_id, field, target_lang))
+
+            cache_row = cur.fetchone()
+
+            if cache_row:
+                # 캐시 Hit - JSON 형식인 경우 파싱
+                item[f"{field}_translated"] = parse_cached_translation(cache_row[0])
+            else:
+                # 캐시 Miss -> 번역 API 호출
+                translated = call_translate_api(original_text, source_lang, target_lang)
+                item[f"{field}_translated"] = translated
+
+                # 캐시 저장
+                if translated and translated != original_text:
+                    try:
+                        text_hash = hashlib.sha256(original_text.encode("utf-8")).hexdigest()
+                        cur.execute("""
+                            INSERT INTO translation_entries
+                            (entity_type, entity_id, field, source_lang, target_lang, source_hash, translated_text, provider, model, created_at, updated_at, last_used_at)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), NOW())
+                            ON CONFLICT (entity_type, entity_id, field, target_lang) DO UPDATE
+                            SET translated_text = EXCLUDED.translated_text, source_hash = EXCLUDED.source_hash, updated_at = NOW(), last_used_at = NOW()
+                        """, (entity_type, entity_id, field, source_lang, target_lang, text_hash, translated, "fastapi", "nllb"))
+                        conn.commit()
+                    except Exception as e:
+                        logger.error(f"Cache save error: {e}")
+                        conn.rollback()
 
 # 삭제 요청 데이터 모델
 class DeleteRequest(BaseModel):
@@ -183,6 +309,7 @@ def index_data(request: IndexRequest):
 # ---------------------------------------------------------
 class SearchRequest(BaseModel):
     query: str
+    lang: str = None  # 타겟 언어 (예: eng_Latn, kor_Hang, jpn_Jpan, zho_Hans)
 
 # @app.post("/search")
 # def search_grouped(request: SearchRequest):
@@ -350,7 +477,9 @@ def search_grouped(request: SearchRequest):
         place_ids = []
         short_ids = []
         column_ids = []
-        
+        plan_ids = []
+        review_ids = []
+
         for r in rows:
             item = {
                 "id": r[0],
@@ -358,15 +487,17 @@ def search_grouped(request: SearchRequest):
                 "distance": float(r[3]),
                 "is_keyword_match": True if r[4] == 0 else False
             }
-            
+
             cat = r[1]
             if cat == "place":
                 grouped_results["places"].append(item)
                 place_ids.append(item["id"])
             elif cat == "review":
                 grouped_results["reviews"].append(item)
+                review_ids.append(item["id"])
             elif cat == "plan":
                 grouped_results["plans"].append(item)
+                plan_ids.append(item["id"])
             elif cat == "shortform":
                 grouped_results["shorts"].append(item)
                 short_ids.append(item["id"])
@@ -385,42 +516,48 @@ def search_grouped(request: SearchRequest):
             try:
                 conn_places = get_db_connection()
                 cur_places = conn_places.cursor()
-                
-                place_query = "SELECT id, thumbnail_urls, average_rating, review_count FROM places WHERE id IN %s"
+
+                place_query = "SELECT id, thumbnail_urls, average_rating, review_count, name, address, source_lang FROM places WHERE id IN %s"
                 cur_places.execute(place_query, (tuple(place_ids),))
                 place_rows = cur_places.fetchall()
-                
+
                 # 리뷰 이미지
                 review_query = """
-                    SELECT DISTINCT ON (place_id) place_id, image_url 
-                    FROM place_reviews 
+                    SELECT DISTINCT ON (place_id) place_id, image_url
+                    FROM place_reviews
                     WHERE place_id IN %s AND image_url IS NOT NULL AND image_url != ''
                     ORDER BY place_id, created_at DESC
                 """
                 cur_places.execute(review_query, (tuple(place_ids),))
                 review_rows = cur_places.fetchall()
                 review_map = {row[0]: row[1] for row in review_rows}
-                
+
                 place_map = {}
-                for pid, urls, rating, count in place_rows:
+                for pid, urls, rating, count, name, address, src_lang in place_rows:
                     thumb = None
                     if pid in review_map:
                         thumb = review_map[pid]
                     elif urls and isinstance(urls, list) and len(urls) > 0:
                         thumb = urls[0]
-                    
+
                     place_map[pid] = {
                         "thumbnail_url": thumb,
                         "average_rating": float(rating) if rating else 0.0,
-                        "review_count": count if count else 0
+                        "review_count": count if count else 0,
+                        "name": name,
+                        "address": address,
+                        "source_lang": src_lang or "kor_Hang"
                     }
-                
+
                 for item in grouped_results["places"]:
                     info = place_map.get(item["id"], {})
                     item["thumbnail_url"] = info.get("thumbnail_url")
                     item["average_rating"] = info.get("average_rating", 0.0)
                     item["review_count"] = info.get("review_count", 0)
-                
+                    item["name"] = info.get("name")
+                    item["address"] = info.get("address")
+                    item["source_lang"] = info.get("source_lang", "kor_Hang")
+
                 cur_places.close()
                 conn_places.close()
             except Exception as e:
@@ -431,20 +568,27 @@ def search_grouped(request: SearchRequest):
             try:
                 conn_shorts = get_db_connection()
                 cur_shorts = conn_shorts.cursor()
-                
-                short_query = "SELECT id, thumbnail_url, title FROM shortforms WHERE id IN %s"
+
+                short_query = "SELECT id, thumbnail_url, title, content, source_lang FROM shortforms WHERE id IN %s"
                 cur_shorts.execute(short_query, (tuple(short_ids),))
                 short_rows = cur_shorts.fetchall()
-                
+
                 short_map = {}
-                for sid, thumb, title in short_rows:
-                    short_map[sid] = {"thumbnail_url": thumb, "title": title}
-                
+                for sid, thumb, title, content, src_lang in short_rows:
+                    short_map[sid] = {
+                        "thumbnail_url": thumb,
+                        "title": title,
+                        "content": content,
+                        "source_lang": src_lang or "kor_Hang"
+                    }
+
                 for item in grouped_results["shorts"]:
                     info = short_map.get(item["id"], {})
                     item["thumbnail_url"] = info.get("thumbnail_url")
                     item["title"] = info.get("title")
-                    
+                    item["content"] = info.get("content")
+                    item["source_lang"] = info.get("source_lang", "kor_Hang")
+
                 cur_shorts.close()
                 conn_shorts.close()
             except Exception as e:
@@ -474,6 +618,116 @@ def search_grouped(request: SearchRequest):
                 conn_cols.close()
             except Exception as e:
                 logger.error(f"Column detail error: {e}")
+
+        # [D] Plan 추가 정보
+        if plan_ids:
+            try:
+                conn_plans = get_db_connection()
+                cur_plans = conn_plans.cursor()
+
+                plan_query = "SELECT id, title, description FROM travel_plans WHERE id IN %s"
+                cur_plans.execute(plan_query, (tuple(plan_ids),))
+                plan_rows = cur_plans.fetchall()
+
+                plan_map = {}
+                for pid, title, description in plan_rows:
+                    plan_map[pid] = {
+                        "title": title,
+                        "description": description,
+                        "source_lang": "kor_Hang"  # Plans는 source_lang 필드가 없으므로 기본값
+                    }
+
+                for item in grouped_results["plans"]:
+                    info = plan_map.get(item["id"], {})
+                    item["title"] = info.get("title")
+                    item["description"] = info.get("description")
+                    item["source_lang"] = info.get("source_lang", "kor_Hang")
+
+                cur_plans.close()
+                conn_plans.close()
+            except Exception as e:
+                logger.error(f"Plan detail error: {e}")
+
+        # [E] Review 추가 정보
+        if review_ids:
+            try:
+                conn_reviews = get_db_connection()
+                cur_reviews = conn_reviews.cursor()
+
+                review_query = "SELECT id, content, source_lang, rating FROM place_reviews WHERE id IN %s"
+                cur_reviews.execute(review_query, (tuple(review_ids),))
+                review_rows = cur_reviews.fetchall()
+
+                review_map = {}
+                for rid, content, src_lang, rating in review_rows:
+                    review_map[rid] = {
+                        "content": content,
+                        "source_lang": src_lang or "kor_Hang",
+                        "rating": rating
+                    }
+
+                for item in grouped_results["reviews"]:
+                    info = review_map.get(item["id"], {})
+                    if info.get("content"):
+                        item["content"] = info.get("content")
+                    item["source_lang"] = info.get("source_lang", "kor_Hang")
+                    item["rating"] = info.get("rating", 5)
+
+                cur_reviews.close()
+                conn_reviews.close()
+            except Exception as e:
+                logger.error(f"Review detail error: {e}")
+
+        # -----------------------------------------------------
+        # 5. 번역 처리 (lang 파라미터가 있을 때만)
+        # -----------------------------------------------------
+        if request.lang:
+            try:
+                conn_trans = get_db_connection()
+
+                # Places 번역
+                if grouped_results["places"]:
+                    translate_items(
+                        grouped_results["places"],
+                        request.lang,
+                        "place",
+                        ["name", "address"],
+                        conn_trans
+                    )
+
+                # Shorts 번역
+                if grouped_results["shorts"]:
+                    translate_items(
+                        grouped_results["shorts"],
+                        request.lang,
+                        "shortform",
+                        ["title", "content"],
+                        conn_trans
+                    )
+
+                # Plans 번역
+                if grouped_results["plans"]:
+                    translate_items(
+                        grouped_results["plans"],
+                        request.lang,
+                        "travel_plan",
+                        ["title", "description"],
+                        conn_trans
+                    )
+
+                # Reviews 번역
+                if grouped_results["reviews"]:
+                    translate_items(
+                        grouped_results["reviews"],
+                        request.lang,
+                        "place_review",
+                        ["content"],
+                        conn_trans
+                    )
+
+                conn_trans.close()
+            except Exception as e:
+                logger.error(f"Translation error: {e}")
 
         return grouped_results
         
