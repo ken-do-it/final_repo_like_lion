@@ -11,6 +11,12 @@ export default {
     nav_logout: "로그아웃",
     nav_login: "로그인",
     nav_signup: "회원가입",
+
+    // 로그아웃 확인 모달
+    logout_confirm_title: "로그아웃 하시겠습니까?",
+    logout_confirm_desc: "로그아웃하면 일부 기능을 사용할 수 없습니다.",
+    yes: "예",
+    no: "아니오",
     // 사이드바 전용
     nav_geoquiz: "지오 퀴즈 업로더",
     nav_ai_plan: "AI 일정 만들기",

@@ -52,9 +52,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
         try:
             return super().create(request, *args, **kwargs)
         except Exception as e:
-            logger.exception("Shortform upload failed")
+            import traceback
+            logger.error(f"Shortform upload failed: {str(e)}")
+            logger.error(traceback.format_exc())
             return Response(
-                {"detail": "업로드 중 오류가 발생했습니다.", "error": str(e)}, 
+                {"detail": "업로드 중 오류가 발생했습니다.", "error": str(e), "trace": traceback.format_exc()}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
