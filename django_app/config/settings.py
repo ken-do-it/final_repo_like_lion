@@ -397,6 +397,8 @@ else:
 
 # Nginx(HTTPS) 뒤에서 실행될 때, 장고가 HTTPS임을 인식하도록 설정
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 
 # 추가 권장 설정 (세션 및 쿠키 보안)
 SESSION_COOKIE_SECURE = True
