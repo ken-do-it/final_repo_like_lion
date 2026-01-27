@@ -433,7 +433,7 @@ const FlightSeat = () => {
                       <span className="material-symbols-outlined text-primary">airlines</span>
                     </div>
                     <div>
-                      <p className="font-medium dark:text-white">{outboundFlight?.airlineName}</p>
+                      <p className="font-medium dark:text-white">{getAirlineName(outboundFlight?.airlineName)}</p>
                       <p className="text-xs text-slate-500">{outboundFlight?.flightNumber}</p>
                     </div>
                   </div>
@@ -472,7 +472,7 @@ const FlightSeat = () => {
                         <span className="material-symbols-outlined text-mint">airlines</span>
                       </div>
                       <div>
-                        <p className="font-medium dark:text-white">{inboundFlight?.airlineName}</p>
+                        <p className="font-medium dark:text-white">{getAirlineName(inboundFlight?.airlineName)}</p>
                         <p className="text-xs text-slate-500">{inboundFlight?.flightNumber}</p>
                       </div>
                     </div>
