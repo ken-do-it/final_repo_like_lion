@@ -58,7 +58,7 @@ const SignupPage = () => {
 
         try {
             await api.post('/users/register/', payload);
-            alert('Registration successful! Please log in.'); // Simple feedback
+            alert(t('registration_success')); // Simple feedback
             navigate('/login-page');
         } catch (err) {
             console.error(err);

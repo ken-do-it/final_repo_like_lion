@@ -1,5 +1,5 @@
 export default {
-    // Sidebar
+    // 사이드바
     title_benefits: "Tripkoの特典",
     benefit_support: "24時間年中無休サポート",
     benefit_guarantee: "最安値保証",
@@ -10,19 +10,25 @@ export default {
     title_need_help: "お困りですか？",
     desc_need_help: "いつでもお問い合わせください。",
     btn_contact_support: "サポートに連絡",
-    // Navbar
+    // 네비게이션 바
     nav_home: "ホーム",
     nav_shorts: "ショート",
     nav_game: "ロードビュー",
     nav_stays: "宿泊",
     nav_places: "場所",
     nav_mytrips: "旅程",
-    // Navbar Dropdown
+    // 네비게이션 드롭다운
     nav_mypage: "マイページ",
     nav_logout: "ログアウト",
     nav_login: "ログイン",
     nav_signup: "会員登録",
-    // Sidebar Specific
+
+    // 로그아웃 확인 모달
+    logout_confirm_title: "ログアウトしますか？",
+    logout_confirm_desc: "ログアウトすると、一部の機能が使用できなくなります。",
+    yes: "はい",
+    no: "いいえ",
+    // 사이드바 전용
     nav_geoquiz: "ジオクイズ・アップローダー",
     nav_ai_plan: "AI日程作成",
     nav_column: "ローカルコラム",
@@ -30,7 +36,7 @@ export default {
     nav_local_auth: "現地人認証",
     nav_settings: "設定",
 
-    // Review Banner
+    // 리뷰 배너
     banner_review_title: "{dest}への旅行はいかがでしたか？",
     banner_review_desc: "旅の思い出をシェアしましょう！",
     banner_review_btn: "レビューを書く",
@@ -38,13 +44,13 @@ export default {
     nav_support: "カスタマーサポート",
     nav_version: "バージョン情報",
 
-    // MainPage Hero
+    // 메인 페이지 히어로
     hero_title_1: "次はどこへ？",
     hero_title_2: "韓国が待っています。",
     search_placeholder: "目的地、航空券、ホテルを検索...",
     search_btn: "検索",
 
-    // Hero Tabs & Plan
+    // 히어로 탭 & 일정
     hero_tab_search: "検索",
     hero_tab_plan: "日程作成",
     plan_title_ph: "旅行タイトル (例: 夏休み)",
@@ -52,26 +58,26 @@ export default {
     plan_end: "到着日",
     plan_create_btn: "作成開始",
 
-    // Filter Chips
+    // 필터 칩
     filter_all: "すべて",
     filter_places: "場所",
     filter_geoquiz: "ジオクイズ",
     filter_stays: "宿泊",
     filter_flights: "交通",
 
-    // Quick Actions
+    // 빠른 작업
     action_flight: "航空券予約",
     action_stays: "宿泊先を探す",
     action_places: "観光地",
     action_geoquiz: "ジオクイズ",
     title_transport: "交通",
 
-    // Sections
+    // 섹션
     sec_upcoming: "これからの旅行",
     btn_view_all: "すべて見る",
     sec_trending: "トレンド動画 & 都市",
 
-    // Shorts Page & Detail
+    // 쇼츠 페이지 & 상세
     shorts_title: "ショート",
     shorts_sub: "AI字幕・翻訳で最新動画を楽しみましょう。",
     btn_upload: "アップロード",
@@ -82,7 +88,7 @@ export default {
     now_playing: "再生中",
     lang_label: "言語",
 
-    // Common
+    // 공통
     play: "再生",
     close: "閉じる",
     follow: "フォロー",
@@ -92,7 +98,7 @@ export default {
     msg_no_comments: 'まだコメントがありません。',
     add_comment: 'コメントを追加...',
 
-    // Auth Pages
+    // 인증 페이지
     login_title: "ログイン",
     login_subtitle: "あなただけの旅行体験へ。",
     signup_title: "会員登録",
@@ -108,8 +114,9 @@ export default {
     no_account: "アカウントをお持ちでないですか？",
     have_account: "すでにアカウントをお持ちですか？",
     forgot_password: "パスワードをお忘れですか？",
+    registration_success: "会員登録が完了しました！ログインしてください。",
 
-    // MyPage
+    // 마이페이지
     mypage_title: "マイページ",
     mypage_desc: "アカウント情報と活動を管理します。",
     tab_profile: "プロフィール",
@@ -131,7 +138,7 @@ export default {
     location_label: "位置",
     phone_label: "電話番号",
 
-    // Shorts Upload
+    // 쇼츠 업로드
     upload_title_new: "ショート動画アップロード",
     upload_title_edit: "ショート動画編集",
     upload_sub_new: "あなたの瞬間を世界と共有しましょう",
@@ -158,7 +165,7 @@ export default {
     btn_save_changes: "変更を保存",
     btn_upload_short: "アップロード",
 
-    // Place Search
+    // 장소 검색
     place_search_title: "場所検索",
     shorts_upload_desc_placeholder: "どのような動画ですか？",
     shorts_location_placeholder: "例: #ソウル #韓国",
@@ -170,7 +177,7 @@ export default {
     no_results_desc_try: "別のキーワードで検索してみてください。",
     searching: "検索中...",
 
-    // Place Detail
+    // 장소 상세
     place_basic_info: "基本情報",
     place_opening_hours: "営業時間",
     place_location: "位置",
@@ -185,7 +192,7 @@ export default {
     loading_place: "場所情報を読み込み中...",
     btn_go_back: "戻る",
 
-    // Plan List
+    // 계획 목록
     plan_list_title: "私の旅行計画",
     plan_list_subtitle: "あなただけの特別な旅を計画・管理しましょう",
     btn_ai_recommend: "AIおすすめ",
@@ -193,7 +200,7 @@ export default {
     msg_no_plans: "まだ旅行計画がありません",
     btn_create_first: "最初の旅行計画を作成",
 
-    // Plan Create Page
+    // 계획 생성 페이지
     plan_create_title: "新しい旅行計画を作成",
     plan_create_subtitle: "あなただけの特別な旅行を計画しましょう",
     label_trip_title: "旅行のタイトル",
@@ -218,8 +225,8 @@ export default {
     msg_create_success: "旅行計画が作成されました！",
     msg_create_fail: "旅行計画の作成に失敗しました。",
 
-    // Add/Edit Place / Plan Edit / AI Recommend
-    // Place Related
+    // 장소 추가/수정 / 계획 수정 / AI 추천
+    // 장소 관련
     title_add_place: "場所を追加",
     subtitle_add_place: "{planTitle}に新しい場所を追加します",
     title_edit_place: "場所を編集",
@@ -251,7 +258,7 @@ export default {
     msg_loading: "読み込み中...",
     msg_plan_not_found: "計画が見つかりません。",
 
-    // Plan Edit
+    // 계획 수정
     title_plan_edit: "旅行計画の編集",
     subtitle_plan_edit: "旅行計画の基本情報を編集します",
     label_plan_type: "計画タイプ",
@@ -260,7 +267,7 @@ export default {
     title_date_warning: "日付変更時の注意事項",
     desc_date_warning: "この計画には既に{count}個の場所が追加されています。日付を変更すると、既存の場所の日付が計画範囲外になる可能性があります。",
 
-    // AI Recommend
+    // AI 추천
     title_ai_recommend: "AI旅行推奨",
     subtitle_ai_recommend: "AIがあなたの好みに合った完璧な旅行日程を作成します",
     q_destination: "どこへ旅行に行きますか？",
@@ -281,7 +288,7 @@ export default {
     alert_ai_request_fail: "AI推奨のリエクエストに失敗しました。",
     alert_ai_polling_fail: "AIの状態確認に失敗しました。",
 
-    // Destinations
+    // 여행지
     dest_gapyeong_yangpyeong: "加平/楊平",
     dest_gangneung_sokcho: "江陵/束草",
     dest_gyeongju: "慶州",
@@ -293,7 +300,7 @@ export default {
     dest_chuncheon_hongcheon: "春川/洪川",
     dest_taean: "泰安",
 
-    // Travel Styles
+    // 여행 스타일
     style_healing: "ヒーリング/保養",
     style_healing_desc: "静かで快適な旅行",
     style_activity: "アクティビティ",
@@ -314,7 +321,7 @@ export default {
     msg_confirm_delete: "本当にこの旅行計画を削除しますか？",
     msg_delete_fail: "削除に失敗しました。",
 
-    // Common Alerts
+    // 공통 알림
     alert_login_required: "ログインが必要なサービスです。",
     alert_public_like_only: "公開された日程のみいいねできます。",
     alert_like_fail: "いいねの更新に失敗しました。",
@@ -325,7 +332,7 @@ export default {
     alert_comment_delete_fail: "コメントの削除に失敗しました。",
     msg_load_fail: "旅行計画の読み込みに失敗しました。",
 
-    // Plan Detail
+    // 계획 상세
     error_invalid_access: "不正なアクセスです。",
     error_plan_private: "非公開の計画です。",
     error_plan_not_found: "計画が見つかりません。",
@@ -340,7 +347,7 @@ export default {
     default_place_name: "場所名なし",
     alt_place_image: "場所の画像 {index}",
     day_label: "Day {day}",
-    // MainPage New
+    // 메인 페이지 신규
     cta_start_journey: "次の旅を始めましょう！",
     cta_no_upcoming: "予定されている旅行はありません。今すぐ計画してみませんか？",
     btn_create_trip: "旅行を作成",
@@ -348,7 +355,7 @@ export default {
     label_group_trip: "グループ旅行",
     link_view_itinerary: "日程を見る →",
     category_travel: "旅行",
-    // AccommodationMap
+    // 숙소 지도
     stays_title: "宿泊施設を探す",
     stays_search_placeholder: "場所を検索 (例: カンナム)",
     stays_search_btn: "検索",
@@ -369,7 +376,7 @@ export default {
     stays_finding: "場所を探しています...",
     stays_view_details: "詳細を見る ↗",
 
-    // GeoImageUploader
+    // 지오 이미지 업로더
     geo_title: "AI位置分析",
     geo_desc: "旅行の写真をアップロードしてGPS位置を抽出し、ロードビューゲームを開始します。",
     geo_drag_drop: "クリックまたはドラッグ＆ドロップ",
@@ -387,7 +394,7 @@ export default {
     geo_start_with: "「{name}」から開始",
     geo_back_home: "← ホームに戻る",
 
-    // LocalColumnList
+    // 로컬 칼럼 목록
     col_title_main: "ローカルコラム",
     col_desc_1: "地元の人が教える隠れた名所やグルメストーリーを発見。",
     col_desc_2: "検証された地元の人だけが知る特別な情報が満載。",
@@ -397,10 +404,10 @@ export default {
     col_no_cols: "まだコラムがありません。",
     col_be_first: "最初のコラムを書いてみませんか！",
     col_anonymous: "匿名",
-    // Shorts
+    // 쇼츠
     shorts_load_error: "ショート動画の読み込みに失敗しました。",
 
-    // FlightSearch
+    // 항공권 검색
     flight_title: "交通",
     flight_search_title: "航空券検索",
     flight_oneway: "片道",
@@ -438,7 +445,7 @@ export default {
     tab_taxi: "タクシー",
     flight_load_error: "データの読み込みに失敗しました。",
 
-    // RoadviewGame
+    // 거리뷰 게임
     game_title: "ストリートビュー",
     game_target_photo: "ターゲット写真",
     game_round: "ラウンド",
@@ -462,7 +469,7 @@ export default {
     game_no_pano_title: "ストリートビューが見つかりません",
     game_no_pano_desc: "周辺の道路データがないか、屋内である可能性があります。",
 
-    // Local Columns
+    // 로컬 칼럼
     col_write_title: "新しいコラムを書く",
     col_edit_title: "コラム編集",
     col_input_title: "タイトル",
@@ -490,7 +497,7 @@ export default {
     msg_col_updated: "コラムが修正されました。",
     msg_save_fail: "保存に失敗しました。",
 
-    // Auth Modal
+    // 인증 모달
     auth_modal_title: "現地人認証",
     auth_modal_desc: "現在地に基づいて現地人バッジを獲得しましょう！",
     btn_auth_my_loc: "現在地で認証する",
@@ -504,7 +511,7 @@ export default {
     msg_loc_timeout: "位置情報の要求がタイムアウトしました。",
     msg_loc_fail: "位置情報の取得に失敗しました。",
 
-    // Detail & List
+    // 상세 & 목록
     col_view_place: "スポット情報を見る",
     btn_back_list: "リストに戻る",
     confirm_delete_col: "本当にこのコラムを削除しますか？",
@@ -517,7 +524,7 @@ export default {
     col_upload_thumb: "クリックして画像をアップロード",
     col_intro_img_add: "画像追加",
 
-    // City Pages
+    // 도시 페이지
     city_search_title: "どこへ行きますか？ ✈️",
     city_search_desc: "都市名を検索して、総合的な旅行情報を見つけましょう。",
     city_search_ph: "都市検索 (例: ソウル, 釜山)",
@@ -534,36 +541,36 @@ export default {
     city_load_error: "コンテンツの読み込みに失敗しました。",
     flight_provider_check_required: "提供元に確認が必要",
 
-    // Currency
+    // 통화
     unit_krw: "ウォン",
     date_format_ymd: "{year}年{month}月{day}日",
     unit_people: "名",
 
-    // 日付/時刻フォーマット
+    // 날짜/시간 형식
     datetime_format_ymdhm: "{year}年{month}月{day}日 {hours}:{minutes}",
 
-    // 決済承認中
+    // 결제 확인 중
     payment_confirming_title: "決済承認処理中",
     payment_confirming_desc: "安全に決済を処理しています。",
     payment_confirming_wait: "しばらくお待ちください。",
 
-    // 決済成功
+    // 결제 성공
     payment_success_title: "決済が完了しました",
     payment_success_desc: "予約が正常に処理されました。",
     payment_order_number: "注文番号",
     payment_amount_label: "決済金額",
     payment_redirecting: "まもなく予約完了ページに移動します...",
 
-    // 決済失敗
+    // 결제 실패
     payment_error_title: "決済承認失敗",
     payment_error_invalid_params: "決済情報が正しくありません。",
     payment_error_refund_info: "決済承認が失敗しましたが、カード承認が行われた場合は自動的にキャンセル処理されます。営業日基準3-5日以内に返金されます。",
 
-    // ボタン
+    // 버튼
     btn_restart: "最初からやり直す",
     btn_processing: "処理中...",
 
-    // 予約詳細モーダル
+    // 예약 상세 모달
     reservation_detail_title: "予約詳細",
     reservation_loading: "読み込み中...",
     reservation_load_error: "情報を読み込めません。",
@@ -591,7 +598,7 @@ export default {
     btn_close: "閉じる",
     label_order: "注文",
 
-    // AddToPlanModal
+    // 일정 추가 모달
     title_add_schedule: "日程に追加",
     btn_new_plan: "+ 新しい計画",
     msg_add_failed: "日程の追加に失敗しました。",
@@ -601,18 +608,18 @@ export default {
     msg_adding: "追加中...",
     btn_add_to_selected_schedule: "日程に追加",
 
-    // PlaceDetailPage
+    // 장소 상세 페이지
     error_load_place: "施設情報の読み込みに失敗しました。",
 
 
-    // LocalColumnList
+    // 로컬 칼럼 목록
     col_title: "ローカルコラム",
     place_search_placeholder_column: "検索語を入力...",
     no_results_desc: "検索結果がありません：",
     btn_view_all_columns: "すべて見る",
     label_place: "施設",
 
-    // Review Section
+    // 리뷰 섹션
     label_reviews: "レビュー",
     msg_login_required_review: "レビューを書くにはログインが必要です。",
     msg_editing_review: "レビュー編集中",
@@ -635,7 +642,7 @@ export default {
     msg_review_deleted: "レビューが削除されました。",
     msg_review_delete_failed: "レビューの削除に失敗しました。",
 
-    // Train Types
+    // 기차 종류
     train_type_ktx: "KTX",
     train_type_srt: "SRT",
     train_type_itx_saemaeul: "ITX-セマウル",
@@ -643,7 +650,7 @@ export default {
     train_type_saemaeul: "セマウル号",
     train_type_mugunghwa: "ムグンファ号",
 
-    // Train Search
+    // 기차 검색
     title_transport: "交通",
     title_train_search: "列車検索",
     label_dep_station: "出発駅",
@@ -664,7 +671,7 @@ export default {
     info_train_4: "KTX、ITX、セマウル号はKORAILで予約可能です",
     info_train_5: "SRTはSRTホームページでのみ予約可能です",
 
-    // Train Results
+    // 기차 검색 결과
     msg_searching_trains: "列車を検索しています...",
     title_search_results_count: "検索結果（{count}件）",
     msg_no_trains_found: "検索された列車がありません。他の条件で検索してください。",
@@ -687,7 +694,7 @@ export default {
     region_jeolla: "全羅",
     region_gangwon: "江原",
 
-    // Subway
+    // 지하철
     title_subway_search: "地下鉄ルート検索",
     label_search_option: "検索オプション",
     placeholder_input_dep_station: "出発駅を入力",
@@ -704,7 +711,7 @@ export default {
     info_subway_4: "Kakaoマップで詳細ルートを表示します。",
     info_subway_5: "駅の案内板でリアルタイム到着情報を確認してください。",
 
-    // Subway Route
+    // 지하철 경로
     msg_searching_route: "最適ルートを検索中...",
     title_recommend_routes: "推奨ルート（{count}件）",
     label_route_n: "ルート{n}",
