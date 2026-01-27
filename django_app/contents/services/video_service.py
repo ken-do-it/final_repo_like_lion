@@ -156,7 +156,9 @@ class VideoService:
                 thumbnail_url = f"{settings.MEDIA_URL}shortforms/thumbnails/{thumb_filename}"
 
         except Exception as e:
-            logger.error(f"Video pipeline failed: {e}")
+            import traceback
+            logger.error(f"Video pipeline failed at step: {e}")
+            logger.error(traceback.format_exc())
             raise e
         finally:
             # 5. 임시 파일 정리 (로컬 모드에서 move를 했다면 이미 파일이 없을 수 있음)
