@@ -28,6 +28,7 @@ const LocalColumnForm = () => {
 
     // Validation
     const [titleError, setTitleError] = useState('');
+    const [contentError, setContentError] = useState('');
 
     useEffect(() => {
         if (isEditMode) {
@@ -128,9 +129,17 @@ const LocalColumnForm = () => {
     };
 
     const handleSubmit = async () => {
+        setTitleError('');
+        setContentError('');
+
         if (!title.trim()) {
             setTitleError(t('err_title_req')); // Translated
             window.scrollTo(0, 0);
+            return;
+        }
+        if (!content.trim()) {
+            setContentError(t('err_content_req')); // Translated
+            document.getElementById('intro-content')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
         if (!thumbnail) {
@@ -198,7 +207,21 @@ const LocalColumnForm = () => {
             navigate('/local-columns');
         } catch (error) {
             console.error('Submit failed:', error);
-            const msg = error.response?.data?.detail || t('msg_save_fail'); // Translated fallback
+            const detail = error.response?.data?.detail;
+            let msg = t('msg_save_fail') || '저장에 실패했습니다.';
+
+            if (detail) {
+                if (Array.isArray(detail)) {
+                    // 422 Validation Error 형식: [{loc: ["body", "field"], msg: "..."}]
+                    const fieldErrors = detail.map(err => {
+                        const field = err.loc?.[err.loc.length - 1] || 'unknown';
+                        return `${field}: ${err.msg}`;
+                    });
+                    msg = fieldErrors.join('\n');
+                } else if (typeof detail === 'string') {
+                    msg = detail;
+                }
+            }
             alert(msg);
         } finally {
             setLoading(false);
@@ -267,15 +290,20 @@ const LocalColumnForm = () => {
                     {/* Intro Content */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {t('col_input_intro')}
+                            {t('col_input_intro')} <span className="text-red-500">*</span>
                         </label>
                         <textarea
+                            id="intro-content"
                             value={content}
-                            onChange={(e) => setContent(e.target.value)}
+                            onChange={(e) => {
+                                setContent(e.target.value);
+                                if (contentError) setContentError('');
+                            }}
                             rows={4}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-[#1392ec] outline-none transition-all dark:text-white resize-none"
+                            className={`w-full px-4 py-3 rounded-xl border ${contentError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-[#1392ec] outline-none transition-all dark:text-white resize-none`}
                             placeholder={t('col_input_intro_ph')}
                         />
+                        {contentError && <p className="text-red-500 text-sm mt-1">{contentError}</p>}
                     </div>
 
                     {/* Intro Image */}

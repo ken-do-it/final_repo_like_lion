@@ -613,7 +613,7 @@ const MyPage = () => {
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Columns Yet</h3>
                 <p className="mb-6">Share your local insights with travelers!</p>
                 <Button
-                    onClick={() => navigate('/places/columns/new')}
+                    onClick={() => navigate('/local-columns/write')}
                     className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
                 >
                     Write Column
@@ -630,7 +630,7 @@ const MyPage = () => {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate('/places/columns/new')}
+                        onClick={() => navigate('/local-columns/write')}
                         className="rounded-lg"
                     >
                         + Write Column

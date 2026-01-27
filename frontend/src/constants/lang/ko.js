@@ -782,6 +782,7 @@ export default {
     btn_submit_create_column: "작성 완료",
     btn_submit_edit: "수정 완료",
     err_title_req: "제목을 입력해주세요.",
+    err_content_req: "서론을 입력해주세요.",
     err_thumb_req: "썸네일 이미지는 필수입니다.",
     err_section_min: "최소 하나의 섹션은 필요합니다.",
     msg_col_created: "칼럼이 작성되었습니다.",
