@@ -102,6 +102,94 @@ class MSRequestInputSerializer(serializers.Serializer):
     )
 
 
+class MSFlightDataInputSerializer(serializers.Serializer):
+    """
+    항공편 정보 입력 (프론트엔드에서 선택한 실제 항공편 데이터)
+
+    [쉬운 설명]
+    사용자가 검색해서 선택한 항공편 정보를 받아요.
+    이 정보가 없으면 Mock(가짜) 데이터가 저장되어서
+    마이페이지에서 이상한 정보가 보이게 됩니다!
+
+    요청 예시:
+    {
+        "airlineName": "제주항공",
+        "flightNumber": "7C101",
+        "departureAirport": "GMP",
+        "arrivalAirport": "CJU",
+        "depAt": "2026-01-27T15:00:00",
+        "arrAt": "2026-01-27T16:05:00",
+        "pricePerPerson": 85000,
+        "totalPrice": 85000
+    }
+    """
+    # airlineName: 항공사 이름 (예: "제주항공", "대한항공")
+    airlineName = serializers.CharField(
+        max_length=50,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        help_text="항공사 이름"
+    )
+
+    # flightNumber: 편명 (예: "7C101", "KE1234")
+    flightNumber = serializers.CharField(
+        max_length=20,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        help_text="편명"
+    )
+
+    # departureAirport: 출발 공항 코드 (예: "GMP", "ICN")
+    departureAirport = serializers.CharField(
+        max_length=10,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        help_text="출발 공항 코드"
+    )
+
+    # arrivalAirport: 도착 공항 코드 (예: "CJU", "PUS")
+    arrivalAirport = serializers.CharField(
+        max_length=10,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        help_text="도착 공항 코드"
+    )
+
+    # depAt: 출발 시각 (ISO 형식: "2026-01-27T15:00:00")
+    depAt = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        help_text="출발 시각 (ISO 형식)"
+    )
+
+    # arrAt: 도착 시각 (ISO 형식: "2026-01-27T16:05:00")
+    arrAt = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        help_text="도착 시각 (ISO 형식)"
+    )
+
+    # pricePerPerson: 1인당 가격
+    pricePerPerson = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="1인당 가격"
+    )
+
+    # totalPrice: 총 가격
+    totalPrice = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="총 가격"
+    )
+
+
 class MSSeatSelectionInputSerializer(serializers.Serializer):
     """
     좌석 선택 정보 입력 (테스트용)
@@ -229,6 +317,14 @@ class MSReservationCreateRequestSerializer(serializers.Serializer):
         required=False,
         allow_null=True,
         help_text="좌석 선택 (테스트용)"
+    )
+
+    # flightData: 실제 항공편 정보 (프론트엔드에서 전달)
+    # [중요] 이 필드가 없으면 Mock 데이터가 저장됩니다!
+    flightData = MSFlightDataInputSerializer(
+        required=False,
+        allow_null=True,
+        help_text="실제 항공편 정보 (프론트엔드에서 선택한 데이터)"
     )
 
     def validate_passengers(self, value):
