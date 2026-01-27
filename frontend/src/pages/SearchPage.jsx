@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { searchAxios } from '../api/axios';
+import { useLanguage } from '../context/LanguageContext';
 
 
 
 const SearchPage = () => {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = searchParams.get('query');
@@ -74,7 +76,7 @@ const SearchPage = () => {
                   : 'bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ring-1 ring-gray-200 dark:ring-gray-700'
                   }`}
               >
-                {tab}
+                {t('search_tab_' + tab.toLowerCase())}
               </button>
             ))}
           </div>
@@ -86,12 +88,12 @@ const SearchPage = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1392ec] mb-4"></div>
-            <p className="text-gray-500 animate-pulse">Searching for "{query}"...</p>
+            <p className="text-gray-500 animate-pulse">{t('search_loading').replace('{query}', query)}</p>
           </div>
         ) : !results ? (
           <div className="text-center py-20">
-            <h3 className="text-2xl font-bold mb-2">Ready to explore?</h3>
-            <p className="text-gray-500">Search for destinations, hotels, or guides.</p>
+            <h3 className="text-2xl font-bold mb-2">{t('search_no_results_title')}</h3>
+            <p className="text-gray-500">{t('search_no_results_desc')}</p>
           </div>
         ) : (
           <>
@@ -99,8 +101,8 @@ const SearchPage = () => {
             {(activeTab === 'All' || activeTab === 'Places') && results.places?.length > 0 && (
               <section className="flex flex-col gap-5">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold tracking-tight">Recommended Places</h2>
-                  {activeTab === 'All' && <button onClick={() => setActiveTab('Places')} className="text-sm font-bold text-[#1392ec]">See all</button>}
+                  <h2 className="text-2xl font-bold tracking-tight">{t('search_header_places')}</h2>
+                  {activeTab === 'All' && <button onClick={() => setActiveTab('Places')} className="text-sm font-bold text-[#1392ec]">{t('see_all')}</button>}
                 </div>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {results.places.map((place) => (
@@ -139,8 +141,8 @@ const SearchPage = () => {
             {(activeTab === 'All' || activeTab === 'Shorts') && results.shorts?.length > 0 && (
               <section className="flex flex-col gap-5">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold tracking-tight">Shorts</h2>
-                  {activeTab === 'All' && <button onClick={() => setActiveTab('Shorts')} className="text-sm font-bold text-[#1392ec]">See all</button>}
+                  <h2 className="text-2xl font-bold tracking-tight">{t('search_header_shorts')}</h2>
+                  {activeTab === 'All' && <button onClick={() => setActiveTab('Shorts')} className="text-sm font-bold text-[#1392ec]">{t('see_all')}</button>}
                 </div>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {results.shorts.map((short) => (
@@ -175,7 +177,7 @@ const SearchPage = () => {
             {(activeTab === 'All' || activeTab === 'Plans') && results.plans?.length > 0 && (
               <section className="flex flex-col gap-5">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold tracking-tight">Popular Itineraries</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">{t('search_header_plans')}</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {results.plans.map((plan) => (
@@ -223,7 +225,7 @@ const SearchPage = () => {
             {(activeTab === 'All' || activeTab === 'Others') && results.flights?.length > 0 && (
               <section className="flex flex-col gap-5">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold tracking-tight">Flights</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">{t('search_header_flights')}</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {results.flights.map((flight) => (
@@ -247,7 +249,7 @@ const SearchPage = () => {
             {(activeTab === 'All' || activeTab === 'Others') && results.transports?.length > 0 && (
               <section className="flex flex-col gap-5">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold tracking-tight">Transport</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">{t('search_header_transports')}</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {results.transports.map((transport) => (
@@ -271,7 +273,7 @@ const SearchPage = () => {
             {(activeTab === 'All' || activeTab === 'Reviews') && results.reviews?.length > 0 && (
               <section className="flex flex-col gap-5 pb-10">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold tracking-tight">From Travelers</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">{t('search_header_reviews')}</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {results.reviews.map((review) => (
@@ -305,7 +307,7 @@ const SearchPage = () => {
             {(activeTab === 'All' || activeTab === 'Others') && results.others?.length > 0 && (
               <section className="flex flex-col gap-5 pb-10">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold tracking-tight">Other Results</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">{t('search_header_others')}</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {results.others.map((item) => (
@@ -320,8 +322,8 @@ const SearchPage = () => {
             {!hasResults('All') && (
               <div className="text-center py-20 bg-white dark:bg-[#1e2b36] rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
                 <div className="text-6xl mb-4">😢</div>
-                <h3 className="text-lg font-bold">No results found for "{activeTab}"</h3>
-                <p className="text-gray-500">Try adjusting your search or filters.</p>
+                <h3 className="text-lg font-bold">{t('search_empty_title').replace('{tab}', t('search_tab_' + activeTab.toLowerCase()))}</h3>
+                <p className="text-gray-500">{t('search_empty_desc')}</p>
               </div>
             )}
           </>
