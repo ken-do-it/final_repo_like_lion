@@ -538,6 +538,7 @@ export default {
     btn_submit_create_column: "作成完了",
     btn_submit_edit: "修正完了",
     err_title_req: "タイトルを入力してください。",
+    err_content_req: "序論を入力してください。",
     err_thumb_req: "サムネイル画像は必須です。",
     err_section_min: "少なくとも一つのセクションが必要です。",
     msg_col_created: "コラムが作成されました。",

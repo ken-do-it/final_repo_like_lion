@@ -538,6 +538,7 @@ export default {
     btn_submit_create_column: "撰写完成",
     btn_submit_edit: "修改完成",
     err_title_req: "请输入标题。",
+    err_content_req: "请输入序言。",
     err_thumb_req: "缩略图是必需的。",
     err_section_min: "至少需要一个章节。",
     msg_col_created: "专栏已创建。",

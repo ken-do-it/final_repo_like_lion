@@ -616,7 +616,7 @@ const MyPage = () => {
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('no_columns_yet')}</h3>
                 <p className="mb-6">{t('columns_empty_desc')}</p>
                 <Button
-                    onClick={() => navigate('/places/columns/new')}
+                    onClick={() => navigate('/local-columns/write')}
                     className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
                 >
                     {t('write_column')}
@@ -633,7 +633,7 @@ const MyPage = () => {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate('/places/columns/new')}
+                        onClick={() => navigate('/local-columns/write')}
                         className="rounded-lg"
                     >
                         + {t('write_column')}

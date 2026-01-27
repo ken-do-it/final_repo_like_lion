@@ -45,20 +45,25 @@ def get_badge_status(
     """
     현지인 뱃지 상태 조회
     """
-    # [TEMPORARY TEST MODE] 모든 사용자에게 Level 5 권한 부여 (테스트용)
-    # 번역 기능 테스트 종료 후 반드시 삭제/원복 필요
-    # return LocalBadgeStatusResponse(
-    #     level=5,
-    #     city="테스트 권한",
-    #     is_active=True,
-    #     first_authenticated_at=date.today(),
-    #     last_authenticated_at=date.today(),
-    #     next_authentication_due=date.today() + timedelta(days=365),
-    #     maintenance_months=12,
-    #     authentication_count=999,
-    # )
-
     badge = db.query(LocalBadge).filter(LocalBadge.user_id == user_id).first()
+
+    # [Superuser Bypass] 관리자는 Level 5로 반환
+    try:
+        from sqlalchemy import text
+        result = db.execute(text("SELECT is_superuser FROM users WHERE id = :uid"), {"uid": user_id}).first()
+        if result and result[0]:  # is_superuser == True
+            return LocalBadgeStatusResponse(
+                level=5,
+                city=badge.city if badge else "관리자",
+                is_active=True,
+                first_authenticated_at=badge.first_authenticated_at if badge else date.today(),
+                last_authenticated_at=badge.last_authenticated_at if badge else date.today(),
+                next_authentication_due=badge.next_authentication_due if badge else date.today() + timedelta(days=365),
+                maintenance_months=badge.maintenance_months if badge else 0,
+                authentication_count=0
+            )
+    except Exception as e:
+        print(f"[Warning] Superuser check failed: {e}")
 
     if not badge:
         return LocalBadgeStatusResponse(

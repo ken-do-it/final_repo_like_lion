@@ -825,6 +825,7 @@ export default {
     btn_submit_create_column: "Submit",
     btn_submit_edit: "Update",
     err_title_req: "Title is required.",
+    err_content_req: "Introduction is required.",
     err_thumb_req: "Thumbnail image is required.",
     err_section_min: "At least one section is required.",
     msg_col_created: "Column created successfully.",
