@@ -24,7 +24,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     ];
 
     const bottomItems = [
-        { label: `❤️ ${t('nav_likes')}`, path: null },
+        { label: `❤️ ${t('nav_likes')}`, action: 'saved_places' },
         { label: `📍 ${t('nav_local_auth')}`, action: 'local_auth' },
         { label: `${t('nav_version')} v1.0`, path: null },
     ];
@@ -39,6 +39,18 @@ const Sidebar = ({ isOpen, onClose }) => {
                 return;
             }
             setIsLocalAuthModalOpen(true);
+            return;
+        }
+
+        if (item.action === 'saved_places') {
+            onClose(); // Close sidebar first
+            if (!isAuthenticated) {
+                if (window.confirm(t('msg_login_required'))) {
+                    navigate('/login-page');
+                }
+                return;
+            }
+            navigate('/mypage?tab=saved');
             return;
         }
 
