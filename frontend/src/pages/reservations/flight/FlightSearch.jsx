@@ -78,6 +78,24 @@ const FlightSearch = () => {
     }
   };
 
+  /**
+   * 언어에 따라 항공사 이름 선택
+   */
+  const getAirlineName = (airline) => {
+    switch (language) {
+      case 'English':
+        return airline.nameEn || airline.nameKo;
+      case '\u65E5\u672C\u8A9E':  // Japanese
+        return airline.nameEn || airline.nameKo;  // Japanese name not available, fallback to English
+      case '\u4E2D\u6587':    // Chinese
+        return airline.nameEn || airline.nameKo;  // Chinese name not available, fallback to English
+      case '\uD55C\uAD6D\uC5B4':  // Korean
+        return airline.nameKo;
+      default:
+        return airline.nameKo;
+    }
+  };
+
   const getDomesticAirportsQuick = () => {
     const list = airports.filter(a =>
       typeof a.airportName === 'string' && domesticNameKeywords.some(k => a.airportName.includes(k))
@@ -496,7 +514,7 @@ const FlightSearch = () => {
                         <option value="">{t('flight_airline_all')}</option>
                         {airlines.map((airline) => (
                           <option key={airline.code} value={airline.code}>
-                            {airline.nameKo}
+                            {getAirlineName(airline)}
                           </option>
                         ))}
                       </select>

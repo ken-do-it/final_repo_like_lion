@@ -3,6 +3,7 @@ import logging
 import hashlib
 import re
 from django.db.models import F, Q
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import exceptions, viewsets, status
 from rest_framework.decorators import action
@@ -241,9 +242,9 @@ class ShortformViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def like(self, request, pk=None):
-        shortform = self.get_object()
+        # IsOwnerOrReadOnly 권한 검사를 우회하기 위해 get_object() 대신 직접 조회
+        shortform = get_object_or_404(Shortform, pk=pk)
         user = request.user
-        # 중복 체크 제거 (permission_classes가 처리)
 
         obj, created = ShortformLike.objects.get_or_create(shortform=shortform, user=user)
         if created:
@@ -258,7 +259,8 @@ class ShortformViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
     def unlike(self, request, pk=None):
-        shortform = self.get_object()
+        # IsOwnerOrReadOnly 권한 검사를 우회하기 위해 get_object() 대신 직접 조회
+        shortform = get_object_or_404(Shortform, pk=pk)
         user = request.user
 
         deleted, _ = ShortformLike.objects.filter(shortform=shortform, user=user).delete()
@@ -274,7 +276,8 @@ class ShortformViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=['get', 'post'], permission_classes=[IsAuthenticatedOrReadOnly])
     def comments(self, request, pk=None):
-        shortform = self.get_object()
+        # IsOwnerOrReadOnly 권한 검사를 우회하기 위해 get_object() 대신 직접 조회
+        shortform = get_object_or_404(Shortform, pk=pk)
         if request.method.lower() == 'get':
             comments = ShortformComment.objects.filter(shortform=shortform).order_by('-created_at')
             serializer = ShortformCommentSerializer(comments, many=True)
@@ -319,8 +322,9 @@ class ShortformViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def view(self, request, pk=None):
-        shortform = self.get_object()
-        
+        # IsOwnerOrReadOnly 권한 검사를 우회하기 위해 get_object() 대신 직접 조회
+        shortform = get_object_or_404(Shortform, pk=pk)
+
         # [개인정보] IP 주소 해싱 (SHA-256 + Base64)
         raw_ip = request.META.get('REMOTE_ADDR', '')
         if raw_ip:
