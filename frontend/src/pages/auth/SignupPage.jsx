@@ -32,11 +32,11 @@ const SignupPage = () => {
 
     const validateForm = () => {
         if (formData.password !== formData.password_confirm) {
-            setError("Passwords do not match");
+            setError(t('passwords_not_match'));
             return false;
         }
         if (formData.password.length < 8) {
-            setError("Password must be at least 8 characters");
+            setError(t('password_min_length'));
             return false;
         }
         return true;
@@ -71,10 +71,10 @@ const SignupPage = () => {
                     const firstMsg = Array.isArray(serverError[firstKey]) ? serverError[firstKey][0] : serverError[firstKey];
                     setError(`${firstKey}: ${firstMsg}`);
                 } else {
-                    setError('Registration failed. Please try again.');
+                    setError(t('registration_failed'));
                 }
             } else {
-                setError('A network error occurred.');
+                setError(t('network_error'));
             }
         } finally {
             setIsLoading(false);
@@ -110,7 +110,7 @@ const SignupPage = () => {
                             id="email"
                             type="email"
                             label={t('email_label')}
-                            placeholder="name@example.com"
+                            placeholder={t('email_placeholder')}
                             value={formData.email}
                             onChange={handleChange}
                             required
@@ -154,7 +154,7 @@ const SignupPage = () => {
                             id="phone_number"
                             type="tel"
                             label={t('phone_label')}
-                            placeholder="+82 10-1234-5678"
+                            placeholder={t('phone_placeholder')}
                             value={formData.phone_number}
                             onChange={handleChange}
                         />
@@ -165,7 +165,7 @@ const SignupPage = () => {
                             id="birth_year"
                             type="number"
                             label={t('birth_year_label')}
-                            placeholder="YYYY"
+                            placeholder={t('year_placeholder')}
                             value={formData.birth_year}
                             onChange={handleChange}
                             required

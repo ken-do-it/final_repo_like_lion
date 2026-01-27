@@ -12,7 +12,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
     const menuItems = [
         { label: `🏠 ${t('nav_home')}`, path: '/' },
-        { label: `📍 ${t('nav_places') || '장소'}`, path: '/places/search' },
+        { label: `📍 ${t('nav_places')}`, path: '/places/search' },
         { label: `🏨 ${t('nav_stays')}`, path: '/stays' },
         { label: `📸 ${t('nav_geoquiz')}`, path: '/geo-quiz' },
         { label: `🎮 ${t('nav_game')}`, path: '/game' },
@@ -20,7 +20,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: `🥘 ${t('nav_column')}`, path: '/local-columns' },
         { label: `🔥 ${t('nav_shorts')}`, path: '/shorts' },
         { label: `✈️ ${t('title_transport')}`, path: '/reservations/flights' },
-        { label: `🏙️ ${t('nav_city') || '도시 검색'}`, path: '/places/city' },
+        { label: `🏙️ ${t('nav_city')}`, path: '/places/city' },
     ];
 
     const bottomItems = [
@@ -74,7 +74,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
                 {/* Header */}
                 <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100 dark:border-gray-700">
-                    <span className="text-xl font-bold text-[#1392ec]">Korea Trip</span>
+                    <span className="text-xl font-bold text-[#1392ec]">{t('sidebar_title')}</span>
                     <button
                         onClick={onClose}
                         className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -116,7 +116,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
                 {/* Footer (Optional) */}
                 <div className="p-4 border-t border-gray-100 dark:border-gray-700 text-xs text-center text-gray-400">
-                    © 2026 Tripko Platform
+                    © {new Date().getFullYear()} {t('sidebar_copyright')}
                 </div>
             </aside>
 

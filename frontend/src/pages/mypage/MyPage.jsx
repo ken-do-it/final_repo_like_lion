@@ -12,7 +12,7 @@ const MyPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { user, isAuthenticated, logout } = useAuth();
-    const { t, language } = useLanguage();
+    const { t, language, translateCity } = useLanguage();
     const [loading, setLoading] = useState(true);
 
     // URL 파라미터에서 탭 초기값 설정 (예: /mypage?tab=reservations)
@@ -137,7 +137,8 @@ const MyPage = () => {
     const fetchMyColumns = async () => {
         setColumnsLoading(true);
         try {
-            const response = await placesAxios.get('/places/local-columns?writer=me');
+            const langCode = API_LANG_CODES[language] || 'eng_Latn';
+            const response = await placesAxios.get(`/places/local-columns?writer=me&lang=${langCode}`);
             setMyColumns(response.data);
         } catch (err) {
             console.error("Failed to fetch my columns", err);
@@ -149,7 +150,8 @@ const MyPage = () => {
     const fetchSavedPlaces = async () => {
         setSavedPlacesLoading(true);
         try {
-            const response = await api.get('/users/mypage/saved-places/');
+            const langCode = API_LANG_CODES[language] || 'eng_Latn';
+            const response = await api.get(`/users/mypage/saved-places/?lang=${langCode}`);
             setSavedPlaces(response.data.results || response.data);
         } catch (err) {
             console.error("Failed to fetch saved places", err);
@@ -161,7 +163,8 @@ const MyPage = () => {
     const fetchMyReviews = async () => {
         setReviewsLoading(true);
         try {
-            const response = await api.get('/users/mypage/reviews/');
+            const langCode = API_LANG_CODES[language] || 'eng_Latn';
+            const response = await api.get(`/users/mypage/reviews/?lang=${langCode}`);
             setMyReviews(response.data.results || response.data);
         } catch (err) {
             console.error("Failed to fetch my reviews", err);
@@ -209,31 +212,31 @@ const MyPage = () => {
             setIsEditingProfile(false);
         } catch (err) {
             console.error("Update failed", err);
-            alert("Failed to update profile.");
+            alert(t('profile_update_failed'));
         }
     };
 
     const handleRemoveBookmark = async (e, id) => {
         e.stopPropagation();
-        if (!window.confirm("Remove this place from your bookmarks?")) return;
+        if (!window.confirm(t('confirm_remove_bookmark'))) return;
         try {
             await api.delete(`/users/mypage/saved-places/${id}/`);
             setSavedPlaces(prev => prev.filter(p => p.id !== id));
         } catch (err) {
             console.error("Failed to remove bookmark", err);
-            alert("Failed to remove bookmark");
+            alert(t('remove_bookmark_failed'));
         }
     };
 
     const handleDeleteReview = async (e, id) => {
         e.stopPropagation();
-        if (!window.confirm("Delete this review?")) return;
+        if (!window.confirm(t('confirm_delete_review'))) return;
         try {
             await api.delete(`/users/mypage/reviews/${id}/`);
             setMyReviews(prev => prev.filter(r => r.id !== id));
         } catch (err) {
             console.error("Failed to delete review", err);
-            alert("Failed to delete review");
+            alert(t('delete_review_failed'));
         }
     };
 
@@ -269,12 +272,12 @@ const MyPage = () => {
                         />
                         <div className="grid grid-cols-2 gap-6">
                             <Input
-                                id="country" label="Country"
+                                id="country" label={t('country_label')}
                                 value={profileForm.country || ''}
                                 onChange={(e) => setProfileForm({ ...profileForm, country: e.target.value })}
                             />
                             <Input
-                                id="city" label="City"
+                                id="city" label={t('city_label')}
                                 value={profileForm.city || ''}
                                 onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
                             />
@@ -311,14 +314,14 @@ const MyPage = () => {
                         <div className="p-5 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-[#1392ec]/30 transition-colors">
                             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('location_label')}</div>
                             <div className="text-lg font-medium text-slate-900 dark:text-slate-100">
-                                {displayUser?.city && displayUser?.country ? `${displayUser.city}, ${displayUser.country}` : <span className="text-slate-400 italic">N/A</span>}
+                                {displayUser?.city && displayUser?.country ? `${displayUser.city}, ${displayUser.country}` : <span className="text-slate-400 italic">{t('na')}</span>}
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-10 pt-8 border-t border-slate-100 dark:border-slate-700">
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                            🏅 {t('local_badge_title') || '현지인 인증 뱃지'}
+                            🏅 {t('local_badge_title')}
                         </h3>
                         {displayUser?.local_badges && displayUser.local_badges.filter(b => b.is_active).length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -341,20 +344,20 @@ const MyPage = () => {
                                                 {badge.level >= 5 ? '🥇' : badge.level >= 3 ? '🥈' : '🥉'}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-slate-900 dark:text-white text-lg">{badge.city}</div>
+                                                <div className="font-bold text-slate-900 dark:text-white text-lg">{translateCity(badge.city)}</div>
                                                 <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                                                    Level {badge.level} {badge.level >= 3 ? '✍️ Writer' : '🔍 Explorer'}
+                                                    {t('badge_level')} {badge.level} {badge.level >= 3 ? `✍️ ${t('badge_writer')}` : `🔍 ${t('badge_explorer')}`}
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
                                             <div className="flex justify-between">
-                                                <span>{t('badge_since') || '인증 시작'}:</span>
+                                                <span>{t('badge_since')}:</span>
                                                 <span className="font-medium">{badge.first_authenticated_at}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span>{t('badge_months') || '유지 개월'}:</span>
-                                                <span className="font-medium text-amber-600 dark:text-amber-400">{badge.maintenance_months}개월</span>
+                                                <span>{t('badge_months')}:</span>
+                                                <span className="font-medium text-amber-600 dark:text-amber-400">{badge.maintenance_months}{t('badge_months_unit')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -364,10 +367,10 @@ const MyPage = () => {
                             <div className="p-6 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
                                 <div className="text-4xl mb-3">🗺️</div>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                                    {t('no_local_badge') || '아직 현지인 인증 뱃지가 없습니다.'}
+                                    {t('no_local_badge')}
                                 </p>
                                 <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
-                                    {t('no_local_badge_desc') || '현지에서 일정 기간 거주하면 뱃지를 획득할 수 있어요!'}
+                                    {t('no_local_badge_desc')}
                                 </p>
                             </div>
                         )}
@@ -383,7 +386,7 @@ const MyPage = () => {
             <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                 <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">🎬</div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('no_shorts')}</h3>
-                <p>Upload your first short video!</p>
+                <p>{t('upload_first_short')}</p>
             </div>
         );
 
@@ -422,13 +425,13 @@ const MyPage = () => {
         if (!myPlans || myPlans.length === 0) return (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                 <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">🗓️</div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('msg_no_plans') || "No Plans Yet"}</h3>
-                <p className="mb-6">{t('no_reservations_desc') || "Create your first travel plan!"}</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('msg_no_plans')}</h3>
+                <p className="mb-6">{t('create_first_plan')}</p>
                 <Button
                     onClick={() => navigate('/plans/create')}
                     className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
                 >
-                    {t('btn_create_new') || 'Create Plan'}
+                    {t('btn_create_new')}
                 </Button>
             </div>
         );
@@ -437,7 +440,7 @@ const MyPage = () => {
             <div className="space-y-4">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                        {t('tab_schedules') || 'My Schedules'} ({myPlans.length})
+                        {t('tab_schedules')} ({myPlans.length})
                     </h3>
                     <Button
                         variant="outline"
@@ -445,7 +448,7 @@ const MyPage = () => {
                         onClick={() => navigate('/plans/create')}
                         className="rounded-lg"
                     >
-                        + {t('btn_create_new') || 'New Plan'}
+                        + {t('btn_create_new')}
                     </Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -462,15 +465,15 @@ const MyPage = () => {
                                         ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
                                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                                         }`}>
-                                        {plan.plan_type === 'ai_recommended' ? 'AI Plan' : 'Manual'}
+                                        {plan.plan_type === 'ai_recommended' ? t('badge_ai') : t('badge_manual')}
                                     </span>
                                     {plan.is_public ? (
                                         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                                            Public
+                                            {t('badge_public')}
                                         </span>
                                     ) : (
                                         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
-                                            Private
+                                            {t('badge_private')}
                                         </span>
                                     )}
                                 </div>
@@ -482,7 +485,7 @@ const MyPage = () => {
                             {/* Plan Body */}
                             <div className="p-4">
                                 <p className="text-slate-500 dark:text-slate-400 text-sm mb-4 line-clamp-2 h-10">
-                                    {(plan.description_translated || plan.description) || "No description"}
+                                    {(plan.description_translated || plan.description) || t('no_desc')}
                                 </p>
 
                                 <div className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
@@ -492,7 +495,7 @@ const MyPage = () => {
                                     </div>
                                     <div className="flex items-center">
                                         <span className="text-base mr-2">⏱️</span>
-                                        {Math.ceil((new Date(plan.end_date) - new Date(plan.start_date)) / (1000 * 60 * 60 * 24))} Days
+                                        {Math.ceil((new Date(plan.end_date) - new Date(plan.start_date)) / (1000 * 60 * 60 * 24))} {t('unit_days')}
                                     </div>
                                 </div>
 
@@ -501,7 +504,7 @@ const MyPage = () => {
                                         <span>❤️ {plan.like_count}</span>
                                         <span>💬 {plan.comment_count}</span>
                                     </div>
-                                    <span className="text-[#1392ec] font-medium group-hover:underline">View Details →</span>
+                                    <span className="text-[#1392ec] font-medium group-hover:underline">{t('view_details')}</span>
                                 </div>
                             </div>
                         </div>
@@ -515,10 +518,10 @@ const MyPage = () => {
         <div className="max-w-2xl">
             <h3 className="text-xl font-bold dark:text-white mb-6">{t('nav_settings')}</h3>
             <div className="p-6 bg-white dark:bg-dark-surface rounded-lg border border-gray-100 dark:border-gray-700 text-center text-gray-500">
-                <p>Language and Currency settings.</p>
+                <p>{t('preferences_desc')}</p>
                 <div className="mt-4 flex justify-center gap-4">
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">Language: {displayUser?.preferences?.language || 'en'}</span>
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">Currency: {displayUser?.preferences?.currency || 'USD'}</span>
+                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">{t('label_language')}: {displayUser?.preferences?.language || 'en'}</span>
+                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">{t('label_currency')}: {displayUser?.preferences?.currency || 'USD'}</span>
                 </div>
             </div>
         </div>
@@ -584,9 +587,9 @@ const MyPage = () => {
                                             reservation.status === 'CANCELLED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                                                 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                                         }`}>
-                                        {reservation.status === 'CONFIRMED_TEST' ? '✓ Confirmed' :
-                                            reservation.status === 'PENDING' ? '⏳ Pending' :
-                                                reservation.status === 'CANCELLED' ? '✕ Cancelled' : reservation.status}
+                                        {reservation.status === 'CONFIRMED_TEST' ? `✓ ${t('status_confirmed')}` :
+                                            reservation.status === 'PENDING' ? `⏳ ${t('status_pending')}` :
+                                                reservation.status === 'CANCELLED' ? `✕ ${t('status_cancelled')}` : reservation.status}
                                     </span>
                                     <p className="mt-2 font-bold text-lg text-[#1392ec]">
                                         {Number(reservation.totalAmount).toLocaleString()} {reservation.currency}
@@ -610,13 +613,13 @@ const MyPage = () => {
         if (!myColumns || myColumns.length === 0) return (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                 <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">✍️</div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Columns Yet</h3>
-                <p className="mb-6">Share your local insights with travelers!</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('no_columns_yet')}</h3>
+                <p className="mb-6">{t('columns_empty_desc')}</p>
                 <Button
                     onClick={() => navigate('/local-columns/write')}
                     className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
                 >
-                    Write Column
+                    {t('write_column')}
                 </Button>
             </div>
         );
@@ -625,7 +628,7 @@ const MyPage = () => {
             <div className="space-y-4">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                        My Columns ({myColumns.length})
+                        {t('my_columns')} ({myColumns.length})
                     </h3>
                     <Button
                         variant="outline"
@@ -633,7 +636,7 @@ const MyPage = () => {
                         onClick={() => navigate('/local-columns/write')}
                         className="rounded-lg"
                     >
-                        + Write Column
+                        + {t('write_column')}
                     </Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -655,11 +658,11 @@ const MyPage = () => {
                             </div>
                             <div className="p-5 flex flex-col flex-1">
                                 <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-[#1392ec] transition-colors line-clamp-2">
-                                    {column.title}
+                                    {column.title_translated || column.title}
                                 </h4>
                                 <div className="mt-auto pt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700">
                                     <span>{new Date(column.created_at).toLocaleDateString()}</span>
-                                    <span className="font-medium text-[#1392ec]">Read More →</span>
+                                    <span className="font-medium text-[#1392ec]">{t('read_more')}</span>
                                 </div>
                             </div>
                         </div>
@@ -675,13 +678,13 @@ const MyPage = () => {
         if (!savedPlaces || savedPlaces.length === 0) return (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                 <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">💾</div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Saved Places</h3>
-                <p className="mb-6">Bookmark your favorite spots to visit later!</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('no_saved_places')}</h3>
+                <p className="mb-6">{t('saved_places_empty_desc')}</p>
                 <Button
                     onClick={() => navigate('/places/search')}
                     className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
                 >
-                    Explore Places
+                    {t('explore_places')}
                 </Button>
             </div>
         );
@@ -689,7 +692,7 @@ const MyPage = () => {
         return (
             <div className="space-y-4">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-                    Saved Places ({savedPlaces.length})
+                    {t('saved_places')} ({savedPlaces.length})
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {savedPlaces.map(item => {
@@ -710,20 +713,20 @@ const MyPage = () => {
                                     <button
                                         onClick={(e) => handleRemoveBookmark(e, item.id)}
                                         className="absolute top-2 right-2 bg-white/80 dark:bg-black/50 p-1.5 rounded-full text-red-500 hover:bg-red-50 transition-colors"
-                                        title="Remove"
+                                        title={t('btn_remove')}
                                     >
                                         ✕
                                     </button>
                                 </div>
                                 <div className="p-4">
                                     <div className="text-xs text-[#1392ec] font-bold mb-1 uppercase tracking-wider">
-                                        {item.place_category || 'Place'}
+                                        {item.place_category || t('label_place')}
                                     </div>
                                     <h4 className="font-bold text-slate-900 dark:text-white mb-1 truncate">
-                                        {item.place_name}
+                                        {item.place_name_translated || item.place_name}
                                     </h4>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-                                        {item.place_address}
+                                        {item.place_address_translated || item.place_address}
                                     </p>
                                     {item.place_rating && (
                                         <div className="mt-2 text-sm text-yellow-500">
@@ -745,13 +748,13 @@ const MyPage = () => {
         if (!myReviews || myReviews.length === 0) return (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
                 <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">⭐</div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Reviews Yet</h3>
-                <p className="mb-6">Share your experiences with others!</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('no_reviews_yet')}</h3>
+                <p className="mb-6">{t('reviews_empty_desc')}</p>
                 <Button
                     onClick={() => navigate('/places/search')}
                     className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
                 >
-                    Find Places to Review
+                    {t('find_places_to_review')}
                 </Button>
             </div>
         );
@@ -759,7 +762,7 @@ const MyPage = () => {
         return (
             <div className="space-y-4">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-                    My Reviews ({myReviews.length})
+                    {t('my_reviews')} ({myReviews.length})
                 </h3>
                 <div className="space-y-4">
                     {myReviews.map(review => (
@@ -771,7 +774,7 @@ const MyPage = () => {
                             <div className="flex justify-between items-start mb-3">
                                 <div>
                                     <h4 className="font-bold text-lg text-slate-900 dark:text-white group-hover:text-[#1392ec]">
-                                        {review.place_name || `Place #${review.place}`}
+                                        {review.place_name_translated || review.place_name || `Place #${review.place}`}
                                     </h4>
                                     <div className="flex items-center gap-1 text-yellow-500 text-sm mt-1">
                                         {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
@@ -784,14 +787,14 @@ const MyPage = () => {
                                     <button
                                         onClick={(e) => handleDeleteReview(e, review.id)}
                                         className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                                        title="Delete"
+                                        title={t('btn_delete')}
                                     >
                                         🗑️
                                     </button>
                                 </div>
                             </div>
                             <p className="text-slate-600 dark:text-slate-300 text-sm line-clamp-3">
-                                {review.content}
+                                {review.content_translated || review.content}
                             </p>
                             {review.image_url && (
                                 <img
@@ -836,7 +839,7 @@ const MyPage = () => {
                                 <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-100 to-blue-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center mb-4 ring-4 ring-white dark:ring-[#1e2b36] shadow-lg">
                                     <span className="text-4xl">😎</span>
                                 </div>
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{displayUser?.nickname || 'Traveler'}</h2>
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{displayUser?.nickname || t('default_nickname')}</h2>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{displayUser?.email}</p>
                             </div>
                             <nav className="p-3 space-y-1">

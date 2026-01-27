@@ -1,3 +1,4 @@
+import logging
 from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,6 +9,8 @@ from django.shortcuts import render, redirect
 from urllib.parse import urlencode
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     UserPreference, LoginSession, LoginHistory,
@@ -740,6 +743,53 @@ class SavedIdCheckView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class SessionTokenView(APIView):
+    """소셜 로그인 후 세션에서 토큰 가져오기 API"""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        """
+        세션에 저장된 토큰과 사용자 정보 반환 후 세션에서 삭제
+        """
+        access_token = request.session.get('access_token', '')
+        refresh_token = request.session.get('refresh_token', '')
+        user_id = request.session.get('user_id', '')
+        username = request.session.get('username', '')
+        email = request.session.get('email', '')
+        nickname = request.session.get('nickname', '')
+        social_provider = request.session.get('social_provider', '')
+
+        if access_token and refresh_token:
+            # 토큰 반환
+            response_data = {
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'user': {
+                    'id': user_id,
+                    'username': username,
+                    'email': email,
+                    'nickname': nickname,
+                    'social_provider': social_provider
+                }
+            }
+
+            # 보안을 위해 세션에서 토큰 삭제 (한 번만 사용)
+            request.session.pop('access_token', None)
+            request.session.pop('refresh_token', None)
+            request.session.pop('user_id', None)
+            request.session.pop('username', None)
+            request.session.pop('email', None)
+            request.session.pop('nickname', None)
+            request.session.pop('social_provider', None)
+
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'error': 'No session token found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
 # 템플릿 렌더링 뷰
 def login_page(request):
     """로그인 페이지 렌더링"""
@@ -762,19 +812,17 @@ def api_test_page(request):
 
 
 def social_callback_page(request):
-    """소셜 로그인 성공 후 프론트엔드로 리다이렉트"""
-    params = {
-        'access_token': request.session.get('access_token', ''),
-        'refresh_token': request.session.get('refresh_token', ''),
-        'user_id': request.session.get('user_id', ''),
-        'username': request.session.get('username', ''),
-        'email': request.session.get('email', ''),
-        'nickname': request.session.get('nickname', ''),
-        'social_provider': request.session.get('social_provider', ''),
-    }
+    """소셜 로그인 성공 후 프론트엔드로 리다이렉트 (토큰은 세션에 저장)"""
+    # 세션에 토큰이 있는지 확인 (signals.py에서 저장됨)
+    access_token = request.session.get('access_token', '')
     
-    # 프론트엔드 URL로 리다이렉트 (토큰을 URL 파라미터로 전달)
-    frontend_url = f"https://tripko.p-e.kr/auth/social-callback?{urlencode(params)}"
+    if access_token:
+        # 토큰이 세션에 있으면 프론트엔드로 리다이렉트 (URL에 토큰 노출하지 않음)
+        frontend_url = "https://tripko.p-e.kr/auth/social-callback?success=true"
+    else:
+        # 토큰이 없으면 실패
+        frontend_url = "https://tripko.p-e.kr/auth/social-callback?success=false"
+    
     return redirect(frontend_url)
 
 
@@ -790,6 +838,7 @@ def mypage_page(request):
 try:
     from places.models import PlaceBookmark, PlaceReview
     from .serializers import SavedPlaceSerializer, MyReviewSerializer
+    from contents.services.translation_service import TranslationService
 
     class SavedPlacesView(generics.ListCreateAPIView):
         """저장한 장소 목록 조회 및 저장"""
@@ -852,7 +901,30 @@ try:
             tags=['마이페이지']
         )
         def get(self, request, *args, **kwargs):
-            return super().get(request, *args, **kwargs)
+            return self.list(request, *args, **kwargs)
+
+        def list(self, request, *args, **kwargs):
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            data = serializer.data
+
+            # Apply translation
+            target_lang = request.query_params.get('lang')
+            if target_lang:
+                try:
+                    data = TranslationService.apply_translation_batch(
+                        data,
+                        target_lang,
+                        entity_type="review",
+                        fields={
+                            'place_name': 'place_name_translated',
+                            'content': 'content_translated'
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Review translation failed: {e}")
+
+            return Response(data)
 
         def get_queryset(self):
             return PlaceReview.objects.filter(user=self.request.user).select_related('place')
