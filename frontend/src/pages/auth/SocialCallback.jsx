@@ -23,11 +23,7 @@ const SocialCallback = () => {
             console.log("🔄 Refresh Token:", refreshToken);
             console.log("👤 User Info:", { userId, username, email, nickname, socialProvider });
 
-            // 토큰 저장
-            localStorage.setItem('access_token', accessToken);
-            localStorage.setItem('refresh_token', refreshToken);
-
-            // 사용자 정보 저장
+            // 사용자 정보 구성
             if (userId && username) {
                 const userData = {
                     id: userId,
@@ -37,17 +33,22 @@ const SocialCallback = () => {
                     social_provider: socialProvider
                 };
                 console.log("👤 [SocialCallback] User Data saved:", userData);
-                localStorage.setItem('user', JSON.stringify(userData));
-            }
 
-            // 홈으로 이동 (새로고침하여 AuthContext가 토큰을 인식하게 함)
-            window.location.href = '/';
+                // AuthContext의 login 함수 호출하여 상태 즉시 업데이트
+                login(accessToken, refreshToken, userData);
+
+                // 홈으로 이동 (새로고침 없이 navigate 사용)
+                navigate('/');
+            } else {
+                alert('Social login failed: Invalid user data received.');
+                navigate('/login-page');
+            }
         } else {
             // 실패 시 로그인 페이지로
             alert('Social login failed: No tokens received.');
             navigate('/login-page');
         }
-    }, [searchParams, navigate]);
+    }, [searchParams, navigate, login]);
 
     return (
         <div className="flex h-screen items-center justify-center flex-col">
