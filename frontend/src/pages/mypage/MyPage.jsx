@@ -12,7 +12,7 @@ const MyPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { user, isAuthenticated, logout } = useAuth();
-    const { t, language } = useLanguage();
+    const { t, language, translateCity } = useLanguage();
     const [loading, setLoading] = useState(true);
 
     // URL 파라미터에서 탭 초기값 설정 (예: /mypage?tab=reservations)
@@ -341,7 +341,7 @@ const MyPage = () => {
                                                 {badge.level >= 5 ? '🥇' : badge.level >= 3 ? '🥈' : '🥉'}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-slate-900 dark:text-white text-lg">{badge.city}</div>
+                                                <div className="font-bold text-slate-900 dark:text-white text-lg">{translateCity(badge.city)}</div>
                                                 <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                                                     Level {badge.level} {badge.level >= 3 ? '✍️ Writer' : '🔍 Explorer'}
                                                 </div>
