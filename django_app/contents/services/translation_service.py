@@ -268,23 +268,13 @@ class TranslationService:
                     current_src_lang = TranslationService.detect_language(original_text)
 
                 # Skip translation for unknown/invalid text (e.g., Korean jamo only: ㅋㅋㅋ, ㅇㄻㅇ)
-
-                # Skip translation for unknown/invalid text (e.g., Korean jamo only: ㅋㅋㅋ, ㅇㄻㅇ)
                 if current_src_lang == 'unknown':
                     item[tgt_field] = original_text
                     continue
-                
+
                 # Skip translation for very short text (≤3 chars, likely emoticons/slang)
-                if len(original_text.strip()) <= 3:
-                    item[tgt_field] = original_text
-                    continue
-
-                if current_src_lang == 'unknown':
-                    item[tgt_field] = original_text
-                    continue
-                
-                # Skip translation for very short text (3 chars, likely emoticons/slang)
-                if len(original_text.strip()) <= 3:
+                # But allow location field (city names can be short like "대전", "서울")
+                if len(original_text.strip()) <= 3 and src_field != 'location':
                     item[tgt_field] = original_text
                     continue
 
