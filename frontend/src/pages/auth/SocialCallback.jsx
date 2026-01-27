@@ -26,7 +26,7 @@ const SocialCallback = () => {
             // 사용자 정보 구성
             if (userId && username) {
                 const userData = {
-                    id: userId,
+                    id: Number(userId),
                     username: username,
                     email: email,
                     nickname: nickname || username,
