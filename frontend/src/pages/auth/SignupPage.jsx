@@ -58,7 +58,7 @@ const SignupPage = () => {
 
         try {
             await api.post('/users/register/', payload);
-            alert('Registration successful! Please log in.'); // Simple feedback
+            alert(t('registration_success')); // Simple feedback
             navigate('/login-page');
         } catch (err) {
             console.error(err);
@@ -164,7 +164,7 @@ const SignupPage = () => {
                         <Input
                             id="birth_year"
                             type="number"
-                            label="Birth Year"
+                            label={t('birth_year_label')}
                             placeholder="YYYY"
                             value={formData.birth_year}
                             onChange={handleChange}
@@ -172,16 +172,16 @@ const SignupPage = () => {
                         />
                         <Input
                             id="country"
-                            label="Country"
-                            placeholder="e.g. South Korea"
+                            label={t('country_label')}
+                            placeholder={t('country_placeholder')}
                             value={formData.country}
                             onChange={handleChange}
                             required
                         />
                         <Input
                             id="city"
-                            label="City"
-                            placeholder={t('location_label')}
+                            label={t('city_label')}
+                            placeholder={t('city_label')}
                             value={formData.city}
                             onChange={handleChange}
                             required

@@ -8,7 +8,7 @@ from rest_framework import exceptions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
 
 from .models import Shortform, ShortformLike, ShortformComment, ShortformView, TranslationEntry
 from .serializers import ShortformSerializer, ShortformCommentSerializer
@@ -49,7 +49,16 @@ class ShortformViewSet(viewsets.ModelViewSet):
         responses={201: ShortformSerializer}
     )
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            import traceback
+            logger.error(f"Shortform upload failed: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(
+                {"detail": "업로드 중 오류가 발생했습니다.", "error": str(e), "trace": traceback.format_exc()}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @extend_schema(
         summary="숏폼 목록 조회 (List Shortforms)",
@@ -62,7 +71,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
 
     def _process_video_upload(self, video_file, serializer_instance=None):
         """
-        [Refactoring] Delegates to VideoService.process_video_pipeline
+        [리팩토링] VideoService.process_video_pipeline으로 위임
         """
         # 제목/내용 추출 (언어 감지에 필요)
         if serializer_instance:
@@ -210,13 +219,13 @@ class ShortformViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 logger.exception(f"Graceful handled: Error in translation (batch={use_batch}) during retrieve")
         
-        # Navigation: Prev/Next ID (Global scope, ordered by ID/Time)
+        # 네비게이션: 이전/다음 ID (전역 범위, ID/시간 순 정렬)
         instance = self.get_object()
         
-        # Previous (Older): ID smaller than current, order by ID desc (closest smaller)
+        # 이전 (더 오래된): 현재 ID보다 작음, ID 내림차순 (가장 가까운 작은 값)
         prev_obj = Shortform.objects.filter(id__lt=instance.id).order_by('-id').first()
         
-        # Next (Newer): ID larger than current, order by ID asc (closest larger)
+        # 다음 (더 최신): 현재 ID보다 큼, ID 오름차순 (가장 가까운 큰 값)
         next_obj = Shortform.objects.filter(id__gt=instance.id).order_by('id').first()
 
         resp.data['prev_id'] = prev_obj.id if prev_obj else None
@@ -230,12 +239,11 @@ class ShortformViewSet(viewsets.ModelViewSet):
         request=None,
         responses={200: {'type': 'object', 'properties': {'liked': {'type': 'boolean'}, 'total_likes': {'type': 'integer'}}}}
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def like(self, request, pk=None):
         shortform = self.get_object()
         user = request.user
-        if not user.is_authenticated:
-            raise exceptions.NotAuthenticated("Authentication required to like.")
+        # 중복 체크 제거 (permission_classes가 처리)
 
         obj, created = ShortformLike.objects.get_or_create(shortform=shortform, user=user)
         if created:
@@ -248,12 +256,10 @@ class ShortformViewSet(viewsets.ModelViewSet):
         description="좋아요를 취소합니다.",
         responses={200: {'type': 'object', 'properties': {'liked': {'type': 'boolean'}, 'total_likes': {'type': 'integer'}}}}
     )
-    @action(detail=True, methods=['delete'])
+    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
     def unlike(self, request, pk=None):
         shortform = self.get_object()
         user = request.user
-        if not user.is_authenticated:
-            raise exceptions.NotAuthenticated("Authentication required to unlike.")
 
         deleted, _ = ShortformLike.objects.filter(shortform=shortform, user=user).delete()
         if deleted:
@@ -266,7 +272,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
         description="GET: 댓글 목록 조회\nPOST: 새 댓글 작성",
         responses={200: ShortformCommentSerializer(many=True)}
     )
-    @action(detail=True, methods=['get', 'post'])
+    @action(detail=True, methods=['get', 'post'], permission_classes=[IsAuthenticatedOrReadOnly])
     def comments(self, request, pk=None):
         shortform = self.get_object()
         if request.method.lower() == 'get':
@@ -315,7 +321,7 @@ class ShortformViewSet(viewsets.ModelViewSet):
     def view(self, request, pk=None):
         shortform = self.get_object()
         
-        # [Privacy] IP Address Hashing (SHA-256 + Base64)
+        # [개인정보] IP 주소 해싱 (SHA-256 + Base64)
         raw_ip = request.META.get('REMOTE_ADDR', '')
         if raw_ip:
             # 해시 생성 (SHA-256) 후 Base64 인코딩하여 길이 단축 (44자)
@@ -522,15 +528,15 @@ class TranslationBatchView(APIView):
             entity_id = item.get("entity_id", 0)
             field = item.get("field", "text")
 
-            # [Security] Whitelist Validation (Skip invalid items or error out? Let's skip safely)
+            # [보안] 허용 목록 검증 (유효하지 않은 항목은 안전하게 건너뜀)
             ALLOWED_ENTITY_TYPES = [
                 'shortform', 'shortform_comment', 'review', 'raw',
                 'place', 'place_name', 'place_address', 'place_category', 'place_opening_hours', 'place_desc',
                 'local_column', 'local_column_section'
             ]
             if entity_type not in ALLOWED_ENTITY_TYPES:
-                logger.warning(f"Skipping invalid entity_type in batch: {entity_type}")
-                results[idx] = text # Return original text without translation/caching
+                logger.warning(f"배치 내 유효하지 않은 entity_type 건너뜀: {entity_type}")
+                results[idx] = text # 번역/캐싱 없이 원본 텍스트 반환
                 continue
             
             # 캐시 확인
@@ -601,7 +607,7 @@ class TranslationBatchView(APIView):
                              if re.search(r'[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f]', t_text):
                                  is_bad_translation = True
 
-                        # Rule 3: CJK/Kana in English (Chinese/Japanese characters in English translation)
+                        # 규칙 3: 영어 내의 CJK/가나 (영어 번역에 한자/일본어 포함 시)
                         if target_lang == 'eng_Latn':
                              # CJK Unified Ideographs + Hiragana/Katakana
                              if re.search(r'[\u4e00-\u9fff\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff]', t_text):

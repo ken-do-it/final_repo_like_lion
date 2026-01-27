@@ -163,26 +163,25 @@ def check_local_badge_active(db: Session, user_id: int) -> LocalBadge:
 
     # [TEMPORARY TEST MODE] 모든 사용자에게 Level 5 권한 부여 (테스트용)
     # 번역 기능 테스트 종료 후 반드시 삭제/원복 필요
-    if True:
-        # 가짜 뱃지 객체 반환 (레벨 5)
-        # badge가 있으면 그것을 사용하지 않고, 무조건 레벨 5로 덮어쓰거나 새로 생성
-        if not badge:
-            badge = LocalBadge(
-                user_id=user_id,
-                city="테스트 City",
-                level=5,
-                is_active=True,
-                first_authenticated_at=date.today(),
-                last_authenticated_at=date.today(),
-                next_authentication_due=date.today() + timedelta(days=365)
-            )
-        else:
-            # 기존 뱃지가 있어도 레벨 5로 간주 (객체 속성 변경은 DB 저장 안함)
-            badge.level = 5
-            badge.is_active = True
-        return badge
+    # if True:
+    #     # 가짜 뱃지 객체 반환 (레벨 5)
+    #     # badge가 있으면 그것을 사용하지 않고, 무조건 레벨 5로 덮어쓰거나 새로 생성
+    #     if not badge:
+    #         badge = LocalBadge(
+    #             user_id=user_id,
+    #             city="테스트 City",
+    #             level=5,
+    #             is_active=True,
+    #             first_authenticated_at=date.today(),
+    #             last_authenticated_at=date.today(),
+    #             next_authentication_due=date.today() + timedelta(days=365)
+    #         )
+    #     else:
+    #         # 기존 뱃지가 있어도 레벨 5로 간주 (객체 속성 변경은 DB 저장 안함)
+    #         badge.level = 5
+    #         badge.is_active = True
+    #     return badge
 
-    """
     # [Superuser Bypass] 관리자는 무조건 통과 (Raw SQL 사용 - Safe Check)
     try:
         from sqlalchemy import text
@@ -204,7 +203,6 @@ def check_local_badge_active(db: Session, user_id: int) -> LocalBadge:
     except Exception as e:
         # 컬럼이 없거나 에러 발생 시 무시하고 일반 로직 진행
         print(f"[Warning] Superuser check failed: {e}")
-    """
 
     if not badge:
         raise HTTPException(status_code=403, detail="현지인 인증이 필요합니다")

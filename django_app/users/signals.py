@@ -52,6 +52,9 @@ def set_social_provider(sender, request, sociallogin, **kwargs):
             extra_data.get('name') or
             extra_data.get('nickname') or
             extra_data.get('properties', {}).get('nickname') or
+            extra_data.get('kakao_account', {}).get('profile', {}).get('nickname') or
+            extra_data.get('response', {}).get('nickname') or
+            extra_data.get('response', {}).get('name') or
             user.username
         )
 

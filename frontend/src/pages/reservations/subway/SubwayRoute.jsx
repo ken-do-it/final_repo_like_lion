@@ -44,6 +44,14 @@ const SubwayRoute = () => {
   const [error, setError] = useState(null);
 
   /**
+   * 헤더(출발/도착역) 번역 상태
+   */
+  const [translatedHeader, setTranslatedHeader] = useState({
+    from: searchParams?.fromStation || '',
+    to: searchParams?.toStation || ''
+  });
+
+  /**
    * 페이지 로드시 경로 검색
    */
   useEffect(() => {
@@ -55,8 +63,71 @@ const SubwayRoute = () => {
       return;
     }
 
+    translateHeader();
     fetchRoutes();
   }, [searchParams, navigate, language]);
+
+  /**
+   * 헤더(출발/도착역) 번역
+   */
+  const translateHeader = async () => {
+    const targetLang = API_LANG_CODES[language] || 'eng_Latn';
+
+    // 한국어면 원본 유지
+    if (targetLang === 'kor_Hang') {
+      setTranslatedHeader({
+        from: searchParams?.fromStation || '',
+        to: searchParams?.toStation || ''
+      });
+      return;
+    }
+
+    const texts = [];
+    if (searchParams?.fromStation) texts.push(searchParams.fromStation);
+    if (searchParams?.toStation) texts.push(searchParams.toStation);
+
+    if (texts.length === 0) return;
+
+    const getEntityId = (value) => {
+      let hash = 0;
+      for (let i = 0; i < value.length; i += 1) {
+        hash = (hash << 5) - hash + value.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    };
+
+    const payload = {
+      source_lang: 'kor_Hang',
+      target_lang: targetLang,
+      items: texts.map((text) => ({
+        text,
+        entity_type: 'raw',
+        entity_id: getEntityId(text),
+        field: 'text'
+      }))
+    };
+
+    try {
+      const response = await axios.post('/translations/batch/', payload);
+      const results = response.data?.results || {};
+
+      const translatedMap = new Map(
+        texts.map((text, idx) => [text, results[idx] || text])
+      );
+
+      setTranslatedHeader({
+        from: translatedMap.get(searchParams?.fromStation) || searchParams?.fromStation,
+        to: translatedMap.get(searchParams?.toStation) || searchParams?.toStation
+      });
+    } catch (err) {
+      console.warn('Header translation failed:', err);
+      setTranslatedHeader({
+        from: searchParams?.fromStation || '',
+        to: searchParams?.toStation || ''
+      });
+    }
+  };
 
   /**
    * 백엔드 API로 지하철 경로 검색
@@ -64,7 +135,11 @@ const SubwayRoute = () => {
    */
   const translateRoutesIfNeeded = async (routes) => {
     const targetLang = API_LANG_CODES[language] || 'eng_Latn';
-    if (targetLang === 'kor_Hang') return routes;
+
+    // 한국어면 원본 유지
+    if (targetLang === 'kor_Hang') {
+      return routes;
+    }
 
     const getEntityId = (value) => {
       let hash = 0;
@@ -83,6 +158,7 @@ const SubwayRoute = () => {
       texts.push(text);
     };
 
+    // 2. 경로 내 역이름/호선 추가
     routes.forEach((route) => {
       route.steps?.forEach((step) => {
         addText(step.line);
@@ -220,13 +296,13 @@ const SubwayRoute = () => {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">
                   <div className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">
-                    {searchParams.fromStation}
+                    {translatedHeader.from}
                   </div>
                   <span className="material-symbols-outlined text-gray-400 flex-shrink-0">
                     arrow_forward
                   </span>
                   <div className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">
-                    {searchParams.toStation}
+                    {translatedHeader.to}
                   </div>
                   <div className="text-sm px-3 py-1 bg-primary/10 text-primary rounded-full whitespace-nowrap flex-shrink-0">
                     {getOptionLabel(searchParams.option)}

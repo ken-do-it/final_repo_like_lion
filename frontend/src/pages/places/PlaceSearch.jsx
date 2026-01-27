@@ -27,6 +27,7 @@ const PlaceSearch = () => {
     // Initial search when URL query changes
     useEffect(() => {
         if (queryFromUrl) {
+            shouldFetchSuggestions.current = false; // Prevent autocomplete dropdown on page load/refresh
             setSearchInput(queryFromUrl);
             fetchPlaces(queryFromUrl);
         }

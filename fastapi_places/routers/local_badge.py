@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from auth import require_auth
 from database import get_db
+from models import LocalBadge
 from schemas import LocalBadgeAuthRequest, LocalBadgeAuthResponse, LocalBadgeStatusResponse
 from services.badges import authenticate_local_badge
 
@@ -46,19 +47,17 @@ def get_badge_status(
     """
     # [TEMPORARY TEST MODE] 모든 사용자에게 Level 5 권한 부여 (테스트용)
     # 번역 기능 테스트 종료 후 반드시 삭제/원복 필요
-    return LocalBadgeStatusResponse(
-        level=5,
-        city="테스트 권한",
-        is_active=True,
-        first_authenticated_at=date.today(),
-        last_authenticated_at=date.today(),
-        next_authentication_due=date.today() + timedelta(days=365),
-        maintenance_months=12,
-        authentication_count=999,
-    )
+    # return LocalBadgeStatusResponse(
+    #     level=5,
+    #     city="테스트 권한",
+    #     is_active=True,
+    #     first_authenticated_at=date.today(),
+    #     last_authenticated_at=date.today(),
+    #     next_authentication_due=date.today() + timedelta(days=365),
+    #     maintenance_months=12,
+    #     authentication_count=999,
+    # )
 
-    # [ORIGINAL CODE - COMMENTED OUT FOR TESTING]
-    """
     badge = db.query(LocalBadge).filter(LocalBadge.user_id == user_id).first()
 
     if not badge:
@@ -83,4 +82,3 @@ def get_badge_status(
         maintenance_months=badge.maintenance_months,
         authentication_count=0
     )
-    """

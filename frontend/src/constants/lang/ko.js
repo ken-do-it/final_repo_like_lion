@@ -1,17 +1,23 @@
 export default {
-    // Navbar
+    // 네비게이션 바
     nav_home: "홈",
     nav_shorts: "쇼츠",
     nav_game: "로드뷰 게임",
     nav_stays: "숙소",
     nav_places: "장소",
     nav_mytrips: "나의 여행",
-    // Navbar Dropdown
+    // 네비게이션 드롭다운
     nav_mypage: "마이페이지",
     nav_logout: "로그아웃",
     nav_login: "로그인",
     nav_signup: "회원가입",
-    // Sidebar Specific
+
+    // 로그아웃 확인 모달
+    logout_confirm_title: "로그아웃 하시겠습니까?",
+    logout_confirm_desc: "로그아웃하면 일부 기능을 사용할 수 없습니다.",
+    yes: "예",
+    no: "아니오",
+    // 사이드바 전용
     nav_geoquiz: "지오 퀴즈 업로더",
     nav_ai_plan: "AI 일정 만들기",
     nav_column: "로컬 칼럼",
@@ -23,18 +29,18 @@ export default {
     nav_support: "고객센터",
     nav_version: "버전 정보",
 
-    // Review Banner
+    // 리뷰 배너
     banner_review_title: "{dest} 여행은 어떠셨나요?",
     banner_review_desc: "여행의 추억을 기록하고 공유해보세요!",
     banner_review_btn: "리뷰 작성하기",
 
-    // MainPage Hero
+    // 메인 페이지 히어로
     hero_title_1: "어디로 떠나시나요?",
     hero_title_2: "한국이 기다립니다.",
     search_placeholder: "여행지, 항공권, 호텔 검색...",
     search_btn: "검색",
 
-    // Hero Tabs & Plan
+    // 히어로 탭 & 일정
     hero_tab_search: "검색",
     hero_tab_plan: "일정 만들기",
     plan_title_ph: "여행 제목 (예: 제주도 여행)",
@@ -42,7 +48,7 @@ export default {
     plan_end: "오는 날",
     plan_create_btn: "일정 생성",
 
-    // Filter Chips
+    // 필터 칩
     filter_all: "전체",
     filter_public: "공유된 일정",
     filter_mine: "내 일정",
@@ -51,18 +57,18 @@ export default {
     filter_stays: "숙소",
     filter_flights: "교통",
 
-    // Quick Actions
+    // 빠른 작업
     action_flight: "항공권 예약",
     action_stays: "숙소 찾기",
     action_places: "여행지 찾기",
     action_geoquiz: "지리 퀴즈",
 
-    // Sections
+    // 섹션
     sec_upcoming: "다가오는 여행",
     btn_view_all: "전체 보기",
     sec_trending: "인기 쇼츠 & 여행지",
 
-    // Shorts Page & Detail
+    // 쇼츠 페이지 & 상세
     shorts_title: "쇼츠",
     shorts_sub: "최신 업로드를 AI 캡션/번역으로 감상하세요.",
     btn_upload: "업로드",
@@ -73,7 +79,7 @@ export default {
     now_playing: "재생 중",
     lang_label: "언어",
 
-    // Common
+    // 공통
     play: "재생",
     close: "닫기",
     follow: "팔로우",
@@ -86,7 +92,7 @@ export default {
     btn_post: "작성",
     btn_posting: "작성 중...",
 
-    // Auth Pages (Login / Signup)
+    // 인증 페이지 (로그인 / 회원가입)
     login_title: "로그인",
     login_subtitle: "개인화된 여행 경험을 만나보세요.",
     signup_title: "회원가입",
@@ -95,6 +101,10 @@ export default {
     password_label: "비밀번호",
     password_confirm_label: "비밀번호 확인",
     nickname_label: "닉네임",
+    birth_year_label: "출생 연도",
+    country_label: "국가",
+    country_placeholder: "예: 대한민국",
+    city_label: "도시",
     login_btn: "로그인",
     signup_btn: "회원가입",
     google_login: "Google로 계속하기",
@@ -102,8 +112,9 @@ export default {
     no_account: "계정이 없으신가요?",
     have_account: "이미 계정이 있으신가요?",
     forgot_password: "비밀번호를 잊으셨나요?",
+    registration_success: "회원가입이 완료되었습니다! 로그인해주세요.",
 
-    // MyPage
+    // 마이페이지
     mypage_title: "마이페이지",
     mypage_desc: "내 계정 정보와 활동을 관리하세요.",
     tab_profile: "내 정보",
@@ -115,7 +126,7 @@ export default {
     tab_saved: "저장한 장소",
     tab_reviews: "내 리뷰",
 
-    // Reservations
+    // 예약
     no_reservations: "예약 내역이 없습니다",
     no_reservations_desc: "첫 항공권을 예약하고 한국을 탐험해보세요!",
     search_flights: "항공권 검색",
@@ -132,7 +143,7 @@ export default {
     location_label: "위치",
     phone_label: "전화번호",
 
-    // Shorts Upload
+    // 쇼츠 업로드
     upload_title_new: "쇼츠 업로드",
     upload_title_edit: "쇼츠 수정",
     upload_sub_new: "당신의 순간을 전 세계와 공유하세요",
@@ -162,7 +173,7 @@ export default {
     btn_save_changes: "변경사항 저장",
     btn_upload_short: "쇼츠 업로드",
 
-    // Place Search
+    // 장소 검색
     place_search_title: "장소 검색",
     place_search_placeholder: "어디로 떠나고 싶으신가요?",
     search_results_title: "'{query}' 검색 결과",
@@ -172,7 +183,7 @@ export default {
     no_results_desc_try: "다른 검색어로 다시 시도해보세요.",
     searching: "검색 중입니다...",
 
-    // Place Detail
+    // 장소 상세
     place_basic_info: "기본 정보",
     place_opening_hours: "영업 시간",
     place_location: "위치",
@@ -187,7 +198,7 @@ export default {
     loading_place: "장소 정보를 불러오는 중입니다...",
     btn_go_back: "뒤로 가기",
 
-    // Plan List
+    // 계획 목록
     plan_list_title: "나의 여행 계획",
     plan_list_subtitle: "나만의 특별한 여행을 계획하고 관리하세요",
     btn_ai_recommend: "AI 추천받기",
@@ -195,7 +206,7 @@ export default {
     msg_no_plans: "아직 여행 계획이 없습니다",
     btn_create_first: "첫 번째 여행 계획 만들기",
 
-    // Plan Create Page
+    // 계획 생성 페이지
     plan_create_title: "새 여행 계획 만들기",
     plan_create_subtitle: "나만의 특별한 여행을 계획해보세요",
     label_trip_title: "여행 제목",
@@ -841,6 +852,27 @@ export default {
     msg_review_created: "리뷰가 등록되었습니다.",
     msg_review_save_failed: "리뷰 저장에 실패했습니다.",
     msg_confirm_delete_review: "정말로 이 리뷰를 삭제하시겠습니까?",
+
+    // Search Page
+    see_all: "모두 보기",
+    search_tab_all: "전체",
+    search_tab_places: "장소",
+    search_tab_plans: "일정",
+    search_tab_shorts: "쇼츠",
+    search_tab_reviews: "후기",
+    search_tab_others: "기타",
+    search_header_places: "추천 장소",
+    search_header_shorts: "쇼츠",
+    search_header_plans: "인기 일정",
+    search_header_flights: "항공권",
+    search_header_transports: "교통편",
+    search_header_reviews: "여행자 후기",
+    search_header_others: "기타 결과",
+    search_loading: "\"{query}\" 검색 중...",
+    search_no_results_title: "준비 되셨나요?",
+    search_no_results_desc: "목적지, 호텔, 가이드를 검색해보세요.",
+    search_empty_title: "\"{tab}\"에 대한 결과가 없습니다.",
+    search_empty_desc: "검색어나 필터를 조정해보세요.",
     msg_review_deleted: "리뷰가 삭제되었습니다.",
     msg_review_delete_failed: "리뷰 삭제에 실패했습니다."
 };

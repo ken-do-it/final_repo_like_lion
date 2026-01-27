@@ -5,6 +5,16 @@ scrape_configs:
   - job_name: 'django'
     static_configs:
       - targets: ['django:8000'] # 장고 컨테이너 이름:포트
-  - job_name: 'fastapi'
+
+  - job_name: 'fastapi_app'
     static_configs:
-      - targets: ['fastapi:8000'] # FastAPI 컨테이너 이름:포트 (포트 확인 필요!)
+      - targets: ['fastapi_app:8001'] # 메인 검색 API (포트 8001)
+  
+  - job_name: 'fastapi_places'
+    static_configs:
+      - targets: ['fastapi_places:8002'] # 장소 API (포트 8002)
+
+  - job_name: 'fastapi_ai_translation'
+    static_configs:
+      - targets: ['fastapi_ai_translation:8003'] # AI 번역 API (포트 8003)
+

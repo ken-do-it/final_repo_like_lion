@@ -170,7 +170,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
@@ -220,9 +221,9 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'username'
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 
 # 소셜 로그인 시 항상 재인증 요구 (자동 로그인 방지)
 SOCIALACCOUNT_STORE_TOKENS = False
@@ -394,3 +395,15 @@ else:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
+
+# Nginx(HTTPS) 뒤에서 실행될 때, 장고가 HTTPS임을 인식하도록 설정
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+# 2. 모든 로그인 처리를 https로 하도록 강제
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
+# 추가 권장 설정 (세션 및 쿠키 보안)
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True

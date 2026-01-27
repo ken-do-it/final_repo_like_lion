@@ -13,27 +13,27 @@ const ShortsUploadPage = () => {
 
     const isEditMode = Boolean(id);
 
-    // Form State
+    // 폼 상태
     const [title, setTitle] = useState('');
     const [locationTags, setLocationTags] = useState([]);
     const [locationInput, setLocationInput] = useState('');
     const [description, setDescription] = useState('');
     const [videoFile, setVideoFile] = useState(null);
-    // For previewing existing video or selected file
+    // 기존 비디오 또는 선택된 파일 미리보기용
     const [previewUrl, setPreviewUrl] = useState('');
 
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
-    // Fetch existing data if in Edit Mode
+    // 수정 모드인 경우 기존 데이터 가져오기
     useEffect(() => {
         if (isEditMode) {
             fetchShortDetail();
         }
     }, [isEditMode, id]);
 
-    // Redirect if not logged in
+    // 로그인하지 않은 경우 리디렉션
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             alert(t('req_login'));
@@ -41,15 +41,17 @@ const ShortsUploadPage = () => {
         }
     }, [isAuthenticated, isLoading, navigate, t]);
 
+
+
     const fetchShortDetail = async () => {
         try {
             setIsLoading(true);
             const res = await axiosInstance.get(`/shortforms/${id}/`);
             const data = res.data;
 
-            // Authorization Check: Only owner can edit
-            // Assuming data.writer is the username or ID. Adjust based on your API response structure.
-            // If the API doesn't return writer info suitable for check here, backend will reject it anyway.
+            // 권한 확인: 작성자만 수정 가능
+            // data.writer가 사용자 이름 또는 ID라고 가정. API 응답 구조에 따라 조정 필요.
+            // 여기서 확인하기 어렵다면 백엔드에서 거부할 것임.
             // checking user match roughly if possible, or relying on backend 403.
 
             setTitle(data.title || '');
@@ -118,7 +120,7 @@ const ShortsUploadPage = () => {
             formData.append('location', locationValue);
             formData.append('content', description);
 
-            // If creating, file is required. If editing, file is optional (update only if changed)
+            // 생성 시 파일 필수. 수정 시 파일 선택적 (변경된 경우만 업데이트)
             if (videoFile) {
                 formData.append('video_file', videoFile);
             }
@@ -203,7 +205,7 @@ const ShortsUploadPage = () => {
                                 accept="video/*"
                                 onChange={handleFileChange}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                required={!isEditMode && !videoFile} // Required only for creation
+                                required={!isEditMode && !videoFile} // 생성 시에만 필수
                             />
 
                             {previewUrl ? (

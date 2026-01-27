@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api, { placesAxios } from '../../api/axios';
+import plansService from '../../api/plansApi';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { API_LANG_CODES } from '../../constants/translations';
@@ -28,6 +29,10 @@ const MyPage = () => {
     // My Shorts State
     const [myShorts, setMyShorts] = useState([]);
     const [shortsLoading, setShortsLoading] = useState(false);
+
+    // My Plans State (Updated from Schedules)
+    const [myPlans, setMyPlans] = useState([]);
+    const [plansLoading, setPlansLoading] = useState(false);
 
     // My Reservations State
     const [reservations, setReservations] = useState([]);
@@ -60,6 +65,7 @@ const MyPage = () => {
 
     useEffect(() => {
         if (activeTab === 'shorts') fetchMyShorts();
+        if (activeTab === 'schedules') fetchMyPlans();
         if (activeTab === 'reservations') fetchReservations();
         if (activeTab === 'columns') fetchMyColumns();
         if (activeTab === 'saved') fetchSavedPlaces();
@@ -93,6 +99,26 @@ const MyPage = () => {
             console.error("Failed to fetch shorts", err);
         } finally {
             setShortsLoading(false);
+        }
+    };
+
+    const fetchMyPlans = async () => {
+        setPlansLoading(true);
+        try {
+            const langCode = API_LANG_CODES[language] || 'eng_Latn';
+            // Assuming getPlans returns all plans, we filter by user in frontend or backend
+            // Ideally backend supports filtering by user. If using the same API as PlanList:
+            const response = await plansService.plans.getPlans({
+                lang: langCode
+            });
+            const allPlans = Array.isArray(response.data) ? response.data : (response.data.results || []);
+            // Filter only my plans
+            const myOwnPlans = allPlans.filter(p => p.user === user?.id);
+            setMyPlans(myOwnPlans);
+        } catch (err) {
+            console.error("Failed to fetch plans", err);
+        } finally {
+            setPlansLoading(false);
         }
     };
 
@@ -386,6 +412,101 @@ const MyPage = () => {
                         </div>
                     </div>
                 ))}
+            </div>
+        );
+    };
+
+    const renderMyPlans = () => {
+        if (plansLoading) return <div className="text-center py-20">{t('loading')}</div>;
+
+        if (!myPlans || myPlans.length === 0) return (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-4xl">🗓️</div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('msg_no_plans') || "No Plans Yet"}</h3>
+                <p className="mb-6">{t('no_reservations_desc') || "Create your first travel plan!"}</p>
+                <Button
+                    onClick={() => navigate('/plans/create')}
+                    className="bg-[#1392ec] hover:bg-blue-600 rounded-lg px-6"
+                >
+                    {t('btn_create_new') || 'Create Plan'}
+                </Button>
+            </div>
+        );
+
+        return (
+            <div className="space-y-4">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                        {t('tab_schedules') || 'My Schedules'} ({myPlans.length})
+                    </h3>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/plans/create')}
+                        className="rounded-lg"
+                    >
+                        + {t('btn_create_new') || 'New Plan'}
+                    </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {myPlans.map((plan) => (
+                        <div
+                            key={plan.id}
+                            onClick={() => navigate(`/plans/${plan.id}`)}
+                            className="group bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
+                        >
+                            {/* Plan Header */}
+                            <div className="p-4 border-b border-slate-100 dark:border-slate-700">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${plan.plan_type === 'ai_recommended'
+                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                        }`}>
+                                        {plan.plan_type === 'ai_recommended' ? 'AI Plan' : 'Manual'}
+                                    </span>
+                                    {plan.is_public ? (
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                            Public
+                                        </span>
+                                    ) : (
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                                            Private
+                                        </span>
+                                    )}
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-[#1392ec] transition-colors line-clamp-1">
+                                    {plan.title_translated || plan.title}
+                                </h3>
+                            </div>
+
+                            {/* Plan Body */}
+                            <div className="p-4">
+                                <p className="text-slate-500 dark:text-slate-400 text-sm mb-4 line-clamp-2 h-10">
+                                    {(plan.description_translated || plan.description) || "No description"}
+                                </p>
+
+                                <div className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+                                    <div className="flex items-center">
+                                        <span className="text-base mr-2">📅</span>
+                                        {new Date(plan.start_date).toLocaleDateString()} ~ {new Date(plan.end_date).toLocaleDateString()}
+                                    </div>
+                                    <div className="flex items-center">
+                                        <span className="text-base mr-2">⏱️</span>
+                                        {Math.ceil((new Date(plan.end_date) - new Date(plan.start_date)) / (1000 * 60 * 60 * 24))} Days
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-700 text-xs text-slate-400">
+                                    <div className="flex gap-3">
+                                        <span>❤️ {plan.like_count}</span>
+                                        <span>💬 {plan.comment_count}</span>
+                                    </div>
+                                    <span className="text-[#1392ec] font-medium group-hover:underline">View Details →</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     };
@@ -747,15 +868,7 @@ const MyPage = () => {
                             {activeTab === 'columns' && renderMyColumns()}
                             {activeTab === 'saved' && renderSavedPlaces()}
                             {activeTab === 'reviews' && renderMyReviews()}
-
-                            {/* Placeholders for others */}
-                            {['schedules'].includes(activeTab) && (
-                                <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
-                                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 text-3xl">🚧</div>
-                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Coming Soon</h3>
-                                    <p>Feature under development.</p>
-                                </div>
-                            )}
+                            {activeTab === 'schedules' && renderMyPlans()}
                         </div>
                     </div>
                 </div>

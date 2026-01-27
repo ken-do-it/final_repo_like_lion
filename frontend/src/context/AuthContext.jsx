@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
             });
             const userData = response.data;
 
-            // Normalize user data if needed (ensure nickname exists)
+            // 필요한 경우 사용자 데이터 정규화 (닉네임 확인)
             if (!userData.nickname && userData.username) {
                 userData.nickname = userData.username;
             }
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        // Check for stored token and user data on mount
+        // 마운트 시 저장된 토큰 및 사용자 데이터 확인
         const storedToken = localStorage.getItem('access_token');
         const storedUser = localStorage.getItem('user');
 
@@ -61,11 +61,11 @@ export const AuthProvider = ({ children }) => {
                         setIsAuthenticated(true);
                     } catch (error) {
                         console.error("Failed to parse stored user data:", error);
-                        // Try fetching from API
+                        // API에서 가져오기 시도
                         await fetchProfile(storedToken);
                     }
                 } else {
-                    // Token exists but no user data, fetch from API
+                    // 토큰은 존재하지만 사용자 데이터가 없음, 프로필 가져오기
                     console.log("⚠️ [AuthContext] Token found but no user data. Fetching profile...");
                     await fetchProfile(storedToken);
                 }

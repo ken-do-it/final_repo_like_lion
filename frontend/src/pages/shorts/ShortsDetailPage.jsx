@@ -118,7 +118,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-    // Like State
+    // 좋아요 상태
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(0);
 
@@ -126,15 +126,15 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
 
     const { user, isAuthenticated } = useAuth()
 
-    // Comment State
+    // 댓글 상태
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
 
-    // Comment Edit State
+    // 댓글 수정 상태
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editContent, setEditContent] = useState("");
 
-    // Fetch Comments
+    // 댓글 가져오기
     const fetchComments = React.useCallback(async () => {
         try {
             const response = await axiosInstance.get(`/shortforms/${id}/comments/`, {
@@ -152,7 +152,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
         }
     }, [fetchComments, id]);
 
-    // Handle Comment Submit
+    // 댓글 제출 처리
     const handleCommentSubmit = async () => {
         if (!newComment.trim()) return;
         if (!isAuthenticated) {
@@ -172,7 +172,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
         }
     };
 
-    // Handle Comment Delete
+    // 댓글 삭제 처리
     const handleDeleteComment = async (commentId) => {
         if (!confirm("Delete this comment?")) return;
         try {
@@ -184,7 +184,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
         }
     };
 
-    // Handle Comment Update
+    // 댓글 수정 처리
     const startEdit = (comment) => {
         setEditingCommentId(comment.id);
         setEditContent(comment.content);
@@ -246,7 +246,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
         }
     }
 
-    // Like Handlers
+    // 좋아요 핸들러
 
 
     const handleLikeToggle = async () => {
@@ -255,7 +255,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
             return;
         }
 
-        // Optimistic UI Update
+        // 낙관적 UI 업데이트
         const prevLiked = liked;
         const prevCount = likeCount;
 
@@ -282,7 +282,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     useEffect(() => {
         if (id) {
             fetchDetail()
-            // Increment view count
+            // 조회수 증가
             axiosInstance.post(`/shortforms/${id}/view/`)
                 .catch(err => console.error("Failed to increment view count:", err));
         }
@@ -296,7 +296,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
         }
     }
 
-    // Get current user ID from AuthContext (handling differences in user object structure)
+    // AuthContext에서 현재 사용자 ID 가져오기 (사용자 객체 구조의 차이 처리)
     const currentUserId = useMemo(() => {
         if (!user) return null
         return user.user_id || user.id || user.pk
@@ -332,7 +332,7 @@ function ShortsDetailPage({ videoId: propVideoId, onBack }) {
     }
     if (!shortform) return null
 
-    // Determine if embed view (no navbar padding, simplified layout) or full page
+    // 임베드 뷰인지 확인 (탐색바 패딩 없음, 단순화된 레이아웃) 또는 전체 페이지
     const isEmbed = !!propVideoId;
 
     return (

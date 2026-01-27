@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate, get_user_model
 from django.utils import timezone
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from urllib.parse import urlencode
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 
@@ -761,8 +762,8 @@ def api_test_page(request):
 
 
 def social_callback_page(request):
-    """소셜 로그인 성공 후 콜백 페이지"""
-    context = {
+    """소셜 로그인 성공 후 프론트엔드로 리다이렉트"""
+    params = {
         'access_token': request.session.get('access_token', ''),
         'refresh_token': request.session.get('refresh_token', ''),
         'user_id': request.session.get('user_id', ''),
@@ -771,7 +772,10 @@ def social_callback_page(request):
         'nickname': request.session.get('nickname', ''),
         'social_provider': request.session.get('social_provider', ''),
     }
-    return render(request, 'users/social_callback.html', context)
+    
+    # 프론트엔드 URL로 리다이렉트 (토큰을 URL 파라미터로 전달)
+    frontend_url = f"https://tripko.p-e.kr/auth/social-callback?{urlencode(params)}"
+    return redirect(frontend_url)
 
 
 def mypage_page(request):

@@ -1,5 +1,5 @@
 export default {
-    // Sidebar
+    // 네비게이션 바
     title_benefits: "Tripko 会员权益",
     benefit_support: "24/7 全天候支持",
     benefit_guarantee: "最优价格保证",
@@ -10,19 +10,25 @@ export default {
     title_need_help: "需要帮助？",
     desc_need_help: "随时联系我们。",
     btn_contact_support: "联系客服",
-    // Navbar
+    // 네비게이션 바
     nav_home: "首页",
     nav_shorts: "短视频",
     nav_game: "街景游戏",
     nav_stays: "住宿",
     nav_places: "地点",
     nav_mytrips: "我的行程",
-    // Navbar Dropdown
+    // 네비게이션 드롭다운
     nav_mypage: "我的页面",
     nav_logout: "退出登录",
     nav_login: "登录",
     nav_signup: "注册",
-    // Sidebar Specific
+
+    // 로그아웃 확인 모달
+    logout_confirm_title: "您确定要退出吗？",
+    logout_confirm_desc: "退出后部分功能将无法使用。",
+    yes: "是",
+    no: "否",
+    // 사이드바 전용
     nav_geoquiz: "地理测验上传",
     nav_ai_plan: "AI行程生成",
     nav_column: "本地专栏",
@@ -30,7 +36,7 @@ export default {
     nav_local_auth: "当地人认证",
     nav_likes: "收藏地点",
 
-    // Review Banner
+    // 리뷰 배너
     banner_review_title: "{dest}之旅怎么样？",
     banner_review_desc: "分享您的美好回忆！",
     banner_review_btn: "写点评",
@@ -38,13 +44,13 @@ export default {
     nav_support: "客户中心",
     nav_version: "版本信息",
 
-    // MainPage Hero
+    // 메인 페이지 히어로
     hero_title_1: "下个目的地？",
     hero_title_2: "韩国等你来。",
     search_placeholder: "搜索目的地、机票、酒店...",
     search_btn: "搜索",
 
-    // Hero Tabs & Plan
+    // 히어로 탭 & 일정
     hero_tab_search: "搜索",
     hero_tab_plan: "行程制作",
     plan_title_ph: "旅行标题 (例: 暑假)",
@@ -52,26 +58,26 @@ export default {
     plan_end: "返回日期",
     plan_create_btn: "开始规划",
 
-    // Filter Chips
+    // 필터 칩
     filter_all: "全部",
     filter_places: "地点",
     filter_geoquiz: "地理测验",
     filter_stays: "住宿",
     filter_flights: "交通",
 
-    // Quick Actions
+    // 빠른 작업
     action_flight: "预订机票",
     title_transport: "交通",
     action_stays: "查找住宿",
     action_places: "查找景点",
     action_geoquiz: "地理测验",
 
-    // Sections
+    // 섹션
     sec_upcoming: "即将开始的旅程",
     btn_view_all: "查看全部",
     sec_trending: "热门短视频 & 城市",
 
-    // Shorts Page & Detail
+    // 쇼츠 페이지 & 상세
     shorts_title: "短视频",
     shorts_sub: "通过AI字幕/翻译观看最新上传。",
     btn_upload: "上传",
@@ -82,7 +88,7 @@ export default {
     now_playing: "正在播放",
     lang_label: "语言",
 
-    // Common
+    // 공통
     play: "播放",
     close: "关闭",
     follow: "关注",
@@ -92,7 +98,7 @@ export default {
     msg_no_comments: '暂无评论。',
     add_comment: "添加评论...",
 
-    // Auth Pages
+    // 인증 페이지
     login_title: "登录",
     login_subtitle: "开启您的个性化旅行体验。",
     signup_title: "注册",
@@ -101,6 +107,10 @@ export default {
     password_label: "密码",
     password_confirm_label: "确认密码",
     nickname_label: "昵称",
+    birth_year_label: "出生年份",
+    country_label: "国家",
+    country_placeholder: "例如: 韩国",
+    city_label: "城市",
     login_btn: "登录",
     signup_btn: "注册",
     google_login: "通过Google继续",
@@ -108,8 +118,9 @@ export default {
     no_account: "还没有账号？",
     have_account: "已有账号？",
     forgot_password: "忘记密码？",
+    registration_success: "注册成功！请登录。",
 
-    // MyPage
+    // 마이페이지
     mypage_title: "我的页面",
     mypage_desc: "管理您的账号和活动。",
     tab_profile: "个人资料",
@@ -131,7 +142,7 @@ export default {
     location_label: "位置",
     phone_label: "电话号码",
 
-    // Shorts Upload
+    // 쇼츠 업로드
     upload_title_new: "上传短视频",
     upload_title_edit: "编辑短视频",
     upload_sub_new: "与世界分享您的瞬间",
@@ -157,7 +168,7 @@ export default {
     btn_updating: "更新中...",
     btn_save_changes: "保存更改",
     btn_upload_short: "上传视频",
-    // Place Search
+    // 장소 검색
     place_search_title: "地点搜索",
     place_search_placeholder: "你想去哪里？",
     shorts_upload_desc_placeholder: "是关于什么的视频？",
@@ -169,7 +180,7 @@ export default {
     no_results_desc_try: "尝试使用不同的关键词搜索。",
     searching: "搜索中...",
 
-    // Place Detail
+    // 장소 상세
     place_basic_info: "基本信息",
     place_opening_hours: "营业时间",
     place_location: "位置",
@@ -184,7 +195,7 @@ export default {
     loading_place: "正在加载地点详情...",
     btn_go_back: "返回",
 
-    // Plan List
+    // 계획 목록
     plan_list_title: "我的旅行行程",
     plan_list_subtitle: "规划和管理您的独特旅程",
     btn_ai_recommend: "获取AI推荐",
@@ -192,7 +203,7 @@ export default {
     msg_no_plans: "暂无旅行行程",
     btn_create_first: "创建您的第一个行程",
 
-    // Plan Create Page
+    // 계획 생성 페이지
     plan_create_title: "创建新旅行计划",
     plan_create_subtitle: "规划您自己的特别旅行",
     label_trip_title: "旅行标题",
@@ -217,8 +228,8 @@ export default {
     msg_create_success: "旅行计划已创建！",
     msg_create_fail: "创建旅行计划失败。",
 
-    // Add/Edit Place / Plan Edit / AI Recommend
-    // Place Related
+    // 장소 추가/수정 / 계획 수정 / AI 추천
+    // 장소 관련
     title_add_place: "添加地点",
     subtitle_add_place: "向{planTitle}添加新地点",
     title_edit_place: "编辑地点",
@@ -250,7 +261,7 @@ export default {
     msg_loading: "加载中...",
     msg_plan_not_found: "未找到计划。",
 
-    // Plan Edit
+    // 계획 수정
     title_plan_edit: "编辑旅行计划",
     subtitle_plan_edit: "编辑旅行计划的基本信息",
     label_plan_type: "计划类型",
@@ -259,7 +270,7 @@ export default {
     title_date_warning: "更改日期时的注意事项",
     desc_date_warning: "此计划已包含{count}个地点。更改日期可能会导致现有地点的日期超出计划范围。",
 
-    // AI Recommend
+    // AI 추천
     title_ai_recommend: "AI旅行推荐",
     subtitle_ai_recommend: "AI将为您创建完美的旅行日程",
     q_destination: "您要去哪里旅行？",
@@ -280,7 +291,7 @@ export default {
     alert_ai_request_fail: "请求AI推荐失败。",
     alert_ai_polling_fail: "AI状态确认失败。",
 
-    // Destinations
+    // 여행지
     dest_gapyeong_yangpyeong: "加平/杨平",
     dest_gangneung_sokcho: "江陵/束草",
     dest_gyeongju: "庆州",
@@ -292,7 +303,7 @@ export default {
     dest_chuncheon_hongcheon: "春川/洪川",
     dest_taean: "泰安",
 
-    // Travel Styles
+    // 여행 스타일
     style_healing: "治愈/休养",
     style_healing_desc: "安静舒适的旅行",
     style_activity: "活动",
@@ -313,7 +324,7 @@ export default {
     msg_confirm_delete: "确定要删除此行程吗？",
     msg_delete_fail: "删除失败。",
 
-    // Common Alerts
+    // 공통 알림
     alert_login_required: "访问此服务需要登录。",
     alert_public_like_only: "只有公开的行程才能点赞。",
     alert_like_fail: "点赞更新失败。",
@@ -324,7 +335,7 @@ export default {
     alert_comment_delete_fail: "删除评论失败。",
     msg_load_fail: "加载旅行计划失败。",
 
-    // Plan Detail
+    // 계획 상세
     error_invalid_access: "无效访问。",
     error_plan_private: "此行程为私密行程。",
     error_plan_not_found: "未找到行程。",
@@ -340,7 +351,7 @@ export default {
     alt_place_image: "地点图片 {index}",
     day_label: "第 {day} 天",
 
-    // MainPage New
+    // 메인 페이지 신규
     cta_start_journey: "开始您的下一段旅程！",
     cta_no_upcoming: "您没有即将开始的行程。为何不现在规划一个？",
     btn_create_trip: "创建行程",
@@ -348,7 +359,7 @@ export default {
     label_group_trip: "团体行程",
     link_view_itinerary: "查看行程 →",
     category_travel: "旅行",
-    // AccommodationMap
+    // 숙소 지도
     stays_title: "查找住宿",
     stays_search_placeholder: "搜索位置 (例如: 江南)",
     stays_search_btn: "搜索",
@@ -369,7 +380,7 @@ export default {
     stays_finding: "正在查找地点...",
     stays_view_details: "查看详情 ↗",
 
-    // GeoImageUploader
+    // 지오 이미지 업로더
     geo_title: "AI位置分析",
     geo_desc: "上传旅行照片以提取GPS位置并开始街景游戏。",
     geo_drag_drop: "点击或拖放上传",
@@ -387,7 +398,7 @@ export default {
     geo_start_with: "从“{name}”开始",
     geo_back_home: "← 返回主页",
 
-    // LocalColumnList
+    // 로컬 칼럼 목록
     col_title_main: "本地专栏",
     col_desc_1: "发现真正的当地人推荐的隐藏景点和美食故事。",
     col_desc_2: "充满只有经过验证的当地人才能提供的特别信息。",
@@ -397,10 +408,10 @@ export default {
     col_no_cols: "暂无专栏。",
     col_be_first: "成为第一个写专栏的人！",
     col_anonymous: "匿名",
-    // Shorts
+    // 쇼츠
     shorts_load_error: "加载短视频失败。",
 
-    // FlightSearch
+    // 항공권 검색
     flight_title: "交通",
     flight_search_title: "机票搜索",
     flight_oneway: "单程",
@@ -438,7 +449,7 @@ export default {
     tab_taxi: "出租车",
     flight_load_error: "加载数据失败。",
 
-    // RoadviewGame
+    // 거리뷰 게임
     game_title: "街景",
     game_target_photo: "目标照片",
     game_round: "轮次",
@@ -462,7 +473,7 @@ export default {
     game_no_pano_title: "未找到街景",
     game_no_pano_desc: "附近没有道路数据，或者是该地点在室内。",
 
-    // Local Columns
+    // 로컬 칼럼
     col_write_title: "撰写新专栏",
     col_edit_title: "编辑专栏",
     col_input_title: "标题",
@@ -490,7 +501,7 @@ export default {
     msg_col_updated: "专栏已修改。",
     msg_save_fail: "保存失败。",
 
-    // Auth Modal
+    // 인증 모달
     auth_modal_title: "当地人认证",
     auth_modal_desc: "根据当前位置获取当地人徽章！",
     btn_auth_my_loc: "使用我的位置认证",
@@ -504,7 +515,7 @@ export default {
     msg_loc_timeout: "位置信息请求超时。",
     msg_loc_fail: "获取位置信息失败。",
 
-    // Detail & List
+    // 상세 & 목록
     col_view_place: "查看地点信息",
     btn_back_list: "返回列表",
     confirm_delete_col: "确定要删除此专栏吗？",
@@ -517,7 +528,7 @@ export default {
     col_upload_thumb: "点击上传图片",
     col_intro_img_add: "添加图片",
 
-    // City Pages
+    // 도시 페이지
     city_search_title: "你要去哪里？ ✈️",
     city_search_desc: "搜索城市名称，查看综合旅游信息。",
     city_search_ph: "搜索城市 (例如: 首尔, 釜山)",
@@ -534,36 +545,36 @@ export default {
     city_load_error: "加载内容失败。",
     flight_provider_check_required: "需要确认供应商",
 
-    // Currency
+    // 통화
     unit_krw: "韩元",
     date_format_ymd: "{year}年{month}月{day}日",
     unit_people: "人",
 
-    // 日期/时间格式
+    // 날짜/시간 형식
     datetime_format_ymdhm: "{year}年{month}月{day}日 {hours}:{minutes}",
 
-    // 正在处理付款
+    // 결제 확인 중
     payment_confirming_title: "正在处理付款",
     payment_confirming_desc: "正在安全处理您的付款。",
     payment_confirming_wait: "请稍候。",
 
-    // 付款成功
+    // 결제 성공
     payment_success_title: "付款完成",
     payment_success_desc: "您的预订已成功处理。",
     payment_order_number: "订单号",
     payment_amount_label: "付款金额",
     payment_redirecting: "即将跳转到确认页面...",
 
-    // 付款失败
+    // 결제 실패
     payment_error_title: "付款失败",
     payment_error_invalid_params: "付款信息无效。",
     payment_error_refund_info: "如果付款批准失败但已扣款，将自动取消。退款将在3-5个工作日内处理。",
 
-    // 按钮
+    // 버튼
     btn_restart: "重新开始",
     btn_processing: "处理中...",
 
-    // 预订详情模态框
+    // 예약 상세 모달
     reservation_detail_title: "预订详情",
     reservation_loading: "加载中...",
     reservation_load_error: "无法加载信息。",
@@ -591,7 +602,7 @@ export default {
     btn_close: "关闭",
     label_order: "订单",
 
-    // AddToPlanModal
+    // 일정 추가 모달
     title_add_schedule: "添加到日程",
     btn_new_plan: "+ 新建行程",
     msg_add_failed: "添加日程失败。",
@@ -601,18 +612,18 @@ export default {
     msg_adding: "添加中...",
     btn_add_to_selected_schedule: "添加到日程",
 
-    // PlaceDetailPage
+    // 장소 상세 페이지
     error_load_place: "无法加载地点信息。",
 
 
-    // LocalColumnList
+    // 로컬 칼럼 목록
     col_title: "本地专栏",
     place_search_placeholder_column: "输入搜索内容...",
     no_results_desc: "没有找到结果：",
     btn_view_all_columns: "查看全部",
     label_place: "地点",
 
-    // Review Section
+    // 리뷰 섹션
     label_reviews: "评论",
     msg_login_required_review: "请登录后撰写评论。",
     msg_editing_review: "正在编辑评论",
@@ -635,7 +646,7 @@ export default {
     msg_review_deleted: "评论已删除。",
     msg_review_delete_failed: "删除评论失败。",
 
-    // Train Types
+    // 기차 종류
     train_type_ktx: "KTX",
     train_type_srt: "SRT",
     train_type_itx_saemaeul: "ITX-新村号",
@@ -643,7 +654,7 @@ export default {
     train_type_saemaeul: "新村号",
     train_type_mugunghwa: "无穷花号",
 
-    // Train Search
+    // 기차 검색
     title_transport: "交通",
     title_train_search: "火车搜索",
     label_dep_station: "出发站",
@@ -664,7 +675,7 @@ export default {
     info_train_4: "KTX、ITX、新村号可在KORAIL预订",
     info_train_5: "SRT仅可在SRT网站预订",
 
-    // Train Results
+    // 기차 검색 결과
     msg_searching_trains: "正在搜索火车...",
     title_search_results_count: "搜索结果（{count}条）",
     msg_no_trains_found: "未找到火车。请尝试其他条件。",
@@ -687,7 +698,7 @@ export default {
     region_jeolla: "全罗",
     region_gangwon: "江原",
 
-    // Subway
+    // 지하철
     title_subway_search: "地铁路线搜索",
     label_search_option: "搜索选项",
     placeholder_input_dep_station: "输入出发站",
@@ -704,7 +715,7 @@ export default {
     info_subway_4: "在Kakao地图上查看详细路线。",
     info_subway_5: "查看车站显示屏获取实时到达信息。",
 
-    // Subway Route
+    // 지하철 경로
     msg_searching_route: "正在搜索最优路线...",
     title_recommend_routes: "推荐路线（{count}条）",
     label_route_n: "路线{n}",
@@ -723,6 +734,27 @@ export default {
     title_usage_guide: "使用指南",
     info_route_1: "路线可能根据实时情况发生变化。",
     info_route_2: "票价基于交通卡。",
+
+    // Search Page
+    see_all: "查看全部",
+    search_tab_all: "全部",
+    search_tab_places: "地点",
+    search_tab_plans: "行程",
+    search_tab_shorts: "短视频",
+    search_tab_reviews: "评论",
+    search_tab_others: "其他",
+    search_header_places: "推荐地点",
+    search_header_shorts: "短视频",
+    search_header_plans: "热门行程",
+    search_header_flights: "机票",
+    search_header_transports: "交通",
+    search_header_reviews: "旅客评论",
+    search_header_others: "其他结果",
+    search_loading: "正在搜索 \"{query}\"...",
+    search_no_results_title: "准备好了吗？",
+    search_no_results_desc: "搜索目的地、酒店或向导。",
+    search_empty_title: "没有找到关于 \"{tab}\" 的结果。",
+    search_empty_desc: "尝试调整您的搜索或筛选条件。",
     info_route_3: "请在各站查看首末班车时间。",
     info_route_4: "查看车站显示屏获取实时到达信息。",
     label_provider: "提供者：",

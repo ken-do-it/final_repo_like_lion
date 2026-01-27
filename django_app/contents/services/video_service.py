@@ -4,6 +4,9 @@ import json
 import subprocess
 import logging
 from shutil import which
+import tempfile
+import shutil
+from django.conf import settings
 from django.core.files.storage import default_storage
 
 logger = logging.getLogger(__name__)
@@ -57,7 +60,7 @@ class VideoService:
         [NEW] 파일을 S3에 업로드합니다.
         """
         try:
-            extra_args = {'ACL': 'public-read'}
+            extra_args = {}
             if content_type:
                 extra_args['ContentType'] = content_type
                 
@@ -75,24 +78,32 @@ class VideoService:
     def process_video_pipeline(uploaded_file, title=None, content=None):
         """
         [NEW] 비디오 처리 파이프라인 (Hybrid Storage)
-        1. 임시 저장 (로컬)
+        1. 임시 저장 (로컬 tempfile 사용 - S3 호환성 문제 해결)
         2. 메타데이터 추출 & 썸네일 생성
         3. (S3 설정 시) 영상 & 썸네일 S3 업로드
         4. 언어 감지
         5. 임시 파일 정리
         """
-        from django.core.files.storage import default_storage
         from contents.services.translation_service import TranslationService
 
-        # 1. 임시 저장 (ffmpeg 처리를 위해 필수)
+        # 1. 로컬 임시 파일 생성 (ffmpeg 처리를 위해 필수)
+        # S3 스토리지의 경우 default_storage.path()가 동작하지 않으므로,
+        # 무조건 로컬 파일시스템의 temp 디렉토리를 사용합니다.
         ext = os.path.splitext(uploaded_file.name)[1] or '.mp4'
+        
+        # delete=False로 설정하여 블록 종료 후에도 파일이 유지되게 함 (ffmpeg에서 읽어야 하므로)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_video_file:
+            for chunk in uploaded_file.chunks():
+                temp_video_file.write(chunk)
+            temp_video_path = temp_video_file.name
+            
+        # 썸네일 임시 경로 설정
+        temp_thumb_path = os.path.splitext(temp_video_path)[0] + ".jpg"
+        
+        # 파일명 생성 (S3 키 또는 로컬 저장 파일명으로 사용)
         unique_id = str(uuid.uuid4())
         filename = f"{unique_id}{ext}"
-        
-        # 임시 경로: media/temp/filename
-        temp_rel_path = os.path.join('temp', filename)
-        saved_path = default_storage.save(temp_rel_path, uploaded_file)
-        abs_path = default_storage.path(saved_path)
+        thumb_filename = f"{unique_id}.jpg"
 
         s3_client, bucket_name = VideoService._get_s3_client()
         is_s3_mode = (s3_client is not None)
@@ -103,63 +114,65 @@ class VideoService:
 
         try:
             # 2. 메타데이터 추출
-            meta = VideoService.extract_metadata(abs_path)
+            meta = VideoService.extract_metadata(temp_video_path)
 
-            # 3. 썸네일 생성 (로컬 임시)
-            thumb_filename = f"{unique_id}.jpg"
-            thumb_rel_path = os.path.join('temp', thumb_filename)
-            thumb_abs_path = default_storage.path(thumb_rel_path)
-            
-            # ffmpeg로 썸네일 생성
-            generated_thumb_rel, _ = VideoService.generate_thumbnail_file(abs_path, thumb_abs_path)
+            # 3. 썸네일 생성 (로컬 임시 경로에 생성)
+            VideoService.generate_thumbnail_file(temp_video_path, temp_thumb_path)
             
             # 4. 저장소 업로드 분기
             if is_s3_mode:
                 # [S3 Mode]
                 # 영상 업로드
                 video_key = f"shortforms/videos/{filename}"
-                video_url = VideoService._upload_to_s3(s3_client, bucket_name, abs_path, video_key, content_type='video/mp4')
+                video_url = VideoService._upload_to_s3(s3_client, bucket_name, temp_video_path, video_key, content_type='video/mp4')
                 
                 # 썸네일 업로드
-                if generated_thumb_rel:
+                if os.path.exists(temp_thumb_path):
                     thumb_key = f"shortforms/thumbnails/{thumb_filename}"
-                    thumbnail_url = VideoService._upload_to_s3(s3_client, bucket_name, thumb_abs_path, thumb_key, content_type='image/jpeg')
+                    thumbnail_url = VideoService._upload_to_s3(s3_client, bucket_name, temp_thumb_path, thumb_key, content_type='image/jpeg')
             else:
                 # [Local Mode]
-                # 임시 파일을 최종 위치로 이동 (media/shortforms/videos/...)
-                final_video_rel = os.path.join('shortforms', 'videos', filename)
-                final_thumb_rel = os.path.join('shortforms', 'thumbnails', thumb_filename)
+                # 최종 저장 경로 (media/shortforms/videos/...)
+                # settings.MEDIA_ROOT를 사용하여 로컬 경로 구성
                 
-                # Django Storage 이동 로직 (기존 파일이 있으면 덮어쓰거나 이름 변경됨)
-                # default_storage는 move가 없으므로 다시 save하거나 os.rename 사용
-                # 여기서는 간단히 os.rename 사용 (로컬 파일시스템 가정)
+                final_video_dir = os.path.join(settings.MEDIA_ROOT, 'shortforms', 'videos')
+                final_thumb_dir = os.path.join(settings.MEDIA_ROOT, 'shortforms', 'thumbnails')
                 
-                final_video_abs = default_storage.path(final_video_rel)
-                final_thumb_abs = default_storage.path(final_thumb_rel)
+                os.makedirs(final_video_dir, exist_ok=True)
+                os.makedirs(final_thumb_dir, exist_ok=True)
                 
-                os.makedirs(os.path.dirname(final_video_abs), exist_ok=True)
-                os.makedirs(os.path.dirname(final_thumb_abs), exist_ok=True)
+                final_video_path = os.path.join(final_video_dir, filename)
+                final_thumb_path = os.path.join(final_thumb_dir, thumb_filename)
                 
-                import shutil
-                shutil.move(abs_path, final_video_abs)
-                if generated_thumb_rel:
-                    shutil.move(thumb_abs_path, final_thumb_abs)
+                # 임시 파일을 최종 위치로 이동
+                shutil.move(temp_video_path, final_video_path)
                 
-                video_url = default_storage.url(final_video_rel)
-                thumbnail_url = default_storage.url(final_thumb_rel)
+                if os.path.exists(temp_thumb_path):
+                    shutil.move(temp_thumb_path, final_thumb_path)
+                
+                # URL 생성
+                # settings.MEDIA_URL이 '/media/' 인 경우를 가정
+                video_url = f"{settings.MEDIA_URL}shortforms/videos/{filename}"
+                thumbnail_url = f"{settings.MEDIA_URL}shortforms/thumbnails/{thumb_filename}"
 
         except Exception as e:
-            logger.error(f"Video pipeline failed: {e}")
-            # 에러 발생 시에도 임시 파일 정리는 finally에서 수행
+            import traceback
+            logger.error(f"Video pipeline failed at step: {e}")
+            logger.error(traceback.format_exc())
             raise e
         finally:
-            # 5. 임시 파일 정리
-            # S3 모드면 둘 다 삭제, 로컬 모드면 이미 move됨 (하지만 에러 시 잔여 파일 삭제)
-            if os.path.exists(abs_path):
-                os.remove(abs_path)
-            # 썸네일 경로가 정의되어 있고 파일이 남아있다면 삭제
-            if 'thumb_abs_path' in locals() and os.path.exists(thumb_abs_path):
-                os.remove(thumb_abs_path)
+            # 5. 임시 파일 정리 (로컬 모드에서 move를 했다면 이미 파일이 없을 수 있음)
+            if os.path.exists(temp_video_path):
+                try:
+                    os.remove(temp_video_path)
+                except OSError:
+                    pass
+            
+            if os.path.exists(temp_thumb_path):
+                try:
+                    os.remove(temp_thumb_path)
+                except OSError:
+                    pass
 
         # 6. 언어 감지
         full_text = f"{title or ''} {content or ''}".strip()
