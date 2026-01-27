@@ -157,6 +157,7 @@ const FlightPayment = () => {
       }));
 
       // 1단계: 예약 생성
+      // [수정됨] flightData를 함께 보내서 실제 항공편 정보가 저장되도록 합니다!
       const reservationResponse = await axios.post('/v1/reservations/flight/', {
         offerId: flight.offerId || 'MOCK_OFFER_ID',
         tripType: searchConditions.tripType?.toUpperCase() || 'ONEWAY',
@@ -165,6 +166,18 @@ const FlightPayment = () => {
         contacts: {
           contactEmail: '',
           contactPhone: '',
+        },
+        // [중요] 실제 항공편 정보를 백엔드로 전달!
+        // 이 정보가 있어야 마이페이지 예약상세에서 정확한 정보가 표시됩니다.
+        flightData: {
+          airlineName: flight.airlineName || flight.airlineNm || '',
+          flightNumber: flight.flightNumber || flight.vihFlightNo || '',
+          departureAirport: flight.departureAirport || '',
+          arrivalAirport: flight.arrivalAirport || '',
+          depAt: flight.depAt || '',
+          arrAt: flight.arrAt || '',
+          pricePerPerson: flight.pricePerPerson || flight.economyCharge || 0,
+          totalPrice: totalPrice,
         },
       });
 
@@ -287,27 +300,79 @@ const FlightPayment = () => {
   };
 
   /**
-   * 시간 포맷팅 함수 (YYYYMMDDHHMM → HH:MM)
+   * 시간 포맷팅 함수
+   *
+   * [쉬운 설명]
+   * 시간 데이터가 여러 형식으로 올 수 있어요:
+   * - ISO 형식: "2026-01-27T15:00:00" (새 형식)
+   * - 기존 형식: "202601271500" (YYYYMMDDHHMM)
+   * 이 함수가 두 형식을 모두 처리해서 "15:00" 같은 형태로 만들어요.
    */
   const formatTime = (timeString) => {
-    if (!timeString || timeString.length < 12) return '';
-    const hours = timeString.substring(8, 10);
-    const minutes = timeString.substring(10, 12);
-    return `${hours}:${minutes}`;
+    if (!timeString) return '';
+
+    // ISO 형식 체크 (T나 -가 포함되어 있으면 ISO 형식)
+    if (timeString.includes('T') || timeString.includes('-')) {
+      try {
+        const date = new Date(timeString);
+        // "15:00" 형태로 반환
+        return date.toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+      } catch {
+        return timeString;
+      }
+    }
+
+    // 기존 형식 "202601271500" (하위 호환성)
+    if (timeString.length >= 12) {
+      const hours = timeString.substring(8, 10);
+      const minutes = timeString.substring(10, 12);
+      return `${hours}:${minutes}`;
+    }
+
+    return timeString;
   };
 
   /**
-   * 날짜 포맷팅 함수 (YYYYMMDD → YYYY년 MM월 DD일)
+   * 날짜 포맷팅 함수
+   *
+   * [쉬운 설명]
+   * 날짜 데이터도 여러 형식으로 올 수 있어요:
+   * - ISO 형식: "2026-01-27T15:00:00" 또는 "2026-01-27" (새 형식)
+   * - 기존 형식: "20260127" (YYYYMMDD)
+   * 이 함수가 두 형식을 모두 처리해서 "2026년 1월 27일" 형태로 만들어요.
    */
   const formatDate = (dateString) => {
-    if (!dateString || dateString.length !== 8) return '';
-    const year = dateString.substring(0, 4);
-    const month = dateString.substring(4, 6);
-    const day = dateString.substring(6, 8);
-    return t('date_format_ymd')
-      .replace('{year}', year)
-      .replace('{month}', month)
-      .replace('{day}', day);
+    if (!dateString) return '';
+
+    // ISO 형식 체크 (T나 -가 포함되어 있으면 ISO 형식)
+    if (dateString.includes('T') || dateString.includes('-')) {
+      try {
+        const date = new Date(dateString);
+        return t('date_format_ymd')
+          .replace('{year}', date.getFullYear())
+          .replace('{month}', date.getMonth() + 1)
+          .replace('{day}', date.getDate());
+      } catch {
+        return dateString;
+      }
+    }
+
+    // 기존 형식 "20260127" (하위 호환성)
+    if (dateString.length >= 8) {
+      const year = dateString.substring(0, 4);
+      const month = dateString.substring(4, 6);
+      const day = dateString.substring(6, 8);
+      return t('date_format_ymd')
+        .replace('{year}', year)
+        .replace('{month}', parseInt(month))
+        .replace('{day}', parseInt(day));
+    }
+
+    return dateString;
   };
 
   /**
@@ -331,6 +396,7 @@ const FlightPayment = () => {
             <SearchCard title={t('title_reservation_info')}>
               <div className="space-y-4">
                 {/* 항공편 정보 */}
+                {/* [수정됨] 새 형식(airlineName)과 기존 형식(airlineNm) 모두 지원 */}
                 <div className="border-b dark:border-gray-700 pb-4">
                   <h3 className="font-semibold text-lg mb-3 text-gray-900 dark:text-white">
                     {t('title_flight_info')}
@@ -339,31 +405,39 @@ const FlightPayment = () => {
                     <div>
                       <p className="text-gray-600 dark:text-gray-400">{t('label_airline')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {flight.airlineNm}
+                        {/* 새 형식: airlineName, 기존 형식: airlineNm */}
+                        {flight.airlineName || flight.airlineNm || '-'}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-600 dark:text-gray-400">{t('label_route')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {flight.vihRouteName}
+                        {/* 새 형식: departureAirport → arrivalAirport, 기존 형식: vihRouteName */}
+                        {flight.vihRouteName ||
+                          (flight.departureAirport && flight.arrivalAirport
+                            ? `${flight.departureAirport} → ${flight.arrivalAirport}`
+                            : '-')}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-600 dark:text-gray-400">{t('label_departure')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {formatTime(flight.depPlandTime)}
+                        {/* 새 형식: depAt (ISO), 기존 형식: depPlandTime */}
+                        {formatTime(flight.depAt || flight.depPlandTime) || '-'}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-600 dark:text-gray-400">{t('label_arrival')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {formatTime(flight.arrPlandTime)}
+                        {/* 새 형식: arrAt (ISO), 기존 형식: arrPlandTime */}
+                        {formatTime(flight.arrAt || flight.arrPlandTime) || '-'}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-600 dark:text-gray-400">{t('label_date')}</p>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {formatDate(searchConditions.depDate)}
+                        {/* 출발 시각에서 날짜 추출, 없으면 검색조건 사용 */}
+                        {formatDate(flight.depAt || searchConditions.depDate) || '-'}
                       </p>
                     </div>
                     <div>

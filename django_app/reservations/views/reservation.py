@@ -133,13 +133,23 @@ class MSReservationCreateView(APIView):
 
         validated_data = serializer.validated_data
 
-        # 2. offerId로 항공편 정보 조회
-        # TODO: 실제로는 검색 캐시에서 가져오거나, 다시 조회해야 함
-        # 지금은 Mock 데이터로 대체
-        flight_data = self._ms_get_flight_data_mock(
-            validated_data['offerId'],
-            validated_data['tripType']
-        )
+        # 2. 항공편 정보 가져오기
+        # [수정됨] 프론트엔드에서 보낸 실제 데이터를 사용합니다!
+        # flightData가 없으면 Mock 데이터를 사용 (하위 호환성)
+        if validated_data.get('flightData'):
+            # 프론트엔드에서 보낸 실제 항공편 정보 사용
+            flight_data = self._ms_convert_flight_data(
+                validated_data['flightData'],
+                validated_data['tripType']
+            )
+            logger.info(f"[OK] 실제 항공편 데이터 사용: {flight_data.get('depAirport')} → {flight_data.get('arrAirport')}")
+        else:
+            # 이전 버전 호환: flightData가 없으면 Mock 데이터 사용
+            flight_data = self._ms_get_flight_data_mock(
+                validated_data['offerId'],
+                validated_data['tripType']
+            )
+            logger.warning("[WARN] flightData 없음, Mock 데이터 사용")
 
         # 3. 예약 생성 Service 호출
         try:
@@ -186,9 +196,75 @@ class MSReservationCreateView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    def _ms_convert_flight_data(self, frontend_data: dict, trip_type: str) -> dict:
+        """
+        프론트엔드 데이터를 백엔드 형식으로 변환
+
+        [쉬운 설명]
+        프론트엔드에서 보내는 데이터 이름과 백엔드에서 사용하는 이름이 달라요.
+        예: 프론트엔드는 'departureAirport', 백엔드는 'depAirport'
+        이 함수가 이름을 맞춰주는 "번역가" 역할을 해요!
+
+        Args:
+            frontend_data: 프론트엔드에서 보낸 항공편 정보
+            trip_type: 편도(ONEWAY) 또는 왕복(ROUNDTRIP)
+
+        Returns:
+            백엔드 형식으로 변환된 항공편 정보
+        """
+        # 편도인 경우
+        if trip_type == 'ONEWAY':
+            return {
+                "offerId": frontend_data.get('offerId', 'FRONTEND_OFFER'),
+                "airline": frontend_data.get('airlineName', ''),
+                "flightNo": frontend_data.get('flightNumber', ''),
+                "depAirport": frontend_data.get('departureAirport', ''),
+                "arrAirport": frontend_data.get('arrivalAirport', ''),
+                "depAt": frontend_data.get('depAt', ''),
+                "arrAt": frontend_data.get('arrAt', ''),
+                "durationMin": frontend_data.get('durationMin', 60),
+                "pricePerPerson": frontend_data.get('pricePerPerson', 0),
+                "totalPrice": frontend_data.get('totalPrice', 0),
+                "currency": "KRW",
+                "seatAvailabilityNote": frontend_data.get('seatAvailabilityNote', '')
+            }
+
+        # 왕복인 경우 (나중에 필요하면 확장)
+        else:
+            return {
+                "offerId": frontend_data.get('offerId', 'FRONTEND_OFFER'),
+                "tripType": "ROUNDTRIP",
+                "outbound": {
+                    "airline": frontend_data.get('airlineName', ''),
+                    "flightNo": frontend_data.get('flightNumber', ''),
+                    "depAirport": frontend_data.get('departureAirport', ''),
+                    "arrAirport": frontend_data.get('arrivalAirport', ''),
+                    "depAt": frontend_data.get('depAt', ''),
+                    "arrAt": frontend_data.get('arrAt', ''),
+                    "durationMin": frontend_data.get('durationMin', 60),
+                    "pricePerPerson": frontend_data.get('pricePerPerson', 0)
+                },
+                "inbound": {
+                    # 오는편 정보 (프론트엔드에서 따로 보내면 사용)
+                    "airline": frontend_data.get('airlineName', ''),
+                    "flightNo": frontend_data.get('flightNumber', ''),
+                    "depAirport": frontend_data.get('arrivalAirport', ''),
+                    "arrAirport": frontend_data.get('departureAirport', ''),
+                    "depAt": frontend_data.get('returnDepAt', ''),
+                    "arrAt": frontend_data.get('returnArrAt', ''),
+                    "durationMin": frontend_data.get('durationMin', 60),
+                    "pricePerPerson": frontend_data.get('pricePerPerson', 0)
+                },
+                "totalPrice": frontend_data.get('totalPrice', 0),
+                "currency": "KRW"
+            }
+
     def _ms_get_flight_data_mock(self, offer_id: str, trip_type: str) -> dict:
         """
         항공편 정보 Mock 데이터 생성
+
+        [주의] 이 함수는 flightData가 없을 때만 사용됩니다!
+        가능하면 프론트엔드에서 flightData를 보내주세요.
 
         실제로는:
         - 검색 결과 캐시에서 가져오거나
@@ -199,7 +275,7 @@ class MSReservationCreateView(APIView):
             trip_type: 편도/왕복
 
         Returns:
-            항공편 정보
+            항공편 정보 (Mock)
         """
         from datetime import datetime, timedelta
 
