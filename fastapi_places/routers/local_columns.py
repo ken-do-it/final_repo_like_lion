@@ -102,7 +102,7 @@ async def get_local_columns(
         item = LocalColumnListResponse(
             id=column.id,
             user_id=column.user_id,
-            user_nickname=user.nickname if user else None,
+            user_nickname=(user.nickname or user.username) if user else None,
             user_level=badge.level if badge else None,
             title=column.title,
             thumbnail_url=column.thumbnail_url,
@@ -192,7 +192,7 @@ async def get_local_column_detail(
     return LocalColumnResponse(
         id=column.id,
         user_id=column.user_id,
-        user_nickname=user.nickname if user else None,
+        user_nickname=(user.nickname or user.username) if user else None,
         user_level=badge.level if badge else None,
         title=column.title,
         content=column.content,
@@ -380,7 +380,7 @@ async def create_local_column(
     return LocalColumnResponse(
         id=column.id,
         user_id=column.user_id,
-        user_nickname=user.nickname if user else None,
+        user_nickname=(user.nickname or user.username) if user else None,
         user_level=badge.level if badge else None,
         title=column.title,
         content=column.content,
@@ -647,7 +647,7 @@ async def update_local_column(
     return LocalColumnResponse(
         id=column.id,
         user_id=column.user_id,
-        user_nickname=user.nickname if user else None,
+        user_nickname=(user.nickname or user.username) if user else None,
         user_level=badge.level if badge else None,
         title=column.title,
         content=column.content,
