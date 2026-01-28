@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import plansService from '../../api/plansApi'; // Adjust path as needed
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 import { API_LANG_CODES } from '../../constants/translations';
 
 const AddToPlanModal = ({ place, onClose }) => {
     const navigate = useNavigate();
     const { t, language } = useLanguage();
+    const { user } = useAuth();
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedPlan, setSelectedPlan] = useState(null);
@@ -17,9 +19,12 @@ const AddToPlanModal = ({ place, onClose }) => {
     useEffect(() => {
         const fetchPlans = async () => {
             try {
-                // Fetch all plans. You might want to filter active ones in backend or here.
+                // Fetch only current user's plans
                 const langParam = API_LANG_CODES[language] || 'eng_Latn';
-                const response = await plansService.plans.getPlans({ lang: langParam });
+                const response = await plansService.plans.getPlans({
+                    lang: langParam,
+                    user: user?.id
+                });
                 // Filter: end_date is in the future (or today)
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
@@ -40,7 +45,7 @@ const AddToPlanModal = ({ place, onClose }) => {
             }
         };
         fetchPlans();
-    }, [language]);
+    }, [language, user]);
 
     const handlePlanSelect = (plan) => {
         setSelectedPlan(plan);
