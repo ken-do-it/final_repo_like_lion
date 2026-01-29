@@ -1,68 +1,55 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* ⬇️ 핵심: Tailwind v4에서 설정 파일(tailwind.config.js)을 읽도록 강제 연결 */
+@config "../tailwind.config.js";
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/* Tripko Global Styles 
+  - 폰트: 본고딕 (Noto Sans KR)
+  - 다크모드: Tailwind 'class' 전략 사용
+*/
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+@layer base {
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+  /* 1. 기본 폰트 및 렌더링 최적화 */
+  html {
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  a:hover {
-    color: #747bff;
+
+  /* 2. Body 기본 스타일 (Light Mode) */
+  body {
+    /* tailwind.config.js에 정의된 커스텀 컬러 적용 (이제 에러가 나지 않습니다) */
+    @apply bg-background-light text-gray-900;
+    @apply min-h-screen min-w-[320px];
+    @apply transition-colors duration-200;
+    /* 다크모드 전환 부드럽게 */
   }
-  button {
-    background-color: #f9f9f9;
+
+  /* 3. 다크 모드 스타일 (Dark Mode) */
+  /* html 태그에 'dark' 클래스가 붙으면 이 스타일이 적용됨 */
+  .dark body {
+    @apply bg-background-dark text-gray-100;
   }
+}
+
+/* Custom Components (Optional) */
+@layer components {
+
+  /* 자주 쓰는 버튼 스타일 */
+  .btn-primary {
+    @apply px-6 py-3 rounded-lg bg-primary text-white font-medium hover:opacity-90 transition-opacity;
+  }
+
+  /* 자주 쓰는 카드 스타일 */
+  .card-base {
+    @apply bg-white dark:bg-[#1e2b36] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700;
+  }
+}
+
+/* 4. Cross-browser fixes */
+/* Force options to have readable contrast regardless of system theme */
+select option {
+  color: #111111;
+  background-color: #ffffff;
 }

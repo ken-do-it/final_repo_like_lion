@@ -7,4 +7,21 @@ setuptools==80.9.0
 sqlparse==0.5.5
 tzdata==2025.3
 wheel==0.45.1
+python-dotenv==1.0.0
+django-allauth==65.4.0
+requests==2.32.3
+cryptography==44.0.0
 python-dotenv
+Pillow==11.3.0
+requests
+django-prometheus
+PyJWT==2.10.1
+drf-spectacular==0.27.2
+openai==1.109.1
+httpx==0.28.1
+langdetect==1.0.9  #텍스트 언어를 자동으로 파악하여 언어코드로 변환하는 라이브러리
+
+# S3 Storage
+boto3==1.36.0
+django-storages==1.14.4
+

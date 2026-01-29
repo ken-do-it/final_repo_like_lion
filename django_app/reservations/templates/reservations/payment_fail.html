@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 실패</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .fail-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .fail-icon::before {
+            content: "x";
+            color: white;
+            font-size: 50px;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .error-box {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .error-title {
+            color: #c62828;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .error-message {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .help-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .help-box h3 {
+            color: #1976d2;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .help-box ul {
+            list-style: none;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .help-box li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .help-box li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #2196f3;
+            font-weight: bold;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="fail-icon"></div>
+        <h1>결제에 실패했습니다</h1>
+        <p class="subtitle">아래 정보를 확인하세요</p>
+
+        <div class="error-box">
+            <div class="error-title">오류 메시지</div>
+            <div class="error-message" id="errorMessage">
+                결제 처리 중 오류가 발생했습니다.
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-row">
+                <span class="info-label">오류 코드</span>
+                <span class="info-value" id="errorCode">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">주문번호</span>
+                <span class="info-value" id="orderId">-</span>
+            </div>
+        </div>
+
+        <div class="help-box">
+            <h3>문제 해결 방법</h3>
+            <ul>
+                <li>카드 한도를 확인해주세요</li>
+                <li>카드 정보가 정확한지 확인해주세요</li>
+                <li>다른 결제 수단을 시도해주세요</li>
+                <li>문제가 계속되면 고객센터로 문의해주세요</li>
+            </ul>
+        </div>
+
+        <button class="btn btn-primary" onclick="retryPayment()">
+            다시 시도하기
+        </button>
+        <button class="btn btn-secondary" onclick="goToHome()">
+            홈으로 이동
+        </button>
+    </div>
+
+    <script>
+        // URL 파라미터 파싱
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorCode = urlParams.get('code') || 'UNKNOWN_ERROR';
+        const errorMessage = urlParams.get('message') || '결제 처리 중 오류가 발생했습니다.';
+        const orderId = urlParams.get('orderId') || '-';
+
+        // 정보 표시
+        document.getElementById('errorCode').textContent = errorCode;
+        document.getElementById('errorMessage').textContent = decodeURIComponent(errorMessage);
+        document.getElementById('orderId').textContent = orderId;
+
+        // 버튼 핸들러
+        function retryPayment() {
+            window.location.href = '/api/v1/payments/test';
+        }
+
+        function goToHome() {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

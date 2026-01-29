@@ -1,58 +1,124 @@
-
 services:
-  # 1. 데이터베이스 (PostgreSQL)
+  # 1. 데이터베이스
   db:
-    image: postgres:15
+    image: pgvector/pgvector:pg16
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=korea_travel_db
-      - POSTGRES_USER=myuser
-      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "5432:5432"
+    env_file:
+      - .env
 
   # 2. 메인 백엔드 (Django)
   django:
+    # [수정] ID: wasanssss 적용
+    image: wasanssss/korea-trip-be:latest
     build:
       context: ./django_app
       dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./django_app:/app  # 코드 수정하면 바로 반영되게 연결 (Hot Reload)
+      - ./django_app:/app
     ports:
       - "8000:8000"
     depends_on:
       - db
-    environment:
-      - DB_HOST=db
-      - DB_NAME=korea_travel_db
-      - DB_USER=myuser
-      - DB_PASSWORD=mypassword
     env_file:
-        - ./django_app/.env
+      - .env
 
   # 3. AI 서버 (FastAPI)
   fastapi:
+    image: wasanssss/korea-trip-ai:latest
     build:
       context: ./fastapi_app
       dockerfile: Dockerfile
-    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - ./fastapi_app:/app # 코드 수정하면 바로 반영
+      - ./fastapi_app:/app
     ports:
-      - "8001:8001"
+      - "8001:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+  # 3.5. AI 번역 서버
+  fastapi-ai-translation:
+    image: wasanssss/korea-trip-translation:latest
+    build:
+      context: ./fastapi_ai_translation
+      dockerfile: ${AI_DOCKERFILE:-Dockerfile}
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+    volumes:
+      - ./fastapi_ai_translation:/app
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
 
   # 4. 프론트엔드 (React + Nginx)
   frontend:
+    image: wasanssss/korea-trip-fe:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_SEARCH_API_URL: ${VITE_SEARCH_API_URL}
+        VITE_PLACES_API_URL: ${VITE_PLACES_API_URL}
+        VITE_KAKAO_JS_KEY: ${VITE_KAKAO_JS_KEY}
+        VITE_TOSS_CLIENT_KEY: ${VITE_TOSS_CLIENT_KEY}
     ports:
-      - "80:80"  # 브라우저에서 localhost로 접속
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # [중요] 배포된 Nginx 설정을 덮어쓰지 않도록 주석 처리 유지
+      # - ./frontend/nginx.local.conf:/etc/nginx/conf.d/default.conf 
     depends_on:
       - django
       - fastapi
+
+  # 5. 장소 검색 서버
+  fastapi_places:
+    image: wasanssss/korea-trip-places:latest
+    build:
+      context: ./fastapi_places
+      dockerfile: Dockerfile
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+    volumes:
+      - ./fastapi_places:/app
+      - ./django_app/media:/app/django_app/media  # Django media 폴더 공유 (로컬 모드)
+    ports:
+      - "8002:8002"
+    depends_on:
+      - db
+      - django
+    env_file:
+      - .env
+
+  # [1] 프로메테우스
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  # [2] 그라파나
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
 
 volumes:
   postgres_data:
