@@ -1,0 +1,21 @@
+# Django Core
+Django==6.0
+
+# Django REST Framework
+djangorestframework==3.16.1
+
+# CORS Headers
+django-cors-headers==4.9.0
+
+# JWT Authentication
+PyJWT==2.9.0
+
+# Social Authentication
+django-allauth==0.57.0
+requests==2.31.0
+
+# Database
+psycopg2-binary==2.9.11
+
+# Utilities
+python-dateutil==2.9.0

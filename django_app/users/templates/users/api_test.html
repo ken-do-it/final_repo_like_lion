@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester - Korea Travel Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #00C9A7, #845EC2);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+        }
+
+        .sidebar {
+            background: #252526;
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .sidebar h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #00C9A7;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #1e1e1e;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .endpoint-item:hover {
+            background: #2d2d30;
+            border-left-color: #00C9A7;
+        }
+
+        .endpoint-item.active {
+            background: #2d2d30;
+            border-left-color: #00C9A7;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .method.post {
+            background: #49cc90;
+            color: white;
+        }
+
+        .method.get {
+            background: #61affe;
+            color: white;
+        }
+
+        .method.put {
+            background: #fca130;
+            color: white;
+        }
+
+        .method.delete {
+            background: #f93e3e;
+            color: white;
+        }
+
+        .endpoint-path {
+            font-size: 12px;
+            color: #9cdcfe;
+        }
+
+        .workspace {
+            background: #252526;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .request-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #00C9A7;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: #9cdcfe;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #00C9A7;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #00C9A7, #00B394);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 201, 167, 0.3);
+        }
+
+        .btn-clear {
+            background: #3e3e42;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 12px;
+        }
+
+        .response-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #3e3e42;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .status-success {
+            background: #49cc90;
+            color: white;
+        }
+
+        .status-error {
+            background: #f93e3e;
+            color: white;
+        }
+
+        .response-body {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        pre {
+            margin: 0;
+            color: #ce9178;
+        }
+
+        .auth-status {
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+
+        .auth-status.logged-in {
+            border-left: 3px solid #49cc90;
+        }
+
+        .auth-status.logged-out {
+            border-left: 3px solid #f93e3e;
+        }
+
+        .token-display {
+            background: #1e1e1e;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+            color: #9cdcfe;
+        }
+
+        .btn-logout {
+            background: #f93e3e;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 API Tester</h1>
+            <p class="subtitle">Test Korea Travel Guide APIs with JWT Authentication</p>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="auth-status" id="authStatus">
+                    <div id="authStatusText">Not authenticated</div>
+                </div>
+
+                <h2>📡 Endpoints</h2>
+                <ul class="endpoint-list">
+                    <li class="endpoint-item" onclick="selectEndpoint('register')">
+                        <div><span class="method post">POST</span> <span class="endpoint-path">Register</span></div>
+                    </li>
+                    <li class="endpoint-item" onclick="selectEndpoint('login')">
+                        <div><span class="method post">POST</span> <span class="endpoint-path">Login</span></div>
+                    </li>
+                    <li class="endpoint-item" onclick="selectEndpoint('logout')">
+                        <div><span class="method post">POST</span> <span class="endpoint-path">Logout</span></div>
+                    </li>
+                    <li class="endpoint-item" onclick="selectEndpoint('refresh')">
+                        <div><span class="method post">POST</span> <span class="endpoint-path">Refresh Token</span>
+                        </div>
+                    </li>
+                    <li class="endpoint-item" onclick="selectEndpoint('profile')">
+                        <div><span class="method get">GET</span> <span class="endpoint-path">Profile</span></div>
+                    </li>
+                    <li class="endpoint-item" onclick="selectEndpoint('main')">
+                        <div><span class="method get">GET</span> <span class="endpoint-path">Main Page Data</span></div>
+                    </li>
+                    <li class="endpoint-item" onclick="selectEndpoint('preferences')">
+                        <div><span class="method get">GET</span> <span class="endpoint-path">Preferences</span></div>
+                    </li>
+                    <li class="endpoint-item" onclick="selectEndpoint('update-profile')">
+                        <div><span class="method put">PUT</span> <span class="endpoint-path">Update Profile</span></div>
+                    </li>
+                </ul>
+            </aside>
+
+            <main class="workspace">
+                <div class="request-section">
+                    <h3 class="section-title">Request</h3>
+
+                    <div class="input-group">
+                        <label>Method</label>
+                        <select id="method">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>URL</label>
+                        <input type="text" id="url" placeholder="http://localhost:8000/api/users/..."
+                            value="http://localhost:8000/api/users/main/">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Request Body (JSON)</label>
+                        <textarea id="requestBody" placeholder='{
+  "username": "test",
+  "password": "test123"
+}'></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>
+                            <input type="checkbox" id="useAuth" checked> Use JWT Authentication
+                        </label>
+                    </div>
+
+                    <div>
+                        <button class="btn-send" onclick="sendRequest()">Send Request</button>
+                        <button class="btn-clear" onclick="clearResponse()">Clear Response</button>
+                    </div>
+                </div>
+
+                <div class="response-section">
+                    <h3 class="section-title">Response</h3>
+                    <div id="responseStatus"></div>
+                    <div class="response-body">
+                        <pre id="responseBody">Response will appear here...</pre>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api/users';
+
+        // 인증 상태 업데이트
+        function updateAuthStatus() {
+            const token = localStorage.getItem('access_token');
+            const authStatus = document.getElementById('authStatus');
+            const authStatusText = document.getElementById('authStatusText');
+
+            if (token) {
+                authStatus.className = 'auth-status logged-in';
+                authStatusText.innerHTML = `
+                    ✅ Authenticated
+                    <div class="token-display">Token: ${token.substring(0, 30)}...</div>
+                    <button class="btn-logout" onclick="logout()">Logout</button>
+                `;
+            } else {
+                authStatus.className = 'auth-status logged-out';
+                authStatusText.textContent = '❌ Not authenticated';
+            }
+        }
+
+        // 로그아웃
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+            updateAuthStatus();
+        }
+
+        // 엔드포인트 선택
+        function selectEndpoint(endpoint) {
+            // 모든 항목에서 active 제거
+            document.querySelectorAll('.endpoint-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 클릭된 항목에 active 추가
+            event.target.closest('.endpoint-item').classList.add('active');
+
+            const endpoints = {
+                'register': {
+                    method: 'POST',
+                    url: `${API_BASE_URL}/register/`,
+                    body: {
+                        "username": "testuser",
+                        "email": "test@example.com",
+                        "password": "SecurePass123!",
+                        "password_confirm": "SecurePass123!",
+                        "nickname": "Test User",
+                        "country": "USA",
+                        "city": "New York"
+                    },
+                    useAuth: false
+                },
+                'login': {
+                    method: 'POST',
+                    url: `${API_BASE_URL}/login/`,
+                    body: {
+                        "username": "testuser",
+                        "password": "SecurePass123!",
+                        "remember_me": true
+                    },
+                    useAuth: false
+                },
+                'logout': {
+                    method: 'POST',
+                    url: `${API_BASE_URL}/logout/`,
+                    body: {},
+                    useAuth: true
+                },
+                'refresh': {
+                    method: 'POST',
+                    url: `${API_BASE_URL}/token/refresh/`,
+                    body: {
+                        "refresh_token": localStorage.getItem('refresh_token') || "your_refresh_token_here"
+                    },
+                    useAuth: false
+                },
+                'profile': {
+                    method: 'GET',
+                    url: `${API_BASE_URL}/profile/`,
+                    body: null,
+                    useAuth: true
+                },
+                'main': {
+                    method: 'GET',
+                    url: `${API_BASE_URL}/main/`,
+                    body: null,
+                    useAuth: false
+                },
+                'preferences': {
+                    method: 'GET',
+                    url: `${API_BASE_URL}/preferences/`,
+                    body: null,
+                    useAuth: true
+                },
+                'update-profile': {
+                    method: 'PUT',
+                    url: `${API_BASE_URL}/profile/`,
+                    body: {
+                        "nickname": "Updated Nickname",
+                        "city": "Seoul"
+                    },
+                    useAuth: true
+                }
+            };
+
+            const config = endpoints[endpoint];
+            if (config) {
+                document.getElementById('method').value = config.method;
+                document.getElementById('url').value = config.url;
+                document.getElementById('requestBody').value = config.body ? JSON.stringify(config.body, null, 2) : '';
+                document.getElementById('useAuth').checked = config.useAuth;
+            }
+        }
+
+        // API 요청 보내기
+        async function sendRequest() {
+            const method = document.getElementById('method').value;
+            const url = document.getElementById('url').value;
+            const requestBody = document.getElementById('requestBody').value;
+            const useAuth = document.getElementById('useAuth').checked;
+
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+
+            if (useAuth) {
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                } else {
+                    alert('No access token found. Please login first.');
+                    return;
+                }
+            }
+
+            const options = {
+                method: method,
+                headers: headers,
+            };
+
+            if (method !== 'GET' && requestBody.trim()) {
+                try {
+                    JSON.parse(requestBody); // Validate JSON
+                    options.body = requestBody;
+                } catch (e) {
+                    alert('Invalid JSON in request body');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                // 로그인 성공 시 토큰 저장
+                if (url.includes('/login/') && response.ok && data.access_token) {
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('refresh_token', data.refresh_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    updateAuthStatus();
+                }
+
+                // 응답 표시
+                displayResponse(response.status, data);
+            } catch (error) {
+                displayResponse(0, { error: error.message });
+            }
+        }
+
+        // 응답 표시
+        function displayResponse(status, data) {
+            const responseStatus = document.getElementById('responseStatus');
+            const responseBody = document.getElementById('responseBody');
+
+            const statusClass = status >= 200 && status < 300 ? 'status-success' : 'status-error';
+            responseStatus.innerHTML = `<span class="status-badge ${statusClass}">Status: ${status}</span>`;
+
+            responseBody.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // 응답 지우기
+        function clearResponse() {
+            document.getElementById('responseStatus').innerHTML = '';
+            document.getElementById('responseBody').textContent = 'Response will appear here...';
+        }
+
+        // 페이지 로드 시 인증 상태 업데이트
+        updateAuthStatus();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+# FastAPI 핵심
+fastapi==0.128.0
+uvicorn==0.40.0
+python-multipart==0.0.9
+
+# 데이터베이스
+psycopg2-binary
+sqlalchemy
+
+# 비동기 HTTP 클라이언트 (카카오/구글 API 호출)
+httpx
+
+# 환경 변수 관리
+python-dotenv
+
+# JWT 인증
+PyJWT==2.8.0
+
+# 테스트용 (선택사항)
+requests
+
+# AWS S3 (이미지 업로드)
+boto3
+
+prometheus_fastapi_instrumentator

@@ -1,0 +1,614 @@
+/* frontend/src/pages/shorts/shortsDetailpage.css */
+
+/* 
+ * Shorts Detail Page Styling
+ * Design System: Stitch (App.css) + Layouts
+ */
+
+:root {
+    /* Default Light Mode */
+    --detail-bg: #ffffff;
+    --detail-text: #111111;
+    --detail-text-sub: #64748b;
+    --detail-accent: var(--primary-color, #1392ec);
+    --detail-player-bg: #000000;
+}
+
+/* Dark Mode Overrides */
+.dark {
+    --detail-bg: #0f1115;
+    --detail-text: #ffffff;
+    --detail-text-sub: #a0a0a0;
+}
+
+/* Page Layout */
+.shorts-detail-container {
+    background-color: var(--detail-bg);
+    min-height: 100vh;
+    color: var(--detail-text);
+    padding-top: 40px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* Modal View Override (if needed) */
+.shorts-detail-container.embed-view {
+    padding-top: 0;
+    min-height: auto;
+    background-color: transparent;
+}
+
+.detail-content-wrapper {
+    max-width: 1280px;
+    /* Match Navbar max-w-7xl */
+    margin: 0 auto;
+    padding: 20px 32px;
+    /* Match Navbar px-8 (32px) */
+    display: grid;
+    grid-template-columns: 1fr 480px;
+    /* Video | Sidebar (Wider) */
+    gap: 40px;
+    height: calc(100vh - 80px);
+    /* Fill remaining height */
+}
+
+@media (max-width: 1024px) {
+    .detail-content-wrapper {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+}
+
+/* 1. Left Column: Video Player */
+.player-wrapper {
+    background: black;
+    border-radius: 16px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 9/16;
+    /* Vertical Shorts Ratio */
+    max-height: 85vh;
+    /* Prevent overflowing viewport */
+    margin: 0 auto;
+    /* Center in the column if needed */
+}
+
+.player-wrapper video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Fill the vertical container */
+}
+
+/* 2. Right Column: Sidebar Info */
+.detail-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    height: 100%;
+
+    /* Visual Separation from Video */
+    background-color: #f8fafc;
+    /* Very light cool gray */
+    padding: 24px;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    /* Darker, deeper shadow */
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark .detail-sidebar {
+    background-color: #1e293b;
+    /* Dark slate */
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Scrollbar Customization */
+.detail-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.detail-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.detail-sidebar::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+/* Top Navigation in Detail */
+.detail-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--detail-text-sub);
+    margin-bottom: 20px;
+}
+
+.nav-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Ghost Button (Close, Options) */
+.btn-close {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--detail-text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: rotate(90deg);
+}
+
+.dark .btn-close {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.dark .btn-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Creator Profile */
+.creator-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.creator-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    object-fit: cover;
+}
+
+.dark .creator-avatar {
+    background: #333;
+}
+
+.creator-info h3 {
+    font-size: 16px;
+    /* H3 size */
+    margin: 0;
+    font-weight: 700;
+    color: var(--detail-text);
+}
+
+.creator-info p {
+    font-size: 13px;
+    color: var(--detail-text-sub);
+    margin: 2px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Rounded Pill Button (Follow) */
+.btn-follow {
+    margin-left: auto;
+    background: var(--detail-text);
+    color: var(--detail-bg);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-follow:hover {
+    opacity: 0.9;
+}
+
+.btn-follow:active {
+    transform: scale(0.95);
+}
+
+.dark .btn-follow {
+    background: #fff;
+    color: #000;
+}
+
+/* Video Content */
+.video-desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--detail-text);
+}
+
+.video-hashtags {
+    color: var(--detail-accent);
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Edit Mode Styles */
+.edit-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    outline: none;
+    transition: all 0.2s ease;
+
+    /* Light Mode Default */
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--detail-text);
+}
+
+.edit-input:focus {
+    background: rgba(19, 146, 236, 0.05);
+    /* Brand color tint */
+    border-color: var(--detail-accent);
+}
+
+.dark .edit-input {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.dark .edit-input:focus {
+    background: rgba(19, 146, 236, 0.15);
+    border-color: var(--detail-accent);
+}
+
+.edit-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 14px;
+    border-radius: 12px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+    transition: all 0.2s ease;
+
+    /* Light Mode Default */
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: var(--detail-text);
+}
+
+.edit-textarea:focus {
+    background: rgba(19, 146, 236, 0.05);
+    border-color: var(--detail-accent);
+}
+
+.dark .edit-textarea {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.dark .edit-textarea:focus {
+    background: rgba(19, 146, 236, 0.15);
+    border-color: var(--detail-accent);
+}
+
+/* File Upload Style */
+.file-upload-wrapper {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+}
+
+.file-upload-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.dark .file-upload-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.dark .file-upload-btn:hover {
+    background: #334155;
+    color: white;
+}
+
+.file-name {
+    font-size: 12px;
+    color: var(--detail-text-sub);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark .stats-row {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--detail-text-sub);
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.stat-item:hover {
+    color: var(--detail-accent);
+}
+
+/* AI Insight Card - Premium Look */
+.ai-card {
+    position: relative;
+    padding: 24px;
+    border-radius: 20px;
+
+    /* Subtle Glass / Gradient Background */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.9));
+    border: 1px solid rgba(19, 146, 236, 0.2);
+    box-shadow: 0 4px 20px rgba(19, 146, 236, 0.08);
+    /* overflow: hidden; Removed to prevent clipping shadows or content */
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    /* Align button to left */
+}
+
+.dark .ai-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.6));
+    border-color: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Decorative Sparkle BG */
+.ai-card::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(19, 146, 236, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.ai-header,
+.ai-title,
+.ai-desc,
+.btn-ai-action {
+    position: relative;
+    z-index: 1;
+    /* Ensure content is above background effects */
+}
+
+.ai-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--detail-accent);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ai-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--detail-text);
+}
+
+.ai-desc {
+    font-size: 14px;
+    color: var(--detail-text-sub);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    /* Increased margin for better spacing */
+}
+
+.btn-ai-action {
+    display: inline-flex;
+    /* Ensure it takes button shape */
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    /* Slightly larger clickable area */
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white !important;
+    /* Force white text */
+    background: var(--detail-accent, #1392ec);
+    /* Fallback color */
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(19, 146, 236, 0.3);
+}
+
+.btn-ai-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(19, 146, 236, 0.4);
+    filter: brightness(1.05);
+}
+
+.btn-ai-action:active {
+    transform: translateY(0);
+}
+
+/* Comments Section */
+.comments-header {
+    font-weight: 700;
+    margin-bottom: 16px;
+    font-size: 16px;
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    background-color: #cbd5e1;
+    border-radius: 50%;
+}
+
+.dark .comment-avatar {
+    background-color: #334155;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-meta {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.comment-user {
+    font-weight: 600;
+    color: var(--detail-text);
+    margin-right: 8px;
+}
+
+.comment-time {
+    color: var(--detail-text-sub);
+}
+
+.comment-text {
+    font-size: 14px;
+    color: #475569;
+    /* Light mode text */
+    line-height: 1.4;
+}
+
+.dark .comment-text {
+    color: #cbd5e1;
+}
+
+.comment-input-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.comment-input {
+    flex: 1;
+    background: #f1f5f9;
+    /* Light mode bg */
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 10px 16px;
+    color: var(--detail-text);
+    font-size: 14px;
+}
+
+.dark .comment-input {
+    background: #1e293b;
+    border-color: #334155;
+    color: white;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: #ffffff;
+    /* Light mode focus */
+}
+
+.dark .comment-input:focus {
+    background: #1e293b;
+}
+
+.btn-send {
+    background: transparent;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 8px;
+}
+
+/* More Like This (Bottom Section) */
+.more-section {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 20px 40px;
+}
+
+.more-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.more-list {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+}
+
+.more-card {
+    min-width: 200px;
+    height: 300px;
+    border-radius: 12px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    cursor: pointer;
+}

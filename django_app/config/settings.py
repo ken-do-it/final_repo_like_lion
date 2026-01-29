@@ -17,7 +17,9 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / '.env')
+# Load .env from project root (final_repo/.env)
+# .env 파일을 루트 폴더(00000-final_repo)에서 읽어옵니다
+load_dotenv(BASE_DIR.parent / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -28,7 +30,11 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
+
+# DEBUG = True
+
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,27 +48,48 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',  # API 문서 자동 생성
     'corsheaders',
-    
+    'storages',  # django-storages (S3)
+
+    # Social Authentication
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.kakao',
+    'allauth.socialaccount.providers.naver',
+
     #프로젝트로 생성한 앱
     'users',
-    'places',
+    'places.apps.PlacesConfig',
     'plans',
     'contents',
     'reservations',
+    
+    #부하 테스트용
+    'django_prometheus',
 ]
+
+# Django Sites Framework (Required for allauth)
+SITE_ID = 1
 
 #커스텀 유저 모델 지정
 AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware', #부하 테스트 정확한 시간 측정을 위해 맨 위에 있어야함
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # django-allauth
+    'django_prometheus.middleware.PrometheusAfterMiddleware', #부하 테스트 결과 확인을 위해 맨 아래 있어야함
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -88,12 +115,25 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv('DB_ENGINE'):
+    DATABASES = {
+        'default': {
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.getenv('DB_NAME', 'korea_travel_db'),
+            'USER': os.getenv('DB_USER', 'myuser'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'mypassword'),
+            'HOST': os.getenv('DB_HOST', 'db'),  # 도커 서비스 이름 'db'
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
     }
-}
+else:
+    # 환경변수가 없으면 개발용 SQLite 사용 (안전장치)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -130,4 +170,240 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+
+# REST Framework Settings
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# REST Framework Settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'users.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
+
+# JWT Settings
+JWT_SECRET_KEY = SECRET_KEY
+JWT_ALGORITHM = 'HS256'
+JWT_ACCESS_TOKEN_LIFETIME = 60 * 60
+JWT_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 14
+
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Django Allauth Settings
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # 기본 Django 인증
+    'allauth.account.auth_backends.AuthenticationBackend',  # Allauth 인증
+]
+
+# Allauth Configuration
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+
+# 소셜 로그인 시 항상 재인증 요구 (자동 로그인 방지)
+SOCIALACCOUNT_STORE_TOKENS = False
+ACCOUNT_SESSION_REMEMBER = False
+
+# 소셜 로그인 후 리다이렉트 URL
+LOGIN_REDIRECT_URL = '/api/users/social-callback/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/api/users/login-page/'
+
+# 소셜 로그인 Provider 설정
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'prompt': 'select_account',  # 매번 계정 선택 화면 표시
+        },
+        'APP': {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    },
+    'kakao': {
+        'AUTH_PARAMS': {
+            'prompt': 'login',  # 매번 로그인 화면 표시
+        },
+        'APP': {
+            'client_id': os.getenv('KAKAO_REST_API_KEY', ''),
+            'secret': os.getenv('KAKAO_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    },
+    'naver': {
+        'AUTH_PARAMS': {
+            'auth_type': 'reauthenticate',  # 매번 재인증 요구
+        },
+        'APP': {
+            'client_id': os.getenv('NAVER_CLIENT_ID', ''),
+            'secret': os.getenv('NAVER_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    }
+}
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+
+# CORS Settings
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://tripko.p-e.kr",
+    "http://tripko.p-e.kr",
+    "http://localhost",
+    "http://localhost:80",
+    "http://localhost:5173",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+    "http://127.0.0.1:5173",
+]
+
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    "https://tripko.p-e.kr",
+    "http://tripko.p-e.kr",
+    "http://localhost",
+    "http://localhost:80",
+    "http://localhost:5173",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+    "http://127.0.0.1:5173",
+]
+
+# Time Zone
+TIME_ZONE = 'Asia/Seoul'
+USE_TZ = True
+
+# MEDIA settings
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# drf-spectacular Settings (API Documentation)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Korea Travel API',
+    'DESCRIPTION': '외국인 관광객을 위한 한국 여행 서비스 API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': r'/api/',
+    'COMPONENT_SPLIT_REQUEST': True,
+    # JWT 인증 스키마 추가
+    'APPEND_COMPONENTS': {
+        # 전역 Authorize 버튼(Bearer JWT) 활성화
+        'COMPONENTS': {
+            'securitySchemes': {
+                'BearerAuth': {
+                    'type': 'http',
+                    'scheme': 'bearer',
+                    'bearerFormat': 'JWT',
+                    'description': 'JWT 인증 토큰을 입력하세요. 로그인 API를 통해 발급받은 access_token을 입력하면 됩니다.'
+                }
+            }
+        }
+    },
+}
+
+# TAGO API Settings (국토교통부 항공 API)
+TAGO_SERVICE_KEY = os.getenv('TAGO_SERVICE_KEY', '')
+
+# 한국공항공사 API Settings
+KAC_SERVICE_KEY = os.getenv('KAC_SERVICE_KEY', '')
+
+# 토스페이먼츠 Settings
+TOSS_PAYMENTS = {
+    'CLIENT_KEY': os.getenv('TOSS_CLIENT_KEY', 'test_ck_default'),
+    'SECRET_KEY': os.getenv('TOSS_SECRET_KEY', 'test_sk_default'),
+    'SUCCESS_URL': os.getenv('TOSS_SUCCESS_URL', 'http://localhost:3000/payment/success'),
+    'FAIL_URL': os.getenv('TOSS_FAIL_URL', 'http://localhost:3000/payment/fail'),
+}
+
+# ODsay API Settings (지하철 경로 검색)
+ODSAY_API_KEY = os.getenv('ODSAY_API_KEY', '')
+
+# ==================== AWS S3 Storage Settings ====================
+# S3를 사용하려면 환경변수에 AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME 을 설정하세요.
+# 설정되지 않으면 로컬 파일시스템을 사용합니다.
+
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', '')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-northeast-2')  # 서울 리전 기본값
+
+# S3 설정이 있으면 S3 스토리지 사용
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
+    # django-storages S3 설정
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+    # S3 상세 설정
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',  # 1일 캐시
+    }
+    AWS_DEFAULT_ACL = None  # ACL 비활성화 (버킷 정책으로 관리)
+    AWS_S3_FILE_OVERWRITE = False  # 같은 이름 파일 덮어쓰기 방지
+    AWS_QUERYSTRING_AUTH = False  # URL에 인증 쿼리스트링 제거 (공개 버킷용)
+
+    # 미디어 파일 경로
+    AWS_LOCATION = 'media'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+else:
+    # S3 설정이 없으면 로컬 파일시스템 사용 (개발 환경)
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+# Nginx(HTTPS) 뒤에서 실행될 때, 장고가 HTTPS임을 인식하도록 설정
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+# 2. 모든 로그인 처리를 https로 하도록 강제
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
+# 추가 권장 설정 (세션 및 쿠키 보안)
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True

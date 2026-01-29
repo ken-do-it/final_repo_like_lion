@@ -1,6 +1,18 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from places.models import Place  # places 앱의 Place 모델 참조
+
+
+def plan_image_upload_path(_instance, filename):
+    """
+    이미지 파일을 고유한 이름으로 저장
+    S3 또는 로컬: plan_images/{uuid}.{확장자}
+    """
+    ext = filename.split('.')[-1] if '.' in filename else 'jpg'
+    new_filename = f"{uuid.uuid4()}.{ext}"
+    return f"plan_images/{new_filename}"
+
 
 class TravelPlan(models.Model):
     """
@@ -27,28 +39,23 @@ class TravelPlan(models.Model):
 
     class Meta:
         db_table = 'travel_plans'
-        # SQL 파일의 INDEX 반영
         indexes = [
             models.Index(fields=['user']),
             models.Index(fields=['created_at']),
             models.Index(fields=['is_public']),
-            models.Index(fields=['user', 'is_public']), # 복합 인덱스
         ]
+
 
 class PlanDetail(models.Model):
     """
     일정 상세 (plan_details)
     """
     plan = models.ForeignKey(TravelPlan, on_delete=models.CASCADE, related_name='details')
-    place = models.ForeignKey(Place, on_delete=models.SET_NULL, null=True, blank=True)
+    place = models.ForeignKey(Place, on_delete=models.SET_NULL, null=True, blank=True, related_name='plan_details')
     
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
     order_index = models.IntegerField(default=0)
-    
-    # DB에 없는 장소(임시 장소) 처리
-    temp_place_name = models.CharField(max_length=255, blank=True, null=True)
-    temp_place_address = models.TextField(blank=True, null=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -58,79 +65,161 @@ class PlanDetail(models.Model):
         indexes = [
             models.Index(fields=['plan']),
             models.Index(fields=['date']),
-            models.Index(fields=['place']),
         ]
 
-class TravelPost(models.Model):
+
+class PlanDetailImage(models.Model):
     """
-    여행기 게시글 (travel_posts)
+    일정 상세 사진 (plan_detail_images)
     """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    plan = models.ForeignKey(TravelPlan, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-    thumbnail_url = models.CharField(max_length=500, blank=True, null=True)
-    
-    # ★ 추가된 필드 (SQL 반영)
-    destination = models.CharField(max_length=100, blank=True, null=True, help_text="여행지 (예: 서울, 부산)")
-    is_public = models.BooleanField(default=True)
-    
-    view_count = models.IntegerField(default=0)
-    like_count = models.IntegerField(default=0)
+    detail = models.ForeignKey(PlanDetail, on_delete=models.CASCADE, related_name='images')
+    image_file = models.ImageField(
+        upload_to=plan_image_upload_path,  # S3 또는 로컬: plan_images/{uuid}.{ext}
+        blank=True,
+        null=True
+    )
+    order_index = models.IntegerField(default=0)
     
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'travel_posts'
+        db_table = 'plan_detail_images'
+        ordering = ['order_index']
         indexes = [
-            models.Index(fields=['user']),
+            models.Index(fields=['detail']),
+        ]
+
+
+class AIQuestion(models.Model):
+    """
+    AI 추천 질문/답변 (ai_questions)
+    """
+    plan = models.ForeignKey(TravelPlan, on_delete=models.CASCADE, related_name='ai_questions')
+    question = models.TextField()
+    answer = models.TextField()
+    order_index = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ai_questions'
+        ordering = ['order_index']
+        indexes = [
             models.Index(fields=['plan']),
-            models.Index(fields=['created_at']),
-            models.Index(fields=['like_count']), # 인기순 정렬용
-            models.Index(fields=['-like_count', '-created_at']), # 복합 정렬 최적화
-            models.Index(fields=['destination']), # 지역별 검색용
-            models.Index(fields=['-view_count']), # 조회수 정렬용
         ]
 
-class PostLike(models.Model):
+
+class PlanLike(models.Model):
     """
-    게시글 좋아요 (post_likes)
+    여행 일정 좋아요 (plan_likes)
     """
-    post = models.ForeignKey(TravelPost, on_delete=models.CASCADE, related_name='likes')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    plan = models.ForeignKey(TravelPlan, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plan_likes')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'post_likes'
-        unique_together = ('post', 'user') # 중복 좋아요 방지 (PK 대체)
+        db_table = 'plan_likes'
+        unique_together = ('plan', 'user')
         indexes = [
+            models.Index(fields=['plan']),
             models.Index(fields=['user']),
-            models.Index(fields=['created_at']),
         ]
 
-class Comment(models.Model):
+
+class PlanComment(models.Model):
     """
-    댓글 (comments) - Soft Delete 반영
+    여행 일정 댓글 (plan_comments)
     """
-    post = models.ForeignKey(TravelPost, on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
-    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
-    
+    plan = models.ForeignKey(TravelPlan, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='plan_comments')
     content = models.TextField()
-    
-    # ★ Soft Delete 필드 (SQL 반영)
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'comments'
+        db_table = 'plan_comments'
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['post']),
+            models.Index(fields=['plan']),
             models.Index(fields=['user']),
-            models.Index(fields=['parent_comment']),
+            models.Index(fields=['created_at']),
         ]
+
+
+class AITravelRequest(models.Model):
+    """
+    AI 여행 추천 요청 (ai_travel_requests)
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='ai_travel_requests'
+    )
+
+    DESTINATION_CHOICES = [
+        ('gapyeong_yangpyeong', '가평/양평'),
+        ('gangneung_sokcho', '강릉/속초'),
+        ('gyeongju', '경주'),
+        ('busan', '부산'),
+        ('yeosu', '여수'),
+        ('incheon', '인천'),
+        ('jeonju', '전주'),
+        ('jeju', '제주'),
+        ('chuncheon_hongcheon', '춘천/홍천'),
+        ('taean', '태안'),
+    ]
+    destination = models.CharField(max_length=50, choices=DESTINATION_CHOICES)
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    TRAVEL_STYLE_CHOICES = [
+        ('healing', '힐링/휴양'),
+        ('activity', '액티비티'),
+        ('culture', '문화/역사'),
+        ('food', '맛집 투어'),
+        ('nature', '자연 경관'),
+    ]
+    travel_style = models.CharField(max_length=20, choices=TRAVEL_STYLE_CHOICES)
+
+    companions = models.IntegerField(default=1)
+    additional_request = models.TextField(blank=True)
+
+    ai_response = models.JSONField(blank=True, null=True)
+
+    created_plan = models.ForeignKey(
+        TravelPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ai_requests'
+    )
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'ai_travel_requests'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_destination_display()} ({self.start_date} ~ {self.end_date})"
+
+    @property
+    def duration_days(self):
+        """여행 기간 (일)"""
+        return (self.end_date - self.start_date).days + 1

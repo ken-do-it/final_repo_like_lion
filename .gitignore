@@ -205,3 +205,49 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+
+#우창호 프론트 테스트
+django_app/users/templates/
+
+
+# claude skills
+.claude/
+
+
+# kijin ignore
+KJ_DevlopPlan.md
+KJ_SKILL.md
+KJ_DevlopPlan2.md
+media/
+clear_cache.py
+clear_data.py
+front_role.txt
+docker_optimization.md
+technical_retrospective.md
+modify_mypage_shorts_translation.md
+docker_build_optimization_report.md
+kjin_portfolio/
+check_and_clean_vectors.py
+delete_duplicated_shorts.py 
+
+
+#최진석 부하테스트용
+load_test.js
+node_modules/
+package-lock.json
+package.json
+
+
+#김미숙 클로드 캐시파일 업로드방지용
+tmpclaude-*
+
+# Docker Compose 개인 설정
+docker-compose.override.yaml
+
+# AI Model Files
+*.gguf
+fastapi_ai_translation/models/
+
+django_app/staticfiles
